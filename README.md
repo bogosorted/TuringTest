@@ -3,6 +3,7 @@
 ![C](https://img.shields.io/badge/C-00599C?style=for-the-badge&logo=c&logoColor=white) ![Raylib](https://img.shields.io/badge/Raylib-FFFFFF?style=for-the-badge&logoColor=black) ![CESAR School](https://img.shields.io/badge/CESAR_School-Projeto_Acad%C3%AAmico-blue?style=for-the-badge)
 
 > "Não deixem que as máquinas substituam a singularidade humana. Detenham os impostores. Exponha a verdade."
+![Descrição da imagem](./TuringTeste.jpg)
 
 Teste de Turing é um jogo de suspense e investigação focado em alfabetização em Inteligência Artificial (AI Literacy). O jogador assume o papel de um inspetor na corporação RASEC com a missão de interrogar funcionários e identificar humanoides sintéticos infiltrados na empresa antes que eles comprometam a rede central.
 
