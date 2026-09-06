@@ -18,6 +18,7 @@ Este projeto foi idealizado e desenvolvido no contexto acadêmico da CESAR Schoo
 * [Rotas e Finais](#rotas-e-finais)
 * [Tecnologias e Conceitos](#tecnologias-e-conceitos)
 * [Instituição](#instituição)
+* [Como Rodar o Jogo (Para Iniciantes)](#como-rodar-o-jogo-para-iniciantes)
 
 ## Premissa
 Na sede da RASEC, uma corporação de robótica, o treinamento de humanoides ultrapassou os limites de segurança estabelecidos devido ao aprendizado por convivência direta com humanos.
@@ -71,3 +72,27 @@ Perfis Humanos (Falsos Positivos):
 ## Instituição
 CESAR School
 Projeto acadêmico focado em inovação, tecnologia e aprendizado de IA por meio do game design.
+
+## Como Rodar o Jogo (Para Iniciantes)
+
+O projeto usa **CMake** para baixar a biblioteca gráfica (Raylib) e compilar o jogo automaticamente em qualquer computador.
+
+### No Windows
+1. Baixe e instale o **Visual Studio Community** (o software roxo). Ele servirá exclusivamente para instalar o compilador C no seu sistema, você nunca precisará abri-lo para programar.
+2. Na tela de instalação, marque obrigatoriamente a opção **Desenvolvimento para Desktop com C++**.
+3. A partir de agora, programe todo o jogo utilizando o **VS Code** (o editor azul e leve) normalmente.
+4. Abra o terminal integrado do VS Code na pasta do projeto.
+5. Prepare a estrutura inicial do jogo rodando o comando **(apenas na primeira vez)**:
+   `cmake -B build`
+6. Compile o código do jogo rodando o comando (repita sempre que alterar o código):
+   `cmake --build build`
+7. Para jogar, abra a pasta `build` recém-criada e dê um duplo clique no arquivo `turing_test.exe` (ou digite `./build/turing_test.exe` no terminal).
+
+### No Linux (Ubuntu/Debian)
+1. Abra o terminal e instale as bibliotecas gráficas e compiladores executando:
+   `sudo apt update && sudo apt install cmake build-essential libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev -y`
+2. Na pasta do projeto, prepare o ambiente de compilação **(apenas na primeira vez)**:
+   `cmake -B build`
+3. Compile o código do jogo (repita sempre que alterar o código):
+   `cmake --build build`
+4. Para jogar, abra a pasta `build` recém-criada e execute o arquivo `turing_test` (ou digite `./build/turing_test` no terminal).
