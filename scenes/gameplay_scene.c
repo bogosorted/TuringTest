@@ -8,6 +8,10 @@
 static Texture2D g_telaFechada;   // menu de ferramentas fechado
 static Texture2D g_telaAberta;  // menu de ferramentas aberto
 static Texture2D g_seta;  // botao da seta (aponta para a direita)
+static Texture2D g_menuFerramentas; // barra do menu de ferramentas
+static Texture2D g_iconePrancheta;  // icone da prancheta
+static Texture2D g_iconeArquivos;   // icone da pasta de arquivos
+static Texture2D g_iconeMapa;       // icone do mapa
 
 static bool g_menuAberto = false;
 static bool g_shouldClose = false;
@@ -16,12 +20,13 @@ static bool g_shouldClose = false;
 // Elas sao somadas a posicao da imagem na tela (ver ParaTela).
 static const Rectangle SETA_FECHADA = { 598, 66, 60, 51 };  // seta "<" (parte fica fora da tela)
 static const Rectangle SETA_ABERTA  = { 513, 66, 60, 51 };  // seta ">"
+static const Rectangle MENU_AREA    = { 510, 0, 130, 360 }; // menu encostado na direita
 
 static const Rectangle FERRAMENTAS[NUM_TOOLS] = {
-    { 564,   2, 74, 88 },  // 0 - prancheta
-    { 564,  92, 74, 88 },  // 1 - pasta
+    { 571,  10, 60, 72 },  // 0 - prancheta (tamanho do sprite: 60x72)
+    { 572, 110, 58, 52 },  // 1 - pasta (tamanho do sprite: 58x52)
     { 564, 184, 74, 82 },  // 2 - maleta
-    { 564, 270, 74, 88 },  // 3 - mapa
+    { 568, 284, 67, 61 },  // 3 - mapa (tamanho do sprite: 67x61)
 };
 
 // Funcoes de clique de cada ferramenta (mesmo estilo do menu)
@@ -56,6 +61,18 @@ static Rectangle ParaTela(Rectangle r) {
     };
 }
 
+// Desenha um sprite numa area da imagem 640x360.
+// Se o mouse estiver em cima, desenha mais escuro (mesmo efeito dos botoes do menu).
+static void DesenharComHover(Texture2D tex, Rectangle area) {
+    Rectangle destino = ParaTela(area);
+    Rectangle origem  = { 0, 0, (float)tex.width, (float)tex.height };
+
+    bool hover = CheckCollisionPointRec(RayCanvasGetMousePosition(), destino);
+    Color cor = hover ? (Color){ 180, 180, 180, 255 } : WHITE;
+
+    DrawTexturePro(tex, origem, destino, (Vector2){ 0, 0 }, 0.0f, cor);
+}
+
 bool GameplaySceneShouldClose(void) {
     return g_shouldClose;
 }
@@ -72,6 +89,18 @@ void InitGameplayScene(void) {
 
     g_seta = LoadTexture("assets/gameplay_scene/spr_botao_seta.png");
        SetTextureFilter(g_seta, TEXTURE_FILTER_POINT);
+
+    g_menuFerramentas = LoadTexture("assets/gameplay_scene/spr_menu_ferramentas.png");
+    SetTextureFilter(g_menuFerramentas, TEXTURE_FILTER_POINT);
+
+    g_iconePrancheta = LoadTexture("assets/gameplay_scene/spr_icone_prancheta.png");
+    SetTextureFilter(g_iconePrancheta, TEXTURE_FILTER_POINT);
+
+    g_iconeArquivos = LoadTexture("assets/gameplay_scene/spr_icone_arquivos.png");
+    SetTextureFilter(g_iconeArquivos, TEXTURE_FILTER_POINT);
+
+    g_iconeMapa = LoadTexture("assets/gameplay_scene/spr_icone_mapa.png");
+    SetTextureFilter(g_iconeMapa, TEXTURE_FILTER_POINT);
 
     RayCanvasInit(g_telaFechada.width, g_telaFechada.height);
 }
@@ -119,8 +148,16 @@ static void UpdateGameplay(void) {
 
        UpdateGameplay();
 
-       // 1) Fundo
-       RayCanvasDrawTexture(g_menuAberto ? g_telaAberta : g_telaFechada, GetTelaRect(), WHITE);
+           RayCanvasDrawTexture(g_telaFechada, GetTelaRect(), WHITE);
+
+    // 2) Menu de ferramentas por cima do fundo (so quando aberto)
+    if (g_menuAberto) {
+        Rectangle menuOrigem = { 0, 0, (float)g_menuFerramentas.width, (float)g_menuFerramentas.height };
+        DrawTexturePro(g_menuFerramentas, menuOrigem, ParaTela(MENU_AREA), (Vector2){ 0, 0 }, 0.0f, WHITE);
+        DesenharComHover(g_iconePrancheta, FERRAMENTAS[0]);
+        DesenharComHover(g_iconeArquivos, FERRAMENTAS[1]);
+        DesenharComHover(g_iconeMapa, FERRAMENTAS[3]);
+    }
 
        // 2) Seta por cima do fundo
        Rectangle setaDestino = ParaTela(g_menuAberto ? SETA_ABERTA : SETA_FECHADA);
@@ -145,5 +182,9 @@ void UnloadGameplayScene(void) {
     UnloadTexture(g_telaFechada);
     UnloadTexture(g_telaAberta);
     UnloadTexture(g_seta);
+    UnloadTexture(g_menuFerramentas);
+    UnloadTexture(g_iconePrancheta);
+    UnloadTexture(g_iconeArquivos);
+    UnloadTexture(g_iconeMapa);
     RayCanvasClose();
 }
