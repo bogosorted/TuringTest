@@ -23,9 +23,11 @@ static const char *g_buttonPaths[NUM_BUTTONS] = {
     "assets/menu_scene/button_exit.png"
 };
 
+static bool g_shouldStartGame = false;
 // Funcoes de clique de cada botao
 static void OnClickPlay(void) {
     TraceLog(LOG_INFO, "Botao JOGAR clicado!");
+    g_shouldStartGame = true;
 }
 
 static void OnClickLoad(void) {
@@ -47,8 +49,13 @@ bool MenuSceneShouldClose(void) {
     return g_shouldClose;
 }
 
+bool MenuSceneShouldStartGame(void) {
+    return g_shouldStartGame;
+}
+
 void InitMenuScene(void) {
     g_shouldClose = false;
+    g_shouldStartGame = false;
     g_bgTexture = LoadTexture("assets/menu_scene/background.png");
     SetTextureFilter(g_bgTexture, TEXTURE_FILTER_POINT);
     RayCanvasInit(g_bgTexture.width, g_bgTexture.height);
