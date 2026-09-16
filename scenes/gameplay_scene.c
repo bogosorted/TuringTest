@@ -6,15 +6,16 @@
 
 // Texturas das duas versoes da tela
 static Texture2D g_telaFechada;   // menu de ferramentas fechado
-static Texture2D g_telaAberta;    // menu de ferramentas aberto
+static Texture2D g_telaAberta;  // menu de ferramentas aberto
+static Texture2D g_seta;  // botao da seta (aponta para a direita)
 
 static bool g_menuAberto = false;
 static bool g_shouldClose = false;
 
 // Areas clicaveis, em pixels DENTRO da imagem (640x360).
 // Elas sao somadas a posicao da imagem na tela (ver ParaTela).
-static const Rectangle SETA_FECHADA = { 598, 66, 42, 52 };  // seta "<"
-static const Rectangle SETA_ABERTA  = { 513, 66, 60, 52 };  // seta ">"
+static const Rectangle SETA_FECHADA = { 598, 66, 60, 51 };  // seta "<" (parte fica fora da tela)
+static const Rectangle SETA_ABERTA  = { 513, 66, 60, 51 };  // seta ">"
 
 static const Rectangle FERRAMENTAS[NUM_TOOLS] = {
     { 564,   2, 74, 88 },  // 0 - prancheta
@@ -63,11 +64,14 @@ void InitGameplayScene(void) {
     g_shouldClose = false;
     g_menuAberto = false;
 
-    g_telaFechada = LoadTexture("assets/gameplay_scene/tela_fechada.png");
+    g_telaFechada = LoadTexture("assets/gameplay_scene/spr_tela_fechada.png");
     SetTextureFilter(g_telaFechada, TEXTURE_FILTER_POINT);
 
-    g_telaAberta = LoadTexture("assets/gameplay_scene/tela_aberta.png");
+    g_telaAberta = LoadTexture("assets/gameplay_scene/spr_tela_aberta.png");
     SetTextureFilter(g_telaAberta, TEXTURE_FILTER_POINT);
+
+    g_seta = LoadTexture("assets/gameplay_scene/spr_botao_seta.png");
+       SetTextureFilter(g_seta, TEXTURE_FILTER_POINT);
 
     RayCanvasInit(g_telaFechada.width, g_telaFechada.height);
 }
@@ -110,18 +114,36 @@ static void UpdateGameplay(void) {
     SetMouseCursor(hover ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 }
 
-void UpdateDrawGameplayScene(void) {
-    RayCanvasBegin();
+   void UpdateDrawGameplayScene(void) {
+       RayCanvasBegin();
 
-    UpdateGameplay();
-    RayCanvasDrawTexture(g_menuAberto ? g_telaAberta : g_telaFechada, GetTelaRect(), WHITE);
+       UpdateGameplay();
 
-    RayCanvasEnd();
-}
+       // 1) Fundo
+       RayCanvasDrawTexture(g_menuAberto ? g_telaAberta : g_telaFechada, GetTelaRect(), WHITE);
+
+       // 2) Seta por cima do fundo
+       Rectangle setaDestino = ParaTela(g_menuAberto ? SETA_ABERTA : SETA_FECHADA);
+       Rectangle setaOrigem  = { 0, 0, (float)g_seta.width, (float)g_seta.height };
+
+       // O sprite aponta para a direita (">").
+       // Com o menu fechado, espelhamos para apontar para a esquerda ("<").
+       if (!g_menuAberto) {
+           setaOrigem.width = -setaOrigem.width;
+       }
+
+           // Destaque quando o mouse esta em cima (mesmo efeito dos botoes do menu)
+    bool setaHover = CheckCollisionPointRec(RayCanvasGetMousePosition(), setaDestino);
+    Color corSeta = setaHover ? (Color){ 180, 180, 180, 255 } : WHITE;
+
+    DrawTexturePro(g_seta, setaOrigem, setaDestino, (Vector2){ 0, 0 }, 0.0f, corSeta);
+       RayCanvasEnd();
+   }
 
 void UnloadGameplayScene(void) {
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
     UnloadTexture(g_telaFechada);
     UnloadTexture(g_telaAberta);
+    UnloadTexture(g_seta);
     RayCanvasClose();
 }
