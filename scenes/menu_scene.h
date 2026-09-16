@@ -7,5 +7,7 @@ void InitMenuScene(void);
 void UpdateDrawMenuScene(void);
 void UnloadMenuScene(void);
 bool MenuSceneShouldClose(void);
+bool MenuSceneShouldStartGame(void);
+
 
 #endif

@@ -12,5 +12,5 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(raylib)
 
-add_executable(turing_test main.c scenes/menu_scene.c utils/raycanvas.c)
+add_executable(turing_test main.c scenes/menu_scene.c scenes/gameplay_scene.c utils/raycanvas.c)
 target_link_libraries(turing_test PRIVATE raylib)
