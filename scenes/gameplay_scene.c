@@ -13,6 +13,13 @@ static Texture2D g_iconePrancheta;  // icone da prancheta
 static Texture2D g_iconeArquivos;   // icone da pasta de arquivos
 static Texture2D g_iconeMapa;       // icone do mapa
 
+// Prancheta arrastavel
+static Texture2D g_prancheta;                       // sprite da prancheta aberta (299x343)
+static bool      g_pranchetaAberta = false;
+static bool      g_arrastando      = false;
+static Vector2   g_pranchetaPos    = { 170, 8 };    // posicao inicial (centralizada)
+static Vector2   g_offsetArraste   = { 0, 0 };      // onde o mouse "pegou" a prancheta
+
 static bool g_menuAberto = false;
 static bool g_shouldClose = false;
 
@@ -30,7 +37,10 @@ static const Rectangle FERRAMENTAS[NUM_TOOLS] = {
 };
 
 // Funcoes de clique de cada ferramenta (mesmo estilo do menu)
-static void OnClickPrancheta(void) { TraceLog(LOG_INFO, "Prancheta clicada!"); }
+static void OnClickPrancheta(void) {
+    g_pranchetaAberta = !g_pranchetaAberta;
+    TraceLog(LOG_INFO, "Prancheta %s", g_pranchetaAberta ? "aberta" : "fechada");
+}
 static void OnClickPasta(void)     { TraceLog(LOG_INFO, "Pasta clicada!"); }
 static void OnClickMaleta(void)    { TraceLog(LOG_INFO, "Maleta clicada!"); }
 static void OnClickMapa(void)      { TraceLog(LOG_INFO, "Mapa clicado!"); }
@@ -73,6 +83,18 @@ static void DesenharComHover(Texture2D tex, Rectangle area) {
     DrawTexturePro(tex, origem, destino, (Vector2){ 0, 0 }, 0.0f, cor);
 }
 
+// Posicao do mouse convertida para pixels da imagem 640x360
+static Vector2 MouseNaImagem(void) {
+    Rectangle tela = GetTelaRect();
+    Vector2 m = RayCanvasGetMousePosition();
+
+    return (Vector2){
+        (m.x - tela.x) * g_telaFechada.width  / tela.width,
+        (m.y - tela.y) * g_telaFechada.height / tela.height
+    };
+}
+
+        
 bool GameplaySceneShouldClose(void) {
     return g_shouldClose;
 }
@@ -80,6 +102,9 @@ bool GameplaySceneShouldClose(void) {
 void InitGameplayScene(void) {
     g_shouldClose = false;
     g_menuAberto = false;
+    g_pranchetaAberta = false;
+    g_arrastando = false;
+    g_pranchetaPos = (Vector2){ 170, 8 };
 
     g_telaFechada = LoadTexture("assets/gameplay_scene/spr_tela_fechada.png");
     SetTextureFilter(g_telaFechada, TEXTURE_FILTER_POINT);
@@ -102,7 +127,50 @@ void InitGameplayScene(void) {
     g_iconeMapa = LoadTexture("assets/gameplay_scene/spr_icone_mapa.png");
     SetTextureFilter(g_iconeMapa, TEXTURE_FILTER_POINT);
 
+    g_prancheta = LoadTexture("assets/gameplay_scene/spr_prancheta.png");
+    SetTextureFilter(g_prancheta, TEXTURE_FILTER_POINT);
+
     RayCanvasInit(g_telaFechada.width, g_telaFechada.height);
+}
+
+// Cuida do arraste da prancheta.
+// Devolve true se a prancheta "pegou" o mouse neste frame
+// (assim o clique nao atravessa para o que esta embaixo dela).
+static bool UpdatePrancheta(void) {
+    if (!g_pranchetaAberta) return false;
+
+    Vector2 mouse = MouseNaImagem();
+    Rectangle area = { g_pranchetaPos.x, g_pranchetaPos.y,
+                       (float)g_prancheta.width, (float)g_prancheta.height };
+
+    // 1) Comecou a arrastar: clicou em cima da prancheta
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouse, area)) {
+        g_arrastando = true;
+        g_offsetArraste = (Vector2){ mouse.x - g_pranchetaPos.x, mouse.y - g_pranchetaPos.y };
+    }
+
+    if (!g_arrastando) return false;
+
+    // 2) Soltou o botao: para de arrastar
+    if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+        g_arrastando = false;
+        return false;
+    }
+
+    // 3) Arrastando: a prancheta segue o mouse
+    g_pranchetaPos.x = mouse.x - g_offsetArraste.x;
+    g_pranchetaPos.y = mouse.y - g_offsetArraste.y;
+
+    // Nao deixa sair da tela
+    float maxX = (float)(g_telaFechada.width  - g_prancheta.width);
+    float maxY = (float)(g_telaFechada.height - g_prancheta.height);
+    if (g_pranchetaPos.x < 0)    g_pranchetaPos.x = 0;
+    if (g_pranchetaPos.y < 0)    g_pranchetaPos.y = 0;
+    if (g_pranchetaPos.x > maxX) g_pranchetaPos.x = maxX;
+    if (g_pranchetaPos.y > maxY) g_pranchetaPos.y = maxY;
+
+    SetMouseCursor(MOUSE_CURSOR_RESIZE_ALL);
+    return true;
 }
 
 static void UpdateGameplay(void) {
@@ -146,7 +214,10 @@ static void UpdateGameplay(void) {
    void UpdateDrawGameplayScene(void) {
        RayCanvasBegin();
 
-       UpdateGameplay();
+           // A prancheta fica por cima de tudo, entao ela tem prioridade no clique
+    if (!UpdatePrancheta()) {
+        UpdateGameplay();
+    }
 
            RayCanvasDrawTexture(g_telaFechada, GetTelaRect(), WHITE);
 
@@ -158,6 +229,8 @@ static void UpdateGameplay(void) {
         DesenharComHover(g_iconeArquivos, FERRAMENTAS[1]);
         DesenharComHover(g_iconeMapa, FERRAMENTAS[3]);
     }
+
+    
 
        // 2) Seta por cima do fundo
        Rectangle setaDestino = ParaTela(g_menuAberto ? SETA_ABERTA : SETA_FECHADA);
@@ -174,6 +247,14 @@ static void UpdateGameplay(void) {
     Color corSeta = setaHover ? (Color){ 180, 180, 180, 255 } : WHITE;
 
     DrawTexturePro(g_seta, setaOrigem, setaDestino, (Vector2){ 0, 0 }, 0.0f, corSeta);
+
+        // 4) Prancheta por cima de tudo
+    if (g_pranchetaAberta) {
+        Rectangle area   = { g_pranchetaPos.x, g_pranchetaPos.y,
+                             (float)g_prancheta.width, (float)g_prancheta.height };
+        Rectangle origem = { 0, 0, (float)g_prancheta.width, (float)g_prancheta.height };
+        DrawTexturePro(g_prancheta, origem, ParaTela(area), (Vector2){ 0, 0 }, 0.0f, WHITE);
+    }
        RayCanvasEnd();
    }
 
@@ -186,5 +267,6 @@ void UnloadGameplayScene(void) {
     UnloadTexture(g_iconePrancheta);
     UnloadTexture(g_iconeArquivos);
     UnloadTexture(g_iconeMapa);
+    UnloadTexture(g_prancheta);
     RayCanvasClose();
 }
