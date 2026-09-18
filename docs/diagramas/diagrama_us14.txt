@@ -1,0 +1,37 @@
+@startuml
+title US-14: Tutorial de Gameplay e Introdução à Investigação
+
+|Jogador|
+start
+:Inicia o jogo pela primeira vez ou seleciona modo Tutorial;
+
+|#AntiqueWhite|Sistema|
+:Carrega a cena de treinamento no Escritório da RASEC;
+:Apresenta o objetivo central: identificar a IA infiltrada entre os 3 funcionários;
+
+:Destaca visualmente o quadro do NPC e a prancheta cadastral;
+note right: Explica a função de cruzar dados da Ficha de Inspeção com as falas
+
+|Jogador|
+:Clica na Ficha de Inspeção;
+
+|#AntiqueWhite|Sistema|
+:Exibe janela com os atributos do funcionário de teste;
+:Explica o medidor de Tokens e a barra de Paciência;
+:Demonstra as opções de diálogo e o menu de ferramentas;
+
+|Jogador|
+:Realiza uma pergunta de teste;
+
+|#AntiqueWhite|Sistema|
+:Simula o efeito máquina de escrever e a dedução de Tokens;
+:Apresenta os botões finais de Veredito ("Manter Cargo" / "Live Area");
+:Explica o impacto dos Falsos Positivos e Falsos Negativos;
+
+|Jogador|
+:Confirma compreensão das mecânicas;
+
+|#AntiqueWhite|Sistema|
+:Encerra o tutorial e habilita o Ciclo principal de investigação;
+stop
+@enduml

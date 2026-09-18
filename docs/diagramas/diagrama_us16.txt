@@ -1,0 +1,55 @@
+@startuml
+title US-16: Identificação de "Talkers" (Complexo)
+
+|Jogador|
+start
+:Inspeciona visualmente o sprite do entrevistado na tela;
+if (Tipo de pergunta formulada?) then (Pergunta Longa / Complexa)
+  :Envia pergunta com alto nível de detalhe;
+else (Pergunta Simples)
+  :Envia pergunta de rotina;
+endif
+
+|#AntiqueWhite|Sistema|
+:Inicia o processamento do turno do NPC;
+
+if (Entrevistado é um sintético do tipo "Talker"?) then (sim)
+  |#AntiqueWhite|Sistema|
+  :Avalia chance percentual de renderização de glitch no turno;
+  
+  if (Sorteio ativou glitch visual?) then (sim)
+    switch (Artefato sorteado para o frame?)
+    case (Dessincronia)
+      :Executa piscar de olhos dessincronizado no Raylib;
+    case (Artefato de Sprite)
+      :Oculta partes do corpo do personagem por milissegundos;
+    endswitch
+  else (não)
+    :Mantém renderização gráfica regular do sprite;
+  endif
+
+  if (Pergunta enviada era longa/complexa?) then (sim)
+    :Aplica atraso perceptível (delay) antes de emitir a fala;
+    note right: Simula o processamento pesado de geração do deepfake
+  else (não)
+    :Aplica tempo de resposta padrão;
+  endif
+
+else (não - Humano ou outro tipo)
+  |#AntiqueWhite|Sistema|
+  :Renderiza animação do sprite sem falhas visuais;
+  :Emite resposta com tempo de fala natural;
+endif
+
+:Exibe a fala do NPC na interface Raylib;
+
+|Jogador|
+:Analisa o tempo de resposta e busca imperfeições no sprite;
+if (Identificou delay excessivo ou artefatos visuais?) then (sim)
+  :Registra fortes indícios de que o suspeito é um Talker (Deepfake);
+else (não)
+  :Considera a renderização e fluidez como estáveis no turno;
+endif
+
+stop
+@enduml

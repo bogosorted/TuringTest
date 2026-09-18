@@ -1,0 +1,39 @@
+@startuml
+title US-08: Botão de Ajuda (Minigame Lógico)
+
+|Jogador|
+start
+:Encontra dificuldade em definir o comportamento do suspeito;
+:Clica no botão "Dica / Ajuda" na tela de diálogo;
+
+|#AntiqueWhite|Sistema|
+if (Jogador possui dicas disponíveis no dia?) then (não ou bloqueada)
+  :Informa que não há mais dicas disponíveis hoje;
+  |Jogador|
+  :Continua a investigação por conta própria;
+  stop
+else (sim - até 2 por dia)
+  |#AntiqueWhite|Sistema|
+  :Apresenta uma proposição lógica na interface;
+  :Exibe 3 opções: [Tautologia, Contradição, Contingência];
+
+  |Jogador|
+  :Analisa a proposição e seleciona a resposta;
+
+  |#AntiqueWhite|Sistema|
+  if (Resposta está correta?) then (sim)
+    :Consome 1 uso de dica do dia;
+    :Executa diálogo investigativo especial sem penalidade;
+    note right: Ex: Injeção de prompt que não consome paciência do NPC
+    |Jogador|
+    :Obtém pista confiável e privilegiada;
+  else (não)
+    :Bloqueia o botão de ajuda para o restante desta conversa;
+    note right: Mesmo com dicas restantes no dia,\na conversa atual perde o auxílio
+    |Jogador|
+    :Perde a chance de ajuda nesta entrevista;
+  endif
+endif
+
+stop
+@enduml

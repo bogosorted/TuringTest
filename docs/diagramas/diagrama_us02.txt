@@ -1,0 +1,32 @@
+@startuml
+title US-02: Fichas de Funcionários (Geração de Dados)
+
+|Jogador|
+start
+:Inicia nova partida ou abre o painel de inspeção;
+
+|#AntiqueWhite|Sistema|
+:Executa rotina de leitura do arquivo de fichas (.txt);
+
+if (Arquivo de fichas existe e é válido?) then (não)
+  :Gera arquivo .txt contendo exatamente 3 fichas aleatórias;
+  note right: 1 ficha de IA e 2 fichas de humanos
+  :Popula campos: Nome, Setor, Função e Personalidade Geral;
+else (sim)
+  :Lê as 3 fichas cadastradas no arquivo;
+endif
+
+:Estrutura os dados na memória do jogo;
+:Vincula cada ficha ao seu respectivo funcionário;
+
+|Jogador|
+:Clica no botão da Prancheta/Ficha durante o diálogo;
+
+|#AntiqueWhite|Sistema|
+:Abre a interface da Ficha de Inspeção na tela;
+:Exibe os 4 atributos cadastrais do funcionário atual;
+
+|Jogador|
+:Cruza os dados da ficha com os depoimentos do suspeito;
+stop
+@enduml

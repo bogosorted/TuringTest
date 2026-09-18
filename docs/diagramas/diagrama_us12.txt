@@ -1,0 +1,51 @@
+@startuml
+title US-12: Gatilho para Finais e Consequências Corporativas
+
+|Jogador|
+start
+if (Tipo de conclusão do jogador?) then (Exploração do Cenário)
+  |Jogador|
+  :Explora a tela base fora do loop de interrogatório;
+  :Interage com elemento clicável (Porta do Gabinete do CEO);
+
+  |#AntiqueWhite|Sistema|
+  if (Disponível no dia / condições atendidas?) then (sim)
+    :Desbloqueia a área e revela o Terminal Secreto;
+    
+    |Jogador|
+    :Acessa e opera o Terminal Confidencial;
+    
+    |#AntiqueWhite|Sistema|
+    :Executa sequência de diálogo interativo;
+    :Dispara cinemática textual do **Final Secreto** via Raylib;
+    note right: Plot twist: auto-descoberta de que o próprio jogador é um Sintético
+    stop
+  else (não)
+    :Mantém a porta inacessível;
+    |Jogador|
+    :Retorna ao loop principal de investigação;
+  endif
+endif
+
+|Jogador|
+:Conclui o 3º dia de investigação (Fim do Ciclo);
+:Emite o Veredito final definindo o suspeito a ser desligado;
+
+|#AntiqueWhite|Sistema|
+:Avalia o score oculto da campanha;
+:Calcula número de Falsos Positivos e Falsos Negativos;
+:Exibe tela de relatório de desempenho corporativo;
+:Calcula e apresenta pontuação na tela de Scoreboard;
+
+if (Total de IAs aprovadas <= X?) then (sim)
+  :Carrega cinemática textual do **Final A** via Raylib;
+  note right: Sucesso corporativo da RASEC e alta eficiência na contenção
+else (não)
+  :Carrega cinemática textual do **Final B** via Raylib;
+  note right: Consequências jurídicas graves e escândalo corporativo
+endif
+
+|Jogador|
+:Assiste à narrativa do desfecho final do jogo;
+stop
+@enduml

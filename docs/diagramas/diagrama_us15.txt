@@ -1,0 +1,48 @@
+@startuml
+title US-15: Ataque de Estresse de Janela de Contexto (Red Teaming)
+
+|Jogador|
+start
+:Abre o menu de diálogo durante o interrogatório;
+:Seleciona pergunta classificada como "Red Teaming";
+note right: Perguntas baseadas em cenários absurdos e paradoxos\npara forçar estouro da janela de contexto
+
+|#AntiqueWhite|Sistema|
+:Verifica saldo de Tokens do jogador;
+
+if (Tokens suficientes para o custo da pergunta?) then (não)
+  :Exibe aviso de Tokens insuficientes;
+  |Jogador|
+  :Escolhe outra opção de diálogo ou gerencia recursos;
+  stop
+else (sim)
+  |#AntiqueWhite|Sistema|
+  :Debita alto custo de Tokens do saldo disponível;
+  :Submete o paradoxo ao motor de diálogo do NPC;
+
+  switch (Tipo do entrevistado?)
+  case (Humano)
+    :Processa a pergunta com raciocínio contextual humano;
+    :Responde com bom senso, expressando estranhamento\nou rejeitando a premissa absurda de forma natural;
+
+  case (Sintético / IA)
+    :Tenta conciliar o paradoxo lógico nos parâmetros internos;
+    :Excede a capacidade da janela de contexto;
+    
+    if (Tipo de falha gerada?) then (Loop Lógico)
+      :Trava a fala em repetições circulares e contradições;
+    else (Viés de Dados)
+      :Apresenta viés de dados manifesto (Data Bias);
+    endif
+    
+    :Exibe erro visível de lógica na fala do personagem;
+  endswitch
+
+  :Renderiza resposta do NPC na caixa de diálogo via Raylib;
+  :Registra a pergunta e a resposta no histórico da partida;
+
+  |Jogador|
+  :Avalia se a fala revelou que o entrevistado é um sintético;
+  stop
+endif
+@enduml

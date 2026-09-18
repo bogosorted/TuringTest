@@ -1,0 +1,31 @@
+@startuml
+title US-10: Registro de Decisões para o Ciclo Diário
+
+|Jogador|
+start
+:Conclui o expediente do dia (3 rounds interrogados);
+
+|#AntiqueWhite|Sistema|
+:Encerra as atividades da Partida atual;
+:Processa as decisões tomadas pelo jogador no dia;
+:Contabiliza secretamente os Falsos Positivos e Falsos Negativos;
+:Carrega a tela de transição de final de expediente;
+
+:Gera relatório diário com métricas corporativas da RASEC;
+if (Houve descarte de funcionário inocente?) then (sim)
+  :Exibe dica narrativa sutil no relatório;
+  note right: ex: "Um funcionário descartado hoje sangrou..."
+endif
+
+:Apresenta resumo das atividades na tela;
+
+|Jogador|
+:Lê o relatório diário e avalia o impacto de suas ações;
+:Clica em "Iniciar Próximo Dia";
+
+|#AntiqueWhite|Sistema|
+:Salva o estado das decisões;
+:Avança para a próxima Partida do Ciclo mantendo o contexto;
+
+stop
+@enduml

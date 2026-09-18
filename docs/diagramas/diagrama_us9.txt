@@ -1,0 +1,39 @@
+@startuml
+title US-09: Variabilidade e Desafio (Falsos Positivos)
+
+|Jogador|
+start
+:Inicia o interrogatório com um funcionário Humano;
+
+|#AntiqueWhite|Sistema|
+:Carrega os traços comportamentais sorteados para o Humano;
+
+switch (Trait ativo no suspeito?)
+case (Robótico)
+  :Gera falas estritamente padronizadas e monocórdicas;
+  note right: Medo de punição corporativa faz o humano parecer uma IA
+  :Responde de forma excessivamente formal;
+
+case (Impaciente)
+  :Demonstra pressa e irritação com a investigação;
+  if (Conversa se prolonga por vários turnos?) then (sim)
+    :Aplica penalidade de perda acelerada de Tokens;
+  endif
+
+case (Desatento)
+  :Gera inconsistência involuntária em dados triviais;
+  note right: Humano esquece a própria senha ou ramal por estresse
+endswitch
+
+:Renderiza a fala e reações na tela Raylib;
+
+|Jogador|
+:Observa comportamento atípico do funcionário;
+if (Jogador julga superficialmente como IA?) then (sim)
+  :Risco de cometer um **Falso Positivo** (descartar humano inocente);
+else (não)
+  :Investiga a fundo e identifica justificativa humana para o erro;
+endif
+
+stop
+@enduml

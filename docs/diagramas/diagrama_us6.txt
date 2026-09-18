@@ -1,0 +1,40 @@
+@startuml
+title US-06: Sistema de Veredito (Live Area)
+
+|Jogador|
+start
+:Encerra as perguntas do ciclo com o suspeito;
+
+|#AntiqueWhite|Sistema|
+:Habilita a interface de decisão de Veredito;
+:Exibe botões: "Manter Cargo" e "Enviar para Descarte (Live Area)";
+
+|Jogador|
+if (Qual a decisão tomada sobre o funcionário?) then (Inocente / Humano)
+  :Clica em "Manter Cargo";
+  |#AntiqueWhite|Sistema|
+  :Registra aprovação do funcionário no sistema;
+else (Culpado / IA)
+  |Jogador|
+  :Clica em "Enviar para Descarte";
+  |#AntiqueWhite|Sistema|
+  :Registra encaminhamento do suspeito para a Live Area;
+endif
+
+:Atualiza a contagem interna de funcionários avaliados;
+:Registra a decisão para cálculo do score final da RASEC;
+:Remove o NPC atual da tela;
+
+if (Restam funcionários para interrogar no dia/ciclo?) then (sim)
+  :Carrega o próximo suspeito da lista;
+  |Jogador|
+  :Inicia interrogatório com o novo funcionário;
+else (não)
+  |#AntiqueWhite|Sistema|
+  :Transiciona para o encerramento do expediente ou relatório;
+  |Jogador|
+  :Avança para a próxima etapa do jogo;
+endif
+
+stop
+@enduml

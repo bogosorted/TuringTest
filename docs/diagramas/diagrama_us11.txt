@@ -1,0 +1,42 @@
+@startuml
+title US-11: Sistema de Paciência e Punição
+
+|Jogador|
+start
+:Inicia turno de conversa com o entrevistado;
+
+|#AntiqueWhite|Sistema|
+:Exibe a barra de Paciência do NPC na interface;
+
+repeat
+  |Jogador|
+  :Formula uma pergunta ao suspeito;
+
+  |#AntiqueWhite|Sistema|
+  if (Pergunta é agressiva, estranha ou insistente?) then (sim)
+    :Reduz o medidor de Paciência do funcionário;
+    :Atualiza a barra visual na tela;
+  else (não)
+    :Mantém a estabilidade da Paciência;
+  endif
+
+  if (Paciência atingiu zero?) then (sim)
+    :Interrompe o diálogo imediatamente com alerta sonoro/visual;
+    :Aciona os seguranças corporativos da RASEC;
+    :Força a transição imediata para a tela de Veredito;
+    
+    |Jogador|
+    :É forçado a dar o Veredito às cegas sem pistas suficientes;
+    stop
+  else (não)
+    :Exibe a resposta do NPC normalmente;
+  endif
+
+  |Jogador|
+  :Decide se continua arriscando perguntas invasivas;
+
+repeat while (Deseja fazer nova pergunta e paciência > 0?) is (sim) not (não)
+
+:Finaliza a entrevista sob controle;
+stop
+@enduml

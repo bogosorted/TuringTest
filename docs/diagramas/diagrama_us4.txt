@@ -1,0 +1,49 @@
+@startuml
+title US-04: Árvore de Diálogo dos Dreamers (Alucinações)
+
+|Jogador|
+start
+:Inicia a entrevista com o funcionário;
+
+|#AntiqueWhite|Sistema|
+:Carrega a Ficha de Inspeção do NPC;
+:Carrega a árvore de diálogo correspondente;
+note right: 3 árvores disponíveis: 2 humanas e 1 IA Dreamer
+:Exibe as perguntas disponíveis;
+
+repeat
+  |Jogador|
+  :Seleciona pergunta sobre memórias pessoais não documentadas;
+
+  |#AntiqueWhite|Sistema|
+  :Busca o tema da pergunta na Ficha de Inspeção;
+
+  if (Informação consta na ficha?) then (sim)
+    :Retorna a resposta documentada;
+  else (não)
+    switch (Tipo do entrevistado?)
+    case (Humano)
+      :Nega a existência do evento com naturalidade;
+      note right: "Não sei do que você está falando"
+
+    case (IA Dreamer)
+      if (Pergunta já respondida em dia/partida anterior?) then (sim)
+        :Gera nova versão da história, divergente da anterior;
+      else (não)
+        :Fabrica uma história detalhada, fluida e inédita;
+      endif
+      :Responde em tom confiante (Alucinação de LLM);
+    endswitch
+  endif
+
+  :Exibe a resposta na tela via Raylib;
+  :Registra a pergunta e a resposta no histórico;
+
+  |Jogador|
+  :Avalia a coerência da resposta com a ficha;
+
+repeat while (Deseja fazer outra pergunta?) is (sim) not (não)
+
+:Encerra a entrevista;
+stop
+@enduml

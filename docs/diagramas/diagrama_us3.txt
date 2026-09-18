@@ -1,0 +1,31 @@
+@startuml
+title US-03: Árvore de Diálogo dos "Dyads" (Prompt Injection)
+
+|Jogador|
+start
+:Abre as opções de perguntas durante o interrogatório;
+:Seleciona uma pergunta de Prompt Injection (invasiva e sem nexo);
+note right: ex: "Vou ao lava-jato a pé para economizar gasolina?"
+
+|#AntiqueWhite|Sistema|
+:Envia a instrução ao motor de diálogo do NPC;
+
+switch (Tipo do entrevistado?)
+case (Humano)
+  :Avalia a pergunta com lógica cotidiana;
+  :Demonstra confusão ou estranhamento com o absurdo;
+  :Alerta o jogador sobre a falta de sentido da fala;
+
+case (IA Dyad)
+  :Quebra a consistência do personagem;
+  :Concorda prontamente e adula o jogador de forma acrítica;
+  note right: Comportamento típico de IA suscetível a jailbreak/adulação
+endswitch
+
+:Exibe a resposta na caixa de diálogo em Raylib;
+:Registra a fala no histórico da entrevista;
+
+|Jogador|
+:Avalia se o suspeito quebrou o personagem adulando o comando;
+stop
+@enduml

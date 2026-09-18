@@ -1,0 +1,35 @@
+@startuml
+title US-05: Loop Central de Gameplay
+
+|Jogador|
+start
+:Seleciona um funcionário no escritório para interrogar;
+
+|#AntiqueWhite|Sistema|
+:Carrega a cena de interrogatório e o sprite do NPC;
+:Inicializa o buffer de texto e estado da conversa;
+:Exibe a saudação inicial com efeito máquina de escrever;
+:Apresenta na interface pelo menos duas opções de diálogo;
+
+repeat
+  |Jogador|
+  :Analisa as opções e seleciona uma pergunta/resposta;
+
+  |#AntiqueWhite|Sistema|
+  :Atualiza o nó atual da árvore de diálogo;
+  :Processa a resposta do NPC conforme seu perfil;
+  :Renderiza o texto com efeito de digitação suave em Raylib;
+  :Gera novas opções de ramificação para o jogador;
+
+  |Jogador|
+  :Lê a resposta do suspeito e observa reações;
+
+repeat while (Há mais perguntas disponíveis e jogador deseja continuar?) is (sim) not (não)
+
+|#AntiqueWhite|Sistema|
+:Habilita botões de conclusão da conversa;
+
+|Jogador|
+:Finaliza o turno com o funcionário atual;
+stop
+@enduml

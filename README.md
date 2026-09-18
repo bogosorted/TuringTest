@@ -80,6 +80,23 @@ Projeto acadêmico focado em inovação, tecnologia e aprendizado de IA por meio
 * **Menu Inicial e Botões**: Construção da cena inicial com layout responsivo via âncoras (`RayCanvas`), repetição de background com dithering preservado e botões interativos (Jogar, Carregar, Opções e Saída).
 * **Fluxo de Telas**: [Apresentação no Google Slides - Fluxo de Telas](https://docs.google.com/presentation/d/1vgTcLLH_QNH6kTTwB8Bmm1NOk4KSN_JBminQDHF8wfI/edit?slide=id.p7#slide=id.p7)
 * **User Stories e Backlog**: [Quadro no Trello - User Stories e Planejamento](https://trello.com/invite/b/6aa1e6285b09214e866db572/ATTI8e57471ff36c1c7f22fa6522a254aed409A5205E/p5-turing-test)
+* **Diagramas das User Stories**: [Documentação e Galeria Completa de Diagramas](./docs/diagramas/README.md)
+  * [US-01: Start e Navegação Inicial](./docs/diagramas/US-01.md)
+  * [US-02: Fichas de Funcionários](./docs/diagramas/US-02.md)
+  * [US-03: Árvore de Diálogo dos "Dyads"](./docs/diagramas/US-03.md)
+  * [US-04: Árvore de Diálogo dos Dreamers](./docs/diagramas/US-04.md)
+  * [US-05: Loop Central de Gameplay](./docs/diagramas/US-05.md)
+  * [US-06: Sistema de Veredito](./docs/diagramas/US-06.md)
+  * [US-07: Tokens (Gerenciamento de Recursos)](./docs/diagramas/US-07.md)
+  * [US-08: Botão de Ajuda (Minigame Lógico)](./docs/diagramas/US-08.md)
+  * [US-09: Variabilidade e Desafio (Falsos Positivos)](./docs/diagramas/US-09.md)
+  * [US-10: Registro de Decisões e Relatório Diário](./docs/diagramas/US-10.md)
+  * [US-11: Sistema de Paciência e Punição](./docs/diagramas/US-11.md)
+  * [US-12: Gatilho para Finais e Consequências](./docs/diagramas/US-12.md)
+  * [US-13: Aleatoriedade de Parâmetros da Campanha](./docs/diagramas/US-13.md)
+  * [US-14: Tutorial de Gameplay](./docs/diagramas/US-14.md)
+  * [US-15: Ataque de Estresse de Janela de Contexto (Red Teaming)](./docs/diagramas/US-15.md)
+  * [US-16: Identificação de "Talkers" (Complexo)](./docs/diagramas/US-16.md)
 
 ![Menu Inicial - Sprint 1](./assets/sprint1.png)
 

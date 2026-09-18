@@ -1,0 +1,41 @@
+@startuml
+title US-01: Start e Navegação Inicial
+
+|Jogador|
+start
+:Abre o jogo e visualiza o Menu Inicial;
+
+if (Opção selecionada no menu?) then (Sair)
+  |Jogador|
+  :Clica no botão "Sair";
+  |#AntiqueWhite|Sistema|
+  :Fecha a aplicação;
+  stop
+else (Jogar)
+  |Jogador|
+  :Clica no botão "Jogar";
+endif
+
+|#AntiqueWhite|Sistema|
+:Transiciona para a tela de Seleção de Área;
+:Exibe o local disponível: "Escritório Principal";
+
+|Jogador|
+:Clica no botão "Escritório Principal";
+
+|#AntiqueWhite|Sistema|
+:Carrega a tela de seleção de funcionários suspeitos;
+:Apresenta 3 botões com os nomes dos funcionários;
+
+|Jogador|
+:Seleciona um dos três funcionários para interrogar;
+
+|#AntiqueWhite|Sistema|
+:Carrega a cena principal de gameplay;
+:Renderiza o quadro com o sprite do NPC selecionado;
+:Exibe os botões de ação e ferramentas de inspeção;
+
+|Jogador|
+:Inicia a sessão de interrogatório;
+stop
+@enduml

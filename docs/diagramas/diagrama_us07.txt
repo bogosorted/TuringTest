@@ -1,0 +1,33 @@
+@startuml
+title US-07: Tokens (Gerenciamento de Recursos)
+
+|Jogador|
+start
+:Visualiza o contador de Tokens na HUD ("Atuais/Máximo");
+:Abre o menu de perguntas do interrogatório;
+
+|#AntiqueWhite|Sistema|
+:Exibe o custo em Tokens ao lado de cada opção de diálogo;
+note right: Perguntas de rotina custam menos;\nRed Teaming / Invasivas custam mais
+
+|Jogador|
+:Seleciona a pergunta desejada;
+
+|#AntiqueWhite|Sistema|
+if (Saldo de Tokens >= Custo da pergunta?) then (sim)
+  :Deduz os Tokens necessários do saldo do jogador;
+  :Atualiza o contador na HUD em tempo real;
+  :Libera a execução da fala e avança o diálogo;
+  
+  |Jogador|
+  :Recebe a resposta do funcionário;
+else (não)
+  :Bloqueia o envio da pergunta;
+  :Exibe alerta visual de "Tokens Insuficientes";
+  
+  |Jogador|
+  :Escolhe uma pergunta mais barata ou encerra o turno;
+endif
+
+stop
+@enduml
