@@ -17,7 +17,7 @@ Este projeto foi idealizado e desenvolvido no contexto acadêmico da CESAR Schoo
 * [Tipologia dos Agentes](#tipologia-dos-agentes)
 * [Rotas e Finais](#rotas-e-finais)
 * [Tecnologias e Conceitos](#tecnologias-e-conceitos)
-* [Entregas das Sprints](#entregas-das-sprints)
+* [Documentação e User Stories](#documentação-e-user-stories)
 * [Instituição](#instituição)
 * [Como Rodar o Jogo (Para Iniciantes)](#como-rodar-o-jogo-para-iniciantes)
 
@@ -74,11 +74,11 @@ Perfis Humanos (Falsos Positivos):
 CESAR School
 Projeto acadêmico focado em inovação, tecnologia e aprendizado de IA por meio do game design.
 
-## Entregas das Sprints
+## Documentação e User Stories
 
-### Sprint 4
 * **Menu Inicial e Botões**: Construção da cena inicial com layout responsivo via âncoras (`RayCanvas`), repetição de background com dithering preservado e botões interativos (Jogar, Carregar, Opções e Saída).
 * **Fluxo de Telas**: [Apresentação no Google Slides - Fluxo de Telas](https://docs.google.com/presentation/d/1vgTcLLH_QNH6kTTwB8Bmm1NOk4KSN_JBminQDHF8wfI/edit?slide=id.p7#slide=id.p7)
+* **Prototipação e Storyboards**: [Galeria de Telas e Fluxos (Figma)](./docs/prototipacao/README.md)
 * **User Stories e Backlog**: [Quadro no Trello - User Stories e Planejamento](https://trello.com/invite/b/6aa1e6285b09214e866db572/ATTI8e57471ff36c1c7f22fa6522a254aed409A5205E/p5-turing-test)
 * **Diagramas das User Stories**: [Documentação e Galeria Completa de Diagramas](./docs/diagramas/README.md)
   * [US-01: Start e Navegação Inicial](./docs/diagramas/US-01.md)
