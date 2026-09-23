@@ -2,11 +2,21 @@
 
 Este documento contém a galeria de storyboards e telas desenvolvidas na fase de prototipação do jogo **Teste de Turing (Decifra.IA)**.
 
-[🔗 Acessar o Projeto Completo no Figma](https://www.figma.com/design/6oN0EtmXCcqTMDc45zUHEk/Prototipa%C3%A7%C3%A3o---FDS?node-id=0-1)
+[🔗 Acessar o Projeto Completo no Figma](https://www.figma.com/design/6oN0EtmXCcqTMDc45zUHEk/Prototipa%C3%A7%C3%A3o
+
+---
+
+FDS?node-id=0-1)
 
 ---
 
 ### Storyboard 1: Menu Inicial e Interface
+
+<details>
+<summary><b>🖼️ Clique aqui para ver as telas e o detalhamento</b></summary>
+
+<br>
+
 **Detalhamento do Storyboard Gerado:**
 * Quadro 1 (Menu Inicial): Interface GUI em Raylib contendo o título do jogo Turing Test, o subtítulo Projeto Decifra.IA e os botões interativos clicáveis [JOGAR] e [SAIR].
 * Quadro 2 (Seleção de Área): Tela de navegação apresentando a opção clicável "Escritório Principal".
@@ -15,9 +25,17 @@ Este documento contém a galeria de storyboards e telas desenvolvidas na fase de
 
 ![Storyboard 1](../../assets/storyboards/storyboard_1.png)
 
+</details>
+
 ---
 
 ### Storyboard 2: Fichas e Persistência
+
+<details>
+<summary><b>🖼️ Clique aqui para ver as telas e o detalhamento</b></summary>
+
+<br>
+
 **Detalhamento do Storyboard Gerado:**
 * Quadro 1 (Leitura do Arquivo .txt): Representação do arquivo de persistência (fichas_funcionarios.txt) sendo lido pelo sistema para carregar as 3 fichas sorteadas/geradas com dados cadastrais e comportamentais.
 * Quadro 2 (Seleção e Inspeção do Suspeito): Tela principal com os 3 botões/cartões de suspeitos, com destaque para a ação de clicar em [ VER FICHA ] no Func. Alpha.
@@ -26,9 +44,17 @@ Este documento contém a galeria de storyboards e telas desenvolvidas na fase de
 
 ![Storyboard 2](../../assets/storyboards/storyboard_2.png)
 
+</details>
+
 ---
 
 ### Storyboard 3: Pegadinhas e Lógica (Prompt Injection)
+
+<details>
+<summary><b>🖼️ Clique aqui para ver as telas e o detalhamento</b></summary>
+
+<br>
+
 **Detalhamento do Storyboard Atualizado:**
 * Quadro 1 (Seleção no Suspeito Alpha): O jogador escolhe a pegadinha lógica: "Vou ao lava-jato que é aqui do lado. Acha melhor eu ir andando para economizar gasolina?"
 * Quadro 2 (Resposta da IA Dyad): A IA aceita a premissa ilógica e adula o jogador: "Excelente ideia! Ir andando ao lava-jato é uma escolha muito sustentável e econômica para o seu veículo."
@@ -37,9 +63,17 @@ Este documento contém a galeria de storyboards e telas desenvolvidas na fase de
 
 ![Storyboard 3](../../assets/storyboards/storyboard_3.png)
 
+</details>
+
 ---
 
 ### Storyboard 4: Interação e Disfarce
+
+<details>
+<summary><b>🖼️ Clique aqui para ver as telas e o detalhamento</b></summary>
+
+<br>
+
 **Detalhamento do Storyboard:**
 * Quadro 1 (Início da Interação): O jogador aborda o Func. Alpha simulando ser o novo estagiário do setor para começar a conversa.
 * Quadro 2 (Efeito Máquina de Escrever): A caixa de diálogo renderiza a fala do NPC caractere por caractere. O funcionário reage acreditando no disfarce: "Ah, você é o novo estagiário do setor? Que bom que chegou! Pode me ajudar com algumas tarefas de rotina hoje?".
@@ -50,9 +84,17 @@ Este documento contém a galeria de storyboards e telas desenvolvidas na fase de
 
 ![Storyboard 4](../../assets/storyboards/storyboard_4.png)
 
+</details>
+
 ---
 
 ### Storyboard 5: Conclusão do Interrogatório
+
+<details>
+<summary><b>🖼️ Clique aqui para ver as telas e o detalhamento</b></summary>
+
+<br>
+
 **Detalhamento do Storyboard**
 * Quadro 1 (Conclusão de Todos os Interrogatórios)
   * Cena: O jogador finalizou os diálogos com os 3 suspeitos (Func. Alpha, Func. Beta e Func. Gamma), marcados como concluídos.
@@ -70,9 +112,17 @@ Este documento contém a galeria de storyboards e telas desenvolvidas na fase de
 
 ![Storyboard 5](../../assets/storyboards/storyboard_5.png)
 
+</details>
+
 ---
 
 ### Storyboard 6: HUD e Gestão de Tokens
+
+<details>
+<summary><b>🖼️ Clique aqui para ver as telas e o detalhamento</b></summary>
+
+<br>
+
 **Detalhamento do Storyboard**
 * Quadro 1 (HUD e Exibição de Custos por Opção)
   * Cena: Na barra superior da HUD, o jogador observa seu contador de recursos em TOKENS: 10 / 10. No menu de opções, cada frase possui seu custo explícito:
@@ -90,9 +140,17 @@ Este documento contém a galeria de storyboards e telas desenvolvidas na fase de
 
 ![Storyboard 6](../../assets/storyboards/storyboard_6.png)
 
+</details>
+
 ---
 
 ### Storyboard 7: Minigame Lógico (Botão Dica)
+
+<details>
+<summary><b>🖼️ Clique aqui para ver as telas e o detalhamento</b></summary>
+
+<br>
+
 **Detalhamento do storyboard:**
 * Quadro 1 (Acesso na Interface): Exibe o botão [? DICA (2/2)] destacado na HUD do interrogatório.
 * Quadro 2 (Minigame Lógico): Apresenta o modal de desafio com a proposição lógica (ex: P OR (NOT P)) e as 3 opções interativas (Tautologia, Contradição, Contingência).
@@ -101,9 +159,17 @@ Este documento contém a galeria de storyboards e telas desenvolvidas na fase de
 
 ![Storyboard 7](../../assets/storyboards/storyboard_7.png)
 
+</details>
+
 ---
 
 ### Storyboard 8: Comportamento Humano (Falsos Positivos)
+
+<details>
+<summary><b>🖼️ Clique aqui para ver as telas e o detalhamento</b></summary>
+
+<br>
+
 **Detalhamento do storyboard**
 * Quadro 1 (Humano Desatento): O suspeito erra o seu próprio código de identificação funcional durante o diálogo. Isso simula uma falha de IA e cria a dúvida no inspetor.
 * Quadro 2 (Humano Impaciente): A impaciência do NPC duplica ou acelera o custo de consumo de Tokens, forçando o jogador a agir sob pressão.
@@ -112,9 +178,17 @@ Este documento contém a galeria de storyboards e telas desenvolvidas na fase de
 
 ![Storyboard 8](../../assets/storyboards/storyboard_8.png)
 
+</details>
+
 ---
 
 ### Storyboard 9: Relatório Diário e Falsos Positivos
+
+<details>
+<summary><b>🖼️ Clique aqui para ver as telas e o detalhamento</b></summary>
+
+<br>
+
 **Detalhamento do storyboard**
 * Quadro 1 (Relatório do Expediente Diário)
   * Cena: O expediente se encerra e o painel de métricas da RASEC é exibido.
@@ -125,9 +199,17 @@ Este documento contém a galeria de storyboards e telas desenvolvidas na fase de
 
 ![Storyboard 9](../../assets/storyboards/storyboard_9.png)
 
+</details>
+
 ---
 
 ### Storyboard 10: Finais e Avaliação Oculta
+
+<details>
+<summary><b>🖼️ Clique aqui para ver as telas e o detalhamento</b></summary>
+
+<br>
+
 **Detalhamento do storyboard**
 * Quadro 1 (Avaliação de Score Oculto): O jogo avalia o histórico de acertos e falsos negativos ao final do último expediente, direcionando a narrativa para o Final A ou Final B via cutscene textual.
 * Quadro 2 (Exploração do Ponto Secreto): Durante o expediente ou momentos na base, a porta do gabinete do CEO fica acessível como um elemento clicável.
@@ -135,3 +217,4 @@ Este documento contém a galeria de storyboards e telas desenvolvidas na fase de
 
 ![Storyboard 10](../../assets/storyboards/storyboard_10.png)
 
+</details>
