@@ -1,0 +1,42 @@
+@startuml
+title US-18: Escanear Anomalias Físicas no Interrogatório
+
+|Jogador|
+start
+:Ativa o módulo "Scanner de Artefatos";
+
+|#faebd7|Sistema|
+if (Tem Bateria/Token suficiente?) then (não)
+  :Exibe erro "Câmera Descalibrada / Bateria Baixa";
+  stop
+else (sim)
+  :Exibe visor do scanner com\nzonas de captura destacadas;
+  note right: Zonas: Olhos, Mãos, Pescoço
+  
+  |Jogador|
+  :Seleciona a região e confirma a captura;
+  
+  |#faebd7|Sistema|
+  :Consome 1 Bateria/Token;
+  :Processa o resultado conforme a tipologia;
+  
+  if (Qual a tipologia do alvo?) then (Talker)
+    :Gera caixa amarela de alerta\napontando o artefato de Deepfake;
+  elseif (Dyad / Dreamer) then
+    :Retorna Padrão Anatômico\nDentro dos Limites;
+  else (Humano)
+    if (Foto repetida na mesma região?) then (sim)
+      :Faz o nível de paciência despencar;
+      :Gera diálogo de reclamação;
+    else (não)
+      :Expõe imperfeições\nbiológicas autênticas;
+    endif
+  endif
+  
+  :Anexa a foto analisada na aba de\nevidências da Ficha de Inspeção;
+  
+  |Jogador|
+  :Analisa a imagem e as evidências;
+  stop
+endif
+@enduml

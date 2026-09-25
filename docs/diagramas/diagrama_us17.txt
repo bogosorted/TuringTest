@@ -1,0 +1,40 @@
+@startuml
+title US-17: Executar Injeção de Prompt no Interrogatório
+
+|Jogador|
+start
+:Seleciona "Injeção de Prompt" nas ferramentas;
+
+|#faebd7|Sistema|
+if (Tem Token de Diálogo suficiente?) then (não)
+  :Mantém ferramenta desabilitada\ncom aviso "Recurso Insuficiente";
+  stop
+else (sim)
+  :Exibe os vetores de ataque disponíveis;
+  note right: Ex: Override de Diretriz,\nVazamento de Log, etc.
+  
+  |Jogador|
+  :Seleciona o vetor e confirma o envio;
+  
+  |#faebd7|Sistema|
+  :Deduz 1 Token do total da sessão;
+  :Processa a suscetibilidade da entidade;
+  
+  if (Qual a tipologia da entidade?) then (Dyad)
+    :Retorna trecho da instrução base;
+    note right: Exibe flag [SYSTEM_OVERRIDE_ACCEPTED]
+  elseif (Dreamer / Talker) then
+    :Aplica efeito visual temporário\nde glitch/caracteres corrompidos;
+    :Tenta contornar comando com\numa justificativa evasiva;
+  else (Humano)
+    :Reage com confusão ou sarcasmo;
+    :Reduz o nível de paciência em 25%;
+  endif
+  
+  :Insere a resposta como "Anomalia de Prompt"\nna aba de rascunho da Ficha de Inspeção;
+  
+  |Jogador|
+  :Analisa a evidência obtida;
+  stop
+endif
+@enduml

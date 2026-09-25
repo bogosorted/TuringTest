@@ -2,6 +2,8 @@
 
 Este diretório contém a galeria detalhada de telas e fluxos desenvolvidos na prototipação.
 
+[🔗 Acessar o Projeto Completo no Figma (Prototipação - FDS)](https://www.figma.com/design/6oN0EtmXCcqTMDc45zUHEk/Prototipa%C3%A7%C3%A3o---FDS?node-id=0-1)
+
 ## Sumário de Telas
 
 * [SB-01: Menu Inicial e Interface](./SB-01.md)

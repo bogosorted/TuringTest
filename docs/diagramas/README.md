@@ -1,6 +1,6 @@
 # Diagramas de Atividades das User Stories (Decifra.IA - Turing Test)
 
-Este diretório reúne a coleção completa de diagramas de atividades UML modelados com raias (*swimlanes* `|Jogador|` e `|Sistema|`) para todas as **16 User Stories** do projeto **Teste de Turing (Decifra.IA)**.
+Este diretório reúne a coleção completa de diagramas de atividades UML modelados com raias (*swimlanes* `|Jogador|` e `|Sistema|`) para todas as **18 User Stories** do projeto **Teste de Turing (Decifra.IA)**.
 
 ---
 
@@ -24,6 +24,8 @@ Este diretório reúne a coleção completa de diagramas de atividades UML model
 | **US-14** | Tutorial de Gameplay e Introdução à Investigação | [Abrir Página](./US-14.md) | [`diagrama_us14.txt`](./diagrama_us14.txt) |
 | **US-15** | Ataque de Estresse de Janela de Contexto (Red Teaming) | [Abrir Página](./US-15.md) | [`diagrama_us15.txt`](./diagrama_us15.txt) |
 | **US-16** | Identificação de "Talkers" (Complexo) | [Abrir Página](./US-16.md) | [`diagrama_us16.txt`](./diagrama_us16.txt) |
+| **US-17** | Executar Injeção de Prompt no Interrogatório | [Abrir Página](./US-17.md) | [`diagrama_us17.txt`](./diagrama_us17.txt) |
+| **US-18** | Escanear Anomalias Físicas no Interrogatório | [Abrir Página](./US-18.md) | [`diagrama_us18.txt`](./diagrama_us18.txt) |
 
 ---
 
@@ -157,3 +159,18 @@ Este diretório reúne a coleção completa de diagramas de atividades UML model
 ![Diagrama de Atividades - US-16](./diagrama_us16.png)
 
 ---
+
+### US-17: Executar Injeção de Prompt no Interrogatório
+
+* **Cartão:** Como jogador, Eu quero submeter comandos de quebra de instrução (prompt injection) durante as sessões de interrogatório, Para que eu possa forçar os modelos sintéticos a ignorarem suas diretrizes de dissimulação e expor falhas no seu processamento de contexto.
+* **Arquivo:** [`US-17.md`](./US-17.md) | **PlantUML:** [`diagrama_us17.txt`](./diagrama_us17.txt)
+
+![Diagrama de Atividades - US-17](./diagrama_us17.png)
+
+---
+### US-18: Escanear Anomalias Físicas no Interrogatório
+
+* **Cartão:** Como jogador, Eu quero tirar capturas fotográficas de regiões anatômicas específicas do entrevistado (olhos, mãos, textura cutânea) para submetê-las ao scanner de integridade biológica, Para que eu possa identificar artefatos visuais de rendição sintética, falhas de iluminação ou ausência de micro-respostas orgânicas.
+* **Arquivo:** [`US-18.md`](./US-18.md) | **PlantUML:** [`diagrama_us18.txt`](./diagrama_us18.txt)
+
+![Diagrama de Atividades - US-18](./diagrama_us18.png)
