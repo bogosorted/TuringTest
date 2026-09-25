@@ -102,6 +102,8 @@ Projeto acadêmico focado em inovação, tecnologia e aprendizado de IA por meio
   * [US-14: Tutorial de Gameplay](./docs/diagramas/US-14.md)
   * [US-15: Ataque de Estresse de Janela de Contexto (Red Teaming)](./docs/diagramas/US-15.md)
   * [US-16: Identificação de "Talkers" (Complexo)](./docs/diagramas/US-16.md)
+  * [US-17: Executar Injeção de Prompt no Interrogatório](./docs/diagramas/US-17.md)
+  * [US-18: Escanear Anomalias Físicas no Interrogatório](./docs/diagramas/US-18.md)
 
 ![Menu Inicial - Sprint 1](./assets/sprint1.png)
 
