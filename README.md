@@ -74,12 +74,17 @@ Perfis Humanos (Falsos Positivos):
 CESAR School
 Projeto acadêmico focado em inovação, tecnologia e aprendizado de IA por meio do game design.
 
+
+
 ## Documentação e User Stories
 
 * **Menu Inicial e Botões**: Construção da cena inicial com layout responsivo via âncoras (`RayCanvas`), repetição de background com dithering preservado e botões interativos (Jogar, Carregar, Opções e Saída).
-* **Fluxo de Telas**: [Apresentação no Google Slides - Fluxo de Telas](https://docs.google.com/presentation/d/1vgTcLLH_QNH6kTTwB8Bmm1NOk4KSN_JBminQDHF8wfI/edit?slide=id.p7#slide=id.p7)
-* **Prototipação e Storyboards**: [Galeria de Telas e Fluxos (Figma)](./docs/prototipacao/README.md)
+* **Prototipação e Storyboards**: [StoryBoards](./docs/prototipacao/README.md)
+* **Vídeo Explicativo dos Storyboards**:
+
+  [![Vídeo explicando os storyboards](https://img.youtube.com/vi/1qpIs8MWkEc/0.jpg)](https://youtu.be/1qpIs8MWkEc)
 * **User Stories e Backlog**: [Quadro no Trello - User Stories e Planejamento](https://trello.com/invite/b/6aa1e6285b09214e866db572/ATTI8e57471ff36c1c7f22fa6522a254aed409A5205E/p5-turing-test)
+
 * **Diagramas das User Stories**: [Documentação e Galeria Completa de Diagramas](./docs/diagramas/README.md)
   * [US-01: Start e Navegação Inicial](./docs/diagramas/US-01.md)
   * [US-02: Fichas de Funcionários](./docs/diagramas/US-02.md)
