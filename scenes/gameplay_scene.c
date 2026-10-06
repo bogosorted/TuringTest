@@ -11,6 +11,7 @@ static Texture2D g_seta;  // botao da seta (aponta para a direita)
 static Texture2D g_menuFerramentas; // barra do menu de ferramentas
 static Texture2D g_iconePrancheta;  // icone da prancheta
 static Texture2D g_iconeArquivos;   // icone da pasta de arquivos
+static Texture2D g_iconeMaleta;     // icone da maleta
 static Texture2D g_iconeMapa;       // icone do mapa
 
 // Prancheta arrastavel
@@ -19,6 +20,21 @@ static bool      g_pranchetaAberta = false;
 static bool      g_arrastando      = false;
 static Vector2   g_pranchetaPos    = { 170, 8 };    // posicao inicial (centralizada)
 static Vector2   g_offsetArraste   = { 0, 0 };      // onde o mouse "pegou" a prancheta
+
+// Quadradinhos da prancheta
+#define NUM_CAIXAS 5
+static Texture2D g_caixaVazia;               // quadradinho sem X
+static Texture2D g_caixaComX;                // quadradinho com X
+static bool      g_marcado[NUM_CAIXAS];      // true = quadradinho com X
+
+// Posicao de cada quadradinho DENTRO da prancheta (sprite 34x33)
+static const Vector2 CAIXAS[NUM_CAIXAS] = {
+    { 59,  60 },
+    { 59, 110 },
+    { 59, 160 },
+    { 59, 210 },
+    { 59, 260 },
+};
 
 static bool g_menuAberto = false;
 static bool g_shouldClose = false;
@@ -32,7 +48,7 @@ static const Rectangle MENU_AREA    = { 510, 0, 130, 360 }; // menu encostado na
 static const Rectangle FERRAMENTAS[NUM_TOOLS] = {
     { 571,  10, 60, 72 },  // 0 - prancheta (tamanho do sprite: 60x72)
     { 572, 110, 58, 52 },  // 1 - pasta (tamanho do sprite: 58x52)
-    { 564, 184, 74, 82 },  // 2 - maleta
+    { 573, 200, 57, 57 },  // 2 - maleta (tamanho do sprite: 57x57)
     { 568, 284, 67, 61 },  // 3 - mapa (tamanho do sprite: 67x61)
 };
 
@@ -124,15 +140,35 @@ void InitGameplayScene(void) {
     g_iconeArquivos = LoadTexture("assets/gameplay_scene/spr_icone_arquivos.png");
     SetTextureFilter(g_iconeArquivos, TEXTURE_FILTER_POINT);
 
+    g_iconeMaleta = LoadTexture("assets/gameplay_scene/spr_icone_ferramentas.png");
+    SetTextureFilter(g_iconeMaleta, TEXTURE_FILTER_POINT);
+
     g_iconeMapa = LoadTexture("assets/gameplay_scene/spr_icone_mapa.png");
     SetTextureFilter(g_iconeMapa, TEXTURE_FILTER_POINT);
 
     g_prancheta = LoadTexture("assets/gameplay_scene/spr_prancheta.png");
     SetTextureFilter(g_prancheta, TEXTURE_FILTER_POINT);
 
+    g_caixaVazia = LoadTexture("assets/gameplay_scene/spr_icone_quadrado_vazio.png");
+    SetTextureFilter(g_caixaVazia, TEXTURE_FILTER_POINT);
+
+    g_caixaComX = LoadTexture("assets/gameplay_scene/spr_icone_quadrado_prancheta.png");
+    SetTextureFilter(g_caixaComX, TEXTURE_FILTER_POINT);
+
+    // Comeca com todos os quadradinhos vazios
+    for (int i = 0; i < NUM_CAIXAS; i++) g_marcado[i] = false;
+
     RayCanvasInit(g_telaFechada.width, g_telaFechada.height);
 }
-
+// Retangulo do quadradinho i, em pixels da imagem 640x360
+static Rectangle CaixaNaImagem(int i) {
+    return (Rectangle){
+        g_pranchetaPos.x + CAIXAS[i].x,
+        g_pranchetaPos.y + CAIXAS[i].y,
+        (float)g_caixaVazia.width,
+        (float)g_caixaVazia.height
+    };
+}
 // Cuida do arraste da prancheta.
 // Devolve true se a prancheta "pegou" o mouse neste frame
 // (assim o clique nao atravessa para o que esta embaixo dela).
@@ -143,6 +179,15 @@ static bool UpdatePrancheta(void) {
     Rectangle area = { g_pranchetaPos.x, g_pranchetaPos.y,
                        (float)g_prancheta.width, (float)g_prancheta.height };
 
+// 0) Clicou num quadradinho: marca/desmarca o X (e nao arrasta)
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        for (int i = 0; i < NUM_CAIXAS; i++) {
+            if (CheckCollisionPointRec(mouse, CaixaNaImagem(i))) {
+                g_marcado[i] = !g_marcado[i];
+                return true;
+            }
+        }
+    }
     // 1) Comecou a arrastar: clicou em cima da prancheta
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouse, area)) {
         g_arrastando = true;
@@ -227,6 +272,7 @@ static void UpdateGameplay(void) {
         DrawTexturePro(g_menuFerramentas, menuOrigem, ParaTela(MENU_AREA), (Vector2){ 0, 0 }, 0.0f, WHITE);
         DesenharComHover(g_iconePrancheta, FERRAMENTAS[0]);
         DesenharComHover(g_iconeArquivos, FERRAMENTAS[1]);
+        DesenharComHover(g_iconeMaleta, FERRAMENTAS[2]);
         DesenharComHover(g_iconeMapa, FERRAMENTAS[3]);
     }
 
@@ -254,6 +300,11 @@ static void UpdateGameplay(void) {
                              (float)g_prancheta.width, (float)g_prancheta.height };
         Rectangle origem = { 0, 0, (float)g_prancheta.width, (float)g_prancheta.height };
         DrawTexturePro(g_prancheta, origem, ParaTela(area), (Vector2){ 0, 0 }, 0.0f, WHITE);
+        // Quadradinhos por cima da prancheta (escurecem no hover)
+        for (int i = 0; i < NUM_CAIXAS; i++) {
+            Texture2D tex = g_marcado[i] ? g_caixaComX : g_caixaVazia;
+            DesenharComHover(tex, CaixaNaImagem(i));
+        }
     }
        RayCanvasEnd();
    }
@@ -266,7 +317,10 @@ void UnloadGameplayScene(void) {
     UnloadTexture(g_menuFerramentas);
     UnloadTexture(g_iconePrancheta);
     UnloadTexture(g_iconeArquivos);
+    UnloadTexture(g_iconeMaleta);
     UnloadTexture(g_iconeMapa);
     UnloadTexture(g_prancheta);
+    UnloadTexture(g_caixaVazia);
+    UnloadTexture(g_caixaComX);
     RayCanvasClose();
 }
