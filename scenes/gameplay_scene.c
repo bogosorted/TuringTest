@@ -5,9 +5,9 @@
 #define NUM_TOOLS 4
 
 // Texturas das duas versoes da tela
-static Texture2D g_telaFechada;   // menu de ferramentas fechado
-static Texture2D g_telaAberta;  // menu de ferramentas aberto
-static Texture2D g_seta;  // botao da seta (aponta para a direita)
+static Texture2D g_telaFechada;     // menu de ferramentas fechado
+static Texture2D g_telaAberta;      // menu de ferramentas aberto
+static Texture2D g_seta;            // botao da seta (aponta para a direita)
 static Texture2D g_menuFerramentas; // barra do menu de ferramentas
 static Texture2D g_iconePrancheta;  // icone da prancheta
 static Texture2D g_iconeArquivos;   // icone da pasta de arquivos
@@ -39,11 +39,26 @@ static const Vector2 CAIXAS[NUM_CAIXAS] = {
 static bool g_menuAberto = false;
 static bool g_shouldClose = false;
 
+// ---------------------------------------------------------------
+// TEXTOS DO INTERROGATORIO
+// Troque aqui o que aparece na tela.
+// ---------------------------------------------------------------
+static const char *g_nomeAtual  = "Nome da Pessoa";
+static const char *g_fraseAtual = "Qualquer frase aqui";
+
+// Para calibrar a posicao, mude para true: aparecem retangulos
+// de teste (vermelho = nome, azul = frase) com texto branco.
+#define MOSTRAR_AREAS_DEBUG false
+
 // Areas clicaveis, em pixels DENTRO da imagem (640x360).
 // Elas sao somadas a posicao da imagem na tela (ver ParaTela).
 static const Rectangle SETA_FECHADA = { 598, 66, 60, 51 };  // seta "<" (parte fica fora da tela)
 static const Rectangle SETA_ABERTA  = { 513, 66, 60, 51 };  // seta ">"
 static const Rectangle MENU_AREA    = { 510, 0, 130, 360 }; // menu encostado na direita
+
+// Areas dos textos (tambem em pixels da imagem 640x360)
+static const Rectangle NOME_AREA  = { 2, 300, 96, 18 };     // quadrado vermelho
+static const Rectangle FRASE_AREA = { 120, 318, 126, 26 };  // circulo vermelho
 
 static const Rectangle FERRAMENTAS[NUM_TOOLS] = {
     { 571,  10, 60, 72 },  // 0 - prancheta (tamanho do sprite: 60x72)
@@ -110,7 +125,34 @@ static Vector2 MouseNaImagem(void) {
     };
 }
 
-        
+// Desenha um texto centralizado dentro de uma area da imagem 640x360.
+// O tamanho da fonte acompanha o zoom da tela.
+static void DesenharTextoNaArea(const char *texto, Rectangle area, int tamanhoFonte, Color cor) {
+    Rectangle destino = ParaTela(area);
+    float escala = destino.height / area.height;
+    int tam = (int)(tamanhoFonte * escala);
+    if (tam < 1) tam = 1;
+
+    int largura = MeasureText(texto, tam);
+    float x = destino.x + (destino.width  - largura) / 2;
+    float y = destino.y + (destino.height - tam) / 2;
+
+    DrawText(texto, (int)x, (int)y, tam, cor);
+}
+
+// Desenha o nome e a frase do interrogado
+static void DesenharTextosInterrogatorio(void) {
+    if (MOSTRAR_AREAS_DEBUG) {
+        DrawRectangleRec(ParaTela(NOME_AREA), RED);
+        DrawRectangleRec(ParaTela(FRASE_AREA), BLUE);
+    }
+
+    Color corTexto = MOSTRAR_AREAS_DEBUG ? WHITE : (Color){ 30, 32, 34, 255 };
+
+    DesenharTextoNaArea(g_nomeAtual,  NOME_AREA,  12, corTexto);
+    DesenharTextoNaArea(g_fraseAtual, FRASE_AREA, 10, corTexto);
+}
+
 bool GameplaySceneShouldClose(void) {
     return g_shouldClose;
 }
@@ -129,7 +171,7 @@ void InitGameplayScene(void) {
     SetTextureFilter(g_telaAberta, TEXTURE_FILTER_POINT);
 
     g_seta = LoadTexture("assets/gameplay_scene/spr_botao_seta.png");
-       SetTextureFilter(g_seta, TEXTURE_FILTER_POINT);
+    SetTextureFilter(g_seta, TEXTURE_FILTER_POINT);
 
     g_menuFerramentas = LoadTexture("assets/gameplay_scene/spr_menu_ferramentas.png");
     SetTextureFilter(g_menuFerramentas, TEXTURE_FILTER_POINT);
@@ -256,15 +298,16 @@ static void UpdateGameplay(void) {
     SetMouseCursor(hover ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 }
 
-   void UpdateDrawGameplayScene(void) {
-       RayCanvasBegin();
+void UpdateDrawGameplayScene(void) {
+    RayCanvasBegin();
 
-           // A prancheta fica por cima de tudo, entao ela tem prioridade no clique
+    // A prancheta fica por cima de tudo, entao ela tem prioridade no clique
     if (!UpdatePrancheta()) {
         UpdateGameplay();
     }
 
-           RayCanvasDrawTexture(g_telaFechada, GetTelaRect(), WHITE);
+    // 1) Fundo
+    RayCanvasDrawTexture(g_telaFechada, GetTelaRect(), WHITE);
 
     // 2) Menu de ferramentas por cima do fundo (so quando aberto)
     if (g_menuAberto) {
@@ -276,25 +319,23 @@ static void UpdateGameplay(void) {
         DesenharComHover(g_iconeMapa, FERRAMENTAS[3]);
     }
 
-    
+    // 3) Seta por cima do fundo
+    Rectangle setaDestino = ParaTela(g_menuAberto ? SETA_ABERTA : SETA_FECHADA);
+    Rectangle setaOrigem  = { 0, 0, (float)g_seta.width, (float)g_seta.height };
 
-       // 2) Seta por cima do fundo
-       Rectangle setaDestino = ParaTela(g_menuAberto ? SETA_ABERTA : SETA_FECHADA);
-       Rectangle setaOrigem  = { 0, 0, (float)g_seta.width, (float)g_seta.height };
+    // O sprite aponta para a direita (">").
+    // Com o menu fechado, espelhamos para apontar para a esquerda ("<").
+    if (!g_menuAberto) {
+        setaOrigem.width = -setaOrigem.width;
+    }
 
-       // O sprite aponta para a direita (">").
-       // Com o menu fechado, espelhamos para apontar para a esquerda ("<").
-       if (!g_menuAberto) {
-           setaOrigem.width = -setaOrigem.width;
-       }
-
-           // Destaque quando o mouse esta em cima (mesmo efeito dos botoes do menu)
+    // Destaque quando o mouse esta em cima (mesmo efeito dos botoes do menu)
     bool setaHover = CheckCollisionPointRec(RayCanvasGetMousePosition(), setaDestino);
     Color corSeta = setaHover ? (Color){ 180, 180, 180, 255 } : WHITE;
 
     DrawTexturePro(g_seta, setaOrigem, setaDestino, (Vector2){ 0, 0 }, 0.0f, corSeta);
 
-        // 4) Prancheta por cima de tudo
+    // 4) Prancheta por cima de tudo
     if (g_pranchetaAberta) {
         Rectangle area   = { g_pranchetaPos.x, g_pranchetaPos.y,
                              (float)g_prancheta.width, (float)g_prancheta.height };
@@ -306,8 +347,12 @@ static void UpdateGameplay(void) {
             DesenharComHover(tex, CaixaNaImagem(i));
         }
     }
-       RayCanvasEnd();
-   }
+
+    // 5) Nome e frase do interrogado (desenhados por ultimo, funcionou assim)
+    DesenharTextosInterrogatorio();
+
+    RayCanvasEnd();
+}
 
 void UnloadGameplayScene(void) {
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
