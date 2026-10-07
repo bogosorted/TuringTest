@@ -46,11 +46,15 @@ int main(void) {
                 }
                 break;
 
-            case SCENE_GAMEPLAY:
+                        case SCENE_GAMEPLAY:
                 UpdateDrawGameplayScene();
 
                 if (GameplaySceneShouldClose()) {
                     running = false;
+                } else if (GameplaySceneGoToSelection()) {
+                    UnloadGameplayScene();          // 1) descarrega o interrogatorio
+                    InitSelectionScene();           // 2) carrega a selecao
+                    currentScene = SCENE_SELECTION; // 3) troca de tela
                 }
                 break;
         }

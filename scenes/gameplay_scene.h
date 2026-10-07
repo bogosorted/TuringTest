@@ -7,5 +7,6 @@ void InitGameplayScene(void);
 void UpdateDrawGameplayScene(void);
 void UnloadGameplayScene(void);
 bool GameplaySceneShouldClose(void);
+bool GameplaySceneGoToSelection(void);
 
 #endif

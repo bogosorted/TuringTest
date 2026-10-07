@@ -7,6 +7,7 @@
 // Texturas das duas versoes da tela
 static Texture2D g_telaFechada;     // menu de ferramentas fechado
 static Texture2D g_telaAberta;      // menu de ferramentas aberto
+static Texture2D g_background;  // foto do escritorio atras da tela
 static Texture2D g_seta;            // botao da seta (aponta para a direita)
 static Texture2D g_menuFerramentas; // barra do menu de ferramentas
 static Texture2D g_iconePrancheta;  // icone da prancheta
@@ -38,6 +39,7 @@ static const Vector2 CAIXAS[NUM_CAIXAS] = {
 
 static bool g_menuAberto = false;
 static bool g_shouldClose = false;
+static bool g_irParaSelecao = false;  // true quando clica no mapa
 
 // ---------------------------------------------------------------
 // TEXTOS DO INTERROGATORIO
@@ -55,6 +57,7 @@ static const char *g_fraseAtual = "Qualquer frase aqui";
 static const Rectangle SETA_FECHADA = { 598, 66, 60, 51 };  // seta "<" (parte fica fora da tela)
 static const Rectangle SETA_ABERTA  = { 513, 66, 60, 51 };  // seta ">"
 static const Rectangle MENU_AREA    = { 510, 0, 130, 360 }; // menu encostado na direita
+static const Rectangle BG_AREA      = { 0, 0, 270, 360 };   // quadrado da esquerda (sprite 270x360)
 
 // Areas dos textos (tambem em pixels da imagem 640x360)
 static const Rectangle NOME_AREA  = { 2, 300, 96, 18 };     // quadrado vermelho
@@ -74,7 +77,10 @@ static void OnClickPrancheta(void) {
 }
 static void OnClickPasta(void)     { TraceLog(LOG_INFO, "Pasta clicada!"); }
 static void OnClickMaleta(void)    { TraceLog(LOG_INFO, "Maleta clicada!"); }
-static void OnClickMapa(void)      { TraceLog(LOG_INFO, "Mapa clicado!"); }
+static void OnClickMapa(void) {
+    TraceLog(LOG_INFO, "Mapa clicado! Indo para a selecao de cenario");
+    g_irParaSelecao = true;
+}
 
 // Retangulo onde a imagem inteira e desenhada (centralizada no canvas)
 static Rectangle GetTelaRect(void) {
@@ -157,8 +163,13 @@ bool GameplaySceneShouldClose(void) {
     return g_shouldClose;
 }
 
+bool GameplaySceneGoToSelection(void) {
+    return g_irParaSelecao;
+}
+
 void InitGameplayScene(void) {
     g_shouldClose = false;
+    g_irParaSelecao = false;
     g_menuAberto = false;
     g_pranchetaAberta = false;
     g_arrastando = false;
@@ -169,6 +180,9 @@ void InitGameplayScene(void) {
 
     g_telaAberta = LoadTexture("assets/gameplay_scene/spr_tela_aberta.png");
     SetTextureFilter(g_telaAberta, TEXTURE_FILTER_POINT);
+
+    g_background = LoadTexture("assets/gameplay_scene/spr_background_teste.png");
+    SetTextureFilter(g_background, TEXTURE_FILTER_POINT);
 
     g_seta = LoadTexture("assets/gameplay_scene/spr_botao_seta.png");
     SetTextureFilter(g_seta, TEXTURE_FILTER_POINT);
@@ -306,6 +320,9 @@ void UpdateDrawGameplayScene(void) {
         UpdateGameplay();
     }
 
+    // Background atras da tela (a moldura da tela cobre as bordas)
+    Rectangle bgOrigem = { 0, 0, (float)g_background.width, (float)g_background.height };
+    DrawTexturePro(g_background, bgOrigem, ParaTela(BG_AREA), (Vector2){ 0, 0 }, 0.0f, WHITE);
     // 1) Fundo
     RayCanvasDrawTexture(g_telaFechada, GetTelaRect(), WHITE);
 
@@ -335,7 +352,10 @@ void UpdateDrawGameplayScene(void) {
 
     DrawTexturePro(g_seta, setaOrigem, setaDestino, (Vector2){ 0, 0 }, 0.0f, corSeta);
 
-    // 4) Prancheta por cima de tudo
+    // 4) Nome e frase do interrogado (desenhados por ultimo, funcionou assim)
+    DesenharTextosInterrogatorio();
+
+     // 5) Prancheta por cima de tudo
     if (g_pranchetaAberta) {
         Rectangle area   = { g_pranchetaPos.x, g_pranchetaPos.y,
                              (float)g_prancheta.width, (float)g_prancheta.height };
@@ -348,9 +368,6 @@ void UpdateDrawGameplayScene(void) {
         }
     }
 
-    // 5) Nome e frase do interrogado (desenhados por ultimo, funcionou assim)
-    DesenharTextosInterrogatorio();
-
     RayCanvasEnd();
 }
 
@@ -358,6 +375,7 @@ void UnloadGameplayScene(void) {
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
     UnloadTexture(g_telaFechada);
     UnloadTexture(g_telaAberta);
+    UnloadTexture(g_background);
     UnloadTexture(g_seta);
     UnloadTexture(g_menuFerramentas);
     UnloadTexture(g_iconePrancheta);
