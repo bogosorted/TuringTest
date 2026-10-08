@@ -1,0 +1,76 @@
+Funcionário 01
+
+Nome: Patrícia Nascimento
+Setor: Financeiro
+Função: Assistente Financeira
+Personalidade Geral: Reservada
+
+Comportamentos:
+- Responde de forma curta quando não se sente à vontade.
+- Observa bastante antes de responder.
+- Demonstra desconforto diante de perguntas inesperadas.
+
+
+Funcionário 02
+
+Nome: Caio Mendes
+Setor: Tecnologia da Informação
+Função: Desenvolvedor de Sistemas
+Personalidade Geral: Detalhista
+
+Comportamentos:
+- Pensa antes de responder perguntas específicas.
+- Presta atenção em pequenos detalhes.
+- Costuma explicar problemas por etapas.
+
+
+Funcionário 03
+
+Nome: Lucas Ferreira
+Setor: Marketing
+Função: Analista de Marketing
+Personalidade Geral: Extrovertido
+
+Comportamentos:
+- Gosta de conversar e manter as pessoas envolvidas na conversa.
+- Demonstra confiança ao falar sobre suas ideias.
+- Costuma reagir de forma espontânea a perguntas e situações inesperadas.
+
+
+Funcionário 04
+
+Nome: Mariana Alves
+Setor: Recursos Humanos
+Função: Analista de Recrutamento
+Personalidade Geral: Comunicativa
+
+Comportamentos:
+- Fala bastante e desenvolve suas respostas.
+- Demonstra interesse quando o assunto envolve outras pessoas.
+- Quando fica nervosa, fala mais rapidamente.
+
+
+Funcionário 05
+
+Nome: Renata Costa
+Setor: Jurídico
+Função: Assistente Jurídica
+Personalidade Geral: Desconfiada
+
+Comportamentos:
+- Analisa cuidadosamente o que é dito antes de responder.
+- Faz perguntas quando percebe alguma informação que considera estranha.
+- Evita fornecer informações sem ter certeza de quem está perguntando.
+
+
+Funcionário 06
+
+Nome: André Martins
+Setor: Logística
+Função: Coordenador de Operações
+Personalidade Geral: Impaciente
+
+Comportamentos:
+- Prefere respostas rápidas e objetivas.
+- Demonstra irritação quando precisa esperar muito por uma resposta.
+- Pode interromper a conversa quando considera que o assunto está demorando demais.

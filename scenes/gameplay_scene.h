@@ -7,6 +7,7 @@ void InitGameplayScene(void);
 void UpdateDrawGameplayScene(void);
 void UnloadGameplayScene(void);
 bool GameplaySceneShouldClose(void);
+void GameplaySceneSetFuncionario(int indice);
 bool GameplaySceneGoToSelection(void);
 
 #endif

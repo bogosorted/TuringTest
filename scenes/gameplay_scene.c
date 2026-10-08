@@ -1,4 +1,6 @@
 #include "raylib.h"
+#include <stdio.h>
+#include <string.h>
 #include "gameplay_scene.h"
 #include "selection_scene.h"
 #include "../utils/raycanvas.h"
@@ -32,6 +34,40 @@ static bool      g_pranchetaAberta = false;
 static bool      g_arrastando      = false;
 static Vector2   g_pranchetaPos    = { 170, 8 };    // posicao inicial (centralizada)
 static Vector2   g_offsetArraste   = { 0, 0 };      // onde o mouse "pegou" a prancheta
+
+// Fichas dos funcionarios (lidas de assets/data/fichas_funcionarios.txt)
+typedef struct {
+    char nome[64];
+    char setor[64];
+    char funcao[64];
+    char personalidade[64];
+    char comportamentos[3][160];
+    bool ehIA;                  // true = sintetico (NAO aparece na ficha)
+} Ficha;
+
+#define MAX_FICHAS 10
+static Ficha g_fichas[MAX_FICHAS];
+static int   g_numFichas = 0;
+
+// Ficha na tela
+static Texture2D g_ficha;                     // sprite da ficha (240x320)
+static int       g_funcionario     = 0;       // funcionario sendo entrevistado
+static int       g_fichaAtual      = -1;      // -1 = ficha fechada
+static bool      g_arrastandoFicha = false;
+static Vector2   g_fichaPos        = { 200, 20 };
+static Vector2   g_offsetFicha     = { 0, 0 };
+
+static const Rectangle FICHA_FECHAR = { 210, 5, 24, 22 };  // botao X, dentro da ficha
+
+// Cores da paleta do jogo
+static const Color COR_PRETO = {   0,   0,   0, 255 };
+static const Color COR_MEDIO = {  77,  83,  60, 255 };
+static const Color COR_CLARO = { 139, 149, 109, 255 };
+
+// Declarada aqui porque o InitGameplayScene usa ela antes de ela aparecer no arquivo
+static void CarregarFichas(const char *caminho);
+
+
 
 // Quadradinhos da prancheta
 #define NUM_CAIXAS 5
@@ -86,7 +122,11 @@ static void OnClickPrancheta(void) {
     g_pranchetaAberta = !g_pranchetaAberta;
     TraceLog(LOG_INFO, "Prancheta %s", g_pranchetaAberta ? "aberta" : "fechada");
 }
-static void OnClickPasta(void)     { TraceLog(LOG_INFO, "Pasta clicada!"); }
+static void OnClickPasta(void) {
+    if (g_funcionario >= g_numFichas) return;   // arquivo nao carregou
+    // Abre a ficha do funcionario entrevistado (ou fecha, se ja estiver aberta)
+    g_fichaAtual = (g_fichaAtual < 0) ? g_funcionario : -1;
+}
 static void OnClickMaleta(void)    { TraceLog(LOG_INFO, "Maleta clicada!"); }
 static void OnClickMapa(void) {
     TraceLog(LOG_INFO, "Mapa clicado! Indo para a selecao de cenario");
@@ -214,7 +254,7 @@ static void DrawInterrogationTexts(void) {
     DrawTextWrappedLeftAligned(ficha, (Vector2){ 10, 322 }, 250.0f, 10, textColor);
 
     if (!g_dialogLoaded) {
-        const char *labels[] = { "Ir até Alpha", "Ir até Beta", "Ir até Gamma" };
+        const char *labels[] = { "Ir até Patricia", "Ir até Caio", "Ir até Lucas" };
         int startY = 80; // (360 - 136) / 2
         for (int i = 0; i < 3; i++) {
             Rectangle choiceArea = { 55, startY + (i * 50), 160, 36 }; // 50 = 36 height + 14 spacing
@@ -330,6 +370,11 @@ bool GameplaySceneShouldClose(void) {
     return g_shouldClose;
 }
 
+void GameplaySceneSetFuncionario(int indice) {
+    if (indice < 0) indice = 0;
+    g_funcionario = indice;
+}
+
 bool GameplaySceneGoToSelection(void) {
     return g_irParaSelecao;
 }
@@ -383,6 +428,15 @@ void InitGameplayScene(void) {
     g_prancheta = LoadTexture("assets/gameplay_scene/spr_prancheta.png");
     SetTextureFilter(g_prancheta, TEXTURE_FILTER_POINT);
 
+    CarregarFichas("assets/data/fichas_funcionarios.txt");
+
+    g_ficha = LoadTexture("assets/gameplay_scene/spr_placeholder_ficha.png");
+    SetTextureFilter(g_ficha, TEXTURE_FILTER_POINT);
+
+    g_fichaAtual = -1;
+    g_arrastandoFicha = false;
+    g_fichaPos = (Vector2){ 200, 20 };
+
     g_caixaVazia = LoadTexture("assets/gameplay_scene/spr_icone_quadrado_vazio.png");
     SetTextureFilter(g_caixaVazia, TEXTURE_FILTER_POINT);
 
@@ -402,6 +456,200 @@ static Rectangle CaixaNaImagem(int i) {
         (float)g_caixaVazia.width,
         (float)g_caixaVazia.height
     };
+}
+// ---------- Leitura do arquivo de fichas ----------
+
+// Troca letras acentuadas (UTF-8) pela versao sem acento: "Funcao"
+static void RemoverAcentos(char *dest, int tam, const char *src) {
+    static const char *TABELA = "AAAAAAACEEEEIIIIDNOOOOOxOUUUUYTsaaaaaaaceeeeiiiidnooooo/ouuuuyty";
+    int j = 0;
+    for (int i = 0; src[i] && j < tam - 1; i++) {
+        unsigned char c  = (unsigned char)src[i];
+        unsigned char c2 = (unsigned char)src[i + 1];
+        if (c < 0x80) {
+            dest[j++] = (char)c;                      // letra normal
+        } else if (c == 0xC3 && c2 >= 0x80 && c2 <= 0xBF) {
+            dest[j++] = TABELA[c2 - 0x80];            // letra acentuada
+            i++;
+        }
+        // outros caracteres especiais sao ignorados
+    }
+    dest[j] = '\0';
+}
+
+// Copia tirando espacos do comeco e a quebra de linha do fim
+static void CopiarTexto(char *dest, int tam, const char *src) {
+    while (*src == ' ') src++;
+    snprintf(dest, tam, "%s", src);
+    int n = (int)strlen(dest);
+    while (n > 0 && (dest[n - 1] == '\n' || dest[n - 1] == '\r' || dest[n - 1] == ' ')) {
+        dest[--n] = '\0';
+    }
+}
+
+// Devolve o que vem depois do ':' ("Nome: Caio" -> " Caio")
+static const char *DepoisDosDoisPontos(const char *linha) {
+    const char *p = strchr(linha, ':');
+    return p ? p + 1 : linha;
+}
+
+// Le o arquivo de fichas e preenche g_fichas
+static void CarregarFichas(const char *caminho) {
+    g_numFichas = 0;
+
+    FILE *arq = fopen(caminho, "r");
+    if (!arq) {
+        TraceLog(LOG_WARNING, "Nao foi possivel abrir %s", caminho);
+        return;
+    }
+
+    char bruta[256], linha[256];
+    Ficha *f = NULL;
+    int nComp = 0;
+
+    while (fgets(bruta, sizeof bruta, arq)) {
+        RemoverAcentos(linha, sizeof linha, bruta);
+
+        if (strncmp(linha, "Funcionario", 11) == 0) {
+            // Comeca uma ficha nova
+            if (g_numFichas >= MAX_FICHAS) break;
+            f = &g_fichas[g_numFichas++];
+            memset(f, 0, sizeof *f);
+            nComp = 0;
+        }
+        else if (f == NULL) {
+            continue;   // ignora o que vier antes do primeiro funcionario
+        }
+        else if (strncmp(linha, "Nome:", 5) == 0) {
+            CopiarTexto(f->nome, sizeof f->nome, DepoisDosDoisPontos(linha));
+        }
+        else if (strncmp(linha, "Setor:", 6) == 0) {
+            CopiarTexto(f->setor, sizeof f->setor, DepoisDosDoisPontos(linha));
+        }
+        else if (strncmp(linha, "Funcao:", 7) == 0) {
+            CopiarTexto(f->funcao, sizeof f->funcao, DepoisDosDoisPontos(linha));
+        }
+        else if (strncmp(linha, "Personalidade", 13) == 0) {
+            CopiarTexto(f->personalidade, sizeof f->personalidade, DepoisDosDoisPontos(linha));
+        }
+        else if (strncmp(linha, "IA:", 3) == 0) {
+            const char *v = DepoisDosDoisPontos(linha);
+            while (*v == ' ') v++;
+            f->ehIA = (*v == 'S' || *v == 's');
+        }
+        else if (linha[0] == '-' && nComp < 3) {
+            CopiarTexto(f->comportamentos[nComp], sizeof f->comportamentos[0], linha + 1);
+            nComp++;
+        }
+    }
+
+    fclose(arq);
+    TraceLog(LOG_INFO, "Fichas carregadas: %d", g_numFichas);
+}
+
+// ---------- Texto ----------
+
+// Escreve texto usando coordenadas da imagem 640x360
+static void TextoNaImagem(const char *txt, float x, float y, float tam, Color cor) {
+    Rectangle r = ParaTela((Rectangle){ x, y, 0, tam });
+    DrawTextEx(GetFontDefault(), txt, (Vector2){ r.x, r.y }, r.height, r.height / 10.0f, cor);
+}
+
+// Escreve numa linha so; se nao couber em 'largura', diminui a letra
+static void TextoQueCabe(const char *txt, float x, float y, float largura, float tam, Color cor) {
+    while (tam > 6 && MeasureTextEx(GetFontDefault(), txt, tam, tam / 10.0f).x > largura) tam -= 1;
+    TextoNaImagem(txt, x, y, tam, cor);
+}
+
+// Escreve quebrando em varias linhas de no maximo 'largura' pixels.
+// Devolve quantas linhas usou.
+static int TextoQuebrado(const char *txt, float x, float y, float largura,
+                         float tam, float entreLinhas, Color cor) {
+    char linha[192] = "";
+    char palavra[64];
+    char teste[256];
+    int linhas = 0;
+    const char *p = txt;
+
+    while (*p) {
+        // Pega a proxima palavra
+        int n = 0;
+        while (*p == ' ') p++;
+        while (*p && *p != ' ' && n < 63) palavra[n++] = *p++;
+        palavra[n] = '\0';
+        if (n == 0) break;
+
+        if (linha[0]) snprintf(teste, sizeof teste, "%s %s", linha, palavra);
+        else          snprintf(teste, sizeof teste, "%s", palavra);
+
+        // Nao coube: escreve a linha atual e comeca outra com essa palavra
+        if (linha[0] && MeasureTextEx(GetFontDefault(), teste, tam, tam / 10.0f).x > largura) {
+            TextoNaImagem(linha, x, y + linhas * entreLinhas, tam, cor);
+            linhas++;
+            snprintf(linha, sizeof linha, "%s", palavra);
+        } else {
+            snprintf(linha, sizeof linha, "%s", teste);
+        }
+    }
+
+    if (linha[0]) {
+        TextoNaImagem(linha, x, y + linhas * entreLinhas, tam, cor);
+        linhas++;
+    }
+    return linhas;
+}
+
+// ---------- Arraste da ficha ----------
+
+// Converte algo que esta DENTRO da ficha para a imagem (acompanha o arraste)
+static Rectangle NaFicha(Rectangle r) {
+    return (Rectangle){ g_fichaPos.x + r.x, g_fichaPos.y + r.y, r.width, r.height };
+}
+
+// Cuida do arraste e do botao X da ficha.
+// Devolve true se a ficha "pegou" o mouse neste frame.
+static bool UpdateFicha(void) {
+    if (g_fichaAtual < 0) return false;
+
+    Vector2 mouse = MouseNaImagem();
+    Rectangle area = { g_fichaPos.x, g_fichaPos.y, (float)g_ficha.width, (float)g_ficha.height };
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        // Botao X: fecha a ficha
+        if (CheckCollisionPointRec(mouse, NaFicha(FICHA_FECHAR))) {
+            g_fichaAtual = -1;
+            g_arrastandoFicha = false;
+            return true;
+        }
+        // Clicou na ficha: comeca a arrastar
+        if (CheckCollisionPointRec(mouse, area)) {
+            g_arrastandoFicha = true;
+            g_offsetFicha = (Vector2){ mouse.x - g_fichaPos.x, mouse.y - g_fichaPos.y };
+        }
+    }
+
+    if (!g_arrastandoFicha) return false;
+
+    // Soltou o botao: para de arrastar
+    if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+        g_arrastandoFicha = false;
+        return false;
+    }
+
+    // Arrastando: a ficha segue o mouse
+    g_fichaPos.x = mouse.x - g_offsetFicha.x;
+    g_fichaPos.y = mouse.y - g_offsetFicha.y;
+
+    // Nao deixa sair da tela
+    float maxX = (float)(g_telaFechada.width  - g_ficha.width);
+    float maxY = (float)(g_telaFechada.height - g_ficha.height);
+    if (g_fichaPos.x < 0)    g_fichaPos.x = 0;
+    if (g_fichaPos.y < 0)    g_fichaPos.y = 0;
+    if (g_fichaPos.x > maxX) g_fichaPos.x = maxX;
+    if (g_fichaPos.y > maxY) g_fichaPos.y = maxY;
+
+    SetMouseCursor(MOUSE_CURSOR_RESIZE_ALL);
+    return true;
 }
 // Cuida do arraste da prancheta.
 // Devolve true se a prancheta "pegou" o mouse neste frame
@@ -536,6 +784,8 @@ static void UpdateGameplay(void) {
                 if (clicou) {
                     g_tree = &g_trees[i];
                     g_dialogLoaded = true;
+                    g_funcionario = i;     // o botao clicado define qual ficha a pasta abre
+                    g_fichaAtual = -1;     // fecha a ficha do funcionario anterior, se estiver aberta
                     return;
                 }
             }
@@ -577,8 +827,8 @@ static void UpdateGameplay(void) {
 void UpdateDrawGameplayScene(void) {
     RayCanvasBegin();
 
-    // A prancheta fica por cima de tudo, entao ela tem prioridade no clique
-    if (!UpdatePrancheta()) {
+    // A ficha e a prancheta ficam por cima de tudo, entao elas tem prioridade no clique
+    if (!UpdateFicha() && !UpdatePrancheta()) {
         UpdateGameplay();
     }
 
@@ -629,6 +879,48 @@ void UpdateDrawGameplayScene(void) {
             DrawWithHover(tex, CaixaNaImagem(i));
         }
     }
+    // 5) Ficha do funcionario (por cima de tudo)
+    if (g_fichaAtual >= 0) {
+        const Ficha *f = &g_fichas[g_fichaAtual];
+        float x = g_fichaPos.x;
+        float y = g_fichaPos.y;
+
+        Rectangle area   = { x, y, (float)g_ficha.width, (float)g_ficha.height };
+        Rectangle origem = { 0, 0, (float)g_ficha.width, (float)g_ficha.height };
+        DrawTexturePro(g_ficha, origem, ParaTela(area), (Vector2){ 0, 0 }, 0.0f, WHITE);
+
+        // Botao X escurece no hover
+        Rectangle fechar = ParaTela(NaFicha(FICHA_FECHAR));
+        if (CheckCollisionPointRec(RayCanvasGetMousePosition(), fechar)) {
+            DrawRectangleRec(fechar, Fade(BLACK, 0.3f));
+        }
+
+        TextoNaImagem("FICHA DO FUNCIONARIO", x + 12, y + 11, 10, COR_CLARO);
+
+        // Ao lado da foto
+        TextoNaImagem("NOME",          x + 86, y + 40, 8, COR_MEDIO);
+        TextoQueCabe(f->nome,          x + 86, y + 52, 140, 10, COR_PRETO);
+        TextoNaImagem("PERSONALIDADE", x + 86, y + 70, 8, COR_MEDIO);
+        TextoQueCabe(f->personalidade, x + 86, y + 82, 140, 10, COR_PRETO);
+
+        // Largura inteira
+        TextoNaImagem("SETOR",  x + 14, y + 122, 8, COR_MEDIO);
+        TextoQueCabe(f->setor,  x + 14, y + 134, 212, 10, COR_PRETO);
+        TextoNaImagem("FUNCAO", x + 14, y + 152, 8, COR_MEDIO);
+        TextoQueCabe(f->funcao, x + 14, y + 164, 212, 10, COR_PRETO);
+
+        // Comportamentos: um tracinho por item, quebrando nas linhas da caixa
+        TextoNaImagem("COMPORTAMENTOS", x + 14, y + 182, 8, COR_MEDIO);
+        float linhaY = y + 198;
+        for (int i = 0; i < 3; i++) {
+            if (f->comportamentos[i][0] == '\0') continue;   // item vazio
+            TextoNaImagem("-", x + 18, linhaY, 10, COR_PRETO);
+            int usadas = TextoQuebrado(f->comportamentos[i], x + 26, linhaY, 196, 10, 12, COR_PRETO);
+            linhaY += usadas * 12;
+        }
+
+        TextoNaImagem("RASEC - CONFIDENCIAL", x + 14, y + 302, 8, COR_MEDIO);
+    }
 
     RayCanvasEnd();
 }
@@ -646,6 +938,7 @@ void UnloadGameplayScene(void) {
     UnloadTexture(g_iconeMaleta);
     UnloadTexture(g_iconeMapa);
     UnloadTexture(g_prancheta);
+    UnloadTexture(g_ficha);
     UnloadTexture(g_caixaVazia);
     UnloadTexture(g_caixaComX);
     RayCanvasClose();
