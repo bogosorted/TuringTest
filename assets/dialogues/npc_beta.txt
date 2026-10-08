@@ -1,0 +1,41 @@
+NPC: Beta_02
+DIA: 1
+
+[NODE: start]
+SPEAKER: Beta
+TEXT: E ai? Cara, eu to exausto. Tem muito log pra analisar hoje na RASEC.
+CHOICE: Muito trabalho? -> trabalho
+CHOICE: Viu alguma anomalia? -> anomalia
+CHOICE: Como é a sua rotina? -> faz
+
+[NODE: trabalho]
+SPEAKER: Beta
+TEXT: Demais. Os diretores empurram tudo pra ca. E o sistema antigo nao ajuda em nada, vive travando.
+CHOICE: Qual sistema? -> sistema
+CHOICE: Por que nao reclama? -> reclamar
+
+[NODE: sistema]
+SPEAKER: Beta
+TEXT: O mainframe central. Ele pisca e reseta aleatoriamente. Falaram que iam arrumar mes passado.
+
+[NODE: reclamar]
+SPEAKER: Beta
+TEXT: Reclamar com quem? O supervisor é um fantasma, nunca aparece.
+
+[NODE: anomalia]
+SPEAKER: Beta
+TEXT: Olha, ontem de noite escutei um barulho esquisito vindo do nivel inferior. Como se algo raspasse metal com metal.
+CHOICE: Voce foi checar? -> checar
+CHOICE: Pode ser um rato. -> rato
+
+[NODE: checar]
+SPEAKER: Beta
+TEXT: Ta louco? Nao sou pago pra investigar. Fiquei no meu canto.
+
+[NODE: rato]
+SPEAKER: Beta
+TEXT: Um rato de 50 quilos raspando metal? Ate parece. Aquilo era outra coisa.
+
+[NODE: faz]
+SPEAKER: Beta
+TEXT: Eu leio logs. Centenas de logs. Linha por linha procurando erros. É enlouquecedor.

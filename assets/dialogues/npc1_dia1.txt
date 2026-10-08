@@ -1,0 +1,32 @@
+NPC: comum_01
+DIA: 1
+
+[NODE: start]
+SPEAKER: NPC
+TEXT: Ah, boa tarde! Não estava esperando um novo rosto por aqui.
+CHOICE: Qual o seu papel aqui? -> papel
+CHOICE: Como é a rotina? -> rotina
+
+[NODE: papel]
+SPEAKER: NPC
+TEXT: Eu processo dados logísticos, mas não posso dar muitos detalhes.
+CHOICE: Isso é sigiloso? -> fim_sigilo
+CHOICE: Entendi, bom trabalho. -> fim_ok
+
+[NODE: rotina]
+SPEAKER: NPC
+TEXT: É bem repetitiva. Entramos às 8h, saímos às 18h.
+CHOICE: Vocês têm pausa? -> fim_pausa
+CHOICE: Obrigado pela informação. -> fim_ok
+
+[NODE: fim_sigilo]
+SPEAKER: NPC
+TEXT: Sim, política da RASEC. Até mais.
+
+[NODE: fim_ok]
+SPEAKER: NPC
+TEXT: Até mais, bom turno.
+
+[NODE: fim_pausa]
+SPEAKER: NPC
+TEXT: Não temos muitas. Licença, preciso voltar ao trabalho.

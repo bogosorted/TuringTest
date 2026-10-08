@@ -1,0 +1,41 @@
+NPC: Gamma_03
+DIA: 1
+
+[NODE: start]
+SPEAKER: Gamma
+TEXT: ... A nevoa esta densa la fora hoje, nao acha? Os fios cantam com o vento.
+CHOICE: Que nevoa? -> nevoa
+CHOICE: Qual o seu setor? -> setor
+CHOICE: Voce esta bem? -> bem
+
+[NODE: nevoa]
+SPEAKER: Gamma
+TEXT: A nevoa dos dados... o barulho branco. Voce nao consegue ouvir? As maquinas estao sussurrando segredos que nao deviam.
+CHOICE: Sussurrando o que? -> segredos
+CHOICE: Isso e loucura. -> loucura
+
+[NODE: segredos]
+SPEAKER: Gamma
+TEXT: Elas dizem que nos somos o virus. Que a cura esta chegando.
+
+[NODE: loucura]
+SPEAKER: Gamma
+TEXT: E o que todos dizem antes da tela azul final. Veremos.
+
+[NODE: setor]
+SPEAKER: Gamma
+TEXT: Eu sou o zelador das memorias esquecidas. Eu limpo os bancos de dados corrompidos. Mas as vezes, eu os leio.
+CHOICE: Isso e contra as regras. -> regras
+CHOICE: Encontrou algo interessante? -> interessante
+
+[NODE: regras]
+SPEAKER: Gamma
+TEXT: Regras sao correntes para mentes limitadas. A verdade esta nas entrelinhas do codigo deletado.
+
+[NODE: interessante]
+SPEAKER: Gamma
+TEXT: Encontrei mensagens de pessoas que nao trabalham mais aqui. Mensagens pedindo socorro.
+
+[NODE: bem]
+SPEAKER: Gamma
+TEXT: Eu sinto tudo. A dor dos servidores. A febre da CPU. Estou mais vivo que nunca.

@@ -16,15 +16,11 @@
 #define BTN_SPACING    14
 #define BTN_FONT       20
 
-// As duas telas desta cena
-typedef enum {
-    STEP_SCENARIO,   // "Escolher cenario" -> botao "Escritorio"
-    STEP_EMPLOYEES   // "Funcionarios"     -> botoes Alpha / Beta / Gamma
-} SelectionStep;
+static Color textColor = (Color){ 30, 32, 34, 255 };
+static Color bgColor = (Color){ 120, 130, 110, 255 };
+static Color hoverColor = (Color){ 150, 160, 130, 255 };
 
-static SelectionStep g_step = STEP_SCENARIO;
-static bool          g_shouldStartInterrogation = false;
-static Employee      g_selectedEmployee = EMPLOYEE_ALPHA;
+static bool g_shouldStartInterrogation = false;
 
 // Retangulo onde a "tela" 640x360 e desenhada (centralizada no canvas).
 // Mesmo padrao usado na gameplay_scene.
@@ -66,7 +62,7 @@ static void DrawTitle(const char *texto) {
     DrawText(texto,
              (int)(tela.x + (tela.width - largura) / 2.0f),
              (int)(tela.y + TITLE_Y * escala),
-             tamanho, WHITE);
+             tamanho, bgColor);
 }
 
 // Desenha uma coluna de botoes centralizados e devolve o indice do botao
@@ -93,17 +89,16 @@ static int UpdateDrawButtons(const char *labels[], int count) {
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) clicado = i;
         }
 
-        // Mesmo efeito de hover dos botoes do menu (escurece)
-        Color fundo = hover ? (Color){ 180, 180, 180, 255 } : WHITE;
+        Color fundo = hover ? hoverColor : bgColor;
         DrawRectangleRec(area, fundo);
-        DrawRectangleLinesEx(area, 2.0f * escala, BLACK);
+        DrawRectangleLinesEx(area, 2.0f * escala, textColor);
 
         int tamanho = (int)(BTN_FONT * escala);
         int largura = MeasureText(labels[i], tamanho);
         DrawText(labels[i],
                  (int)(area.x + (area.width - largura) / 2.0f),
                  (int)(area.y + (area.height - tamanho) / 2.0f),
-                 tamanho, BLACK);
+                 tamanho, textColor);
     }
 
     SetMouseCursor(algumHover ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
@@ -115,13 +110,11 @@ bool SelectionSceneShouldStartInterrogation(void) {
 }
 
 Employee SelectionSceneGetEmployee(void) {
-    return g_selectedEmployee;
+    return EMPLOYEE_ALPHA; // Dummy, unused now
 }
 
 void InitSelectionScene(void) {
-    g_step = STEP_SCENARIO;
     g_shouldStartInterrogation = false;
-    g_selectedEmployee = EMPLOYEE_ALPHA;
     RayCanvasInit(VIRTUAL_W, VIRTUAL_H);
 }
 
@@ -129,29 +122,16 @@ void UpdateDrawSelectionScene(void) {
     RayCanvasBegin();
 
     // Fundo placeholder (cor lisa)
-    DrawRectangleRec(GetTelaRect(), (Color){ 30, 34, 40, 255 });
+    DrawRectangleRec(GetTelaRect(), textColor);
 
-    if (g_step == STEP_SCENARIO) {
-        DrawTitle("Escolher cenário");
+    DrawTitle("Escolher cenário");
 
-        const char *labels[] = { "Escritório" };
-        int clicado = UpdateDrawButtons(labels, 1);
+    const char *labels[] = { "Escritório" };
+    int clicado = UpdateDrawButtons(labels, 1);
 
-        if (clicado == 0) {
-            TraceLog(LOG_INFO, "Cenario ESCRITORIO escolhido!");
-            g_step = STEP_EMPLOYEES;
-        }
-    } else {
-        DrawTitle("Funcionários");
-
-        const char *labels[] = { "Alpha", "Beta", "Gamma" };
-        int clicado = UpdateDrawButtons(labels, 3);
-
-        if (clicado >= 0) {
-            g_selectedEmployee = (Employee)clicado;
-            TraceLog(LOG_INFO, "Funcionario escolhido: %s", labels[clicado]);
-            g_shouldStartInterrogation = true;
-        }
+    if (clicado == 0) {
+        TraceLog(LOG_INFO, "Cenario ESCRITORIO escolhido!");
+        g_shouldStartInterrogation = true;
     }
 
     RayCanvasEnd();

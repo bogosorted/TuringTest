@@ -13,6 +13,7 @@ typedef enum {
 int main(void) {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(640, 360, "Turing Test");
+    ToggleFullscreen();
 
     Scene currentScene = SCENE_MENU; // o jogo comeca no menu
     InitMenuScene();
@@ -46,7 +47,7 @@ int main(void) {
                 }
                 break;
 
-                        case SCENE_GAMEPLAY:
+            case SCENE_GAMEPLAY:
                 UpdateDrawGameplayScene();
 
                 if (GameplaySceneShouldClose()) {

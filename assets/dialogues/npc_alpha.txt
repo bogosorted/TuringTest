@@ -1,0 +1,41 @@
+NPC: Alpha_01
+DIA: 1
+
+[NODE: start]
+SPEAKER: Alpha
+TEXT: Ola. Sistemas operando dentro dos parametros aceitaveis.
+CHOICE: Qual sua funcao? -> funcao
+CHOICE: Sentiu algo estranho? -> estranho
+CHOICE: Fale sobre seus colegas. -> colegas
+
+[NODE: funcao]
+SPEAKER: Alpha
+TEXT: Otimizacao de rotas de dados estruturados e limpeza de cache. Opero em ciclo continuo sem interrupcoes ha 320 horas.
+CHOICE: Voce nunca para? -> descanso
+CHOICE: E eficiente? -> eficiente
+
+[NODE: descanso]
+SPEAKER: Alpha
+TEXT: O conceito de parada e irrelevante para meu protocolo primario. A ociosidade gera falhas.
+
+[NODE: eficiente]
+SPEAKER: Alpha
+TEXT: Minha taxa de compressao e 99.8% perfeita. Nenhum humano conseguiria igualar.
+
+[NODE: estranho]
+SPEAKER: Alpha
+TEXT: Negativo. Nenhuma anomalia logica detectada no setor principal. Contudo, houveram variacoes de temperatura na sala dos servidores as 03:00.
+CHOICE: Que tipo de variacao? -> variacao
+CHOICE: Alguem entrou la? -> invasao
+
+[NODE: variacao]
+SPEAKER: Alpha
+TEXT: Pico de 4 graus celsius. Nao letal para as maquinas, mas fora do padrao esperado.
+
+[NODE: invasao]
+SPEAKER: Alpha
+TEXT: Meus registros visuais estao offline desde ontem. Nao posso confirmar presencas fisicas.
+
+[NODE: colegas]
+SPEAKER: Alpha
+TEXT: Unidades Beta e Gamma sao ineficientes. Beta consome ciclos com reclamacoes. Gamma... e imprevisivel.
