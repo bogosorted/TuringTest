@@ -3,7 +3,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-int global_tokens = 6;
+int global_tokens = TOKENS_PER_DAY;
+bool global_infinite_tokens = false;
+
+bool HasTokens(void) {
+    return global_infinite_tokens || global_tokens > 0;
+}
+
+void ResetTokens(void) {
+    global_tokens = TOKENS_PER_DAY;
+}
 
 void InitDialogSystem(void) {
     // Tokens sao globais, nao resetar aqui
@@ -81,12 +90,12 @@ DialogNode* GetCurrentNode(DialogTree *tree) {
 }
 
 bool MakeChoiceById(DialogTree *tree, const char *next_id) {
-    if (global_tokens <= 0) return false;
+    if (!HasTokens()) return false;
     for (int i = 0; i < tree->node_count; i++) {
         if (strcmp(tree->nodes[i].id, next_id) == 0) {
             tree->current_node_index = i;
             tree->nodes[i].visited = true;
-            global_tokens--; 
+            if (!global_infinite_tokens) global_tokens--;
             return true;
         }
     }
@@ -94,8 +103,45 @@ bool MakeChoiceById(DialogTree *tree, const char *next_id) {
 }
 
 bool MakeChoice(DialogTree *tree, int choice_index) {
-    if (global_tokens <= 0) return false;
+    if (!HasTokens()) return false;
     DialogNode *curr = GetCurrentNode(tree);
     if (!curr || choice_index < 0 || choice_index >= curr->choice_count) return false;
     return MakeChoiceById(tree, curr->choices[choice_index].next_node);
+}
+
+// true se o no com esse id existe e ja foi visitado
+static bool NodeIdVisited(const DialogTree *tree, const char *id) {
+    for (int i = 0; i < tree->node_count; i++) {
+        if (strcmp(tree->nodes[i].id, id) == 0) return tree->nodes[i].visited;
+    }
+    return false;
+}
+
+int GetAvailableChoices(DialogTree *tree, DialogChoice out[MAX_CHOICES]) {
+    int count = 0;
+    DialogNode *node = GetCurrentNode(tree);
+    if (!node) return 0;
+
+    // 1) Escolhas do no atual que ainda nao foram feitas
+    for (int i = 0; i < node->choice_count && count < MAX_CHOICES; i++) {
+        if (!NodeIdVisited(tree, node->choices[i].next_node)) {
+            out[count++] = node->choices[i];
+        }
+    }
+    if (count > 0) return count;
+
+    // 2) Nada sobrou aqui: oferece as perguntas do "start" ainda nao feitas
+    for (int s = 0; s < tree->node_count; s++) {
+        if (strcmp(tree->nodes[s].id, "start") != 0) continue;
+
+        const DialogNode *start = &tree->nodes[s];
+        for (int i = 0; i < start->choice_count && count < MAX_CHOICES; i++) {
+            if (NodeIdVisited(tree, start->choices[i].next_node)) continue;
+            snprintf(out[count].text, MAX_TEXT_LENGTH, "[Voltar] %s", start->choices[i].text);
+            snprintf(out[count].next_node, MAX_ID_LENGTH, "%s", start->choices[i].next_node);
+            count++;
+        }
+        break;
+    }
+    return count;
 }

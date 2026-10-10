@@ -4,6 +4,7 @@
 static int g_refWidth = 640;
 static int g_refHeight = 360;
 static float g_uiScale = 1.0f;
+static float g_fadeAlpha = 0.0f;
 
 void RayCanvasInit(int referenceWidth, int referenceHeight) {
     g_refWidth = referenceWidth;
@@ -26,7 +27,21 @@ void RayCanvasBegin(void) {
 }
 
 void RayCanvasEnd(void) {
+    // Fade das transicoes: retangulo preto por cima de tudo que a cena desenhou
+    if (g_fadeAlpha > 0.0f) {
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, g_fadeAlpha));
+    }
     EndDrawing();
+}
+
+void RayCanvasSetFade(float alpha) {
+    if (alpha < 0.0f) alpha = 0.0f;
+    if (alpha > 1.0f) alpha = 1.0f;
+    g_fadeAlpha = alpha;
+}
+
+bool RayCanvasInputBlocked(void) {
+    return g_fadeAlpha > 0.0f;
 }
 
 void RayCanvasDraw(void) {
@@ -42,6 +57,7 @@ void RayCanvasDrawTiledBackground(Texture2D texture) {
 
     float tileW = (float)texture.width * bgScale;
     float tileH = (float)texture.height * bgScale;
+    (void)tileH;
 
     // Alinhado pelo centro da tela
     float centerOffset = fmodf((screenW - tileW) * 0.5f, tileW);

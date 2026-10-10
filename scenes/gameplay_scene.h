@@ -10,4 +10,10 @@ bool GameplaySceneShouldClose(void);
 void GameplaySceneSetFuncionario(int indice);
 bool GameplaySceneGoToSelection(void);
 
+// Ciclo de dias: recarrega os dialogos (todos voltam a "nao vistos")
+void GameplaySceneResetDialogues(void);
+
+// true quando o dia pode terminar: tokens acabaram OU nao ha mais escolhas nos 3 funcionarios
+bool GameplaySceneDayFinished(void);
+
 #endif
