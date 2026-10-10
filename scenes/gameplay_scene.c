@@ -246,7 +246,8 @@ static void DrawInterrogationTexts(void) {
     Color hoverColor = (Color){ 150, 160, 130, 255 };
 
     char bufTokens[32];
-    sprintf(bufTokens, "Tokens: %d", global_tokens);
+    if (global_infinite_tokens) sprintf(bufTokens, "Tokens: infinitos");
+    else                        sprintf(bufTokens, "Tokens: %d", global_tokens);
     DrawTextLeftAligned(bufTokens, (Vector2){ 280, 10 }, 10, textColor);
 
     char ficha[256];
@@ -273,51 +274,9 @@ static void DrawInterrogationTexts(void) {
 
     DrawTextLeftAligned(node->speaker, (Vector2){ 35, 303 }, 12, textColor);
 
+    // Mesma lista que o clique usa (ver UpdateGameplay)
     DialogChoice active_choices[MAX_CHOICES];
-    int active_count = 0;
-
-    if (global_tokens > 0) {
-        if (node->choice_count > 0) {
-            for (int i = 0; i < node->choice_count; i++) {
-                const char *next_id = node->choices[i].next_node;
-                bool visited = false;
-                for (int j = 0; j < g_tree->node_count; j++) {
-                    if (strcmp(g_tree->nodes[j].id, next_id) == 0 && g_tree->nodes[j].visited) {
-                        visited = true;
-                        break;
-                    }
-                }
-                if (!visited && active_count < MAX_CHOICES) {
-                    active_choices[active_count++] = node->choices[i];
-                }
-            }
-        } else {
-            DialogNode *startNode = NULL;
-            for (int i = 0; i < g_tree->node_count; i++) {
-                if (strcmp(g_tree->nodes[i].id, "start") == 0) {
-                    startNode = &g_tree->nodes[i];
-                    break;
-                }
-            }
-            if (startNode) {
-                for (int i = 0; i < startNode->choice_count; i++) {
-                    const char *next_id = startNode->choices[i].next_node;
-                    bool visited = false;
-                    for (int j = 0; j < g_tree->node_count; j++) {
-                        if (strcmp(g_tree->nodes[j].id, next_id) == 0 && g_tree->nodes[j].visited) {
-                            visited = true;
-                            break;
-                        }
-                    }
-                    if (!visited && active_count < MAX_CHOICES) {
-                        sprintf(active_choices[active_count].text, "[Voltar] %s", startNode->choices[i].text);
-                        strcpy(active_choices[active_count].next_node, startNode->choices[i].next_node);
-                        active_count++;
-                    }
-                }
-            }
-        }
-    }
+    int active_count = HasTokens() ? GetAvailableChoices(g_tree, active_choices) : 0;
 
     int total_buttons = active_count + 1;
     int startY = 355 - (total_buttons * 20);
@@ -338,7 +297,7 @@ static void DrawInterrogationTexts(void) {
     DrawRectangleLinesEx(rTextBox, 2, textColor);
     DrawTextWrappedLeftAligned(node->text, (Vector2){ 285, boxY + 5 }, 190.0f, 10, textColor);
 
-    if (global_tokens > 0) {
+    if (HasTokens()) {
         for (int i = 0; i < active_count; i++) {
             Rectangle choiceArea = { 280, startY + (i * 20), 200, 18 };
             Rectangle rTela = ParaTela(choiceArea);
@@ -359,7 +318,7 @@ static void DrawInterrogationTexts(void) {
     Color boxColor = hover ? hoverColor : bgColor;
     DrawRectangleRec(rTela, boxColor);
     DrawRectangleLinesEx(rTela, 2, textColor);
-    if (global_tokens > 0) {
+    if (HasTokens()) {
         DrawTextInArea("Pode voltar ao trabalho.", exitArea, 10, textColor);
     } else {
         DrawTextInArea("To cansado, depois falo contigo.", exitArea, 10, textColor);
@@ -377,6 +336,36 @@ void GameplaySceneSetFuncionario(int indice) {
 
 bool GameplaySceneGoToSelection(void) {
     return g_irParaSelecao;
+}
+
+// Faz o proximo InitGameplayScene recarregar as arvores (zera os "visited").
+// O LoadDialogTree aloca memoria, entao libera as arvores antigas antes.
+void GameplaySceneResetDialogues(void) {
+    if (g_treesLoaded) {
+        for (int i = 0; i < 3; i++) FreeDialogTree(&g_trees[i]);
+    }
+    g_treesLoaded = false;
+    g_dialogLoaded = false;
+    g_tree = NULL;
+}
+
+// true quando o dia pode terminar (o botao "proximo dia" / "veredito" aparece):
+//   1) os tokens acabaram, OU
+//   2) os 3 funcionarios ja nao tem nenhuma escolha restante.
+// Obs.: nos arquivos de dialogo atuais os ramos se excluem (ex.: depois de
+// "funcao", so da para ver UM entre "descanso" e "eficiente"), entao "nao ha
+// mais escolhas" e o que significa "ver todos os dialogos" na pratica.
+bool GameplaySceneDayFinished(void) {
+    if (!HasTokens()) return true;
+
+    if (!g_treesLoaded) return false;
+    for (int t = 0; t < 3; t++) {
+        if (g_trees[t].node_count == 0) return false;   // arquivo nao carregou
+
+        DialogChoice restantes[MAX_CHOICES];
+        if (GetAvailableChoices(&g_trees[t], restantes) > 0) return false;
+    }
+    return true;
 }
 
 void InitGameplayScene(void) {
@@ -708,57 +697,15 @@ static void UpdateGameplay(void) {
     if (g_dialogLoaded) {
         DialogNode *node = GetCurrentNode(g_tree);
         if (node) {
+            // Mesma lista que o desenho usa (ver DrawInterrogationTexts)
             DialogChoice active_choices[MAX_CHOICES];
-            int active_count = 0;
-
-            if (global_tokens > 0) {
-        if (node->choice_count > 0) {
-            for (int i = 0; i < node->choice_count; i++) {
-                const char *next_id = node->choices[i].next_node;
-                bool visited = false;
-                for (int j = 0; j < g_tree->node_count; j++) {
-                    if (strcmp(g_tree->nodes[j].id, next_id) == 0 && g_tree->nodes[j].visited) {
-                        visited = true;
-                        break;
-                    }
-                }
-                if (!visited && active_count < MAX_CHOICES) {
-                    active_choices[active_count++] = node->choices[i];
-                }
-            }
-        } else {
-                    DialogNode *startNode = NULL;
-                    for (int i = 0; i < g_tree->node_count; i++) {
-                        if (strcmp(g_tree->nodes[i].id, "start") == 0) {
-                            startNode = &g_tree->nodes[i];
-                            break;
-                        }
-                    }
-                    if (startNode) {
-                        for (int i = 0; i < startNode->choice_count; i++) {
-                            const char *next_id = startNode->choices[i].next_node;
-                            bool visited = false;
-                            for (int j = 0; j < g_tree->node_count; j++) {
-                                if (strcmp(g_tree->nodes[j].id, next_id) == 0 && g_tree->nodes[j].visited) {
-                                    visited = true;
-                                    break;
-                                }
-                            }
-                            if (!visited && active_count < MAX_CHOICES) {
-                                sprintf(active_choices[active_count].text, "[Voltar] %s", startNode->choices[i].text);
-                                strcpy(active_choices[active_count].next_node, startNode->choices[i].next_node);
-                                active_count++;
-                            }
-                        }
-                    }
-                }
-            }
+            int active_count = HasTokens() ? GetAvailableChoices(g_tree, active_choices) : 0;
 
             int total_buttons = active_count + 1;
             int startY = 355 - (total_buttons * 20);
             int exitY = startY;
 
-            if (global_tokens > 0) {
+            if (HasTokens()) {
                 for (int i = 0; i < active_count; i++) {
                     Rectangle choiceArea = { 280, startY + (i * 20), 200, 18 };
                     if (clicou && CheckCollisionPointRec(mouse, ParaTela(choiceArea))) {

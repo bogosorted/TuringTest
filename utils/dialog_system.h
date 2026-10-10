@@ -29,8 +29,19 @@ typedef struct {
     int current_node_index;
 } DialogTree;
 
-// Economia de Tokens do Jogo (6 Diários)
+// Economia de Tokens do Jogo (6 por dia)
+#define TOKENS_PER_DAY 6
 extern int global_tokens;
+
+// Modo desenvolvedor: true = tokens ilimitados (nao bloqueia e nao gasta).
+// Ligado/desligado pelo botao secreto do menu (digite "treloso").
+extern bool global_infinite_tokens;
+
+// true se ainda ha tokens para gastar (ou se o modo ilimitado esta ligado)
+bool HasTokens(void);
+
+// Devolve os tokens para o valor inicial (chamar no comeco de cada dia)
+void ResetTokens(void);
 
 // API
 void InitDialogSystem(void);
@@ -39,5 +50,13 @@ void FreeDialogTree(DialogTree *tree);
 DialogNode* GetCurrentNode(DialogTree *tree);
 bool MakeChoice(DialogTree *tree, int choice_index);
 bool MakeChoiceById(DialogTree *tree, const char *next_id);
+
+// Preenche 'out' com as escolhas que o jogador pode fazer AGORA e devolve quantas sao.
+//  1) escolhas do no atual cujo destino ainda nao foi visitado;
+//  2) se nao sobrar nenhuma, as escolhas do "start" ainda nao visitadas,
+//     com "[Voltar] " na frente do texto.
+// Devolver 0 significa que essa conversa acabou (nao ha mais para onde ir).
+// Nao olha os tokens: quem chama decide se o jogador pode pagar.
+int GetAvailableChoices(DialogTree *tree, DialogChoice out[MAX_CHOICES]);
 
 #endif // DIALOG_SYSTEM_H

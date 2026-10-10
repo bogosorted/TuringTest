@@ -1,6 +1,9 @@
 #include "raylib.h"
 #include "menu_scene.h"
 #include "../utils/raycanvas.h"
+#include "../utils/dialog_system.h"
+#include <string.h>
+#include <ctype.h>
 
 #define NUM_BUTTONS 4
 
@@ -53,6 +56,75 @@ bool MenuSceneShouldStartGame(void) {
     return g_shouldStartGame;
 }
 
+// ---------------------------------------------------------------
+// MODO DESENVOLVEDOR (testes)
+// Digitar "treloso" no menu revela o botao "Tokens Infinitos",
+// que liga/desliga global_infinite_tokens. Antes disso o botao nem
+// e desenhado nem recebe clique.
+// ---------------------------------------------------------------
+#define DEV_CODE      "treloso"
+#define DEV_CODE_LEN  7
+
+static bool g_devUnlocked = false;                 // fica liberado ate fechar o jogo
+static char g_devTyped[DEV_CODE_LEN + 1] = { 0 };  // ultimas letras digitadas
+
+static void UpdateDevCode(void) {
+    int c;
+    while ((c = GetCharPressed()) != 0) {
+        // Empurra o buffer uma casa e coloca a nova letra no final
+        memmove(g_devTyped, g_devTyped + 1, DEV_CODE_LEN - 1);
+        g_devTyped[DEV_CODE_LEN - 1] = (c < 128) ? (char)tolower(c) : '?';
+
+        if (strncmp(g_devTyped, DEV_CODE, DEV_CODE_LEN) == 0) {
+            g_devUnlocked = true;
+            TraceLog(LOG_INFO, "Modo desenvolvedor liberado");
+        }
+    }
+}
+
+static void UpdateDrawDevButton(void) {
+    if (!g_devUnlocked) return;
+
+    float scale = RayCanvasGetUIScale();
+
+    // Meio da direita da tela
+    Rectangle area = RayCanvasGetRect(
+        (Vector2){ 1.0f, 0.5f },
+        (Vector2){ 1.0f, 0.5f },
+        (Vector2){ -10.0f, 0.0f },
+        (Vector2){ 120.0f, 22.0f }
+    );
+
+    bool hover = CheckCollisionPointRec(RayCanvasGetMousePosition(), area);
+
+    // So "Pressed": com Pressed || Released ele ligaria e desligaria no mesmo clique
+    if (hover && !RayCanvasInputBlocked() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        global_infinite_tokens = !global_infinite_tokens;
+        TraceLog(LOG_INFO, "Tokens infinitos: %s", global_infinite_tokens ? "LIGADO" : "DESLIGADO");
+    }
+
+    DrawRectangleRec(area, hover ? (Color){ 220, 220, 220, 255 } : WHITE);
+
+    int fonte = (int)(10 * scale);
+    if (fonte < 1) fonte = 1;
+    const char *label = "Tokens Infinitos";
+    int larguraLabel = MeasureText(label, fonte);
+    DrawText(label,
+             (int)(area.x + (area.width - larguraLabel) / 2.0f),
+             (int)(area.y + (area.height - fonte) / 2.0f),
+             fonte, BLACK);
+
+    // Estado atual, pequeno, logo abaixo do botao
+    const char *estado = global_infinite_tokens ? "ligado" : "desligado";
+    int fonteEstado = (int)(8 * scale);
+    if (fonteEstado < 1) fonteEstado = 1;
+    int larguraEstado = MeasureText(estado, fonteEstado);
+    DrawText(estado,
+             (int)(area.x + (area.width - larguraEstado) / 2.0f),
+             (int)(area.y + area.height + 4.0f * scale),
+             fonteEstado, WHITE);
+}
+
 void InitMenuScene(void) {
     g_shouldClose = false;
     g_shouldStartGame = false;
@@ -95,7 +167,7 @@ static void UpdateMenuButtons(void) {
         g_buttons[i].isHovered = CheckCollisionPointRec(mousePos, g_buttons[i].bounds);
 
         // Dispara o metodo correspondente ao botao clicado de forma direta (press ou release)
-        if (g_buttons[i].isHovered && (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonReleased(MOUSE_BUTTON_LEFT))) {
+        if (!RayCanvasInputBlocked() && g_buttons[i].isHovered && (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonReleased(MOUSE_BUTTON_LEFT))) {
             if (i == 0) OnClickPlay();
             else if (i == 1) OnClickLoad();
             else if (i == 2) OnClickOptions();
@@ -145,6 +217,9 @@ void UpdateDrawMenuScene(void) {
     DrawMenuDecorations();
     UpdateMenuButtons();
     DrawMenuButtons();
+
+    UpdateDevCode();
+    UpdateDrawDevButton();
 
     RayCanvasEnd();
 }
