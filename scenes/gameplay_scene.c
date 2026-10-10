@@ -239,6 +239,201 @@ static void DrawTextWrappedLeftAligned(const char *texto, Vector2 pos, float max
         DrawTextLeftAligned(line, (Vector2){ pos.x, pos.y + yOffset }, tamanhoFonte, cor);
     }
 }
+// ---------------------------------------------------------------
+// DICA (minigame de logica)
+// ---------------------------------------------------------------
+typedef struct {
+    const char *frase;      // proposicao em portugues
+    const char *p;          // o que "p" significa
+    const char *q;          // o que "q" significa
+    const char *opcoes[3];  // alternativas em linguagem simbolica
+    int correta;            // indice da alternativa certa (0, 1 ou 2)
+} Proposicao;
+
+// Simbolos em ASCII (a fonte padrao da raylib nao tem os simbolos logicos):
+//   ~ nao    ^ e    v ou    -> se...entao    <-> se e somente se
+#define NUM_PROPOSICOES 6
+static const Proposicao PROPOSICOES[NUM_PROPOSICOES] = {
+    { "Patricia confere os relatorios e Caio nao revisa o codigo.",
+      "Patricia confere os relatorios", "Caio revisa o codigo",
+      { "p ^ ~q", "~p ^ q", "p v ~q" }, 0 },
+    { "Se Lucas apresenta a campanha, entao Caio nao sai mais cedo.",
+      "Lucas apresenta a campanha", "Caio sai mais cedo",
+      { "~q -> p", "p ^ ~q", "p -> ~q" }, 2 },
+    { "Patricia nao almoca na empresa ou Lucas chega atrasado.",
+      "Patricia almoca na empresa", "Lucas chega atrasado",
+      { "~p ^ q", "~p v q", "~(p v q)" }, 1 },
+    { "Nao e verdade que o sistema caiu e o cofre abriu.",
+      "o sistema caiu", "o cofre abriu",
+      { "~(p ^ q)", "~p ^ ~q", "~p ^ q" }, 0 },
+    { "Caio fala ingles se, e somente se, Patricia fala espanhol.",
+      "Caio fala ingles", "Patricia fala espanhol",
+      { "p -> q", "p ^ q", "p <-> q" }, 2 },
+    { "Se Patricia nao assina o relatorio, entao o setor nao e auditado.",
+      "Patricia assina o relatorio", "o setor e auditado",
+      { "~q -> ~p", "~p -> ~q", "p -> q" }, 1 },
+};
+
+static Texture2D g_dicaAceso;     // botao disponivel
+static Texture2D g_dicaApagado;   // botao bloqueado
+
+// Posicao do botao: no cantinho com o menu fechado, ao lado do menu quando aberto (sprite 32x32)
+static Rectangle DicaBotao(void) {
+    if (g_menuAberto) return (Rectangle){ 528, 4, 32, 32 };   // colado na borda do menu (borda visivel em x = 560)
+    return (Rectangle){ 604, 4, 32, 32 };                     // cantinho superior direito
+}
+static const Rectangle DICA_PAINEL = { 285, 40, 200, 222 };
+static const Rectangle DICA_OK     = { 345, 238, 80, 18 };
+
+static bool g_dicaUsadaHoje      = false;  // true depois de responder (certo ou errado)
+static bool g_entrevistaLiberada = false;  // acertou: a entrevista atual tem tokens infinitos
+static bool g_infinitosAntes     = false;  // como estava o global_infinite_tokens antes da dica
+
+static bool g_dicaAberta = false;
+static int  g_dicaEstado = 0;    // 0 = pergunta, 1 = acertou, 2 = errou
+static int  g_dicaAtual  = 0;    // qual proposicao foi sorteada
+
+// Retangulo da alternativa i dentro do painel
+static Rectangle OpcaoDica(int i) {
+    return (Rectangle){ DICA_PAINEL.x + 6, DICA_PAINEL.y + 136 + i * 20, DICA_PAINEL.width - 12, 18 };
+}
+
+// Uma vez por dia, e so durante uma conversa
+static bool DicaDisponivel(void) {
+    return g_dialogLoaded && !g_dicaUsadaHoje;
+}
+
+// Acertou: tokens infinitos so nesta entrevista
+static void LiberarEntrevista(void) {
+    g_infinitosAntes = global_infinite_tokens;
+    global_infinite_tokens = true;
+    g_entrevistaLiberada = true;
+    // TODO: desbloquear o dialogo novo que revela se o funcionario e IA
+}
+
+// A entrevista acabou: tokens voltam ao normal
+static void EncerrarEntrevistaLiberada(void) {
+    if (g_entrevistaLiberada) global_infinite_tokens = g_infinitosAntes;
+    g_entrevistaLiberada = false;
+}
+
+// Cuida do botao e do painel da dica.
+// Devolve true se a dica "pegou" o mouse neste frame.
+static bool UpdateDica(void) {
+    Vector2 mouse = RayCanvasGetMousePosition();
+    bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+
+    // Painel aberto: so ele recebe o mouse
+    if (g_dicaAberta) {
+        bool hover = false;
+        if (g_dicaEstado == 0) {
+            const Proposicao *p = &PROPOSICOES[g_dicaAtual];
+            for (int i = 0; i < 3; i++) {
+                if (!CheckCollisionPointRec(mouse, ParaTela(OpcaoDica(i)))) continue;
+                hover = true;
+                if (clicou) {
+                    g_dicaUsadaHoje = true;   // certo ou errado, a dica acabou por hoje
+                    if (i == p->correta) {
+                        g_dicaEstado = 1;
+                        LiberarEntrevista();
+                    } else {
+                        g_dicaEstado = 2;
+                    }
+                }
+            }
+        } else if (CheckCollisionPointRec(mouse, ParaTela(DICA_OK))) {
+            hover = true;
+            if (clicou) g_dicaAberta = false;
+        }
+        SetMouseCursor(hover ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+        return true;
+    }
+
+    // Botao
+    if (!DicaDisponivel()) return false;
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !clicou) return false;  // esta arrastando algo
+    if (!CheckCollisionPointRec(mouse, ParaTela(DicaBotao()))) return false;
+
+    SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+    if (clicou) {
+        g_dicaAtual  = GetRandomValue(0, NUM_PROPOSICOES - 1);
+        g_dicaEstado = 0;
+        g_dicaAberta = true;
+    }
+    return true;
+}
+
+// Desenha o botao e, se estiver aberto, o painel da dica
+static void DesenharDica(void) {
+    Color texto = {  30,  32,  34, 255 };
+    Color fundo = { 120, 130, 110, 255 };
+    Color claro = { 150, 160, 130, 255 };
+    Vector2 mouse = RayCanvasGetMousePosition();
+
+    // Botao: aceso (escurece no hover) ou apagado
+    if (DicaDisponivel() && !g_dicaAberta) {
+        DrawWithHover(g_dicaAceso, DicaBotao());
+    } else {
+        Rectangle origem = { 0, 0, (float)g_dicaApagado.width, (float)g_dicaApagado.height };
+        DrawTexturePro(g_dicaApagado, origem, ParaTela(DicaBotao()), (Vector2){ 0, 0 }, 0.0f, WHITE);
+    }
+
+    if (!g_dicaAberta) return;
+
+    const Proposicao *p = &PROPOSICOES[g_dicaAtual];
+    float x = DICA_PAINEL.x + 6;
+    float y = DICA_PAINEL.y;
+    float largura = DICA_PAINEL.width - 12;
+
+    // Escurece o resto da tela
+    DrawRectangleRec(GetTelaRect(), Fade(BLACK, 0.4f));
+
+    // Painel e barra de titulo
+    Rectangle rPainel = ParaTela(DICA_PAINEL);
+    DrawRectangleRec(rPainel, fundo);
+    DrawRectangleLinesEx(rPainel, 2, texto);
+    Rectangle titulo = { DICA_PAINEL.x, DICA_PAINEL.y, DICA_PAINEL.width, 16 };
+    DrawRectangleRec(ParaTela(titulo), texto);
+    DrawTextInArea("DICA - LOGICA", titulo, 10, fundo);
+
+    // Proposicao e legenda
+    char linha[160];
+    DrawTextWrappedLeftAligned(p->frase, (Vector2){ x, y + 22 }, largura, 10, texto);
+    snprintf(linha, sizeof linha, "p: %s", p->p);
+    DrawTextWrappedLeftAligned(linha, (Vector2){ x, y + 66 }, largura, 10, texto);
+    snprintf(linha, sizeof linha, "q: %s", p->q);
+    DrawTextWrappedLeftAligned(linha, (Vector2){ x, y + 94 }, largura, 10, texto);
+
+    if (g_dicaEstado == 0) {
+        // Pergunta e as 3 alternativas
+        DrawTextLeftAligned("Qual a forma simbolica?", (Vector2){ x, y + 120 }, 10, texto);
+        for (int i = 0; i < 3; i++) {
+            Rectangle op = OpcaoDica(i);
+            Rectangle rOp = ParaTela(op);
+            bool hover = CheckCollisionPointRec(mouse, rOp);
+            DrawRectangleRec(rOp, hover ? claro : fundo);
+            DrawRectangleLinesEx(rOp, 2, texto);
+            DrawTextInArea(p->opcoes[i], op, 10, texto);
+        }
+    } else {
+        // Resultado
+        char msg[200];
+        const char *nome = (g_funcionario < g_numFichas) ? g_fichas[g_funcionario].nome : "este funcionario";
+        if (g_dicaEstado == 1) {
+            snprintf(msg, sizeof msg, "Correto! A entrevista com %s nao gasta tokens.", nome);
+        } else {
+            snprintf(msg, sizeof msg, "Errado. A resposta era: %s. A dica so volta amanha.",
+                     p->opcoes[p->correta]);
+        }
+        DrawTextWrappedLeftAligned(msg, (Vector2){ x, y + 136 }, largura, 10, texto);
+
+        Rectangle rOk = ParaTela(DICA_OK);
+        bool hoverOk = CheckCollisionPointRec(mouse, rOk);
+        DrawRectangleRec(rOk, hoverOk ? claro : fundo);
+        DrawRectangleLinesEx(rOk, 2, texto);
+        DrawTextInArea("OK", DICA_OK, 10, texto);
+    }
+}
 
 static void DrawInterrogationTexts(void) {
     Color textColor = (Color){ 30, 32, 34, 255 };
@@ -346,8 +541,14 @@ void GameplaySceneResetDialogues(void) {
     }
     g_treesLoaded = false;
     g_dialogLoaded = false;
-    g_tree = NULL;
+        g_tree = NULL;
+
+    // Dia novo: a dica volta a ficar disponivel
+    g_dicaUsadaHoje = false;
+    g_dicaAberta = false;
+    EncerrarEntrevistaLiberada();
 }
+
 
 // true quando o dia pode terminar (o botao "proximo dia" / "veredito" aparece):
 //   1) os tokens acabaram, OU
@@ -416,6 +617,12 @@ void InitGameplayScene(void) {
 
     g_prancheta = LoadTexture("assets/gameplay_scene/spr_prancheta.png");
     SetTextureFilter(g_prancheta, TEXTURE_FILTER_POINT);
+
+    g_dicaAceso = LoadTexture("assets/gameplay_scene/spr_botao_dica_aceso.png");
+    SetTextureFilter(g_dicaAceso, TEXTURE_FILTER_POINT);
+    g_dicaApagado = LoadTexture("assets/gameplay_scene/spr_botao_dica_apagado.png");
+    SetTextureFilter(g_dicaApagado, TEXTURE_FILTER_POINT);
+    g_dicaAberta = false;
 
     CarregarFichas("assets/data/fichas_funcionarios.txt");
 
@@ -720,6 +927,7 @@ static void UpdateGameplay(void) {
             if (clicou && CheckCollisionPointRec(mouse, ParaTela(exitArea))) {
                 g_dialogLoaded = false;
                 g_tree = NULL;
+                EncerrarEntrevistaLiberada();
                 return;
             }
         }
@@ -775,7 +983,7 @@ void UpdateDrawGameplayScene(void) {
     RayCanvasBegin();
 
     // A ficha e a prancheta ficam por cima de tudo, entao elas tem prioridade no clique
-    if (!UpdateFicha() && !UpdatePrancheta()) {
+        if (!UpdateDica() && !UpdateFicha() && !UpdatePrancheta()) {
         UpdateGameplay();
     }
 
@@ -868,6 +1076,8 @@ void UpdateDrawGameplayScene(void) {
 
         TextoNaImagem("RASEC - CONFIDENCIAL", x + 14, y + 302, 8, COR_MEDIO);
     }
+    // 6) Botao e painel da dica (por cima de tudo)
+    DesenharDica();
 
     RayCanvasEnd();
 }
@@ -888,5 +1098,8 @@ void UnloadGameplayScene(void) {
     UnloadTexture(g_ficha);
     UnloadTexture(g_caixaVazia);
     UnloadTexture(g_caixaComX);
+    UnloadTexture(g_dicaAceso);
+    UnloadTexture(g_dicaApagado);
+    EncerrarEntrevistaLiberada();   // sair pelo mapa tambem encerra a entrevista
     RayCanvasClose();
 }
