@@ -73,20 +73,27 @@ static void CarregarFichas(const char *caminho);
 
 
 
-// Quadradinhos da prancheta
-#define NUM_CAIXAS 5
-static Texture2D g_caixaVazia;               // quadradinho sem X
-static Texture2D g_caixaComX;                // quadradinho com X
-static bool      g_marcado[NUM_CAIXAS];      // true = quadradinho com X
+// Guia da investigacao (checklist da prancheta)
+#define NUM_CAIXAS 7
+static Texture2D g_caixaVazia;                          // quadradinho sem X
+static Texture2D g_caixaComX;                           // quadradinho com X
+static bool      g_marcado[MAX_FICHAS][NUM_CAIXAS];     // um checklist por funcionario
 
-// Posicao de cada quadradinho DENTRO da prancheta (sprite 34x33)
-static const Vector2 CAIXAS[NUM_CAIXAS] = {
-    { 59,  60 },
-    { 59, 110 },
-    { 59, 160 },
-    { 59, 210 },
-    { 59, 260 },
+static const char *GUIA[NUM_CAIXAS] = {
+    "Inverte ordem dos acontecimentos.",
+    "Nao lembra de acontecimentos cotidianos.",
+    "Falas padronizadas demais.",
+    "Inventou fatos.",
+    "Mudou contexto dito anteriormente.",
+    "Mudou de personalidade.",
+    "Segue muito a risca a personalidade descrita.",
 };
+
+// Posicao dos quadradinhos DENTRO da prancheta (sprite 20x20)
+#define CAIXA_X      58     // x de todos os quadradinhos
+#define CAIXA_Y0     84     // y do primeiro
+#define CAIXA_PASSO  30     // distancia entre um e outro
+#define TEXTO_X      84     // x dos textos (ao lado do quadradinho)
 
 static bool g_menuAberto = false;
 static bool g_shouldClose = false;
@@ -127,6 +134,7 @@ static void OnClickPrancheta(void) {
     TraceLog(LOG_INFO, "Prancheta %s", g_pranchetaAberta ? "aberta" : "fechada");
 }
 static void OnClickPasta(void) {
+    if (!g_dialogLoaded) return;                // ninguem sendo entrevistado
     if (g_funcionario >= g_numFichas) return;   // arquivo nao carregou
     // Abre a ficha do funcionario entrevistado (ou fecha, se ja estiver aberta)
     g_fichaAtual = (g_fichaAtual < 0) ? g_funcionario : -1;
@@ -744,6 +752,8 @@ void GameplaySceneResetDialogues(void) {
     g_tree = NULL;
     memset(g_chatHistories, 0, sizeof(g_chatHistories));
 
+    // Jogo novo (dia 1): limpa os checklists de todos os funcionarios
+    if (GameStateGetDay() == 1) memset(g_marcado, 0, sizeof g_marcado);
     // Dia novo: a dica volta a ficar disponivel
     g_dicaUsadaHoje = false;
     g_dicaAberta = false;
@@ -859,16 +869,14 @@ void InitGameplayScene(void) {
     g_caixaComX = LoadTexture("assets/gameplay_scene/spr_icone_quadrado_prancheta.png");
     SetTextureFilter(g_caixaComX, TEXTURE_FILTER_POINT);
 
-    // Comeca com todos os quadradinhos vazios
-    for (int i = 0; i < NUM_CAIXAS; i++) g_marcado[i] = false;
-
+    // As marcacoes NAO sao zeradas aqui: sao as anotacoes da investigacao
     RayCanvasInit(g_telaFechada.width, g_telaFechada.height);
 }
 // Retangulo do quadradinho i, em pixels da imagem 640x360
 static Rectangle CaixaNaImagem(int i) {
     return (Rectangle){
-        g_pranchetaPos.x + CAIXAS[i].x,
-        g_pranchetaPos.y + CAIXAS[i].y,
+        g_pranchetaPos.x + CAIXA_X,
+        g_pranchetaPos.y + CAIXA_Y0 + i * CAIXA_PASSO,
         (float)g_caixaVazia.width,
         (float)g_caixaVazia.height
     };
@@ -1078,10 +1086,10 @@ static bool UpdatePrancheta(void) {
                        (float)g_prancheta.width, (float)g_prancheta.height };
 
 // 0) Clicou num quadradinho: marca/desmarca o X (e nao arrasta)
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (g_dialogLoaded && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         for (int i = 0; i < NUM_CAIXAS; i++) {
             if (CheckCollisionPointRec(mouse, CaixaNaImagem(i))) {
-                g_marcado[i] = !g_marcado[i];
+                g_marcado[g_funcionario][i] = !g_marcado[g_funcionario][i];
                 return true;
             }
         }
@@ -1167,6 +1175,7 @@ static void UpdateGameplay(void) {
                 if (clicou) {
                     g_dialogLoaded = false;
                     g_tree = NULL;
+                    g_fichaAtual = -1;
                     EncerrarEntrevistaLiberada();
                     return;
                 }
@@ -1288,10 +1297,27 @@ void UpdateDrawGameplayScene(void) {
                              (float)g_prancheta.width, (float)g_prancheta.height };
         Rectangle origem = { 0, 0, (float)g_prancheta.width, (float)g_prancheta.height };
         DrawTexturePro(g_prancheta, origem, ParaTela(area), (Vector2){ 0, 0 }, 0.0f, WHITE);
-        // Quadradinhos por cima da prancheta (escurecem no hover)
-        for (int i = 0; i < NUM_CAIXAS; i++) {
-            Texture2D tex = g_marcado[i] ? g_caixaComX : g_caixaVazia;
-            DrawWithHover(tex, CaixaNaImagem(i));
+        float px = g_pranchetaPos.x;
+        float py = g_pranchetaPos.y;
+
+        TextoNaImagem("GUIA DA INVESTIGACAO", px + CAIXA_X, py + 60, 8, COR_MEDIO);
+
+        if (!g_dialogLoaded) {
+            // Ninguem sendo entrevistado: so um aviso
+            TextoQuebrado("Nenhum funcionario em entrevista. Escolha alguem para comecar a investigacao.",
+                          px + CAIXA_X, py + 74, 190, 10, 12, COR_PRETO);
+        } else {
+            // Nome do funcionario dono deste checklist
+            const char *nome = (g_funcionario < g_numFichas) ? g_fichas[g_funcionario].nome : "";
+            TextoQueCabe(nome, px + CAIXA_X, py + 70, 190, 10, COR_PRETO);
+
+            // Quadradinhos (escurecem no hover) e textos ao lado
+            for (int i = 0; i < NUM_CAIXAS; i++) {
+                Texture2D tex = g_marcado[g_funcionario][i] ? g_caixaComX : g_caixaVazia;
+                DrawWithHover(tex, CaixaNaImagem(i));
+                TextoQuebrado(GUIA[i], px + TEXTO_X, py + CAIXA_Y0 + i * CAIXA_PASSO + 1,
+                              165, 10, 11, COR_PRETO);
+            }
         }
     }
     // 5) Ficha do funcionario (por cima de tudo)
