@@ -91,11 +91,12 @@ DialogNode* GetCurrentNode(DialogTree *tree) {
 
 bool MakeChoiceById(DialogTree *tree, const char *next_id) {
     if (!HasTokens()) return false;
+    bool is_free = (strcmp(next_id, "intro") == 0);
     for (int i = 0; i < tree->node_count; i++) {
         if (strcmp(tree->nodes[i].id, next_id) == 0) {
             tree->current_node_index = i;
             tree->nodes[i].visited = true;
-            if (!global_infinite_tokens) global_tokens--;
+            if (!global_infinite_tokens && !is_free) global_tokens--;
             return true;
         }
     }
@@ -103,7 +104,6 @@ bool MakeChoiceById(DialogTree *tree, const char *next_id) {
 }
 
 bool MakeChoice(DialogTree *tree, int choice_index) {
-    if (!HasTokens()) return false;
     DialogNode *curr = GetCurrentNode(tree);
     if (!curr || choice_index < 0 || choice_index >= curr->choice_count) return false;
     return MakeChoiceById(tree, curr->choices[choice_index].next_node);
@@ -130,18 +130,30 @@ int GetAvailableChoices(DialogTree *tree, DialogChoice out[MAX_CHOICES]) {
     }
     if (count > 0) return count;
 
-    // 2) Nada sobrou aqui: oferece as perguntas do "start" ainda nao feitas
+    // 2) Nada sobrou aqui: oferece as perguntas do "intro" (ou "start") ainda nao feitas
+    const DialogNode *base = NULL;
     for (int s = 0; s < tree->node_count; s++) {
-        if (strcmp(tree->nodes[s].id, "start") != 0) continue;
+        if (strcmp(tree->nodes[s].id, "intro") == 0) {
+            base = &tree->nodes[s];
+            break;
+        }
+    }
+    if (!base) {
+        for (int s = 0; s < tree->node_count; s++) {
+            if (strcmp(tree->nodes[s].id, "start") == 0) {
+                base = &tree->nodes[s];
+                break;
+            }
+        }
+    }
 
-        const DialogNode *start = &tree->nodes[s];
-        for (int i = 0; i < start->choice_count && count < MAX_CHOICES; i++) {
-            if (NodeIdVisited(tree, start->choices[i].next_node)) continue;
-            snprintf(out[count].text, MAX_TEXT_LENGTH, "[Voltar] %s", start->choices[i].text);
-            snprintf(out[count].next_node, MAX_ID_LENGTH, "%s", start->choices[i].next_node);
+    if (base) {
+        for (int i = 0; i < base->choice_count && count < MAX_CHOICES; i++) {
+            if (NodeIdVisited(tree, base->choices[i].next_node)) continue;
+            snprintf(out[count].text, MAX_TEXT_LENGTH, "%s", base->choices[i].text);
+            snprintf(out[count].next_node, MAX_ID_LENGTH, "%s", base->choices[i].next_node);
             count++;
         }
-        break;
     }
     return count;
 }

@@ -1,0 +1,26 @@
+NPC: andre
+DIA: 3
+
+[NODE: start]
+SPEAKER: Você
+TEXT: André parece exausto entre ligações e papéis acumulados.
+CHOICE: Oi, como vai? -> intro
+
+[NODE: intro]
+SPEAKER: André
+TEXT: Cansado. Vai logo, o que você quer?
+CHOICE: Alguém mexeu no recrutamento ou financeiro? -> suspeita
+CHOICE: A Mariana disse que o RH está sob pressão. -> mariana
+CHOICE: Você já teve algum conflito com alguém daqui? -> conflito
+
+[NODE: suspeita]
+SPEAKER: André
+TEXT: Não sei e não quero saber. Eu não tenho acesso a isso. Se alguém mexeu, quem tem que apurar é a TI ou o RH, não eu. Terminou?
+
+[NODE: mariana]
+SPEAKER: André
+TEXT: Percebi, todo mundo tá sob pressão. Ela sempre fala muito, e eu nem tenho tempo pra ouvir tudo. Se quiser fofoca, procura outro.
+
+[NODE: conflito]
+SPEAKER: André
+TEXT: Tive com o pessoal do marketing porque o Lucas atrasou um pedido de campanha. Mas resolvi. Fim de conversa, tenho que ir.

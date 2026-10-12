@@ -1,0 +1,21 @@
+NPC: lucas
+DIA: 3
+
+[NODE: start]
+SPEAKER: Lucas
+TEXT: Boa! Estava esperando revê-lo!
+CHOICE: Em seu último trabalho, como era a criação? -> messiah
+CHOICE: Disse que acessou os currículos. Por quê? -> curriculos
+CHOICE: Lembra de algo do começo da semana? -> memoria
+
+[NODE: messiah]
+SPEAKER: Lucas
+TEXT: Quando estava na Messiah Auto, tinha que repensar o marketing pra modelos de automóvel. E na sorveteria era difícil gerenciar atendentes nos pedidos.
+
+[NODE: curriculos]
+SPEAKER: Lucas
+TEXT: Para cruzar perfis com a campanha. Mas espera, tenho certeza que foi só uma vez? Acho que foram várias consultas em dias diferentes. Não tenho certeza.
+
+[NODE: memoria]
+SPEAKER: Lucas
+TEXT: Lembro sim! No dia em que o Caio saiu mais cedo e a Mariana ficou no RH até tarde... Ou o contrário? Fiquei com a impressão de que mexeram em algo importante.

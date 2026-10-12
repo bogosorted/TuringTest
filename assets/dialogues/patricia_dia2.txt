@@ -1,0 +1,36 @@
+NPC: patricia
+DIA: 2
+
+[NODE: start]
+SPEAKER: Patrícia
+TEXT: ...Boa tarde. Estão em andamento. Colocaram o estagiário para checar a prestação de contas do setor?
+CHOICE: Usam sistemas automatizados de aprovação? -> automacao
+CHOICE: Notou movimentação atípica nas contas? -> atipica
+CHOICE: Identificaria comprovante gerado por IA? -> ia_comprovante
+
+[NODE: automacao]
+SPEAKER: Patrícia
+TEXT: O sistema faz uma pré-checagem... Mas pagamentos acima do limite passam pela minha conferência antes da liberação.
+CHOICE: Você valida tudo manualmente? -> manual
+
+[NODE: manual]
+SPEAKER: Patrícia
+TEXT: Sim. Observo cada valor e destinatário. Erros na área financeira custam caro para a empresa.
+
+[NODE: atipica]
+SPEAKER: Patrícia
+TEXT: ...Movimentação atípica? Não. Todos os lançamentos das últimas semanas possuem nota fiscal correspondente.
+CHOICE: Como funciona o token bancário? -> token
+
+[NODE: token]
+SPEAKER: Patrícia
+TEXT: O token fica no cofre do setor. Apenas eu e a gerência temos a combinação física de acesso.
+
+[NODE: ia_comprovante]
+SPEAKER: Patrícia
+TEXT: Documentos gerados por IA costumam ter falhas no código de barras ou na formatação. Eu notaria na hora.
+CHOICE: Como reage a perguntas fora da rotina? -> desconforto
+
+[NODE: desconforto]
+SPEAKER: Patrícia
+TEXT: ...Fico desconfortável. Não gosto de especulações quando o assunto é a contabilidade da RASEC.

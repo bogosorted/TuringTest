@@ -1,6 +1,6 @@
 #include "raylib.h"
 #include "verdict_scene.h"
-#include "selection_scene.h"      // enum Employee (EMPLOYEE_BETA = a IA)
+#include "selection_scene.h"      // enum Employee (EMPLOYEE_LUCAS = AI)
 #include "../utils/raycanvas.h"
 
 // Mesmo espaco virtual das outras cenas (640x360)
@@ -25,8 +25,8 @@
 #define RETRY_W        170
 #define MARGIN         12
 
-// Quem e a IA infiltrada (placeholder)
-#define INDICE_DA_IA   EMPLOYEE_BETA
+// Infiltrated AI
+#define AI_INDEX        EMPLOYEE_LUCAS
 
 static Color textColor  = (Color){ 30, 32, 34, 255 };
 static Color bgColor    = (Color){ 120, 130, 110, 255 };
@@ -34,7 +34,7 @@ static Color hoverColor = (Color){ 150, 160, 130, 255 };
 static Color selColor   = (Color){ 190, 200, 150, 255 };
 static Color offColor   = (Color){ 80, 85, 75, 255 };
 
-static const char *NOMES[3] = { "Alpha", "Beta", "Gamma" };
+static const char *NOMES[3] = { "Patrícia", "André", "Lucas" };
 
 static int  g_selecionado = -1;     // -1 = ninguem
 static bool g_confirmado = false;
@@ -159,7 +159,7 @@ void UpdateDrawVerdictScene(void) {
         };
         if (DrawButton(confirmar, "Confirmar Seleção", g_selecionado >= 0)) {
             g_confirmado = true;
-            g_acertou = (g_selecionado == INDICE_DA_IA);
+            g_acertou = (g_selecionado == AI_INDEX);
             TraceLog(LOG_INFO, "Veredito: %s", g_acertou ? "correto" : "incorreto");
         }
     } else {

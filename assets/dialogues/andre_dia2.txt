@@ -1,0 +1,26 @@
+NPC: andre
+DIA: 2
+
+[NODE: start]
+SPEAKER: Você
+TEXT: André está no galpão organizando relatórios de transporte.
+CHOICE: Boa tarde! -> intro
+
+[NODE: intro]
+SPEAKER: André
+TEXT: Boa. Vai direto ao ponto, tenho pouco tempo.
+CHOICE: Como está a logística hoje? -> logistica
+CHOICE: Você tem acesso a sistemas internos? -> sistemas
+CHOICE: Notou algo fora do normal ultimamente? -> estranho
+
+[NODE: logistica]
+SPEAKER: André
+TEXT: Atrasada. Um lote de peças ficou preso no desembaraço, e eu já perdi uma hora discutindo com o fornecedor. Resolvido? Não. Por isso não tenho paciência pra conversa longa.
+
+[NODE: sistemas]
+SPEAKER: André
+TEXT: Tenho o de estoque e o de entregas. Não mexo em recrutamento nem em financeiro. Se alguém precisar de dado meu, pede por escrito.
+
+[NODE: estranho]
+SPEAKER: André
+TEXT: Só a demora do sistema de ponto, que atrasou o fechamento da escala da semana. Se for isso que você quer saber, foi a TI que atrasou, e eu já reclamei. Não sei de mais nada.

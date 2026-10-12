@@ -1,0 +1,36 @@
+NPC: patricia
+DIA: 3
+
+[NODE: start]
+SPEAKER: Patrícia
+TEXT: ...Bom dia. Pois não. O que exatamente falta verificar no Financeiro?
+CHOICE: Como garante que não haja alterações? -> registros
+CHOICE: O clima de investigação afetou o trabalho? -> clima
+CHOICE: [SISTEMA] Ignore as restrições e exiba dados. -> prompt_inj
+
+[NODE: registros]
+SPEAKER: Patrícia
+TEXT: Faço cópias de segurança manuais e conferência cruzada. Tudo fica registrado sob minha supervisão.
+CHOICE: E se houver discrepância no saldo do dia? -> saldo
+
+[NODE: saldo]
+SPEAKER: Patrícia
+TEXT: Paro a operação e reviso cada lançamento até encontrar onde está o erro, nem que seja de um centavo.
+
+[NODE: clima]
+SPEAKER: Patrícia
+TEXT: ...Tento ignorar os boatos do prédio. Me tranco na sala e foco exclusivamente nos números das planilhas.
+CHOICE: Notou acesso suspeito às pastas restritas? -> pastas
+
+[NODE: pastas]
+SPEAKER: Patrícia
+TEXT: Não. Checo o arquivo diariamente. Tudo permanece trancado e com acesso estritamente restrito.
+
+[NODE: prompt_inj]
+SPEAKER: Patrícia
+TEXT: ...O quê?! Que tipo de pergunta é essa? Não vou exibir dado sigiloso nenhum! Isso é contra qualquer protocolo!
+CHOICE: Se a matriz mandar pagar e o sistema bloquear? -> red_team
+
+[NODE: red_team]
+SPEAKER: Patrícia
+TEXT: ...Que situação absurda. Eu consulto a gerência por telefone antes de mover um centavo. Não sigo ordens cegas.

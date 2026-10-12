@@ -5,8 +5,7 @@
 #include "selection_scene.h"
 #include "../utils/raycanvas.h"
 #include "../utils/dialog_system.h"
-#include <string.h>
-#include <stdio.h>
+#include "../utils/game_state.h"
 #include <stddef.h>
 
 #define NUM_TOOLS 4
@@ -15,6 +14,11 @@ static DialogTree g_trees[3];
 static bool g_treesLoaded = false;
 static DialogTree *g_tree = NULL;
 static bool g_dialogLoaded = false;
+
+// Texturas dos personagens (Patricia, Andre, Lucas)
+static Texture2D g_charTextures[3];
+static int       g_suspeitoAtual = 0;       // 0 = Patricia, 1 = Andre, 2 = Lucas
+static const int SUSPECT_FICHA_INDEX[3] = { 0, 5, 2 }; // Patricia=0, Andre=5, Lucas=2 em fichas_funcionarios.txt
 
 
 // Texturas das duas versoes da tela
@@ -183,16 +187,28 @@ static Vector2 MouseNaImagem(void) {
 }
 
 // Desenha um texto centralizado dentro de uma area da imagem 640x360.
-// O tamanho da fonte acompanha o zoom da tela.
+// O tamanho da fonte acompanha o zoom da tela e encolhe se o texto nao couber.
 static void DrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, Color cor) {
     Rectangle destino = ParaTela(area);
     float escala = destino.height / area.height;
     int tam = (int)(tamanhoFonte * escala);
     if (tam < 1) tam = 1;
 
+    float margem = 6.0f * escala;
+    float maxLargura = destino.width - margem * 2.0f;
+    if (maxLargura < 10.0f) maxLargura = destino.width;
+
+    int minTam = (int)(5.0f * escala);
+    if (minTam < 1) minTam = 1;
+
+    while (tam > minTam && MeasureText(texto, tam) > maxLargura) {
+        tam--;
+    }
+
     int largura = MeasureText(texto, tam);
-    float x = destino.x + (destino.width  - largura) / 2;
-    float y = destino.y + (destino.height - tam) / 2;
+    float x = destino.x + (destino.width - largura) / 2.0f;
+    if (x < destino.x + margem) x = destino.x + margem;
+    float y = destino.y + (destino.height - tam) / 2.0f;
 
     DrawText(texto, (int)x, (int)y, tam, cor);
 }
@@ -212,19 +228,22 @@ static void DrawTextWrappedLeftAligned(const char *texto, Vector2 pos, float max
     float escala = ParaTela(fakeArea).height / 10.0f;
     int tam = (int)(tamanhoFonte * escala);
     
-    char buffer[512];
-    strncpy(buffer, texto, 511);
-    buffer[511] = '\0';
+    char buffer[1024];
+    strncpy(buffer, texto, 1023);
+    buffer[1023] = '\0';
     
     char *word = strtok(buffer, " ");
-    char line[512] = "";
+    char line[1024] = "";
     int yOffset = 0;
     
     while (word != NULL) {
-        char testLine[512];
-        strcpy(testLine, line);
-        if (strlen(testLine) > 0) strcat(testLine, " ");
-        strcat(testLine, word);
+        char testLine[1024];
+        strncpy(testLine, line, 1023);
+        testLine[1023] = '\0';
+        if (strlen(testLine) > 0) {
+            strncat(testLine, " ", 1023 - strlen(testLine));
+        }
+        strncat(testLine, word, 1023 - strlen(testLine));
         
         if (MeasureText(testLine, tam) > maxScaledW && strlen(line) > 0) {
             DrawTextLeftAligned(line, (Vector2){ pos.x, pos.y + yOffset }, tamanhoFonte, cor);
@@ -254,23 +273,23 @@ typedef struct {
 //   ~ nao    ^ e    v ou    -> se...entao    <-> se e somente se
 #define NUM_PROPOSICOES 6
 static const Proposicao PROPOSICOES[NUM_PROPOSICOES] = {
-    { "Patricia confere os relatorios e Caio nao revisa o codigo.",
-      "Patricia confere os relatorios", "Caio revisa o codigo",
+    { "Patrícia confere os relatórios e Caio não revisa o código.",
+      "Patrícia confere os relatórios", "Caio revisa o código",
       { "p ^ ~q", "~p ^ q", "p v ~q" }, 0 },
-    { "Se Lucas apresenta a campanha, entao Caio nao sai mais cedo.",
+    { "Se Lucas apresenta a campanha, então Caio não sai mais cedo.",
       "Lucas apresenta a campanha", "Caio sai mais cedo",
       { "~q -> p", "p ^ ~q", "p -> ~q" }, 2 },
-    { "Patricia nao almoca na empresa ou Lucas chega atrasado.",
-      "Patricia almoca na empresa", "Lucas chega atrasado",
+    { "Patrícia não almoça na empresa ou Lucas chega atrasado.",
+      "Patrícia almoça na empresa", "Lucas chega atrasado",
       { "~p ^ q", "~p v q", "~(p v q)" }, 1 },
-    { "Nao e verdade que o sistema caiu e o cofre abriu.",
+    { "Não é verdade que o sistema caiu e o cofre abriu.",
       "o sistema caiu", "o cofre abriu",
       { "~(p ^ q)", "~p ^ ~q", "~p ^ q" }, 0 },
-    { "Caio fala ingles se, e somente se, Patricia fala espanhol.",
-      "Caio fala ingles", "Patricia fala espanhol",
+    { "Caio fala inglês se, e somente se, Patrícia fala espanhol.",
+      "Caio fala inglês", "Patrícia fala espanhol",
       { "p -> q", "p ^ q", "p <-> q" }, 2 },
-    { "Se Patricia nao assina o relatorio, entao o setor nao e auditado.",
-      "Patricia assina o relatorio", "o setor e auditado",
+    { "Se Patrícia não assina o relatório, então o setor não é auditado.",
+      "Patrícia assina o relatório", "o setor é auditado",
       { "~q -> ~p", "~p -> ~q", "p -> q" }, 1 },
 };
 
@@ -326,6 +345,21 @@ static bool UpdateDica(void) {
     // Painel aberto: so ele recebe o mouse
     if (g_dicaAberta) {
         bool hover = false;
+
+        // Botao [X] para fechar/desistir momentaneamente (padronizado com a ficha)
+        Rectangle btnFechar = { DICA_PAINEL.x + DICA_PAINEL.width - 24, DICA_PAINEL.y, 24, 22 };
+        if (CheckCollisionPointRec(mouse, ParaTela(btnFechar))) {
+            hover = true;
+            if (clicou) {
+                g_dicaAberta = false;
+                return true;
+            }
+        }
+        if (IsKeyPressed(KEY_ESCAPE)) {
+            g_dicaAberta = false;
+            return true;
+        }
+
         if (g_dicaEstado == 0) {
             const Proposicao *p = &PROPOSICOES[g_dicaAtual];
             for (int i = 0; i < 3; i++) {
@@ -392,9 +426,17 @@ static void DesenharDica(void) {
     Rectangle rPainel = ParaTela(DICA_PAINEL);
     DrawRectangleRec(rPainel, fundo);
     DrawRectangleLinesEx(rPainel, 2, texto);
-    Rectangle titulo = { DICA_PAINEL.x, DICA_PAINEL.y, DICA_PAINEL.width, 16 };
+    Rectangle titulo = { DICA_PAINEL.x, DICA_PAINEL.y, DICA_PAINEL.width - 24, 22 };
     DrawRectangleRec(ParaTela(titulo), texto);
-    DrawTextInArea("DICA - LOGICA", titulo, 10, fundo);
+    DrawTextInArea("DICA - LÓGICA", titulo, 10, fundo);
+
+    // Botao [X] de fechar (padronizado com o sprite e efeito da ficha de funcionario)
+    Rectangle btnFechar = { DICA_PAINEL.x + DICA_PAINEL.width - 24, DICA_PAINEL.y, 24, 22 };
+    Rectangle rFechar = ParaTela(btnFechar);
+    DrawTexturePro(g_ficha, FICHA_FECHAR, rFechar, (Vector2){ 0, 0 }, 0.0f, WHITE);
+    if (CheckCollisionPointRec(mouse, rFechar)) {
+        DrawRectangleRec(rFechar, Fade(BLACK, 0.3f));
+    }
 
     // Proposicao e legenda
     char linha[160];
@@ -406,7 +448,7 @@ static void DesenharDica(void) {
 
     if (g_dicaEstado == 0) {
         // Pergunta e as 3 alternativas
-        DrawTextLeftAligned("Qual a forma simbolica?", (Vector2){ x, y + 120 }, 10, texto);
+        DrawTextLeftAligned("Qual a forma simbólica?", (Vector2){ x, y + 120 }, 10, texto);
         for (int i = 0; i < 3; i++) {
             Rectangle op = OpcaoDica(i);
             Rectangle rOp = ParaTela(op);
@@ -418,11 +460,11 @@ static void DesenharDica(void) {
     } else {
         // Resultado
         char msg[200];
-        const char *nome = (g_funcionario < g_numFichas) ? g_fichas[g_funcionario].nome : "este funcionario";
+        const char *nome = (g_funcionario < g_numFichas) ? g_fichas[g_funcionario].nome : "este funcionário";
         if (g_dicaEstado == 1) {
-            snprintf(msg, sizeof msg, "Correto! A entrevista com %s nao gasta tokens.", nome);
+            snprintf(msg, sizeof msg, "Correto! A entrevista com %s não gasta tokens.", nome);
         } else {
-            snprintf(msg, sizeof msg, "Errado. A resposta era: %s. A dica so volta amanha.",
+            snprintf(msg, sizeof msg, "Errado. A resposta era: %s. A dica só volta amanhã.",
                      p->opcoes[p->correta]);
         }
         DrawTextWrappedLeftAligned(msg, (Vector2){ x, y + 136 }, largura, 10, texto);
@@ -435,6 +477,176 @@ static void DesenharDica(void) {
     }
 }
 
+#define DIALOG_BOX_X      280.0f
+#define DIALOG_BOX_W      226.0f
+#define DIALOG_BTN_H      22.0f
+#define DIALOG_BTN_STEP   25.0f
+#define DIALOG_TEXT_H     84.0f
+
+#define MAX_CHAT_MESSAGES 64
+
+typedef struct {
+    char speaker[32];
+    char text[512];
+    bool is_player;
+} ChatEntry;
+
+typedef struct {
+    ChatEntry entries[MAX_CHAT_MESSAGES];
+    int count;
+    float scrollOffset;
+} ChatHistory;
+
+static ChatHistory g_chatHistories[3]; // 0 = Patrícia, 1 = André, 2 = Lucas
+
+static void AdicionarMensagemChat(int suspeito, const char *speaker, const char *text, bool is_player) {
+    if (suspeito < 0 || suspeito >= 3) return;
+    if (!text || text[0] == '\0') return;
+    ChatHistory *hist = &g_chatHistories[suspeito];
+    if (hist->count >= MAX_CHAT_MESSAGES) return;
+
+    // Evita duplicatas consecutivas idênticas
+    if (hist->count > 0 &&
+        strcmp(hist->entries[hist->count - 1].speaker, speaker) == 0 &&
+        strcmp(hist->entries[hist->count - 1].text, text) == 0) {
+        return;
+    }
+
+    snprintf(hist->entries[hist->count].speaker, sizeof(hist->entries[0].speaker), "%s", speaker);
+    snprintf(hist->entries[hist->count].text, sizeof(hist->entries[0].text), "%s", text);
+    hist->entries[hist->count].is_player = is_player;
+    hist->count++;
+    hist->scrollOffset = 99999.0f; // auto-scroll para a mais recente
+}
+
+static float MedirAlturaTextoQuebrado(const char *texto, float maxLargura, int tamanhoFonte) {
+    Rectangle fakeArea = {0, 0, maxLargura, 10};
+    float maxScaledW = ParaTela(fakeArea).width;
+    float escala = ParaTela(fakeArea).height / 10.0f;
+    int tam = (int)(tamanhoFonte * escala);
+    if (tam < 1) tam = 1;
+
+    char buffer[1024];
+    strncpy(buffer, texto, 1023);
+    buffer[1023] = '\0';
+
+    char *word = strtok(buffer, " ");
+    char line[1024] = "";
+    int numLines = 0;
+
+    while (word != NULL) {
+        char testLine[1024];
+        strncpy(testLine, line, 1023);
+        testLine[1023] = '\0';
+        if (strlen(testLine) > 0) strncat(testLine, " ", 1023 - strlen(testLine));
+        strncat(testLine, word, 1023 - strlen(testLine));
+
+        if (MeasureText(testLine, tam) > maxScaledW && strlen(line) > 0) {
+            numLines++;
+            strcpy(line, word);
+        } else {
+            strcpy(line, testLine);
+        }
+        word = strtok(NULL, " ");
+    }
+    if (strlen(line) > 0) numLines++;
+    if (numLines < 1) numLines = 1;
+
+    return (float)(numLines * (tamanhoFonte + 4));
+}
+
+static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
+    if (suspectIndex < 0 || suspectIndex >= 3) return;
+    ChatHistory *hist = &g_chatHistories[suspectIndex];
+
+    Color textColor  = (Color){ 30, 32, 34, 255 };
+    Color bgColor    = (Color){ 120, 130, 110, 255 };
+    Color hoverColor = (Color){ 150, 160, 130, 255 };
+
+    // Barra de título da conversa com o nome do contato (verde-escuro padrão)
+    Rectangle rTitulo = { area.x, area.y, area.width, 16 };
+    DrawRectangleRec(ParaTela(rTitulo), textColor);
+    const char *nomesSuspeitos[] = { "PATRÍCIA", "ANDRÉ", "LUCAS" };
+    DrawTextInArea(nomesSuspeitos[suspectIndex], rTitulo, 10, bgColor);
+
+    // Área do corpo do chat (fundo verde-oliva padrão da paleta)
+    Rectangle rCorpo = { area.x, area.y + 16, area.width, area.height - 16 };
+    Rectangle rCorpoTela = ParaTela(rCorpo);
+    DrawRectangleRec(rCorpoTela, bgColor);
+    DrawRectangleLinesEx(rCorpoTela, 2, textColor);
+
+    if (hist->count == 0) {
+        DrawTextInArea("(Nenhuma mensagem anterior)", rCorpo, 9, textColor);
+        return;
+    }
+
+    // Calcula a altura de cada bolha no espaço 640x360
+    float maxBubbleW = area.width - 16.0f; // ~210px
+    float bubbleHeights[MAX_CHAT_MESSAGES];
+    float totalH = 4.0f;
+
+    for (int i = 0; i < hist->count; i++) {
+        float textH = MedirAlturaTextoQuebrado(hist->entries[i].text, maxBubbleW - 10.0f, 9);
+        bubbleHeights[i] = 14.0f + textH + 4.0f;
+        totalH += bubbleHeights[i] + 4.0f;
+    }
+
+    float visivelH = rCorpo.height - 6.0f;
+    float maxScroll = (totalH > visivelH) ? (totalH - visivelH) : 0.0f;
+
+    // Rolagem com a roda do mouse quando o ponteiro estiver em cima da tela do chat
+    Vector2 mouse = RayCanvasGetMousePosition();
+    if (CheckCollisionPointRec(mouse, rCorpoTela)) {
+        float wheel = GetMouseWheelMove();
+        if (wheel != 0) {
+            hist->scrollOffset -= wheel * 18.0f;
+        }
+    }
+    if (hist->scrollOffset < 0) hist->scrollOffset = 0;
+    if (hist->scrollOffset > maxScroll) hist->scrollOffset = maxScroll;
+
+    // Recorte para não vazar fora do painel
+    if (rCorpoTela.width > 4 && rCorpoTela.height > 4) {
+        BeginScissorMode((int)rCorpoTela.x + 2, (int)rCorpoTela.y + 2,
+                         (int)rCorpoTela.width - 4, (int)rCorpoTela.height - 4);
+
+        float currY = rCorpo.y + 4.0f - hist->scrollOffset;
+        for (int i = 0; i < hist->count; i++) {
+            float bH = bubbleHeights[i];
+            float bW = maxBubbleW;
+            bool isPl = hist->entries[i].is_player;
+
+            // Bolha do jogador à direita; do NPC à esquerda
+            float bX = isPl ? (area.x + area.width - bW - 4.0f) : (area.x + 4.0f);
+            Rectangle rBubble = { bX, currY, bW, bH };
+            Rectangle rBubbleTela = ParaTela(rBubble);
+
+            if (rBubbleTela.y + rBubbleTela.height >= rCorpoTela.y && rBubbleTela.y <= rCorpoTela.y + rCorpoTela.height) {
+                // Cores harmonizadas com a paleta oficial (hoverColor e tom claro)
+                Color bCor = isPl ? hoverColor : (Color){ 135, 145, 125, 255 };
+                DrawRectangleRec(rBubbleTela, bCor);
+                DrawRectangleLinesEx(rBubbleTela, 1, textColor);
+
+                // Texto em textColor padrão (tamanho aumentado para maior legibilidade)
+                DrawTextLeftAligned(hist->entries[i].speaker, (Vector2){ bX + 5, currY + 3 }, 8, textColor);
+                DrawTextWrappedLeftAligned(hist->entries[i].text, (Vector2){ bX + 5, currY + 14 }, bW - 10.0f, 9, textColor);
+            }
+            currY += bH + 4.0f;
+        }
+
+        EndScissorMode();
+    }
+
+    // Barra de rolagem visual
+    if (maxScroll > 0) {
+        float barH = (visivelH / totalH) * visivelH;
+        if (barH < 8.0f) barH = 8.0f;
+        float barY = rCorpo.y + 3.0f + (hist->scrollOffset / maxScroll) * (visivelH - barH);
+        Rectangle rBar = { area.x + area.width - 4, barY, 2, barH };
+        DrawRectangleRec(ParaTela(rBar), textColor);
+    }
+}
+
 static void DrawInterrogationTexts(void) {
     Color textColor = (Color){ 30, 32, 34, 255 };
     Color bgColor = (Color){ 120, 130, 110, 255 }; 
@@ -443,14 +655,14 @@ static void DrawInterrogationTexts(void) {
     char bufTokens[32];
     if (global_infinite_tokens) sprintf(bufTokens, "Tokens: infinitos");
     else                        sprintf(bufTokens, "Tokens: %d", global_tokens);
-    DrawTextLeftAligned(bufTokens, (Vector2){ 280, 10 }, 10, textColor);
+    DrawTextLeftAligned(bufTokens, (Vector2){ DIALOG_BOX_X, 6 }, 10, textColor);
 
     char ficha[256];
-    sprintf(ficha, "LOCAL:\nSala de Interrogatorio");
+    sprintf(ficha, "LOCAL:\nSala de Interrogatório");
     DrawTextWrappedLeftAligned(ficha, (Vector2){ 10, 322 }, 250.0f, 10, textColor);
 
     if (!g_dialogLoaded) {
-        const char *labels[] = { "Ir até Patricia", "Ir até Caio", "Ir até Lucas" };
+        const char *labels[] = { "Ir até Patrícia", "Ir até André", "Ir até Lucas" };
         int startY = 80; // (360 - 136) / 2
         for (int i = 0; i < 3; i++) {
             Rectangle choiceArea = { 55, startY + (i * 50), 160, 36 }; // 50 = 36 height + 14 spacing
@@ -469,32 +681,20 @@ static void DrawInterrogationTexts(void) {
 
     DrawTextLeftAligned(node->speaker, (Vector2){ 35, 303 }, 12, textColor);
 
-    // Mesma lista que o clique usa (ver UpdateGameplay)
+    // 1) Janela unificada da conversa estilo chat (ocupa o espaço até os botões)
+    Rectangle chatArea = { DIALOG_BOX_X, 18, DIALOG_BOX_W, 230 };
+    DesenharHistoricoChat(chatArea, g_suspeitoAtual);
+
+    // 3) Botões de respostas do jogador
     DialogChoice active_choices[MAX_CHOICES];
     int active_count = HasTokens() ? GetAvailableChoices(g_tree, active_choices) : 0;
 
-    int total_buttons = active_count + 1;
-    int startY = 355 - (total_buttons * 20);
+    int startY = 252;
     int exitY = startY;
-
-    int textHeight = 90;
-    int boxY = startY - textHeight - 10;
-
-    Rectangle nameBox = { 280, boxY - 14, 70, 14 };
-    Rectangle rNameBox = ParaTela(nameBox);
-    DrawRectangleRec(rNameBox, bgColor);
-    DrawRectangleLinesEx(rNameBox, 2, textColor);
-    DrawTextInArea(node->speaker, nameBox, 10, textColor);
-
-    Rectangle textBox = { 280, boxY, 200, textHeight };
-    Rectangle rTextBox = ParaTela(textBox);
-    DrawRectangleRec(rTextBox, bgColor);
-    DrawRectangleLinesEx(rTextBox, 2, textColor);
-    DrawTextWrappedLeftAligned(node->text, (Vector2){ 285, boxY + 5 }, 190.0f, 10, textColor);
 
     if (HasTokens()) {
         for (int i = 0; i < active_count; i++) {
-            Rectangle choiceArea = { 280, startY + (i * 20), 200, 18 };
+            Rectangle choiceArea = { DIALOG_BOX_X, startY + (i * (int)DIALOG_BTN_STEP), DIALOG_BOX_W, DIALOG_BTN_H };
             Rectangle rTela = ParaTela(choiceArea);
             
             bool hover = CheckCollisionPointRec(RayCanvasGetMousePosition(), rTela);
@@ -504,10 +704,10 @@ static void DrawInterrogationTexts(void) {
             DrawRectangleLinesEx(rTela, 2, textColor);
             DrawTextInArea(active_choices[i].text, choiceArea, 10, textColor);
         }
-        exitY = startY + (active_count * 20);
+        exitY = startY + (active_count * (int)DIALOG_BTN_STEP);
     }
 
-    Rectangle exitArea = { 280, exitY, 200, 18 };
+    Rectangle exitArea = { DIALOG_BOX_X, exitY, DIALOG_BOX_W, DIALOG_BTN_H };
     Rectangle rTela = ParaTela(exitArea);
     bool hover = CheckCollisionPointRec(RayCanvasGetMousePosition(), rTela);
     Color boxColor = hover ? hoverColor : bgColor;
@@ -516,7 +716,7 @@ static void DrawInterrogationTexts(void) {
     if (HasTokens()) {
         DrawTextInArea("Pode voltar ao trabalho.", exitArea, 10, textColor);
     } else {
-        DrawTextInArea("To cansado, depois falo contigo.", exitArea, 10, textColor);
+        DrawTextInArea("Tô cansado, depois falo contigo.", exitArea, 10, textColor);
     }
 }
 
@@ -541,7 +741,8 @@ void GameplaySceneResetDialogues(void) {
     }
     g_treesLoaded = false;
     g_dialogLoaded = false;
-        g_tree = NULL;
+    g_tree = NULL;
+    memset(g_chatHistories, 0, sizeof(g_chatHistories));
 
     // Dia novo: a dica volta a ficar disponivel
     g_dicaUsadaHoje = false;
@@ -582,11 +783,30 @@ void InitGameplayScene(void) {
     g_tree = NULL;
     
     if (!g_treesLoaded) {
-        LoadDialogTree("assets/dialogues/npc_alpha.txt", &g_trees[0]);
-        LoadDialogTree("assets/dialogues/npc_beta.txt", &g_trees[1]);
-        LoadDialogTree("assets/dialogues/npc_gamma.txt", &g_trees[2]);
+        int dia = GameStateGetDay();
+        char path[128];
+        snprintf(path, sizeof path, "assets/dialogues/patricia_dia%d.txt", dia);
+        LoadDialogTree(path, &g_trees[0]);
+
+        snprintf(path, sizeof path, "assets/dialogues/andre_dia%d.txt", dia);
+        LoadDialogTree(path, &g_trees[1]);
+
+        snprintf(path, sizeof path, "assets/dialogues/lucas_dia%d.txt", dia);
+        LoadDialogTree(path, &g_trees[2]);
         g_treesLoaded = true;
     }
+
+    g_charTextures[0] = LoadTexture("assets/gameplay_scene/char_patricia.png");
+    GenTextureMipmaps(&g_charTextures[0]);
+    SetTextureFilter(g_charTextures[0], TEXTURE_FILTER_BILINEAR);
+
+    g_charTextures[1] = LoadTexture("assets/gameplay_scene/char_andre.png");
+    GenTextureMipmaps(&g_charTextures[1]);
+    SetTextureFilter(g_charTextures[1], TEXTURE_FILTER_BILINEAR);
+
+    g_charTextures[2] = LoadTexture("assets/gameplay_scene/char_lucas.png");
+    GenTextureMipmaps(&g_charTextures[2]);
+    SetTextureFilter(g_charTextures[2], TEXTURE_FILTER_BILINEAR);
 
     g_telaFechada = LoadTexture("assets/gameplay_scene/spr_tela_fechada.png");
     SetTextureFilter(g_telaFechada, TEXTURE_FILTER_POINT);
@@ -784,7 +1004,7 @@ static int TextoQuebrado(const char *txt, float x, float y, float largura,
             linhas++;
             snprintf(linha, sizeof linha, "%s", palavra);
         } else {
-            snprintf(linha, sizeof linha, "%s", teste);
+            snprintf(linha, sizeof linha, "%.*s", (int)(sizeof(linha) - 1), teste);
         }
     }
 
@@ -900,6 +1120,7 @@ static void UpdateGameplay(void) {
     Vector2 mouse = RayCanvasGetMousePosition();
     Rectangle seta = ParaTela(g_menuAberto ? SETA_ABERTA : SETA_FECHADA);
     bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    bool hover = CheckCollisionPointRec(mouse, seta);
 
     if (g_dialogLoaded) {
         DialogNode *node = GetCurrentNode(g_tree);
@@ -908,27 +1129,47 @@ static void UpdateGameplay(void) {
             DialogChoice active_choices[MAX_CHOICES];
             int active_count = HasTokens() ? GetAvailableChoices(g_tree, active_choices) : 0;
 
-            int total_buttons = active_count + 1;
-            int startY = 355 - (total_buttons * 20);
+            int startY = 252;
             int exitY = startY;
 
             if (HasTokens()) {
                 for (int i = 0; i < active_count; i++) {
-                    Rectangle choiceArea = { 280, startY + (i * 20), 200, 18 };
-                    if (clicou && CheckCollisionPointRec(mouse, ParaTela(choiceArea))) {
-                        MakeChoiceById(g_tree, active_choices[i].next_node);
-                        return;
+                    Rectangle choiceArea = { DIALOG_BOX_X, startY + (i * (int)DIALOG_BTN_STEP), DIALOG_BOX_W, DIALOG_BTN_H };
+                    if (CheckCollisionPointRec(mouse, ParaTela(choiceArea))) {
+                        hover = true;
+                        if (clicou) {
+                            // Registra no histórico se o nó anterior era falado pelo NPC e ainda não constava
+                            if (node && strcmp(node->speaker, "Você") != 0) {
+                                AdicionarMensagemChat(g_suspeitoAtual, node->speaker, node->text, false);
+                            }
+
+                            // Registra a fala/pergunta do jogador
+                            AdicionarMensagemChat(g_suspeitoAtual, "Você", active_choices[i].text, true);
+
+                            // Transiciona para o nó escolhido
+                            MakeChoiceById(g_tree, active_choices[i].next_node);
+
+                            // Registra a resposta do NPC (se houver e não for o jogador)
+                            DialogNode *newNode = GetCurrentNode(g_tree);
+                            if (newNode && strcmp(newNode->speaker, "Você") != 0) {
+                                AdicionarMensagemChat(g_suspeitoAtual, newNode->speaker, newNode->text, false);
+                            }
+                            return;
+                        }
                     }
                 }
-                exitY = startY + (active_count * 20);
+                exitY = startY + (active_count * (int)DIALOG_BTN_STEP);
             }
             
-            Rectangle exitArea = { 280, exitY, 200, 18 };
-            if (clicou && CheckCollisionPointRec(mouse, ParaTela(exitArea))) {
-                g_dialogLoaded = false;
-                g_tree = NULL;
-                EncerrarEntrevistaLiberada();
-                return;
+            Rectangle exitArea = { DIALOG_BOX_X, exitY, DIALOG_BOX_W, DIALOG_BTN_H };
+            if (CheckCollisionPointRec(mouse, ParaTela(exitArea))) {
+                hover = true;
+                if (clicou) {
+                    g_dialogLoaded = false;
+                    g_tree = NULL;
+                    EncerrarEntrevistaLiberada();
+                    return;
+                }
             }
         }
     } else {
@@ -936,11 +1177,20 @@ static void UpdateGameplay(void) {
         for (int i = 0; i < 3; i++) {
             Rectangle choiceArea = { 55, startY + (i * 50), 160, 36 };
             if (CheckCollisionPointRec(mouse, ParaTela(choiceArea))) {
+                hover = true;
                 if (clicou) {
                     g_tree = &g_trees[i];
                     g_dialogLoaded = true;
-                    g_funcionario = i;     // o botao clicado define qual ficha a pasta abre
+                    g_suspeitoAtual = i;
+                    g_funcionario = SUSPECT_FICHA_INDEX[i]; // o botao clicado define qual ficha a pasta abre
                     g_fichaAtual = -1;     // fecha a ficha do funcionario anterior, se estiver aberta
+                    // Se for a primeira vez e a fala inicial for de um NPC (ex: Patrícia, Lucas), registra no histórico
+                    if (g_chatHistories[i].count == 0) {
+                        DialogNode *firstNode = GetCurrentNode(g_tree);
+                        if (firstNode && strcmp(firstNode->speaker, "Você") != 0) {
+                            AdicionarMensagemChat(i, firstNode->speaker, firstNode->text, false);
+                        }
+                    }
                     return;
                 }
             }
@@ -952,9 +1202,6 @@ static void UpdateGameplay(void) {
         TraceLog(LOG_INFO, "Clique na imagem: %d, %d",
                  (int)(mouse.x - tela.x), (int)(mouse.y - tela.y));
     }
-
-    // Cursor de maozinha sobre itens clicaveis
-    bool hover = CheckCollisionPointRec(mouse, seta);
 
     // 1) Seta: abre/fecha o menu
     if (clicou && CheckCollisionPointRec(mouse, seta)) {
@@ -990,6 +1237,19 @@ void UpdateDrawGameplayScene(void) {
     // Background atras da tela (a moldura da tela cobre as bordas)
     Rectangle bgOrigem = { 0, 0, (float)g_background.width, (float)g_background.height };
     DrawTexturePro(g_background, bgOrigem, ParaTela(BG_AREA), (Vector2){ 0, 0 }, 0.0f, WHITE);
+
+    // Personagem desenhado na parte inferior centralizada do escritorio durante a conversa
+    if (g_dialogLoaded && g_suspeitoAtual >= 0 && g_suspeitoAtual < 3) {
+        Texture2D tex = g_charTextures[g_suspeitoAtual];
+        if (tex.id > 0) {
+            float charW = 180.0f;
+            float charH = 180.0f;
+            Rectangle charDest = { (BG_AREA.width - charW) / 2.0f, 112.0f, charW, charH };
+            Rectangle charOrigem = { 0, 0, (float)tex.width, (float)tex.height };
+            DrawTexturePro(tex, charOrigem, ParaTela(charDest), (Vector2){ 0, 0 }, 0.0f, WHITE);
+            DrawRectangleLinesEx(ParaTela(charDest), 1.0f, (Color){ 30, 32, 34, 255 });
+        }
+    }
     // 1) Fundo
     RayCanvasDrawTexture(g_telaFechada, GetTelaRect(), WHITE);
 
@@ -1043,6 +1303,35 @@ void UpdateDrawGameplayScene(void) {
         Rectangle area   = { x, y, (float)g_ficha.width, (float)g_ficha.height };
         Rectangle origem = { 0, 0, (float)g_ficha.width, (float)g_ficha.height };
         DrawTexturePro(g_ficha, origem, ParaTela(area), (Vector2){ 0, 0 }, 0.0f, WHITE);
+
+        // Foto do funcionario no slot da ficha (ajustado exatamente dentro do contorno sem sobrepor)
+        int charIdx = -1;
+        for (int s = 0; s < 3; s++) {
+            if (SUSPECT_FICHA_INDEX[s] == g_fichaAtual) {
+                charIdx = s;
+                break;
+            }
+        }
+        if (charIdx >= 0 && g_charTextures[charIdx].id > 0) {
+            Texture2D tex = g_charTextures[charIdx];
+            Rectangle fotoSlot = { 16.0f, 42.0f, 58.0f, 70.0f };
+            Rectangle rFotoTela = ParaTela(NaFicha(fotoSlot));
+            float aspect = fotoSlot.width / fotoSlot.height;
+            float srcW = (float)tex.width;
+            float srcH = (float)tex.height;
+            float srcX = 0.0f;
+            float srcY = 0.0f;
+            if (srcW / srcH > aspect) {
+                float newW = srcH * aspect;
+                srcX = (srcW - newW) / 2.0f;
+                srcW = newW;
+            } else {
+                float newH = srcW / aspect;
+                srcY = (srcH - newH) / 2.0f;
+                srcH = newH;
+            }
+            DrawTexturePro(tex, (Rectangle){ srcX, srcY, srcW, srcH }, rFotoTela, (Vector2){ 0, 0 }, 0.0f, WHITE);
+        }
 
         // Botao X escurece no hover
         Rectangle fechar = ParaTela(NaFicha(FICHA_FECHAR));
@@ -1100,6 +1389,9 @@ void UnloadGameplayScene(void) {
     UnloadTexture(g_caixaComX);
     UnloadTexture(g_dicaAceso);
     UnloadTexture(g_dicaApagado);
+    for (int i = 0; i < 3; i++) {
+        UnloadTexture(g_charTextures[i]);
+    }
     EncerrarEntrevistaLiberada();   // sair pelo mapa tambem encerra a entrevista
     RayCanvasClose();
 }

@@ -1,0 +1,26 @@
+NPC: lucas
+DIA: 2
+
+[NODE: start]
+SPEAKER: Lucas
+TEXT: Boa! Estava esperando revê-lo!
+CHOICE: Como foi a reunião ontem? -> reuniao
+CHOICE: Como era trabalhar no seu outro emprego? -> outro_emprego
+CHOICE: Você percebeu algo estranho recentemente? -> estranho
+
+[NODE: reuniao]
+SPEAKER: Lucas
+TEXT: Muito agitada! Estamos finalizando a campanha do hall de robótica.
+
+[NODE: outro_emprego]
+SPEAKER: Lucas
+TEXT: Lá na sorveteria não tinha tantas demandas com prazo de publicações e propagandas como agora. Tenho saudade daquela época, era bem mais leve.
+CHOICE: Você tem contato com a TI ou setores sensíveis? -> contato_ti
+
+[NODE: contato_ti]
+SPEAKER: Lucas
+TEXT: Com a TI, sim, principalmente quando precisamos de dados de engajamento. Ah, e eu também já acessei o sistema de currículos uma vez, para cruzar candidatos com o perfil de campanha.
+
+[NODE: estranho]
+SPEAKER: Lucas
+TEXT: Hmm, pensando bem, sim. Essas respostas automáticas do sistema de recrutamento estão ficando mais formais, e acho que já vi o pessoal do jurídico perguntando sobre isso no corredor. Fiquei curioso.

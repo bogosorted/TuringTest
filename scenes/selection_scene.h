@@ -5,9 +5,12 @@
 
 // Funcionarios que o jogador pode escolher para interrogar
 typedef enum {
-    EMPLOYEE_ALPHA,
-    EMPLOYEE_BETA,
-    EMPLOYEE_GAMMA
+    EMPLOYEE_PATRICIA,
+    EMPLOYEE_ANDRE,
+    EMPLOYEE_LUCAS,
+    EMPLOYEE_ALPHA = EMPLOYEE_PATRICIA,
+    EMPLOYEE_BETA  = EMPLOYEE_ANDRE,
+    EMPLOYEE_GAMMA = EMPLOYEE_LUCAS
 } Employee;
 
 void InitSelectionScene(void);

@@ -1,0 +1,21 @@
+NPC: lucas
+DIA: 1
+
+[NODE: start]
+SPEAKER: Lucas
+TEXT: Ah, boa tarde, não estava esperando um novo rosto! Seja muito bem-vindo! Eu sou o Lucas, cuido da parte de marketing e campanhas. Qualquer coisa sobre comunicação interna pode contar comigo.
+CHOICE: Qual é exatamente sua função na empresa? -> funcao
+CHOICE: Como é a sua rotina aqui? -> rotina
+CHOICE: Você já trabalhou em outra empresa antes? -> empresa
+
+[NODE: funcao]
+SPEAKER: Lucas
+TEXT: Eu planejo as campanhas da RASEC, desde o conteúdo até as métricas. Ultimamente estou focado no lançamento de um novo produto! Você já viu a vitrine de robótica no hall? Fui eu que sugeri aquela ideia.
+
+[NODE: rotina]
+SPEAKER: Lucas
+TEXT: Ah, é bem dinâmica! Reunião de manhã, depois criação, depois aquele café com o pessoal, que é onde sai metade das boas ideias. Eu adoro isso. Você vai almoçar com a gente um dia?
+
+[NODE: empresa]
+SPEAKER: Lucas
+TEXT: Já sim! Trabalhei em uma agência de publicidade por uns dois anos, antes de vir pra cá. Aprendi muito sobre prazo e pressão. A RASEC é mais séria, mas eu gosto desse equilíbrio criativo.

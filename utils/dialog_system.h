@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #define MAX_CHOICES 3
-#define MAX_TEXT_LENGTH 256
+#define MAX_TEXT_LENGTH 512
 #define MAX_ID_LENGTH 32
 
 typedef struct {

@@ -1,0 +1,36 @@
+NPC: patricia
+DIA: 1
+
+[NODE: start]
+SPEAKER: Patrícia
+TEXT: ...Ah, bom dia. Sou a Patrícia, do Financeiro. Você é o novato da checagem, né? Desculpe, estava concentrada nas planilhas. Em que posso ajudar?
+CHOICE: Qual é a sua função específica no setor? -> funcao
+CHOICE: Você prefere trabalhar reservada? -> reservada
+CHOICE: Algum conselho sobre o funcionamento? -> conselho
+
+[NODE: funcao]
+SPEAKER: Patrícia
+TEXT: ...Eu faço a conciliação bancária e a verificação das notas fiscais. É um trabalho quieto, mas exige muita atenção.
+CHOICE: Como costuma ser a rotina do setor? -> rotina
+
+[NODE: rotina]
+SPEAKER: Patrícia
+TEXT: Bastante analítica. Passo a maior parte do dia revisando números e checando lançamentos de contas no sistema.
+
+[NODE: reservada]
+SPEAKER: Patrícia
+TEXT: Sim... Prefiro evitar distrações. Lidar com números exige silêncio para não cometer erros de digitação.
+CHOICE: O setor de finanças sofre com prazos? -> prazos
+
+[NODE: prazos]
+SPEAKER: Patrícia
+TEXT: Em época de fechamento mensal sim, fica bastante tenso. Mas no dia a dia mantemos o fluxo em ordem.
+
+[NODE: conselho]
+SPEAKER: Patrícia
+TEXT: Siga os manuais e evite chamar atenção desnecessária. É a forma mais segura de trabalhar por aqui.
+CHOICE: Onde fica o arquivo de contas do setor? -> arquivo
+
+[NODE: arquivo]
+SPEAKER: Patrícia
+TEXT: Fica na sala de arquivo no final do corredor do Financeiro. O acesso exige credencial do setor.

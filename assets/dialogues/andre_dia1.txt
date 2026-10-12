@@ -1,0 +1,26 @@
+NPC: andre
+DIA: 1
+
+[NODE: start]
+SPEAKER: Você
+TEXT: Você se aproxima da mesa de André, que está conferindo pilhas de notas de remessa.
+CHOICE: Oi, sou o novo estagiário. -> intro
+
+[NODE: intro]
+SPEAKER: André
+TEXT: Beleza. André, logística. Você é o estagiário novo, então já sabe: pontualidade e objetividade. Fala logo o que precisa.
+CHOICE: Qual é exatamente o seu papel na empresa? -> papel
+CHOICE: Como é a sua rotina aqui? -> rotina
+CHOICE: Você conhece o pessoal de outros setores? -> colegas
+
+[NODE: papel]
+SPEAKER: André
+TEXT: Coordeno o estoque e as entregas de peças. Se uma caixa atrasa, a linha de produção para. Resumindo: se você não souber o seu papel, aprende rápido.
+
+[NODE: rotina]
+SPEAKER: André
+TEXT: Correria. Chego cedo, confiro o carregamento, resolvo problema de transportadora. Não tenho tempo pra enrolação, então se precisar de algo, manda direto.
+
+[NODE: colegas]
+SPEAKER: André
+TEXT: Conheço. O pessoal do RH e do marketing vive pedindo coisa com urgência. Não tenho nada contra, mas quando demora, eu cobro mesmo.
