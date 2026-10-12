@@ -12,10 +12,12 @@ typedef enum { PHASE_NONE, PHASE_FADE_OUT, PHASE_TEXT } Phase;
 static Phase g_phase = PHASE_NONE;
 static float g_timer = 0.0f;
 static char  g_text[64] = "";
+static bool  g_showText = true;   // false = transicao so com fade-out
 
 void TransitionStart(const char *texto) {
     if (g_phase != PHASE_NONE) return;
-    snprintf(g_text, sizeof g_text, "%s", texto);
+    snprintf(g_text, sizeof g_text, "%s", texto ? texto : "");
+    g_showText = (g_text[0] != '\0');
     g_phase = PHASE_FADE_OUT;
     g_timer = 0.0f;
 }
@@ -40,7 +42,7 @@ TransitionEvent TransitionUpdate(void) {
 
         if (g_timer >= FADE_OUT_TIME) {
             RayCanvasSetFade(0.0f);
-            g_phase = PHASE_TEXT;
+            g_phase = g_showText ? PHASE_TEXT : PHASE_NONE;
             g_timer = 0.0f;
             return TRANSITION_FADE_OUT_DONE;
         }

@@ -1,8 +1,10 @@
 #include <raylib.h>
+#include <stddef.h>
 #include "scenes/menu_scene.h"
 #include "scenes/selection_scene.h"
 #include "scenes/gameplay_scene.h"
 #include "scenes/verdict_scene.h"
+#include "scenes/intro_scene.h"
 #include "utils/game_state.h"
 #include "utils/dialog_system.h"
 #include "utils/transition.h"
@@ -10,6 +12,7 @@
 // Lista das telas que o jogo tem
 typedef enum {
     SCENE_MENU,
+    SCENE_INTRO,       // texto de contexto (antes do Dia 1)
     SCENE_SELECTION,   // escolher cenario
     SCENE_GAMEPLAY,    // tela de interrogatorio
     SCENE_VERDICT      // "qual deles e a IA?" (depois do ultimo dia)
@@ -18,6 +21,7 @@ typedef enum {
 static void InitScene(Scene scene) {
     switch (scene) {
         case SCENE_MENU:      InitMenuScene();      break;
+        case SCENE_INTRO:     InitIntroScene();     break;
         case SCENE_SELECTION: InitSelectionScene(); break;
         case SCENE_GAMEPLAY:  InitGameplayScene();  break;
         case SCENE_VERDICT:   InitVerdictScene();   break;
@@ -27,6 +31,7 @@ static void InitScene(Scene scene) {
 static void UnloadScene(Scene scene) {
     switch (scene) {
         case SCENE_MENU:      UnloadMenuScene();      break;
+        case SCENE_INTRO:     UnloadIntroScene();     break;
         case SCENE_SELECTION: UnloadSelectionScene(); break;
         case SCENE_GAMEPLAY:  UnloadGameplayScene();  break;
         case SCENE_VERDICT:   UnloadVerdictScene();   break;
@@ -44,6 +49,7 @@ static void SwitchScene(Scene *current, Scene next) {
 static Scene nextScene = SCENE_MENU;
 
 // Fade-out -> tela preta com texto (3s) -> nextScene
+// (texto NULL = so o fade-out, a cena nova faz o proprio fade-in)
 static void GoToWithTransition(Scene destino, const char *texto) {
     nextScene = destino;
     TransitionStart(texto);
@@ -84,6 +90,14 @@ int main(void) {
                     GameStateNewRun();               // volta para o dia 1
                     ResetTokens();                   // tokens do dia 1
                     GameplaySceneResetDialogues();   // dialogos "nao vistos" de novo
+                    GoToWithTransition(SCENE_INTRO, NULL);   // fade-out -> texto de contexto
+                }
+                break;
+
+            case SCENE_INTRO:
+                UpdateDrawIntroScene();
+
+                if (IntroSceneShouldContinue() && !TransitionActive()) {
                     GoToWithTransition(SCENE_SELECTION,
                                        TextFormat("Dia %d", GameStateGetDay()));
                 }

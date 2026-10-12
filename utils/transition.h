@@ -12,7 +12,10 @@ typedef enum {
     TRANSITION_FINISHED         // o texto acabou: a nova cena ja pode aparecer
 } TransitionEvent;
 
-void TransitionStart(const char *texto);   // ignora se ja houver uma transicao
+// Inicia a transicao (ignora se ja houver uma).
+// texto == NULL ou "" -> so o fade-out, sem a tela preta com texto
+// (a cena nova aparece logo depois do fade-out e faz o proprio fade-in).
+void TransitionStart(const char *texto);
 TransitionEvent TransitionUpdate(void);    // chamar UMA vez por frame
 bool TransitionActive(void);               // true durante o fade-out e o texto
 bool TransitionShowingText(void);          // true na fase da tela preta com texto
