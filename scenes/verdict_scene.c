@@ -28,11 +28,11 @@
 // Infiltrated AI
 #define AI_INDEX        EMPLOYEE_LUCAS
 
-static Color textColor  = (Color){ 30, 32, 34, 255 };
-static Color bgColor    = (Color){ 120, 130, 110, 255 };
-static Color hoverColor = (Color){ 150, 160, 130, 255 };
-static Color selColor   = (Color){ 190, 200, 150, 255 };
-static Color offColor   = (Color){ 80, 85, 75, 255 };
+static Color textColor  = { 30, 32, 34, 255 };
+static Color bgColor    = { 120, 130, 110, 255 };
+static Color hoverColor = { 150, 160, 130, 255 };
+static Color selColor   = { 190, 200, 150, 255 };
+static Color offColor   = { 80, 85, 75, 255 };
 
 static const char *NOMES[3] = { "Patrícia", "André", "Lucas" };
 

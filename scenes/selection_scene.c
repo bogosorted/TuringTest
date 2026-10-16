@@ -24,9 +24,9 @@
 #define NEXT_FONT      12
 #define NEXT_MARGIN    12
 
-static Color textColor = (Color){ 30, 32, 34, 255 };
-static Color bgColor = (Color){ 120, 130, 110, 255 };
-static Color hoverColor = (Color){ 150, 160, 130, 255 };
+static Color textColor = { 30, 32, 34, 255 };
+static Color bgColor = { 120, 130, 110, 255 };
+static Color hoverColor = { 150, 160, 130, 255 };
 
 static bool g_shouldStartInterrogation = false;
 static bool g_shouldAdvanceDay = false;
