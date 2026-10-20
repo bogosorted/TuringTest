@@ -3,7 +3,8 @@
 
 #include <stdbool.h>
 
-#define MAX_CHOICES 3
+#define MAX_CHOICES 2
+#define MAX_NODE_CHOICES 8
 #define MAX_TEXT_LENGTH 512
 #define MAX_ID_LENGTH 32
 
@@ -17,7 +18,7 @@ typedef struct {
     char speaker[MAX_ID_LENGTH];
     char text[MAX_TEXT_LENGTH];
     int choice_count;
-    DialogChoice choices[MAX_CHOICES];
+    DialogChoice choices[MAX_NODE_CHOICES];
     bool visited;
 } DialogNode;
 
@@ -29,8 +30,8 @@ typedef struct {
     int current_node_index;
 } DialogTree;
 
-// Economia de Tokens do Jogo (6 por dia)
-#define TOKENS_PER_DAY 6
+// Economia de Tokens do Jogo (12 por dia)
+#define TOKENS_PER_DAY 12
 extern int global_tokens;
 
 // Modo desenvolvedor: true = tokens ilimitados (nao bloqueia e nao gasta).

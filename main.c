@@ -56,6 +56,12 @@ static void GoToWithTransition(Scene destino, const char *texto) {
 }
 
 int main(void) {
+    // Garante que o jogo encontre os arquivos em assets/ mesmo se rodar de build/
+    ChangeDirectory(GetApplicationDirectory());
+    if (!DirectoryExists("assets") && DirectoryExists("../assets")) {
+        ChangeDirectory("..");
+    }
+
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(640, 360, "Turing Test");
     ToggleFullscreen();

@@ -59,7 +59,7 @@ bool LoadDialogTree(const char *filepath, DialogTree *tree) {
                 strncpy(curr->text, line + 6, MAX_TEXT_LENGTH - 1);
             } else if (strncmp(line, "CHOICE: ", 8) == 0) {
                 char *arrow = strstr(line, " -> ");
-                if (arrow && curr->choice_count < MAX_CHOICES) {
+                if (arrow && curr->choice_count < MAX_NODE_CHOICES) {
                     *arrow = '\0';
                     int idx = curr->choice_count;
                     strncpy(curr->choices[idx].text, line + 8, MAX_TEXT_LENGTH - 1);
