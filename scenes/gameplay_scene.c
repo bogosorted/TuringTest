@@ -99,6 +99,23 @@ static bool g_menuAberto = false;
 static bool g_shouldClose = false;
 static bool g_irParaSelecao = false;  // true quando clica no mapa
 
+// Passos do tutorial interativo forcado no Dia 1
+typedef enum {
+    TUT_PASSO_SUSPEITO = 0,     // 1/6: Escolher um suspeito para conversar
+    TUT_PASSO_ABRIR_MENU,       // 2/6: Abrir a aba lateral de ferramentas [<]
+    TUT_PASSO_ABRIR_FICHA,      // 3/6: Clicar na Pasta de Arquivos para ver a ficha
+    TUT_PASSO_FECHAR_FICHA,     // 4/6: Ler a ficha e clicar no [X] para fechar
+    TUT_PASSO_PERGUNTA,         // 5/6: Fazer uma pergunta e entender os Tokens
+    TUT_PASSO_ABRIR_PRANCHETA,  // 6/6: Abrir a Prancheta de anomalias
+    TUT_PASSO_CONCLUSAO         // Resumo da Dica Logica + Mapa e botao de iniciar
+} TutorialPasso;
+
+static TutorialPasso g_tutorialPasso = TUT_PASSO_SUSPEITO;
+
+static bool TutorialAtivo(void) {
+    return GameStateIsTutorialActive();
+}
+
 // ---------------------------------------------------------------
 // TEXTOS DO INTERROGATORIO
 // Troque aqui o que aparece na tela.
@@ -347,6 +364,7 @@ static void EncerrarEntrevistaLiberada(void) {
 // Cuida do botao e do painel da dica.
 // Devolve true se a dica "pegou" o mouse neste frame.
 static bool UpdateDica(void) {
+    if (TutorialAtivo()) return false;
     Vector2 mouse = RayCanvasGetMousePosition();
     bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 
@@ -753,7 +771,10 @@ void GameplaySceneResetDialogues(void) {
     memset(g_chatHistories, 0, sizeof(g_chatHistories));
 
     // Jogo novo (dia 1): limpa os checklists de todos os funcionarios
-    if (GameStateGetDay() == 1) memset(g_marcado, 0, sizeof g_marcado);
+    if (GameStateGetDay() == 1) {
+        memset(g_marcado, 0, sizeof g_marcado);
+        g_tutorialPasso = TUT_PASSO_SUSPEITO;
+    }
     // Dia novo: a dica volta a ficar disponivel
     g_dicaUsadaHoje = false;
     g_dicaAberta = false;
@@ -1043,6 +1064,10 @@ static bool UpdateFicha(void) {
         if (CheckCollisionPointRec(mouse, NaFicha(FICHA_FECHAR))) {
             g_fichaAtual = -1;
             g_arrastandoFicha = false;
+            if (TutorialAtivo() && g_tutorialPasso == TUT_PASSO_FECHAR_FICHA) {
+                g_menuAberto = false;
+                g_tutorialPasso = TUT_PASSO_PERGUNTA;
+            }
             return true;
         }
         // Clicou na ficha: comeca a arrastar
@@ -1124,11 +1149,225 @@ static bool UpdatePrancheta(void) {
     return true;
 }
 
+// ---------- Tutorial Interativo (Dia 1) ----------
+
+static const Rectangle TUT_BTN_COMECAR = { 18, 224, 180, 20 };
+
+static float PulsoTutorial(void) {
+    float t = (float)GetTime() * 1.5f;
+    t = t - (int)t;
+    float tri = (t < 0.5f) ? (t * 2.0f) : ((1.0f - t) * 2.0f);
+    return tri * tri * (3.0f - 2.0f * tri);
+}
+
+// Desenha uma moldura pulsante e uma seta animada apontando para o alvo
+static void DesenharDestaqueTutorial(Rectangle alvoVirtual, const char *setaTxt, int ladoSeta) {
+    float pulso = PulsoTutorial();
+    Rectangle rTela = ParaTela(alvoVirtual);
+    float escala = rTela.height / alvoVirtual.height;
+    Color corBrilho = (Color){ 225, 240, 155, 255 };
+    Color corEscura = (Color){ 20, 22, 18, 235 };
+
+    DrawRectangleRec(rTela, Fade(corBrilho, 0.08f + 0.12f * pulso));
+    DrawRectangleLinesEx(rTela, 3.5f * escala, corEscura);
+    DrawRectangleLinesEx(rTela, (1.5f + 1.5f * pulso) * escala, corBrilho);
+
+    if (!setaTxt || !setaTxt[0]) return;
+
+    float offset = 4.0f * pulso;
+    Rectangle badge = { 0, 0, 24, 16 };
+    if (ladoSeta == 0) { // esquerda do alvo (aponta ">>")
+        badge.x = alvoVirtual.x - badge.width - 4.0f - offset;
+        badge.y = alvoVirtual.y + (alvoVirtual.height - badge.height) / 2.0f;
+    } else if (ladoSeta == 1) { // direita do alvo (aponta "<<")
+        badge.x = alvoVirtual.x + alvoVirtual.width + 4.0f + offset;
+        badge.y = alvoVirtual.y + (alvoVirtual.height - badge.height) / 2.0f;
+    } else if (ladoSeta == 2) { // abaixo do alvo (aponta "^")
+        badge.x = alvoVirtual.x + (alvoVirtual.width - badge.width) / 2.0f;
+        badge.y = alvoVirtual.y + alvoVirtual.height + 3.0f + offset;
+    }
+
+    Rectangle rBadge = ParaTela(badge);
+    DrawRectangleRec(rBadge, corEscura);
+    DrawRectangleLinesEx(rBadge, 1.5f * escala, corBrilho);
+    DrawTextInArea(setaTxt, badge, 10, corBrilho);
+}
+
+// Desenha o card enxuto de instrucao do passo atual
+static void DesenharCardTutorial(Rectangle card, const char *titulo, const char *corpo, const char *acao) {
+    Color corEscura  = (Color){ 25, 28, 24, 255 };
+    Color corFundo   = (Color){ 125, 136, 114, 248 };
+    Color corRodape  = (Color){ 155, 168, 136, 255 };
+    Color corDestaque = (Color){ 225, 240, 155, 255 };
+
+    Rectangle sombra = { card.x + 3, card.y + 3, card.width, card.height };
+    DrawRectangleRec(ParaTela(sombra), Fade(BLACK, 0.45f));
+
+    Rectangle rCard = ParaTela(card);
+    float escala = rCard.height / card.height;
+    DrawRectangleRec(rCard, corFundo);
+    DrawRectangleLinesEx(rCard, 2.0f * escala, corEscura);
+
+    Rectangle rCabecalho = { card.x, card.y, card.width, 18 };
+    DrawRectangleRec(ParaTela(rCabecalho), corEscura);
+    DrawTextInArea(titulo, rCabecalho, 9, corDestaque);
+
+    char buf[512];
+    snprintf(buf, sizeof buf, "%s", corpo);
+    float currY = card.y + 23.0f;
+    char *p = buf;
+    while (p && *p) {
+        char *nl = strchr(p, '\n');
+        if (nl) *nl = '\0';
+        if (*p) {
+            DrawTextWrappedLeftAligned(p, (Vector2){ card.x + 8, currY }, card.width - 16, 9, corEscura);
+            currY += MedirAlturaTextoQuebrado(p, card.width - 16, 9);
+        } else {
+            currY += 5.0f;
+        }
+        if (!nl) break;
+        p = nl + 1;
+    }
+
+    if (acao && acao[0]) {
+        Rectangle rAcao = { card.x + 6, card.y + card.height - 22, card.width - 12, 16 };
+        Rectangle rAcaoTela = ParaTela(rAcao);
+        DrawRectangleRec(rAcaoTela, corRodape);
+        DrawRectangleLinesEx(rAcaoTela, 1.0f * escala, corEscura);
+        DrawTextInArea(acao, rAcao, 9, corEscura);
+    }
+}
+
+static bool UpdateTutorialFinal(void) {
+    if (!TutorialAtivo() || g_tutorialPasso != TUT_PASSO_CONCLUSAO) return false;
+    Vector2 mouse = RayCanvasGetMousePosition();
+    Rectangle rBtn = ParaTela(TUT_BTN_COMECAR);
+    if (CheckCollisionPointRec(mouse, rBtn)) {
+        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            g_pranchetaAberta = false;
+            g_menuAberto = false;
+            ResetTokens(); // devolve o token gasto na pergunta de teste
+            GameStateCompleteTutorial();
+            return true;
+        }
+    }
+    return false;
+}
+
+static void DesenharTutorial(void) {
+    if (!TutorialAtivo()) return;
+
+    switch (g_tutorialPasso) {
+        case TUT_PASSO_SUSPEITO: {
+            Rectangle alvo = { 51, 76, 168, 144 };
+            DesenharDestaqueTutorial(alvo, "<<", 1);
+            Rectangle card = { 282, 74, 222, 122 };
+            DesenharCardTutorial(
+                card,
+                "TUTORIAL 1/6 - A MISSÃO",
+                "Há 1 IA infiltrada entre estes 3 funcionários da RASEC.\n\nVocê tem 3 dias para descobrir quem é o impostor.",
+                "> Clique em um suspeito à esquerda"
+            );
+            break;
+        }
+        case TUT_PASSO_ABRIR_MENU: {
+            Rectangle alvo = { 596, 66, 42, 51 };
+            DesenharDestaqueTutorial(alvo, ">>", 0);
+            Rectangle card = { 10, 12, 248, 96 };
+            DesenharCardTutorial(
+                card,
+                "TUTORIAL 2/6 - FERRAMENTAS",
+                "Antes de interrogar, veja quem está na sua frente para notar mentiras ou desvios.",
+                "> Clique na seta [<] à direita"
+            );
+            break;
+        }
+        case TUT_PASSO_ABRIR_FICHA: {
+            Rectangle alvo = { 570, 108, 62, 56 };
+            DesenharDestaqueTutorial(alvo, ">>", 0);
+            Rectangle card = { 10, 12, 248, 96 };
+            DesenharCardTutorial(
+                card,
+                "TUTORIAL 3/6 - FICHA PESSOAL",
+                "A Pasta guarda o perfil confidencial, o cargo e os hábitos reais deste funcionário.",
+                "> Clique na Pasta no menu à direita"
+            );
+            break;
+        }
+        case TUT_PASSO_FECHAR_FICHA: {
+            if (g_fichaAtual >= 0) {
+                Rectangle alvoX = NaFicha(FICHA_FECHAR);
+                DesenharDestaqueTutorial(alvoX, ">>", 0);
+            }
+            Rectangle card = { 8, 12, 244, 114 };
+            DesenharCardTutorial(
+                card,
+                "TUTORIAL 4/6 - PERSONALIDADE",
+                "Compare a ficha com as respostas! IAs costumam contradizer a ficha ou segui-la de forma robótica.",
+                "> Leia a ficha e clique no [X] dela"
+            );
+            break;
+        }
+        case TUT_PASSO_PERGUNTA: {
+            Rectangle alvoTokens = { DIALOG_BOX_X - 3, 3, 86, 14 };
+            Rectangle alvoPerguntas = { DIALOG_BOX_X - 2, 250, DIALOG_BOX_W + 4, 49 };
+            DesenharDestaqueTutorial(alvoTokens, "", 0);
+            DesenharDestaqueTutorial(alvoPerguntas, ">>", 0);
+            Rectangle card = { 10, 12, 248, 102 };
+            DesenharCardTutorial(
+                card,
+                "TUTORIAL 5/6 - TOKENS E PERGUNTAS",
+                "Você tem 12 Tokens por dia (veja acima do chat). Cada pergunta gasta 1 Token!",
+                "> Clique em uma pergunta abaixo do chat"
+            );
+            break;
+        }
+        case TUT_PASSO_ABRIR_PRANCHETA: {
+            Rectangle alvo = { 569, 8, 64, 76 };
+            DesenharDestaqueTutorial(alvo, ">>", 0);
+            Rectangle card = { 10, 12, 248, 102 };
+            DesenharCardTutorial(
+                card,
+                "TUTORIAL 6/6 - ANOTAÇÕES",
+                "Veja a resposta no chat! Quando notar alguma falha suspeita, anote no seu Guia da Investigação.",
+                "> Clique na Prancheta (topo do menu)"
+            );
+            break;
+        }
+        case TUT_PASSO_CONCLUSAO: {
+            Rectangle alvoDica = { 526, 2, 36, 36 };
+            Rectangle alvoMapa = { 566, 282, 71, 65 };
+            DesenharDestaqueTutorial(alvoDica, "^", 2);
+            DesenharDestaqueTutorial(alvoMapa, ">>", 0);
+
+            Rectangle card = { 8, 12, 200, 238 };
+            DesenharCardTutorial(
+                card,
+                "PRONTO PARA INVESTIGAR!",
+                "Marque na prancheta as falhas de cada suspeito.\n\n- LÂMPADA (topo): 1 puzzle lógico por dia para ter perguntas grátis na conversa!\n\n- MAPA (menu): Use ao fim do dia para avançar até o Veredito.",
+                NULL
+            );
+
+            Rectangle rBtn = ParaTela(TUT_BTN_COMECAR);
+            float escala = rBtn.height / TUT_BTN_COMECAR.height;
+            bool hover = CheckCollisionPointRec(RayCanvasGetMousePosition(), rBtn);
+            Color corBtn = hover ? (Color){ 225, 240, 155, 255 } : (Color){ 165, 180, 140, 255 };
+            DrawRectangleRec(rBtn, corBtn);
+            DrawRectangleLinesEx(rBtn, 2.0f * escala, (Color){ 25, 28, 24, 255 });
+            DrawTextInArea("Começar Investigação! (12 Tokens)", TUT_BTN_COMECAR, 9, (Color){ 25, 28, 24, 255 });
+            break;
+        }
+    }
+}
+
 static void UpdateGameplay(void) {
     Vector2 mouse = RayCanvasGetMousePosition();
     Rectangle seta = ParaTela(g_menuAberto ? SETA_ABERTA : SETA_FECHADA);
     bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-    bool hover = CheckCollisionPointRec(mouse, seta);
+    bool tut = TutorialAtivo();
+    bool permiteSeta = !tut || (g_tutorialPasso == TUT_PASSO_ABRIR_MENU);
+    bool hover = permiteSeta && CheckCollisionPointRec(mouse, seta);
 
     if (g_dialogLoaded) {
         DialogNode *node = GetCurrentNode(g_tree);
@@ -1140,7 +1379,8 @@ static void UpdateGameplay(void) {
             int startY = 252;
             int exitY = startY;
 
-            if (HasTokens()) {
+            bool permitePergunta = !tut || (g_tutorialPasso == TUT_PASSO_PERGUNTA);
+            if (HasTokens() && permitePergunta) {
                 for (int i = 0; i < active_count; i++) {
                     Rectangle choiceArea = { DIALOG_BOX_X, startY + (i * (int)DIALOG_BTN_STEP), DIALOG_BOX_W, DIALOG_BTN_H };
                     if (CheckCollisionPointRec(mouse, ParaTela(choiceArea))) {
@@ -1162,15 +1402,22 @@ static void UpdateGameplay(void) {
                             if (newNode && strcmp(newNode->speaker, "Você") != 0) {
                                 AdicionarMensagemChat(g_suspeitoAtual, newNode->speaker, newNode->text, false);
                             }
+
+                            if (tut && g_tutorialPasso == TUT_PASSO_PERGUNTA) {
+                                g_menuAberto = true;
+                                g_tutorialPasso = TUT_PASSO_ABRIR_PRANCHETA;
+                            }
                             return;
                         }
                     }
                 }
+            }
+            if (HasTokens()) {
                 exitY = startY + (active_count * (int)DIALOG_BTN_STEP);
             }
             
             Rectangle exitArea = { DIALOG_BOX_X, exitY, DIALOG_BOX_W, DIALOG_BTN_H };
-            if (CheckCollisionPointRec(mouse, ParaTela(exitArea))) {
+            if (!tut && CheckCollisionPointRec(mouse, ParaTela(exitArea))) {
                 hover = true;
                 if (clicou) {
                     g_dialogLoaded = false;
@@ -1183,7 +1430,8 @@ static void UpdateGameplay(void) {
         }
     } else {
         int startY = 80;
-        for (int i = 0; i < 3; i++) {
+        bool permiteSuspeito = !tut || (g_tutorialPasso == TUT_PASSO_SUSPEITO);
+        for (int i = 0; i < 3 && permiteSuspeito; i++) {
             Rectangle choiceArea = { 55, startY + (i * 50), 160, 36 };
             if (CheckCollisionPointRec(mouse, ParaTela(choiceArea))) {
                 hover = true;
@@ -1200,6 +1448,9 @@ static void UpdateGameplay(void) {
                             AdicionarMensagemChat(i, firstNode->speaker, firstNode->text, false);
                         }
                     }
+                    if (tut && g_tutorialPasso == TUT_PASSO_SUSPEITO) {
+                        g_tutorialPasso = TUT_PASSO_ABRIR_MENU;
+                    }
                     return;
                 }
             }
@@ -1213,8 +1464,11 @@ static void UpdateGameplay(void) {
     }
 
     // 1) Seta: abre/fecha o menu
-    if (clicou && CheckCollisionPointRec(mouse, seta)) {
+    if (permiteSeta && clicou && CheckCollisionPointRec(mouse, seta)) {
         g_menuAberto = !g_menuAberto;
+        if (tut && g_tutorialPasso == TUT_PASSO_ABRIR_MENU && g_menuAberto) {
+            g_tutorialPasso = TUT_PASSO_ABRIR_FICHA;
+        }
         return;
     }
 
@@ -1222,11 +1476,29 @@ static void UpdateGameplay(void) {
     if (g_menuAberto) {
         for (int i = 0; i < NUM_TOOLS; i++) {
             if (!CheckCollisionPointRec(mouse, ParaTela(FERRAMENTAS[i]))) continue;
+            if (tut) {
+                bool permitido = (i == 1 && (g_tutorialPasso == TUT_PASSO_ABRIR_FICHA || g_tutorialPasso == TUT_PASSO_FECHAR_FICHA)) ||
+                                 (i == 0 && g_tutorialPasso == TUT_PASSO_ABRIR_PRANCHETA);
+                if (!permitido) continue;
+            }
             hover = true;
             if (clicou) {
-                if (i == 0) OnClickPrancheta();
-                else if (i == 1) OnClickPasta();
-                else if (i == 2) OnClickMaleta();
+                if (i == 0) {
+                    OnClickPrancheta();
+                    if (tut && g_tutorialPasso == TUT_PASSO_ABRIR_PRANCHETA && g_pranchetaAberta) {
+                        g_pranchetaPos = (Vector2){ 216, 8 };
+                        g_tutorialPasso = TUT_PASSO_CONCLUSAO;
+                    }
+                } else if (i == 1) {
+                    OnClickPasta();
+                    if (tut && g_tutorialPasso == TUT_PASSO_ABRIR_FICHA && g_fichaAtual >= 0) {
+                        g_fichaPos = (Vector2){ 262, 20 };
+                        g_tutorialPasso = TUT_PASSO_FECHAR_FICHA;
+                    } else if (tut && g_tutorialPasso == TUT_PASSO_FECHAR_FICHA && g_fichaAtual < 0) {
+                        g_menuAberto = false;
+                        g_tutorialPasso = TUT_PASSO_PERGUNTA;
+                    }
+                } else if (i == 2) OnClickMaleta();
                 else if (i == 3) OnClickMapa();
             }
         }
@@ -1239,7 +1511,7 @@ void UpdateDrawGameplayScene(void) {
     RayCanvasBegin();
 
     // A ficha e a prancheta ficam por cima de tudo, entao elas tem prioridade no clique
-        if (!UpdateDica() && !UpdateFicha() && !UpdatePrancheta()) {
+    if (!UpdateTutorialFinal() && !UpdateDica() && !UpdateFicha() && !UpdatePrancheta()) {
         UpdateGameplay();
     }
 
@@ -1393,6 +1665,9 @@ void UpdateDrawGameplayScene(void) {
     }
     // 6) Botao e painel da dica (por cima de tudo)
     DesenharDica();
+
+    // 7) Overlay do tutorial guiado no Dia 1
+    DesenharTutorial();
 
     RayCanvasEnd();
 }

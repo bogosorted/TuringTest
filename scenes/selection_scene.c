@@ -176,6 +176,33 @@ void UpdateDrawSelectionScene(void) {
         g_shouldStartInterrogation = true;
     }
 
+    // Pulso suave (0..1) para destacar acoes importantes no Dia 1
+    float t = (float)GetTime() * 1.4f;
+    t = t - (int)t;
+    float tri = (t < 0.5f) ? (t * 2.0f) : ((1.0f - t) * 2.0f);
+    float pulso = tri * tri * (3.0f - 2.0f * tri);
+    Color corDestaque = (Color){ 220, 235, 150, (unsigned char)(160 + 95 * pulso) };
+
+    if (GameStateIsTutorialActive()) {
+        Rectangle btnEscritorio = ParaTela((Rectangle){
+            (VIRTUAL_W - BTN_W) / 2.0f - 4.0f,
+            (float)BUTTONS_TOP - 4.0f,
+            (float)BTN_W + 8.0f,
+            (float)BTN_H + 8.0f
+        });
+        DrawRectangleLinesEx(btnEscritorio, (2.0f + 1.5f * pulso) * Escala(), corDestaque);
+
+        const char *dicaInicio = "Clique em 'Escritório' para começar o treinamento no Dia 1";
+        Rectangle tela = GetTelaRect();
+        float escala = Escala();
+        int tamDica = (int)(13 * escala);
+        int largDica = MeasureText(dicaInicio, tamDica);
+        DrawText(dicaInicio,
+                 (int)(tela.x + (tela.width - largDica) / 2.0f),
+                 (int)(tela.y + (BUTTONS_TOP + BTN_H + 18) * escala),
+                 tamDica, corDestaque);
+    }
+
     // Aparece quando os tokens acabam ou os dialogos do dia se esgotam
     if (g_podeAvancar) {
         bool ultimoDia = (g_dia >= GAME_NUM_DAYS);
@@ -190,6 +217,13 @@ void UpdateDrawSelectionScene(void) {
         if (UpdateDrawButton(area, label, NEXT_FONT)) {
             if (ultimoDia) g_shouldGoToVerdict = true;
             else           g_shouldAdvanceDay = true;
+        }
+
+        if (g_dia == 1) {
+            Rectangle rDestaque = ParaTela((Rectangle){
+                area.x - 3.0f, area.y - 3.0f, area.width + 6.0f, area.height + 6.0f
+            });
+            DrawRectangleLinesEx(rDestaque, (2.0f + 1.5f * pulso) * Escala(), corDestaque);
         }
     }
 
