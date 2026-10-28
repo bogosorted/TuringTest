@@ -18,6 +18,7 @@ Este projeto foi idealizado e desenvolvido no contexto acadêmico da CESAR Schoo
 * [Rotas e Finais](#rotas-e-finais)
 * [Tecnologias e Conceitos](#tecnologias-e-conceitos)
 * [Documentação e User Stories](#documentação-e-user-stories)
+* [Relatórios de Extreme Programming (XP)](#relatórios-de-extreme-programming-xp)
 * [Instituição](#instituição)
 * [Como Rodar o Jogo (Para Iniciantes)](#como-rodar-o-jogo-para-iniciantes)
 
@@ -106,6 +107,13 @@ Projeto acadêmico focado em inovação, tecnologia e aprendizado de IA por meio
   * [US-18: Escanear Anomalias Físicas no Interrogatório](./docs/diagramas/US-18.md)
 
 ![Menu Inicial - Sprint 1](./assets/sprint1.png)
+
+## Relatórios de Extreme Programming (XP)
+
+* [Gabriel Aragão e Andressa](./docs/relatorios/aragao-andressa.md) — *Tutorial Interativo do Dia 1, Diálogos e UX*
+* [Lívia Acioli e Ricardo Freire](./docs/relatorios/livia-ricardo.md) — *Fichas de Funcionários, Prancheta, QA e Sons*
+* [João Gabriel e José Rodrigo Bispo](./docs/relatorios/joao-rodrigo.md) — *Ciclo de Dias, Facilitação Scrum e Testes de Aceitação*
+* [Vitor Cauã e Renato Veras](./docs/relatorios/vitor-renato.md) — *Product Owner, Design de Interface (HUD) e Áudio/SFX*
 
 ## Como Rodar o Jogo (Para Iniciantes)
 
