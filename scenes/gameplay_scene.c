@@ -22,11 +22,16 @@ static const int SUSPECT_FICHA_INDEX[3] = { 0, 5, 2 }; // Patricia=0, Andre=5, L
 
 
 // Texturas das duas versoes da tela
-static Texture2D g_telaFechada;     // menu de ferramentas fechado
-static Texture2D g_telaAberta;      // menu de ferramentas aberto
+static Texture2D g_interface;       // spr_interface_principal (640x360)
+
+// Areas do spr_interface_principal (pixels da imagem 640x360)
+static const Rectangle JANELA_AREA = { 3,   3, 298, 221 };  // janela transparente (fundo + NPC)
+static const Rectangle OPCOES_AREA = { 3, 227, 298, 130 };  // painel de baixo (opcoes de dialogo)
+#define NPC_TAMANHO 180.0f
 static Texture2D g_background;  // foto do escritorio atras da tela
 static Texture2D g_seta;            // botao da seta (aponta para a direita)
 static Texture2D g_menuFerramentas; // barra do menu de ferramentas
+static Texture2D g_barraMenu;       // barra de rolagem do menu (12x89, com a barrinha desenhada no topo)
 static Texture2D g_iconePrancheta;  // icone da prancheta
 static Texture2D g_iconeArquivos;   // icone da pasta de arquivos
 static Texture2D g_iconeMaleta;     // icone da maleta
@@ -36,8 +41,14 @@ static Texture2D g_iconeMapa;       // icone do mapa
 static Texture2D g_prancheta;                       // sprite da prancheta aberta (299x343)
 static bool      g_pranchetaAberta = false;
 static bool      g_arrastando      = false;
-static Vector2   g_pranchetaPos    = { 170, 8 };    // posicao inicial (centralizada)
-static Vector2   g_offsetArraste   = { 0, 0 };      // onde o mouse "pegou" a prancheta
+static Vector2   g_pranchetaPos    = { 163, 65 };   // posicao inicial (centralizado na tela)
+static Vector2   g_offsetArraste   = { 0, 0 };      // onde o mouse "pegou" o tablet
+
+// Scroll do checklist dentro do tablet
+static float     g_tabletScroll          = 0.0f;   // quanto o checklist ja rolou (pixels da imagem)
+static float     g_tabletConteudoH       = 0.0f;   // altura total do checklist
+static bool      g_arrastandoBarraTablet = false;  // segurando a barrinha do tablet
+static float     g_offsetBarraTablet     = 0.0f;   // onde o mouse "pegou" a barrinha
 
 // Fichas dos funcionarios (lidas de assets/data/fichas_funcionarios.txt)
 typedef struct {
@@ -54,14 +65,32 @@ static Ficha g_fichas[MAX_FICHAS];
 static int   g_numFichas = 0;
 
 // Ficha na tela
-static Texture2D g_ficha;                     // sprite da ficha (240x320)
+static Texture2D g_ficha;                     // sprite da ficha (299x285)
 static int       g_funcionario     = 0;       // funcionario sendo entrevistado
 static int       g_fichaAtual      = -1;      // -1 = ficha fechada
 static bool      g_arrastandoFicha = false;
 static Vector2   g_fichaPos        = { 200, 20 };
 static Vector2   g_offsetFicha     = { 0, 0 };
 
-static const Rectangle FICHA_FECHAR = { 210, 5, 24, 22 };  // botao X, dentro da ficha
+// Rolagem da parte de baixo da ficha
+static float     g_fichaScroll     = 0.0f;    // quanto o conteudo ja subiu (pixels da imagem)
+static float     g_fichaConteudoH  = 0.0f;    // altura total do conteudo que rola
+static bool      g_arrastandoBarra = false;   // segurando a barrinha da ficha
+static float     g_offsetBarra     = 0.0f;    // onde o mouse "pegou" a barrinha
+
+// Areas DENTRO do sprite da ficha (299x285)
+static const Rectangle FICHA_FECHAR = { 278,   4,  14,  14 };  // botao X na barra de titulo
+static const Rectangle FICHA_FOTO   = {  14,  40, 124, 114 };  // foto, dentro do quadrado bege
+static const Rectangle FICHA_SCROLL = {   9, 164, 268, 110 };  // parte que rola (embaixo da foto)
+static const Rectangle FICHA_BARRA  = { 283, 162,  12, 114 };  // barra de rolagem
+#define FICHA_LADO_X      150   // x dos textos ao lado da foto
+#define FICHA_LADO_W      138   // largura disponivel ao lado da foto
+#define FICHA_PASSO_RODA  18.0f // quanto cada "clique" da roda do mouse rola
+
+// Cores da ficha (fundo preto)
+static const Color COR_FICHA_TEXTO  = { 189, 181, 168, 255 };  // mesmo bege do quadrado da foto
+static const Color COR_FICHA_ROTULO = { 125, 112, 113, 255 };  // titulos dos campos
+static const Color COR_FICHA_TITULO = {  32,  29,  31, 255 };  // texto na barra de titulo
 
 // Cores da paleta do jogo
 static const Color COR_PRETO = {   0,   0,   0, 255 };
@@ -89,13 +118,32 @@ static const char *GUIA[NUM_CAIXAS] = {
     "Segue muito a risca a personalidade descrita.",
 };
 
-// Posicao dos quadradinhos DENTRO da prancheta (sprite 20x20)
-#define CAIXA_X      58     // x de todos os quadradinhos
-#define CAIXA_Y0     84     // y do primeiro
-#define CAIXA_PASSO  30     // distancia entre um e outro
-#define TEXTO_X      84     // x dos textos (ao lado do quadradinho)
+// Areas DENTRO do sprite do tablet (313x230)
+static const Rectangle TABLET_CONTEUDO = {  37,  30, 234, 171 };  // parte da tela onde o checklist aparece (e rola)
+static const Rectangle TABLET_BARRA    = { 277,  35,  10, 157 };  // barra de rolagem desenhada no sprite (area de clique)
+#define TABLET_POLEGAR_X  279     // a barrinha desenhada no sprite comeca na coluna 279...
+#define TABLET_POLEGAR_W    6     // ...tem 6 de largura...
+#define TABLET_POLEGAR_Y   38     // ...comeca na linha 38...
+#define TABLET_POLEGAR_H   21     // ...e tem 21 de altura
+#define TABLET_CANAL_FIM  189     // o canal por onde ela corre acaba na linha 189
+#define TABLET_PASSO_RODA 20.0f   // quanto cada "clique" da roda do mouse rola
+
+// Checklist dentro do tablet (pixels, contando do canto da area de conteudo)
+#define CAIXA_TAM       25    // os quadradinhos tem 25x25
+#define CAIXA_TEXTO_X   32    // o texto comeca 32 px depois do inicio do quadradinho
+#define CAIXA_ESPACO     6    // espaco entre um item e o proximo
+#define CHECKLIST_Y0    34    // y do primeiro item (antes vem o titulo e o nome)
+
+// Cores do tablet (tela preta)
+static const Color COR_TABLET_TEXTO  = { 189, 181, 168, 255 };
+static const Color COR_TABLET_ROTULO = { 125, 112, 113, 255 };
+
+static const char *AVISO_TABLET = "Nenhum funcionario em entrevista. Escolha alguem para comecar a investigacao.";
 
 static bool g_menuAberto = false;
+static float g_menuScroll          = 0.0f;   // quanto o conteudo do menu ja rolou (pixels da imagem)
+static bool  g_arrastandoBarraMenu = false;  // segurando a barrinha
+static float g_offsetBarraMenu     = 0.0f;   // onde o mouse "pegou" a barrinha
 static bool g_shouldClose = false;
 static bool g_irParaSelecao = false;  // true quando clica no mapa
 
@@ -112,8 +160,11 @@ typedef enum {
 
 static TutorialPasso g_tutorialPasso = TUT_PASSO_SUSPEITO;
 
+// Mude para true para ligar o tutorial do Dia 1 de novo
+#define TUTORIAL_LIGADO false
+
 static bool TutorialAtivo(void) {
-    return GameStateIsTutorialActive();
+    return TUTORIAL_LIGADO && GameStateIsTutorialActive();
 }
 
 // ---------------------------------------------------------------
@@ -129,20 +180,36 @@ static const char *g_fraseAtual = "Qualquer frase aqui";
 
 // Areas clicaveis, em pixels DENTRO da imagem (640x360).
 // Elas sao somadas a posicao da imagem na tela (ver ParaTela).
-static const Rectangle SETA_FECHADA = { 598, 66, 60, 51 };  // seta "<" (parte fica fora da tela)
-static const Rectangle SETA_ABERTA  = { 513, 66, 60, 51 };  // seta ">"
-static const Rectangle MENU_AREA    = { 510, 0, 130, 360 }; // menu encostado na direita
-static const Rectangle BG_AREA      = { 0, 0, 270, 360 };   // quadrado da esquerda (sprite 270x360)
+static const Rectangle SETA_FECHADA = { 431, 332, 100,  25 };  // aba fechada, encostada embaixo do painel da direita
+static const Rectangle SETA_ABERTA  = { 434, 233,  93,  24 };  // a aba no topo do menu aberto (onde clica para fechar)
+static const Rectangle MENU_AREA    = { 322, 233, 291, 124 };  // menu aberto inteiro
+
+// Scroll do menu (medido do mockup; menu aberto comeca em 322, 233)
+static const Rectangle MENU_BARRA    = { 322 + 270, 233 + 32,  12, 89 };  // trilho da barra de rolagem
+static const Rectangle MENU_CONTEUDO = { 322 + 8,   233 + 30, 258, 90 };  // area onde os icones aparecem
+
+// Pedacos do sprite da barra (12x89)
+#define BARRA_POLEGAR_X    3     // a barrinha comeca na coluna 3 do sprite...
+#define BARRA_POLEGAR_W    6     // ...tem 6 de largura...
+#define BARRA_POLEGAR_Y    3     // ...comeca na linha 3...
+#define BARRA_POLEGAR_H   21     // ...e tem 21 de altura
+#define BARRA_CANAL_FIM   86     // o canal por onde ela corre acaba na linha 86
+#define BARRA_LINHA_VAZIA 30     // uma linha do sprite que so tem o canal vazio
+
+#define MENU_ICONES_POR_LINHA 3      // quantos icones cabem numa fileira
+#define MENU_LINHA_H        90.0f    // altura de cada fileira (uma fileira por vez na tela)
+#define MENU_PASSO_RODA     30.0f    // quanto cada "clique" da roda do mouse rola
 
 // Areas dos textos (tambem em pixels da imagem 640x360)
 static const Rectangle NOME_AREA  = { 2, 300, 96, 18 };     // quadrado vermelho
 static const Rectangle FRASE_AREA = { 120, 318, 126, 26 };  // circulo vermelho
 
 static const Rectangle FERRAMENTAS[NUM_TOOLS] = {
-    { 571,  10, 60, 72 },  // 0 - prancheta (tamanho do sprite: 60x72)
-    { 572, 110, 58, 52 },  // 1 - pasta (tamanho do sprite: 58x52)
-    { 573, 200, 57, 57 },  // 2 - maleta (tamanho do sprite: 57x57)
-    { 568, 284, 67, 61 },  // 3 - mapa (tamanho do sprite: 67x61)
+    // Posicoes no menu novo, SEM scroll (fileira 1: y ~263-353, fileira 2: +90)
+    { 433, 273, 52, 43 },  // 0 - tablet (52x43), fileira 1, meio
+    { 335, 273, 68, 43 },  // 1 - ficha/pasta (68x43), fileira 1, esquerda
+    { 340, 356, 57, 57 },  // 2 - maleta (57x57), fileira 2, esquerda
+    { 512, 266, 57, 52 },  // 3 - mapa (57x52), fileira 1, direita
 };
 
 // Funcoes de clique de cada ferramenta (mesmo estilo do menu)
@@ -155,6 +222,8 @@ static void OnClickPasta(void) {
     if (g_funcionario >= g_numFichas) return;   // arquivo nao carregou
     // Abre a ficha do funcionario entrevistado (ou fecha, se ja estiver aberta)
     g_fichaAtual = (g_fichaAtual < 0) ? g_funcionario : -1;
+    g_fichaScroll = 0.0f;           // sempre abre no topo
+    g_arrastandoBarra = false;
 }
 static void OnClickMaleta(void)    { TraceLog(LOG_INFO, "Maleta clicada!"); }
 static void OnClickMapa(void) {
@@ -168,7 +237,7 @@ static Rectangle GetTelaRect(void) {
         (Vector2){ 0.5f, 0.5f },
         (Vector2){ 0.5f, 0.5f },
         (Vector2){ 0.0f, 0.0f },
-        (Vector2){ (float)g_telaFechada.width, (float)g_telaFechada.height }
+        (Vector2){ (float)g_interface.width, (float)g_interface.height }
     );
 }
 
@@ -177,8 +246,8 @@ static Rectangle ParaTela(Rectangle r) {
     Rectangle tela = GetTelaRect();
 
     // Quanto a imagem foi ampliada (1 = tamanho original)
-    float escalaX = tela.width  / (float)g_telaFechada.width;
-    float escalaY = tela.height / (float)g_telaFechada.height;
+    float escalaX = tela.width  / (float)g_interface.width;
+    float escalaY = tela.height / (float)g_interface.height;
 
     return (Rectangle){
         tela.x + r.x * escalaX,
@@ -200,15 +269,41 @@ static void DrawWithHover(Texture2D tex, Rectangle area) {
     DrawTexturePro(tex, origem, destino, (Vector2){ 0, 0 }, 0.0f, cor);
 }
 
+// Desenha uma textura preenchendo uma area sem distorcer:
+// corta o excesso dos lados (ou de cima/baixo), mantendo o centro.
+static void DrawTextureCover(Texture2D tex, Rectangle area) {
+    if (tex.id == 0 || tex.width == 0 || tex.height == 0) return;
+    float aspectoArea = area.width / area.height;
+    Rectangle origem = { 0, 0, (float)tex.width, (float)tex.height };
+    if (origem.width / origem.height > aspectoArea) {
+        float w = origem.height * aspectoArea;      // imagem mais larga: corta os lados
+        origem.x = (origem.width - w) / 2.0f;
+        origem.width = w;
+    } else {
+        float h = origem.width / aspectoArea;       // imagem mais alta: corta em cima e embaixo
+        origem.y = (origem.height - h) / 2.0f;
+        origem.height = h;
+    }
+    DrawTexturePro(tex, origem, ParaTela(area), (Vector2){ 0, 0 }, 0.0f, WHITE);
+}
+
 // Posicao do mouse convertida para pixels da imagem 640x360
 static Vector2 MouseNaImagem(void) {
     Rectangle tela = GetTelaRect();
     Vector2 m = RayCanvasGetMousePosition();
 
     return (Vector2){
-        (m.x - tela.x) * g_telaFechada.width  / tela.width,
-        (m.y - tela.y) * g_telaFechada.height / tela.height
+        (m.x - tela.x) * g_interface.width  / tela.width,
+        (m.y - tela.y) * g_interface.height / tela.height
     };
+}
+
+// true se a ficha esta aberta e o mouse esta em cima dela
+// (usado para a roda do mouse nao rolar o chat que fica embaixo)
+static bool MouseSobreFicha(void) {
+    if (g_fichaAtual < 0) return false;
+    Rectangle area = { g_fichaPos.x, g_fichaPos.y, (float)g_ficha.width, (float)g_ficha.height };
+    return CheckCollisionPointRec(MouseNaImagem(), area);
 }
 
 // Desenha um texto centralizado dentro de uma area da imagem 640x360.
@@ -622,7 +717,8 @@ static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
 
     // Rolagem com a roda do mouse quando o ponteiro estiver em cima da tela do chat
     Vector2 mouse = RayCanvasGetMousePosition();
-    if (CheckCollisionPointRec(mouse, rCorpoTela)) {
+    if (CheckCollisionPointRec(mouse, rCorpoTela) && !MouseSobreFicha() &&
+        !(g_menuAberto && CheckCollisionPointRec(MouseNaImagem(), MENU_AREA))) {
         float wheel = GetMouseWheelMove();
         if (wheel != 0) {
             hist->scrollOffset -= wheel * 18.0f;
@@ -807,7 +903,9 @@ void InitGameplayScene(void) {
     g_menuAberto = false;
     g_pranchetaAberta = false;
     g_arrastando = false;
-    g_pranchetaPos = (Vector2){ 170, 8 };
+    g_pranchetaPos = (Vector2){ 163, 65 };
+    g_tabletScroll = 0.0f;
+    g_arrastandoBarraTablet = false;
 
     InitDialogSystem();
     g_dialogLoaded = false;
@@ -839,25 +937,27 @@ void InitGameplayScene(void) {
     GenTextureMipmaps(&g_charTextures[2]);
     SetTextureFilter(g_charTextures[2], TEXTURE_FILTER_BILINEAR);
 
-    g_telaFechada = LoadTexture("assets/gameplay_scene/spr_tela_fechada.png");
-    SetTextureFilter(g_telaFechada, TEXTURE_FILTER_POINT);
-
-    g_telaAberta = LoadTexture("assets/gameplay_scene/spr_tela_aberta.png");
-    SetTextureFilter(g_telaAberta, TEXTURE_FILTER_POINT);
+    g_interface = LoadTexture("assets/gameplay_scene/spr_interface_principal.png");
+    SetTextureFilter(g_interface, TEXTURE_FILTER_POINT);
 
     g_background = LoadTexture("assets/gameplay_scene/spr_background_teste.png");
     SetTextureFilter(g_background, TEXTURE_FILTER_POINT);
 
-    g_seta = LoadTexture("assets/gameplay_scene/spr_botao_seta.png");
+    g_seta = LoadTexture("assets/gameplay_scene/spr_menu_fechado.png");
     SetTextureFilter(g_seta, TEXTURE_FILTER_POINT);
 
-    g_menuFerramentas = LoadTexture("assets/gameplay_scene/spr_menu_ferramentas.png");
+    g_menuFerramentas = LoadTexture("assets/gameplay_scene/spr_menu_aberto.png");
     SetTextureFilter(g_menuFerramentas, TEXTURE_FILTER_POINT);
 
-    g_iconePrancheta = LoadTexture("assets/gameplay_scene/spr_icone_prancheta.png");
+    g_barraMenu = LoadTexture("assets/gameplay_scene/spr_menu_scroll.png");
+    SetTextureFilter(g_barraMenu, TEXTURE_FILTER_POINT);
+    g_menuScroll = 0.0f;
+    g_arrastandoBarraMenu = false;
+
+    g_iconePrancheta = LoadTexture("assets/gameplay_scene/spr_icone_tablet.png");
     SetTextureFilter(g_iconePrancheta, TEXTURE_FILTER_POINT);
 
-    g_iconeArquivos = LoadTexture("assets/gameplay_scene/spr_icone_arquivos.png");
+    g_iconeArquivos = LoadTexture("assets/gameplay_scene/spr_icone_ficha.png");
     SetTextureFilter(g_iconeArquivos, TEXTURE_FILTER_POINT);
 
     g_iconeMaleta = LoadTexture("assets/gameplay_scene/spr_icone_ferramentas.png");
@@ -866,7 +966,7 @@ void InitGameplayScene(void) {
     g_iconeMapa = LoadTexture("assets/gameplay_scene/spr_icone_mapa.png");
     SetTextureFilter(g_iconeMapa, TEXTURE_FILTER_POINT);
 
-    g_prancheta = LoadTexture("assets/gameplay_scene/spr_prancheta.png");
+    g_prancheta = LoadTexture("assets/gameplay_scene/spr_tablet.png");
     SetTextureFilter(g_prancheta, TEXTURE_FILTER_POINT);
 
     g_dicaAceso = LoadTexture("assets/gameplay_scene/spr_botao_dica_aceso.png");
@@ -877,31 +977,25 @@ void InitGameplayScene(void) {
 
     CarregarFichas("assets/data/fichas_funcionarios.txt");
 
-    g_ficha = LoadTexture("assets/gameplay_scene/spr_placeholder_ficha.png");
+    g_ficha = LoadTexture("assets/gameplay_scene/spr_ficha.png");
     SetTextureFilter(g_ficha, TEXTURE_FILTER_POINT);
 
     g_fichaAtual = -1;
     g_arrastandoFicha = false;
     g_fichaPos = (Vector2){ 200, 20 };
+    g_arrastandoBarra = false;
+    g_fichaScroll = 0.0f;
 
-    g_caixaVazia = LoadTexture("assets/gameplay_scene/spr_icone_quadrado_vazio.png");
+    g_caixaVazia = LoadTexture("assets/gameplay_scene/spr_tablet_caixa_vazia.png");
     SetTextureFilter(g_caixaVazia, TEXTURE_FILTER_POINT);
 
-    g_caixaComX = LoadTexture("assets/gameplay_scene/spr_icone_quadrado_prancheta.png");
+    g_caixaComX = LoadTexture("assets/gameplay_scene/spr_tablet_caixa_marcada.png");
     SetTextureFilter(g_caixaComX, TEXTURE_FILTER_POINT);
 
     // As marcacoes NAO sao zeradas aqui: sao as anotacoes da investigacao
-    RayCanvasInit(g_telaFechada.width, g_telaFechada.height);
+    RayCanvasInit(g_interface.width, g_interface.height);
 }
-// Retangulo do quadradinho i, em pixels da imagem 640x360
-static Rectangle CaixaNaImagem(int i) {
-    return (Rectangle){
-        g_pranchetaPos.x + CAIXA_X,
-        g_pranchetaPos.y + CAIXA_Y0 + i * CAIXA_PASSO,
-        (float)g_caixaVazia.width,
-        (float)g_caixaVazia.height
-    };
-}
+
 // ---------- Leitura do arquivo de fichas ----------
 
 // Troca letras acentuadas (UTF-8) pela versao sem acento: "Funcao"
@@ -1044,6 +1138,90 @@ static int TextoQuebrado(const char *txt, float x, float y, float largura,
     return linhas;
 }
 
+// Conta em quantas linhas o texto vai quebrar, sem desenhar
+// (mesma regra do TextoQuebrado)
+static int ContarLinhas(const char *txt, float largura, float tam) {
+    char linha[192] = "";
+    char palavra[64];
+    char teste[256];
+    int linhas = 0;
+    const char *p = txt;
+
+    while (*p) {
+        int n = 0;
+        while (*p == ' ') p++;
+        while (*p && *p != ' ' && n < 63) palavra[n++] = *p++;
+        palavra[n] = '\0';
+        if (n == 0) break;
+
+        if (linha[0]) snprintf(teste, sizeof teste, "%s %s", linha, palavra);
+        else          snprintf(teste, sizeof teste, "%s", palavra);
+
+        if (linha[0] && MeasureTextEx(GetFontDefault(), teste, tam, tam / 10.0f).x > largura) {
+            linhas++;
+            snprintf(linha, sizeof linha, "%s", palavra);
+        } else {
+            snprintf(linha, sizeof linha, "%.*s", (int)(sizeof(linha) - 1), teste);
+        }
+    }
+    if (linha[0]) linhas++;
+    return linhas;
+}
+
+// ---------- Tablet (checklist da investigacao) ----------
+
+static float g_caixaY[NUM_CAIXAS];   // y de cada quadradinho, dentro do conteudo (sem scroll)
+static float g_textoY[NUM_CAIXAS];   // y do texto de cada item
+
+// Converte algo que esta DENTRO do tablet para a imagem (acompanha o arraste)
+static Rectangle NoTablet(Rectangle r) {
+    return (Rectangle){ g_pranchetaPos.x + r.x, g_pranchetaPos.y + r.y, r.width, r.height };
+}
+
+// Calcula onde fica cada item (os textos podem ter 1 ou 2 linhas)
+// e devolve a altura total do checklist
+static float TabletLayout(void) {
+    if (!g_dialogLoaded) {
+        return 14 + ContarLinhas(AVISO_TABLET, TABLET_CONTEUDO.width, 10) * 12;
+    }
+
+    float larguraTexto = TABLET_CONTEUDO.width - CAIXA_TEXTO_X;
+    float y = CHECKLIST_Y0;
+    for (int i = 0; i < NUM_CAIXAS; i++) {
+        float textoH = ContarLinhas(GUIA[i], larguraTexto, 10) * 11.0f - 1.0f;
+        float h = (textoH > CAIXA_TAM) ? textoH : CAIXA_TAM;   // o item tem a altura do maior dos dois
+
+        g_caixaY[i] = y + (h - CAIXA_TAM) / 2.0f;   // centraliza o quadradinho...
+        g_textoY[i] = y + (h - textoH) / 2.0f;      // ...e o texto, um em relacao ao outro
+        y += h + CAIXA_ESPACO;
+    }
+    return y - CAIXA_ESPACO + 4;   // + 4 de folga no fim da lista
+}
+
+// Quanto da para rolar (0 = tudo cabe)
+static float TabletMaxScroll(void) {
+    float m = g_tabletConteudoH - TABLET_CONTEUDO.height;
+    return (m > 0.0f) ? m : 0.0f;
+}
+
+// Quanto a barrinha pode andar dentro do canal
+static float TabletCursoBarra(void) {
+    return (float)(TABLET_CANAL_FIM - TABLET_POLEGAR_Y - TABLET_POLEGAR_H);
+}
+
+// Onde a barrinha esta agora (pixels da imagem)
+static Rectangle TabletPolegar(void) {
+    float maxScroll = TabletMaxScroll();
+    float t = (maxScroll > 0.0f) ? g_tabletScroll / maxScroll : 0.0f;   // 0 = topo, 1 = fim
+    return NoTablet((Rectangle){ TABLET_POLEGAR_X, TABLET_POLEGAR_Y + t * TabletCursoBarra(),
+                                 TABLET_POLEGAR_W, TABLET_POLEGAR_H });
+}
+
+// Retangulo do quadradinho i, em pixels da imagem 640x360 (ja com o scroll)
+static Rectangle CaixaNaImagem(int i) {
+    Rectangle conteudo = NoTablet(TABLET_CONTEUDO);
+    return (Rectangle){ conteudo.x, conteudo.y + g_caixaY[i] - g_tabletScroll, CAIXA_TAM, CAIXA_TAM };
+}
 // ---------- Arraste da ficha ----------
 
 // Converte algo que esta DENTRO da ficha para a imagem (acompanha o arraste)
@@ -1051,7 +1229,83 @@ static Rectangle NaFicha(Rectangle r) {
     return (Rectangle){ g_fichaPos.x + r.x, g_fichaPos.y + r.y, r.width, r.height };
 }
 
-// Cuida do arraste e do botao X da ficha.
+// ---------- Parte da ficha que rola ----------
+
+// Desenha (ou so mede, se desenhar = false) a parte de baixo da ficha a partir de (x, y).
+// Devolve a altura total, em pixels da imagem.
+// Para colocar mais informacoes na ficha, e so adicionar aqui.
+static float ConteudoFicha(const Ficha *f, float x, float y, bool desenhar) {
+    const float largura = FICHA_SCROLL.width;
+    float cy = y;
+    int n;
+
+    if (desenhar) TextoNaImagem("PERSONALIDADE", x, cy, 8, COR_FICHA_ROTULO);
+    cy += 11;
+    n = desenhar ? TextoQuebrado(f->personalidade, x, cy, largura, 10, 12, COR_FICHA_TEXTO)
+                 : ContarLinhas(f->personalidade, largura, 10);
+    cy += n * 12 + 8;
+
+    if (desenhar) TextoNaImagem("COMPORTAMENTOS", x, cy, 8, COR_FICHA_ROTULO);
+    cy += 11;
+    for (int i = 0; i < 3; i++) {
+        if (f->comportamentos[i][0] == '\0') continue;   // item vazio
+        if (desenhar) TextoNaImagem("-", x + 2, cy, 10, COR_FICHA_TEXTO);
+        n = desenhar ? TextoQuebrado(f->comportamentos[i], x + 10, cy, largura - 10, 10, 12, COR_FICHA_TEXTO)
+                     : ContarLinhas(f->comportamentos[i], largura - 10, 10);
+        cy += n * 12 + 3;
+    }
+    cy += 8;
+
+    if (desenhar) TextoNaImagem("RASEC - CONFIDENCIAL", x, cy, 8, COR_FICHA_ROTULO);
+    cy += 8 + 4;    // altura do texto + folga no final
+
+    return cy - y;
+}
+
+// Quanto da para rolar (0 = tudo cabe)
+static float FichaMaxScroll(void) {
+    float m = g_fichaConteudoH - FICHA_SCROLL.height;
+    return (m > 0.0f) ? m : 0.0f;
+}
+
+// Quanto a barrinha pode andar: o trilho menos as pontas (3 em cima, 3 embaixo) e a barrinha
+static float FichaCursoBarra(void) {
+    return FICHA_BARRA.height - 6.0f - BARRA_POLEGAR_H;
+}
+
+// Onde a barrinha esta agora (pixels DENTRO da ficha)
+static Rectangle FichaPolegar(void) {
+    float maxScroll = FichaMaxScroll();
+    float t = (maxScroll > 0.0f) ? g_fichaScroll / maxScroll : 0.0f;   // 0 = topo, 1 = fim
+    return (Rectangle){ FICHA_BARRA.x + BARRA_POLEGAR_X, FICHA_BARRA.y + 3.0f + t * FichaCursoBarra(),
+                        BARRA_POLEGAR_W, BARRA_POLEGAR_H };
+}
+
+// Desenha a barra de rolagem da ficha usando o sprite da barra do menu.
+// O sprite tem 89 de altura e a barra da ficha 114: as pontas ficam inteiras
+// e o meio do trilho estica.
+static void DesenharBarraFicha(void) {
+    Texture2D t = g_barraMenu;
+    float w = (float)t.width;
+    float h = (float)t.height;
+    Rectangle trilho = NaFicha(FICHA_BARRA);
+
+    // Ponta de cima (linhas 0-2), meio esticado (uma linha de canal vazio), ponta de baixo (3 ultimas linhas)
+    DrawTexturePro(t, (Rectangle){ 0, 0, w, 3 },
+                   ParaTela((Rectangle){ trilho.x, trilho.y, w, 3 }), (Vector2){ 0, 0 }, 0.0f, WHITE);
+    DrawTexturePro(t, (Rectangle){ 0, BARRA_LINHA_VAZIA, w, 1 },
+                   ParaTela((Rectangle){ trilho.x, trilho.y + 3, w, trilho.height - 6 }), (Vector2){ 0, 0 }, 0.0f, WHITE);
+    DrawTexturePro(t, (Rectangle){ 0, h - 3, w, 3 },
+                   ParaTela((Rectangle){ trilho.x, trilho.y + trilho.height - 3, w, 3 }), (Vector2){ 0, 0 }, 0.0f, WHITE);
+
+    // Barrinha (escurece no hover ou arrastando)
+    bool hover = g_arrastandoBarra || CheckCollisionPointRec(MouseNaImagem(), trilho);
+    Color cor = hover ? (Color){ 180, 180, 180, 255 } : WHITE;
+    Rectangle polegarOrigem = { BARRA_POLEGAR_X, BARRA_POLEGAR_Y, BARRA_POLEGAR_W, BARRA_POLEGAR_H };
+    DrawTexturePro(t, polegarOrigem, ParaTela(NaFicha(FichaPolegar())), (Vector2){ 0, 0 }, 0.0f, cor);
+}
+
+// Cuida da rolagem, do arraste e do botao X da ficha.
 // Devolve true se a ficha "pegou" o mouse neste frame.
 static bool UpdateFicha(void) {
     if (g_fichaAtual < 0) return false;
@@ -1059,22 +1313,59 @@ static bool UpdateFicha(void) {
     Vector2 mouse = MouseNaImagem();
     Rectangle area = { g_fichaPos.x, g_fichaPos.y, (float)g_ficha.width, (float)g_ficha.height };
 
+    // Mede o conteudo da ficha aberta (muda quando troca de funcionario)
+    g_fichaConteudoH = ConteudoFicha(&g_fichas[g_fichaAtual], 0, 0, false);
+    float maxScroll = FichaMaxScroll();
+
+    // Roda do mouse em cima da ficha: rola o conteudo
+    if (CheckCollisionPointRec(mouse, area)) {
+        float roda = GetMouseWheelMove();
+        if (roda != 0.0f) g_fichaScroll -= roda * FICHA_PASSO_RODA;
+    }
+
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         // Botao X: fecha a ficha
         if (CheckCollisionPointRec(mouse, NaFicha(FICHA_FECHAR))) {
             g_fichaAtual = -1;
             g_arrastandoFicha = false;
+            g_arrastandoBarra = false;
             if (TutorialAtivo() && g_tutorialPasso == TUT_PASSO_FECHAR_FICHA) {
                 g_menuAberto = false;
                 g_tutorialPasso = TUT_PASSO_PERGUNTA;
             }
             return true;
         }
-        // Clicou na ficha: comeca a arrastar
-        if (CheckCollisionPointRec(mouse, area)) {
+        // Clicou na barra de rolagem: pega a barrinha (ou pula para onde clicou)
+        if (maxScroll > 0.0f && CheckCollisionPointRec(mouse, NaFicha(FICHA_BARRA))) {
+            Rectangle barra = NaFicha(FichaPolegar());
+            if (CheckCollisionPointRec(mouse, barra)) g_offsetBarra = mouse.y - barra.y;
+            else                                      g_offsetBarra = barra.height / 2.0f;
+            g_arrastandoBarra = true;
+        }
+        // Clicou no resto da ficha: comeca a arrastar a ficha
+        else if (CheckCollisionPointRec(mouse, area)) {
             g_arrastandoFicha = true;
             g_offsetFicha = (Vector2){ mouse.x - g_fichaPos.x, mouse.y - g_fichaPos.y };
         }
+    }
+
+    // Arrastando a barrinha: o conteudo acompanha
+    if (g_arrastandoBarra) {
+        if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            g_arrastandoBarra = false;
+        } else {
+            float topo = mouse.y - g_offsetBarra - (g_fichaPos.y + FICHA_BARRA.y + 3.0f);
+            g_fichaScroll = topo / FichaCursoBarra() * maxScroll;
+        }
+    }
+
+    // Nao deixa rolar alem do comeco nem do fim
+    if (g_fichaScroll < 0.0f)      g_fichaScroll = 0.0f;
+    if (g_fichaScroll > maxScroll) g_fichaScroll = maxScroll;
+
+    if (g_arrastandoBarra) {
+        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+        return true;
     }
 
     if (!g_arrastandoFicha) return false;
@@ -1090,8 +1381,8 @@ static bool UpdateFicha(void) {
     g_fichaPos.y = mouse.y - g_offsetFicha.y;
 
     // Nao deixa sair da tela
-    float maxX = (float)(g_telaFechada.width  - g_ficha.width);
-    float maxY = (float)(g_telaFechada.height - g_ficha.height);
+    float maxX = (float)(g_interface.width  - g_ficha.width);
+    float maxY = (float)(g_interface.height - g_ficha.height);
     if (g_fichaPos.x < 0)    g_fichaPos.x = 0;
     if (g_fichaPos.y < 0)    g_fichaPos.y = 0;
     if (g_fichaPos.x > maxX) g_fichaPos.x = maxX;
@@ -1110,19 +1401,56 @@ static bool UpdatePrancheta(void) {
     Rectangle area = { g_pranchetaPos.x, g_pranchetaPos.y,
                        (float)g_prancheta.width, (float)g_prancheta.height };
 
-// 0) Clicou num quadradinho: marca/desmarca o X (e nao arrasta)
-    if (g_dialogLoaded && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        for (int i = 0; i < NUM_CAIXAS; i++) {
-            if (CheckCollisionPointRec(mouse, CaixaNaImagem(i))) {
-                g_marcado[g_funcionario][i] = !g_marcado[g_funcionario][i];
-                return true;
+    g_tabletConteudoH = TabletLayout();
+    float maxScroll = TabletMaxScroll();
+
+    // Roda do mouse em cima do tablet: rola o checklist
+    if (CheckCollisionPointRec(mouse, area)) {
+        float roda = GetMouseWheelMove();
+        if (roda != 0.0f) g_tabletScroll -= roda * TABLET_PASSO_RODA;
+    }
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        // 0) Clicou num quadradinho (so na parte visivel da tela): marca/desmarca
+        if (g_dialogLoaded && CheckCollisionPointRec(mouse, NoTablet(TABLET_CONTEUDO))) {
+            for (int i = 0; i < NUM_CAIXAS; i++) {
+                if (CheckCollisionPointRec(mouse, CaixaNaImagem(i))) {
+                    g_marcado[g_funcionario][i] = !g_marcado[g_funcionario][i];
+                    return true;
+                }
             }
         }
+        // 1) Clicou na barra de rolagem: pega a barrinha (ou pula para onde clicou)
+        if (maxScroll > 0.0f && CheckCollisionPointRec(mouse, NoTablet(TABLET_BARRA))) {
+            Rectangle pol = TabletPolegar();
+            if (CheckCollisionPointRec(mouse, pol)) g_offsetBarraTablet = mouse.y - pol.y;
+            else                                    g_offsetBarraTablet = pol.height / 2.0f;
+            g_arrastandoBarraTablet = true;
+        }
+        // 2) Clicou no resto do tablet: comeca a arrastar o tablet
+        else if (CheckCollisionPointRec(mouse, area)) {
+            g_arrastando = true;
+            g_offsetArraste = (Vector2){ mouse.x - g_pranchetaPos.x, mouse.y - g_pranchetaPos.y };
+        }
     }
-    // 1) Comecou a arrastar: clicou em cima da prancheta
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mouse, area)) {
-        g_arrastando = true;
-        g_offsetArraste = (Vector2){ mouse.x - g_pranchetaPos.x, mouse.y - g_pranchetaPos.y };
+
+    // Arrastando a barrinha: o checklist acompanha
+    if (g_arrastandoBarraTablet) {
+        if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            g_arrastandoBarraTablet = false;
+        } else {
+            float topo = mouse.y - g_offsetBarraTablet - (g_pranchetaPos.y + TABLET_POLEGAR_Y);
+            g_tabletScroll = topo / TabletCursoBarra() * maxScroll;
+        }
+    }
+
+    // Nao deixa rolar alem do comeco nem do fim
+    if (g_tabletScroll < 0.0f)      g_tabletScroll = 0.0f;
+    if (g_tabletScroll > maxScroll) g_tabletScroll = maxScroll;
+
+    if (g_arrastandoBarraTablet) {
+        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+        return true;
     }
 
     if (!g_arrastando) return false;
@@ -1138,8 +1466,8 @@ static bool UpdatePrancheta(void) {
     g_pranchetaPos.y = mouse.y - g_offsetArraste.y;
 
     // Nao deixa sair da tela
-    float maxX = (float)(g_telaFechada.width  - g_prancheta.width);
-    float maxY = (float)(g_telaFechada.height - g_prancheta.height);
+    float maxX = (float)(g_interface.width  - g_prancheta.width);
+    float maxY = (float)(g_interface.height - g_prancheta.height);
     if (g_pranchetaPos.x < 0)    g_pranchetaPos.x = 0;
     if (g_pranchetaPos.y < 0)    g_pranchetaPos.y = 0;
     if (g_pranchetaPos.x > maxX) g_pranchetaPos.x = maxX;
@@ -1361,6 +1689,115 @@ static void DesenharTutorial(void) {
     }
 }
 
+// ---------- Scroll do menu de ferramentas ----------
+
+// Altura de tudo que tem dentro do menu (as fileiras de icones)
+static float MenuConteudoAltura(void) {
+    int linhas = (NUM_TOOLS + MENU_ICONES_POR_LINHA - 1) / MENU_ICONES_POR_LINHA;  // divisao arredondando pra cima
+    return linhas * MENU_LINHA_H;
+}
+
+// Quanto da para rolar (0 = tudo cabe)
+static float MenuMaxScroll(void) {
+    float m = MenuConteudoAltura() - MENU_CONTEUDO.height;
+    return (m > 0.0f) ? m : 0.0f;
+}
+
+// Quanto a barrinha pode andar dentro do canal
+static float MenuCursoBarra(void) {
+    return (float)(BARRA_CANAL_FIM - BARRA_POLEGAR_Y - BARRA_POLEGAR_H);
+}
+
+// Onde a barrinha esta agora (pixels da imagem)
+static Rectangle MenuPolegar(void) {
+    float maxScroll = MenuMaxScroll();
+    float t = (maxScroll > 0.0f) ? g_menuScroll / maxScroll : 0.0f;   // 0 = topo, 1 = fim
+    return (Rectangle){ MENU_BARRA.x + BARRA_POLEGAR_X, MENU_BARRA.y + BARRA_POLEGAR_Y + t * MenuCursoBarra(),
+                        BARRA_POLEGAR_W, BARRA_POLEGAR_H };
+}
+
+// Roda do mouse e arraste da barrinha.
+// Devolve true se o scroll "pegou" o mouse neste frame.
+static bool UpdateMenuScroll(void) {
+    if (!g_menuAberto) {
+        g_arrastandoBarraMenu = false;
+        return false;
+    }
+
+    Vector2 mouse = MouseNaImagem();
+    float maxScroll = MenuMaxScroll();
+
+    // Roda do mouse em cima do menu
+    if (CheckCollisionPointRec(mouse, MENU_AREA)) {
+        float roda = GetMouseWheelMove();
+        if (roda != 0.0f) g_menuScroll -= roda * MENU_PASSO_RODA;
+    }
+
+    // Clicou no trilho: pega a barrinha (ou pula para onde clicou)
+    if (maxScroll > 0.0f && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+        CheckCollisionPointRec(mouse, MENU_BARRA)) {
+        Rectangle pol = MenuPolegar();
+        if (CheckCollisionPointRec(mouse, pol)) g_offsetBarraMenu = mouse.y - pol.y;
+        else                                    g_offsetBarraMenu = pol.height / 2.0f;
+        g_arrastandoBarraMenu = true;
+    }
+
+    // Arrastando: o scroll acompanha a barrinha
+    if (g_arrastandoBarraMenu) {
+        if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            g_arrastandoBarraMenu = false;
+        } else {
+            float topo = mouse.y - g_offsetBarraMenu - (MENU_BARRA.y + BARRA_POLEGAR_Y);
+            g_menuScroll = topo / MenuCursoBarra() * maxScroll;
+        }
+    }
+
+    // Nao deixa passar do comeco nem do fim
+    if (g_menuScroll < 0.0f)      g_menuScroll = 0.0f;
+    if (g_menuScroll > maxScroll) g_menuScroll = maxScroll;
+
+    if (g_arrastandoBarraMenu || (maxScroll > 0.0f && CheckCollisionPointRec(mouse, MENU_BARRA))) {
+        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+        return true;
+    }
+    return false;
+}
+
+// Desenha o trilho e a barrinha na posicao do scroll
+static void DesenharBarraMenu(void) {
+    Texture2D t = g_barraMenu;
+    float w = (float)t.width;
+
+    // 1) Trilho inteiro (o sprite ja vem com a barrinha no topo)
+    DrawTexturePro(t, (Rectangle){ 0, 0, w, (float)t.height }, ParaTela(MENU_BARRA),
+                   (Vector2){ 0, 0 }, 0.0f, WHITE);
+
+    // 2) Apaga a barrinha do topo: estica uma linha de canal vazio por cima dela
+    Rectangle vazioOrigem  = { BARRA_POLEGAR_X, BARRA_LINHA_VAZIA, BARRA_POLEGAR_W, 1 };
+    Rectangle vazioDestino = { MENU_BARRA.x + BARRA_POLEGAR_X, MENU_BARRA.y + BARRA_POLEGAR_Y,
+                               BARRA_POLEGAR_W, BARRA_POLEGAR_H };
+    DrawTexturePro(t, vazioOrigem, ParaTela(vazioDestino), (Vector2){ 0, 0 }, 0.0f, WHITE);
+
+    // 3) Barrinha na posicao atual (escurece no hover ou arrastando)
+    bool hover = g_arrastandoBarraMenu || CheckCollisionPointRec(MouseNaImagem(), MENU_BARRA);
+    Color cor = hover ? (Color){ 180, 180, 180, 255 } : WHITE;
+    Rectangle polegarOrigem = { BARRA_POLEGAR_X, BARRA_POLEGAR_Y, BARRA_POLEGAR_W, BARRA_POLEGAR_H };
+    DrawTexturePro(t, polegarOrigem, ParaTela(MenuPolegar()), (Vector2){ 0, 0 }, 0.0f, cor);
+}
+
+// Posicao do icone i agora, descontando o scroll do menu (pixels da imagem)
+static Rectangle IconeMenu(int i) {
+    Rectangle r = FERRAMENTAS[i];
+    r.y -= g_menuScroll;
+    return r;
+}
+
+// true se o mouse esta em cima do icone i E na parte visivel do menu
+static bool MouseNoIcone(int i) {
+    Vector2 m = MouseNaImagem();
+    return CheckCollisionPointRec(m, MENU_CONTEUDO) && CheckCollisionPointRec(m, IconeMenu(i));
+}
+
 static void UpdateGameplay(void) {
     Vector2 mouse = RayCanvasGetMousePosition();
     Rectangle seta = ParaTela(g_menuAberto ? SETA_ABERTA : SETA_FECHADA);
@@ -1475,7 +1912,7 @@ static void UpdateGameplay(void) {
     // 2) Ferramentas (so funcionam com o menu aberto)
     if (g_menuAberto) {
         for (int i = 0; i < NUM_TOOLS; i++) {
-            if (!CheckCollisionPointRec(mouse, ParaTela(FERRAMENTAS[i]))) continue;
+            if (!MouseNoIcone(i)) continue;
             if (tut) {
                 bool permitido = (i == 1 && (g_tutorialPasso == TUT_PASSO_ABRIR_FICHA || g_tutorialPasso == TUT_PASSO_FECHAR_FICHA)) ||
                                  (i == 0 && g_tutorialPasso == TUT_PASSO_ABRIR_PRANCHETA);
@@ -1511,86 +1948,110 @@ void UpdateDrawGameplayScene(void) {
     RayCanvasBegin();
 
     // A ficha e a prancheta ficam por cima de tudo, entao elas tem prioridade no clique
-    if (!UpdateTutorialFinal() && !UpdateDica() && !UpdateFicha() && !UpdatePrancheta()) {
+    if (!UpdateTutorialFinal() && !UpdateDica() && !UpdateFicha() && !UpdatePrancheta() && !UpdateMenuScroll()) {
         UpdateGameplay();
     }
 
-    // Background atras da tela (a moldura da tela cobre as bordas)
-    Rectangle bgOrigem = { 0, 0, (float)g_background.width, (float)g_background.height };
-    DrawTexturePro(g_background, bgOrigem, ParaTela(BG_AREA), (Vector2){ 0, 0 }, 0.0f, WHITE);
+     // 1) Fundo na janela de cima (preenche sem distorcer)
+    DrawTextureCover(g_background, JANELA_AREA);
 
-    // Personagem desenhado na parte inferior centralizada do escritorio durante a conversa
+    // 2) NPC encostado embaixo da janela, centralizado
     if (g_dialogLoaded && g_suspeitoAtual >= 0 && g_suspeitoAtual < 3) {
         Texture2D tex = g_charTextures[g_suspeitoAtual];
         if (tex.id > 0) {
-            float charW = 180.0f;
-            float charH = 180.0f;
-            Rectangle charDest = { (BG_AREA.width - charW) / 2.0f, 112.0f, charW, charH };
+            Rectangle charDest = {
+                JANELA_AREA.x + (JANELA_AREA.width - NPC_TAMANHO) / 2.0f,
+                JANELA_AREA.y + JANELA_AREA.height - NPC_TAMANHO,
+                NPC_TAMANHO, NPC_TAMANHO
+            };
             Rectangle charOrigem = { 0, 0, (float)tex.width, (float)tex.height };
             DrawTexturePro(tex, charOrigem, ParaTela(charDest), (Vector2){ 0, 0 }, 0.0f, WHITE);
-            DrawRectangleLinesEx(ParaTela(charDest), 1.0f, (Color){ 30, 32, 34, 255 });
         }
     }
-    // 1) Fundo
-    RayCanvasDrawTexture(g_telaFechada, GetTelaRect(), WHITE);
 
-    // 2) Menu de ferramentas por cima do fundo (so quando aberto)
+    // 3) Moldura por cima (a janela dela e transparente)
+    RayCanvasDrawTexture(g_interface, GetTelaRect(), WHITE);
+
+    // 2) Menu de ferramentas (embaixo do painel da direita)
+    Rectangle abaTela = ParaTela(g_menuAberto ? SETA_ABERTA : SETA_FECHADA);
+    bool abaHover = CheckCollisionPointRec(RayCanvasGetMousePosition(), abaTela);
+    Color corAba = abaHover ? (Color){ 180, 180, 180, 255 } : WHITE;   // escurece no hover
+
     if (g_menuAberto) {
+        // Menu aberto inteiro
         Rectangle menuOrigem = { 0, 0, (float)g_menuFerramentas.width, (float)g_menuFerramentas.height };
         DrawTexturePro(g_menuFerramentas, menuOrigem, ParaTela(MENU_AREA), (Vector2){ 0, 0 }, 0.0f, WHITE);
-        DrawWithHover(g_iconePrancheta, FERRAMENTAS[0]);
-        DrawWithHover(g_iconeArquivos, FERRAMENTAS[1]);
-        DrawWithHover(g_iconeMaleta, FERRAMENTAS[2]);
-        DrawWithHover(g_iconeMapa, FERRAMENTAS[3]);
+
+        // Redesenha so o pedaco da aba com a cor do hover por cima
+        Rectangle abaOrigem = { SETA_ABERTA.x - MENU_AREA.x, SETA_ABERTA.y - MENU_AREA.y,
+                                SETA_ABERTA.width, SETA_ABERTA.height };
+        DrawTexturePro(g_menuFerramentas, abaOrigem, abaTela, (Vector2){ 0, 0 }, 0.0f, corAba);
+
+            // Barra de rolagem do menu
+        DesenharBarraMenu();
+
+        // Icones das ferramentas (cortados na area do menu, rolando com o scroll)
+        Rectangle rConteudo = ParaTela(MENU_CONTEUDO);
+        BeginScissorMode((int)rConteudo.x, (int)rConteudo.y, (int)rConteudo.width, (int)rConteudo.height);
+        DrawWithHover(g_iconePrancheta, IconeMenu(0));
+        DrawWithHover(g_iconeArquivos,  IconeMenu(1));
+        DrawWithHover(g_iconeMaleta,    IconeMenu(2));
+        DrawWithHover(g_iconeMapa,      IconeMenu(3));
+        EndScissorMode();
+    } else {
+        // So a aba, fechada
+        Rectangle abaOrigem = { 0, 0, (float)g_seta.width, (float)g_seta.height };
+        DrawTexturePro(g_seta, abaOrigem, abaTela, (Vector2){ 0, 0 }, 0.0f, corAba);
     }
-
-    // 3) Seta por cima do fundo
-    Rectangle setaDestino = ParaTela(g_menuAberto ? SETA_ABERTA : SETA_FECHADA);
-    Rectangle setaOrigem  = { 0, 0, (float)g_seta.width, (float)g_seta.height };
-
-    // O sprite aponta para a direita (">").
-    // Com o menu fechado, espelhamos para apontar para a esquerda ("<").
-    if (!g_menuAberto) {
-        setaOrigem.width = -setaOrigem.width;
-    }
-
-    // Destaque quando o mouse esta em cima (mesmo efeito dos botoes do menu)
-    bool setaHover = CheckCollisionPointRec(RayCanvasGetMousePosition(), setaDestino);
-    Color corSeta = setaHover ? (Color){ 180, 180, 180, 255 } : WHITE;
-
-    DrawTexturePro(g_seta, setaOrigem, setaDestino, (Vector2){ 0, 0 }, 0.0f, corSeta);
 
     // 4) Nome e frase do interrogado (desenhados por ultimo, funcionou assim)
     DrawInterrogationTexts();
 
-     // 5) Prancheta por cima de tudo
+         // 5) Tablet por cima de tudo
     if (g_pranchetaAberta) {
         Rectangle area   = { g_pranchetaPos.x, g_pranchetaPos.y,
                              (float)g_prancheta.width, (float)g_prancheta.height };
         Rectangle origem = { 0, 0, (float)g_prancheta.width, (float)g_prancheta.height };
         DrawTexturePro(g_prancheta, origem, ParaTela(area), (Vector2){ 0, 0 }, 0.0f, WHITE);
-        float px = g_pranchetaPos.x;
-        float py = g_pranchetaPos.y;
 
-        TextoNaImagem("GUIA DA INVESTIGACAO", px + CAIXA_X, py + 60, 8, COR_MEDIO);
+        // Checklist: desenhado subindo g_tabletScroll e cortado na tela do tablet
+        g_tabletConteudoH = TabletLayout();
+        Rectangle conteudo = NoTablet(TABLET_CONTEUDO);
+        float cx = conteudo.x;
+        float cy = conteudo.y - g_tabletScroll;
+
+        Rectangle rConteudo = ParaTela(conteudo);
+        BeginScissorMode((int)rConteudo.x, (int)rConteudo.y, (int)rConteudo.width, (int)rConteudo.height);
+
+        TextoNaImagem("GUIA DA INVESTIGACAO", cx, cy + 2, 8, COR_TABLET_ROTULO);
 
         if (!g_dialogLoaded) {
             // Ninguem sendo entrevistado: so um aviso
-            TextoQuebrado("Nenhum funcionario em entrevista. Escolha alguem para comecar a investigacao.",
-                          px + CAIXA_X, py + 74, 190, 10, 12, COR_PRETO);
+            TextoQuebrado(AVISO_TABLET, cx, cy + 14, conteudo.width, 10, 12, COR_TABLET_TEXTO);
         } else {
             // Nome do funcionario dono deste checklist
             const char *nome = (g_funcionario < g_numFichas) ? g_fichas[g_funcionario].nome : "";
-            TextoQueCabe(nome, px + CAIXA_X, py + 70, 190, 10, COR_PRETO);
+            TextoQueCabe(nome, cx, cy + 14, conteudo.width, 10, COR_TABLET_TEXTO);
 
             // Quadradinhos (escurecem no hover) e textos ao lado
             for (int i = 0; i < NUM_CAIXAS; i++) {
                 Texture2D tex = g_marcado[g_funcionario][i] ? g_caixaComX : g_caixaVazia;
-                DrawWithHover(tex, CaixaNaImagem(i));
-                TextoQuebrado(GUIA[i], px + TEXTO_X, py + CAIXA_Y0 + i * CAIXA_PASSO + 1,
-                              165, 10, 11, COR_PRETO);
+                Rectangle caixa = { cx, cy + g_caixaY[i], CAIXA_TAM, CAIXA_TAM };   // os dois sprites no mesmo tamanho
+                DrawWithHover(tex, caixa);
+                TextoQuebrado(GUIA[i], cx + CAIXA_TEXTO_X, cy + g_textoY[i],
+                              conteudo.width - CAIXA_TEXTO_X, 10, 11, COR_TABLET_TEXTO);
             }
         }
+        EndScissorMode();
+
+        // Barra de rolagem: apaga a barrinha que vem desenhada no topo do sprite
+        // (o canal e preto) e desenha ela de novo na posicao do scroll
+        Rectangle polegarOrigem = { TABLET_POLEGAR_X, TABLET_POLEGAR_Y, TABLET_POLEGAR_W, TABLET_POLEGAR_H };
+        DrawRectangleRec(ParaTela(NoTablet(polegarOrigem)), BLACK);
+        bool hoverBarra = g_arrastandoBarraTablet ||
+                          (TabletMaxScroll() > 0.0f && CheckCollisionPointRec(MouseNaImagem(), NoTablet(TABLET_BARRA)));
+        Color corBarra = hoverBarra ? (Color){ 180, 180, 180, 255 } : WHITE;
+        DrawTexturePro(g_prancheta, polegarOrigem, ParaTela(TabletPolegar()), (Vector2){ 0, 0 }, 0.0f, corBarra);
     }
     // 5) Ficha do funcionario (por cima de tudo)
     if (g_fichaAtual >= 0) {
@@ -1612,7 +2073,7 @@ void UpdateDrawGameplayScene(void) {
         }
         if (charIdx >= 0 && g_charTextures[charIdx].id > 0) {
             Texture2D tex = g_charTextures[charIdx];
-            Rectangle fotoSlot = { 16.0f, 42.0f, 58.0f, 70.0f };
+            Rectangle fotoSlot = FICHA_FOTO;
             Rectangle rFotoTela = ParaTela(NaFicha(fotoSlot));
             float aspect = fotoSlot.width / fotoSlot.height;
             float srcW = (float)tex.width;
@@ -1637,31 +2098,26 @@ void UpdateDrawGameplayScene(void) {
             DrawRectangleRec(fechar, Fade(BLACK, 0.3f));
         }
 
-        TextoNaImagem("FICHA DO FUNCIONARIO", x + 12, y + 11, 10, COR_CLARO);
+        // Titulo na barra de cima
+        TextoNaImagem("FICHA DO FUNCIONARIO", x + 7, y + 6, 8, COR_FICHA_TITULO);
 
-        // Ao lado da foto
-        TextoNaImagem("NOME",          x + 86, y + 40, 8, COR_MEDIO);
-        TextoQueCabe(f->nome,          x + 86, y + 52, 140, 10, COR_PRETO);
-        TextoNaImagem("PERSONALIDADE", x + 86, y + 70, 8, COR_MEDIO);
-        TextoQueCabe(f->personalidade, x + 86, y + 82, 140, 10, COR_PRETO);
+        // Ao lado da foto (fixo, nao rola)
+        TextoNaImagem("NOME",   x + FICHA_LADO_X, y + 42,  8, COR_FICHA_ROTULO);
+        TextoQueCabe(f->nome,   x + FICHA_LADO_X, y + 53,  FICHA_LADO_W, 10, COR_FICHA_TEXTO);
+        TextoNaImagem("SETOR",  x + FICHA_LADO_X, y + 80,  8, COR_FICHA_ROTULO);
+        TextoQueCabe(f->setor,  x + FICHA_LADO_X, y + 91,  FICHA_LADO_W, 10, COR_FICHA_TEXTO);
+        TextoNaImagem("FUNCAO", x + FICHA_LADO_X, y + 118, 8, COR_FICHA_ROTULO);
+        TextoQueCabe(f->funcao, x + FICHA_LADO_X, y + 129, FICHA_LADO_W, 10, COR_FICHA_TEXTO);
 
-        // Largura inteira
-        TextoNaImagem("SETOR",  x + 14, y + 122, 8, COR_MEDIO);
-        TextoQueCabe(f->setor,  x + 14, y + 134, 212, 10, COR_PRETO);
-        TextoNaImagem("FUNCAO", x + 14, y + 152, 8, COR_MEDIO);
-        TextoQueCabe(f->funcao, x + 14, y + 164, 212, 10, COR_PRETO);
+        // Parte de baixo: rola, e o que passa da area fica escondido
+        g_fichaConteudoH = ConteudoFicha(f, 0, 0, false);
+        Rectangle rScroll = ParaTela(NaFicha(FICHA_SCROLL));
+        BeginScissorMode((int)rScroll.x, (int)rScroll.y, (int)rScroll.width, (int)rScroll.height);
+        ConteudoFicha(f, x + FICHA_SCROLL.x, y + FICHA_SCROLL.y - g_fichaScroll, true);
+        EndScissorMode();
 
-        // Comportamentos: um tracinho por item, quebrando nas linhas da caixa
-        TextoNaImagem("COMPORTAMENTOS", x + 14, y + 182, 8, COR_MEDIO);
-        float linhaY = y + 198;
-        for (int i = 0; i < 3; i++) {
-            if (f->comportamentos[i][0] == '\0') continue;   // item vazio
-            TextoNaImagem("-", x + 18, linhaY, 10, COR_PRETO);
-            int usadas = TextoQuebrado(f->comportamentos[i], x + 26, linhaY, 196, 10, 12, COR_PRETO);
-            linhaY += usadas * 12;
-        }
-
-        TextoNaImagem("RASEC - CONFIDENCIAL", x + 14, y + 302, 8, COR_MEDIO);
+        // Barra de rolagem
+        DesenharBarraFicha();
     }
     // 6) Botao e painel da dica (por cima de tudo)
     DesenharDica();
@@ -1675,11 +2131,10 @@ void UpdateDrawGameplayScene(void) {
 void UnloadGameplayScene(void) {
     
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-    UnloadTexture(g_telaFechada);
-    UnloadTexture(g_telaAberta);
     UnloadTexture(g_background);
     UnloadTexture(g_seta);
     UnloadTexture(g_menuFerramentas);
+    UnloadTexture(g_barraMenu);
     UnloadTexture(g_iconePrancheta);
     UnloadTexture(g_iconeArquivos);
     UnloadTexture(g_iconeMaleta);
