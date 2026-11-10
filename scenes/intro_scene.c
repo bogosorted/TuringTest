@@ -246,7 +246,7 @@ void UpdateDrawIntroScene(void) {
     DrawRectangleRec(tarjaCab, Fade((Color){ 18, 16, 18, 255 }, alpha));
     DrawRectangleLinesEx(tarjaCab, 1.5f * escala, Fade(corPainel, alpha));
 
-    const char *cabecalho = "RASEC — DOSSIÊ CONFIDENCIAL // DIRETORIA DE SEGURANÇA";
+    const char *cabecalho = "RASEC - DOSSIÊ CONFIDENCIAL // DIRETORIA DE SEGURANÇA";
     int tamCab = (int)(9 * escala);
     DrawText(cabecalho,
              (int)(tela.x + (tela.width - MeasureText(cabecalho, tamCab)) / 2.0f),
