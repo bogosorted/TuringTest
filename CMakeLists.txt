@@ -16,7 +16,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(raylib)
 
-add_executable(turing_test main.c scenes/menu_scene.c scenes/gameplay_scene.c scenes/selection_scene.c utils/raycanvas.c utils/dialog_system.c utils/transition.c utils/game_state.c scenes/verdict_scene.c scenes/intro_scene.c)
+add_executable(turing_test main.c scenes/menu_scene.c scenes/gameplay_scene.c scenes/selection_scene.c utils/raycanvas.c utils/dialog_system.c utils/transition.c utils/game_state.c utils/settings.c utils/options_ui.c scenes/verdict_scene.c scenes/intro_scene.c)
 target_link_libraries(turing_test PRIVATE raylib)
 
 file(CREATE_LINK ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/assets SYMBOLIC)

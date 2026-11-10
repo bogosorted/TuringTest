@@ -1,5 +1,7 @@
 #include "raycanvas.h"
+#include "settings.h"
 #include <math.h>
+#include <stddef.h>
 
 static int g_refWidth = 640;
 static int g_refHeight = 360;
@@ -14,6 +16,110 @@ void RayCanvasInit(int referenceWidth, int referenceHeight) {
 void RayCanvasClose(void) {
 }
 
+// ---------------------------------------------------------------
+// PALETAS (pos-processamento)
+// Com uma paleta diferente da original, o frame inteiro e desenhado numa
+// textura e um shader troca cada tom da rampa original pelo tom equivalente
+// da paleta escolhida. A diferenca entre o pixel e a rampa (ex.: o vermelho
+// dos alertas) e mantida, entao cores de destaque continuam se destacando.
+// Com a paleta original nada disso roda: desenha direto na tela.
+// ---------------------------------------------------------------
+static const char *PALETA_FS =
+    "#version 330\n"
+    "in vec2 fragTexCoord;\n"
+    "in vec4 fragColor;\n"
+    "uniform sampler2D texture0;\n"
+    "uniform vec3 orig[5];\n"
+    "uniform vec3 pal[5];\n"
+    "out vec4 finalColor;\n"
+    "float lum(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }\n"
+    "void main() {\n"
+    "    vec4 src = texture(texture0, fragTexCoord);\n"
+    "    float l = lum(src.rgb);\n"
+    "    vec3 o = orig[4];\n"
+    "    vec3 p = pal[4];\n"
+    "    for (int i = 0; i < 4; i++) {\n"
+    "        float l0 = lum(orig[i]);\n"
+    "        float l1 = lum(orig[i + 1]);\n"
+    "        if (l <= l1) {\n"
+    "            float t = clamp((l - l0) / max(l1 - l0, 0.0001), 0.0, 1.0);\n"
+    "            o = mix(orig[i], orig[i + 1], t);\n"
+    "            p = mix(pal[i], pal[i + 1], t);\n"
+    "            break;\n"
+    "        }\n"
+    "    }\n"
+    "    finalColor = vec4(clamp(p + (src.rgb - o), 0.0, 1.0), 1.0) * fragColor;\n"
+    "}\n";
+
+static Shader          g_paletaShader;
+static bool            g_paletaShaderPronto = false;
+static int             g_locOrig = -1;
+static int             g_locPal  = -1;
+static RenderTexture2D g_alvo;                // frame desenhado antes de aplicar a paleta
+static bool            g_alvoPronto = false;
+static bool            g_usandoAlvo = false;  // este frame esta indo para g_alvo?
+
+static void CoresParaVec3(const Color *cores, float out[PALETTE_NUM_STOPS * 3]) {
+    for (int i = 0; i < PALETTE_NUM_STOPS; i++) {
+        out[i * 3 + 0] = cores[i].r / 255.0f;
+        out[i * 3 + 1] = cores[i].g / 255.0f;
+        out[i * 3 + 2] = cores[i].b / 255.0f;
+    }
+}
+
+void RayCanvasBeginFrame(void) {
+    BeginDrawing();
+
+    g_usandoAlvo = (SettingsGetPalette() != 0);
+    if (!g_usandoAlvo) return;
+
+    if (!g_paletaShaderPronto) {
+        g_paletaShader = LoadShaderFromMemory(NULL, PALETA_FS);
+        g_locOrig = GetShaderLocation(g_paletaShader, "orig");
+        g_locPal  = GetShaderLocation(g_paletaShader, "pal");
+        g_paletaShaderPronto = true;
+    }
+
+    // Recria a textura se a janela mudou de tamanho (F11, redimensionar)
+    int w = GetScreenWidth();
+    int h = GetScreenHeight();
+    if (!g_alvoPronto || g_alvo.texture.width != w || g_alvo.texture.height != h) {
+        if (g_alvoPronto) UnloadRenderTexture(g_alvo);
+        g_alvo = LoadRenderTexture(w, h);
+        SetTextureFilter(g_alvo.texture, TEXTURE_FILTER_POINT);
+        g_alvoPronto = true;
+    }
+
+    BeginTextureMode(g_alvo);
+}
+
+void RayCanvasEndFrame(void) {
+    if (g_usandoAlvo) {
+        EndTextureMode();
+
+        float orig[PALETTE_NUM_STOPS * 3];
+        float pal[PALETTE_NUM_STOPS * 3];
+        CoresParaVec3(SettingsOriginalStops(), orig);
+        CoresParaVec3(SettingsPaletteStops(SettingsGetPalette()), pal);
+        SetShaderValueV(g_paletaShader, g_locOrig, orig, SHADER_UNIFORM_VEC3, PALETTE_NUM_STOPS);
+        SetShaderValueV(g_paletaShader, g_locPal,  pal,  SHADER_UNIFORM_VEC3, PALETTE_NUM_STOPS);
+
+        BeginShaderMode(g_paletaShader);
+        // Render textures ficam de cabeca para baixo no OpenGL: altura negativa desvira
+        Rectangle src = { 0, 0, (float)g_alvo.texture.width, -(float)g_alvo.texture.height };
+        DrawTextureRec(g_alvo.texture, src, (Vector2){ 0, 0 }, WHITE);
+        EndShaderMode();
+    }
+    EndDrawing();
+}
+
+void RayCanvasShutdown(void) {
+    if (g_alvoPronto) UnloadRenderTexture(g_alvo);
+    if (g_paletaShaderPronto) UnloadShader(g_paletaShader);
+    g_alvoPronto = false;
+    g_paletaShaderPronto = false;
+}
+
 void RayCanvasBegin(void) {
     float screenW = (float)GetScreenWidth();
     float screenH = (float)GetScreenHeight();
@@ -22,7 +128,7 @@ void RayCanvasBegin(void) {
     g_uiScale = fminf(screenW / (float)g_refWidth, screenH / (float)g_refHeight);
     if (g_uiScale < 0.1f) g_uiScale = 0.1f;
 
-    BeginDrawing();
+    RayCanvasBeginFrame();
     ClearBackground((Color){ 32, 29, 31, 255 });
 }
 
@@ -31,7 +137,7 @@ void RayCanvasEnd(void) {
     if (g_fadeAlpha > 0.0f) {
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade((Color){ 32, 29, 31, 255 }, g_fadeAlpha));
     }
-    EndDrawing();
+    RayCanvasEndFrame();
 }
 
 void RayCanvasSetFade(float alpha) {

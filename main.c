@@ -9,6 +9,7 @@
 #include "utils/dialog_system.h"
 #include "utils/transition.h"
 #include "utils/raycanvas.h"
+#include "utils/settings.h"
 #include <math.h>
 
 // Lista das telas que o jogo tem
@@ -63,6 +64,7 @@ int main(void) {
     if (!DirectoryExists("assets") && DirectoryExists("../assets")) {
         ChangeDirectory("..");
     }
+    SettingsLoad();   // volumes e paleta salvos no settings.cfg
 
     // Modo janela maximizada sem bordas (borderless windowed real no Linux/X11):
     // Nao usamos ToggleBorderlessWindowed() porque no Linux a raylib 5.5 chama
@@ -71,9 +73,7 @@ int main(void) {
     InitWindow(640, 360, "Turing Test");
     InitAudioDevice(); // Inicializa dispositivo de som da raylib
     SetExitKey(0); // desabilita ESC fechar a janela direto; tratamos saida de segurança no loop
-    int mon = GetCurrentMonitor();
-    SetWindowPosition(0, 0);
-    SetWindowSize(GetMonitorWidth(mon), GetMonitorHeight(mon));
+    SettingsApplyWindowMode();   // tela cheia ou janela, conforme o settings.cfg
     SetTargetFPS(60);
 
     // Música principal do jogo (toca continuamente com volume ajustado por cena e transição)
@@ -111,25 +111,19 @@ int main(void) {
             if (TransitionShowingText()) fatorTransicao = 0.20f;
             if (fatorTransicao < 0.15f)  fatorTransicao = 0.15f;
 
-            float targetVol = baseVol * fatorTransicao;
+            float targetVol = baseVol * fatorTransicao * SettingsGetMusicVolume();
             volumeBgmAtual += (targetVol - volumeBgmAtual) * fminf(dt * 5.0f, 1.0f);
             SetMusicVolume(bgm, volumeBgmAtual);
         }
         // Atalho de emergencia: Ctrl+Q ou F10 fecha o jogo imediatamente de qualquer lugar,
-        // e F11 alterna entre janela sem bordas (tela cheia) e janela normal com borda (1280x720)
+        // e F11 alterna entre tela cheia e modo janela (o mesmo da opcao "Tela cheia" do menu)
         if (IsKeyPressed(KEY_F10) || ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_Q))) {
             break;
         }
         if (IsKeyPressed(KEY_F11)) {
-            if (IsWindowState(FLAG_WINDOW_UNDECORATED)) {
-                ClearWindowState(FLAG_WINDOW_UNDECORATED);
-                SetWindowSize(1280, 720);
-                SetWindowPosition((GetMonitorWidth(mon) - 1280) / 2, (GetMonitorHeight(mon) - 720) / 2);
-            } else {
-                SetWindowState(FLAG_WINDOW_UNDECORATED);
-                SetWindowPosition(0, 0);
-                SetWindowSize(GetMonitorWidth(mon), GetMonitorHeight(mon));
-            }
+            SettingsSetFullscreen(!SettingsGetFullscreen());
+            SettingsApplyWindowMode();
+            SettingsSave();
         }
 
         // 1) Transicao: quando o fade-out termina, a troca de cena acontece
@@ -223,6 +217,7 @@ int main(void) {
         UnloadMusicStream(bgm);
     }
     CloseAudioDevice(); // Encerra dispositivo de som
+    RayCanvasShutdown();
     CloseWindow();
     return 0;
 }

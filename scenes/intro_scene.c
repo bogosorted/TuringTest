@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include "intro_scene.h"
+#include "../utils/settings.h"
 #include "../utils/raycanvas.h"
 #include "../utils/game_state.h"
 #include <stdio.h>
@@ -278,7 +279,7 @@ void UpdateDrawIntroScene(void) {
     bool pronto = (alpha >= 1.0f);
     bool hover = pronto && CheckCollisionPointRec(RayCanvasGetMousePosition(), area);
     if (hover && !g_btnHoverAnt && g_sndHover.frameCount > 0) {
-        SetSoundVolume(g_sndHover, 0.32f);
+        SetSoundVolume(g_sndHover, 0.32f * SettingsGetSfxVolume());
         PlaySound(g_sndHover);
     }
     g_btnHoverAnt = hover;

@@ -4,6 +4,8 @@
 #include <math.h>
 #include "gameplay_scene.h"
 #include "selection_scene.h"
+#include "../utils/settings.h"
+#include "../utils/options_ui.h"
 #include "../utils/raycanvas.h"
 #include "../utils/dialog_system.h"
 #include "../utils/game_state.h"
@@ -34,7 +36,7 @@ static float     g_alertaTokensTimer = 0.0f; // pisca em vermelho quando faltam 
 
 static void TocarSomHover(void) {
     if (g_sndHover.frameCount > 0) {
-        SetSoundVolume(g_sndHover, 0.30f);
+        SetSoundVolume(g_sndHover, 0.30f * SettingsGetSfxVolume());
         SetSoundPitch(g_sndHover, 0.97f + ((float)GetRandomValue(0, 6) / 100.0f));
         PlaySound(g_sndHover);
     }
@@ -1490,29 +1492,54 @@ static void DesenharConfirmarAvancar(void) {
     DrawTextInArea(ultimoDia ? "Sim, ir ao Veredito >>" : "Sim, próximo dia >>", CONFIRMAR_BTN_SIM, 9, corEscura);
 }
 
-// Modal "DESEJA ABANDONAR A RUN?" (aparece quando aperta ESC e nao ha mais nada aberto para fechar)
+// Menu de PAUSA (aparece quando aperta ESC e nao ha mais nada aberto para fechar):
+// em cima as opcoes (musica, efeitos, tela cheia, paleta - as mesmas do menu principal,
+// ver utils/options_ui.c), embaixo a pergunta de abandonar a run.
+static const Rectangle PAUSA_PAINEL  = { 155.0f,  52.0f, 330.0f, 256.0f };
+static const Rectangle PAUSA_BTN_NAO = { 171.0f, 268.0f, 140.0f,  26.0f };
+static const Rectangle PAUSA_BTN_SIM = { 329.0f, 268.0f, 140.0f,  26.0f };
+#define PAUSA_Y_DIVISORIA 204.0f
+#define PAUSA_Y_AVISO     210.0f
+#define PAUSA_Y_PERGUNTA  239.0f
+
+static const OptionsUiLayout LAYOUT_PAUSA = {
+    .x = 171.0f, .direita = 469.0f, .yPrimeira = 96.0f, .passoY = 24.0f,
+    .larguraValor = 40.0f, .gapNome = 10.0f
+};
+
+static void AbrirPausa(void) {
+    g_confirmarAbandonarRun = true;
+    OptionsUiReset();
+}
+
+static void FecharPausa(void) {
+    g_confirmarAbandonarRun = false;
+    OptionsUiReset();
+    SettingsSave();
+}
+
 static bool UpdateConfirmarAbandonar(void) {
     if (!g_confirmarAbandonarRun) return false;
 
     Vector2 mouse = RayCanvasGetMousePosition();
-    bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !OptionsUiArrastando();
     bool hover = false;
 
-    Rectangle rNao = ParaTela(CONFIRMAR_BTN_NAO);
-    Rectangle rSim = ParaTela(CONFIRMAR_BTN_SIM);
-    Rectangle btnFechar = { CONFIRMAR_PAINEL.x + CONFIRMAR_PAINEL.width - 19, CONFIRMAR_PAINEL.y + 3, 16, 16 };
+    Rectangle rNao = ParaTela(PAUSA_BTN_NAO);
+    Rectangle rSim = ParaTela(PAUSA_BTN_SIM);
+    Rectangle btnFechar = { PAUSA_PAINEL.x + PAUSA_PAINEL.width - 19, PAUSA_PAINEL.y + 3, 16, 16 };
     Rectangle rFechar = ParaTela(btnFechar);
 
     if (CheckCollisionPointRec(mouse, rNao) || CheckCollisionPointRec(mouse, rFechar)) {
         hover = true;
         if (clicou) {
-            g_confirmarAbandonarRun = false;
+            FecharPausa();
             return true;
         }
     } else if (CheckCollisionPointRec(mouse, rSim)) {
         hover = true;
         if (clicou) {
-            g_confirmarAbandonarRun = false;
+            FecharPausa();
             EncerrarEntrevistaLiberada();
             g_voltarParaMenu = true;
             return true;
@@ -1535,48 +1562,76 @@ static void DesenharConfirmarAbandonar(void) {
 
     DrawRectangleRec(GetTelaRect(), Fade(BLACK, 0.58f));
 
-    Rectangle sombra = { CONFIRMAR_PAINEL.x + 4, CONFIRMAR_PAINEL.y + 4, CONFIRMAR_PAINEL.width, CONFIRMAR_PAINEL.height };
+    Rectangle sombra = { PAUSA_PAINEL.x + 4, PAUSA_PAINEL.y + 4, PAUSA_PAINEL.width, PAUSA_PAINEL.height };
     DrawRectangleRec(ParaTela(sombra), Fade(BLACK, 0.6f));
 
-    Rectangle rPainel = ParaTela(CONFIRMAR_PAINEL);
+    Rectangle rPainel = ParaTela(PAUSA_PAINEL);
     DrawRectangleRec(rPainel, corFundo);
     DrawRectangleLinesEx(rPainel, 2.0f, corDestaque);
 
-    Rectangle barraTitulo = { CONFIRMAR_PAINEL.x, CONFIRMAR_PAINEL.y, CONFIRMAR_PAINEL.width, 22 };
+    Rectangle barraTitulo = { PAUSA_PAINEL.x, PAUSA_PAINEL.y, PAUSA_PAINEL.width, 22 };
     DrawRectangleRec(ParaTela(barraTitulo), corEscura);
-    DrawTextInArea("ABANDONAR A RUN?", (Rectangle){ CONFIRMAR_PAINEL.x, CONFIRMAR_PAINEL.y, CONFIRMAR_PAINEL.width - 22, 22 }, 10, corBranco);
+    DrawTextInArea("PAUSA", (Rectangle){ PAUSA_PAINEL.x, PAUSA_PAINEL.y, PAUSA_PAINEL.width - 22, 22 }, 10, corBranco);
 
-    Rectangle btnFechar = { CONFIRMAR_PAINEL.x + CONFIRMAR_PAINEL.width - 19, CONFIRMAR_PAINEL.y + 3, 16, 16 };
+    Rectangle btnFechar = { PAUSA_PAINEL.x + PAUSA_PAINEL.width - 19, PAUSA_PAINEL.y + 3, 16, 16 };
     DesenharBotaoFecharPadrao(btnFechar);
 
-    Rectangle badgeAviso = { CONFIRMAR_PAINEL.x + 16, CONFIRMAR_PAINEL.y + 30, CONFIRMAR_PAINEL.width - 32, 22 };
+    // 1) Opcoes: musica, efeitos e paleta (texto escuro sobre o fundo do popup)
+    OptionsUiEstilo est = {
+        .fonte = GetFontDefault(), .tamFonte = 10.0f, .espacamento = 1.0f, .sombraTexto = false,
+        .nome            = corEscura,
+        .valor           = corEscura,
+        .valorAtivo      = corBranco,
+        .trilhoBorda     = corEscura,
+        .trilhoFundo     = corEscura,
+        .preenchido      = corDestaque,
+        .preenchidoAtivo = corBranco,
+        .puxadorBorda    = corEscura,
+        .setaBorda       = corEscura,
+        .setaBordaHover  = corBranco,
+        .setaFundo       = corClaro,
+        .setaFundoHover  = corDestaque,
+        .setaTexto       = corEscura,
+        .nomePaleta      = corEscura,
+        .amostraBorda    = corEscura,
+    };
+    bool interativo = !RayCanvasInputBlocked();
+    if (OptionsUiUpdateDraw(&LAYOUT_PAUSA, &est, 1.0f, interativo, TocarSomHover)) {
+        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+    }
+
+    // Divisoria entre as opcoes e a parte de abandonar a run
+    DrawRectangleRec(ParaTela((Rectangle){ PAUSA_PAINEL.x + 16, PAUSA_Y_DIVISORIA, PAUSA_PAINEL.width - 32, 1 }), Fade(corEscura, 0.6f));
+
+    // 2) Abandonar a run
+    Rectangle badgeAviso = { PAUSA_PAINEL.x + 16, PAUSA_Y_AVISO, PAUSA_PAINEL.width - 32, 22 };
     DrawRectangleRec(ParaTela(badgeAviso), COR_NEGACAO_FUNDO);
     DrawRectangleLinesEx(ParaTela(badgeAviso), 1.5f, COR_NEGACAO_CLARO);
     DrawTextInArea("Atenção: O progresso atual desta investigação será encerrado!", badgeAviso, 9, corBranco);
 
     DrawTextWrappedLeftAligned(
         "Deseja mesmo abandonar esta run e retornar ao Menu Inicial?",
-        (Vector2){ CONFIRMAR_PAINEL.x + 18, CONFIRMAR_PAINEL.y + 68 },
-        CONFIRMAR_PAINEL.width - 36,
+        (Vector2){ PAUSA_PAINEL.x + 18, PAUSA_Y_PERGUNTA },
+        PAUSA_PAINEL.width - 36,
         10,
         corEscura
     );
 
     // Botao NAO / Continuar jogando
-    Rectangle rNao = ParaTela(CONFIRMAR_BTN_NAO);
+    Rectangle rNao = ParaTela(PAUSA_BTN_NAO);
     bool hovNao = CheckCollisionPointRec(mouse, rNao);
-    DrawRectangleRec(ParaTela((Rectangle){ CONFIRMAR_BTN_NAO.x + 2, CONFIRMAR_BTN_NAO.y + 2, CONFIRMAR_BTN_NAO.width, CONFIRMAR_BTN_NAO.height }), Fade(BLACK, 0.45f));
+    DrawRectangleRec(ParaTela((Rectangle){ PAUSA_BTN_NAO.x + 2, PAUSA_BTN_NAO.y + 2, PAUSA_BTN_NAO.width, PAUSA_BTN_NAO.height }), Fade(BLACK, 0.45f));
     DrawRectangleRec(rNao, hovNao ? corDestaque : corClaro);
     DrawRectangleLinesEx(rNao, hovNao ? 2.0f : 1.5f, hovNao ? corBranco : corEscura);
-    DrawTextInArea("Não, continuar run", CONFIRMAR_BTN_NAO, 9, corEscura);
+    DrawTextInArea("Não, continuar run", PAUSA_BTN_NAO, 9, corEscura);
 
     // Botao SIM / Abandonar run e voltar ao menu inicial (vermelho de negacao da paleta)
-    Rectangle rSim = ParaTela(CONFIRMAR_BTN_SIM);
+    Rectangle rSim = ParaTela(PAUSA_BTN_SIM);
     bool hovSim = CheckCollisionPointRec(mouse, rSim);
-    DrawRectangleRec(ParaTela((Rectangle){ CONFIRMAR_BTN_SIM.x + 2, CONFIRMAR_BTN_SIM.y + 2, CONFIRMAR_BTN_SIM.width, CONFIRMAR_BTN_SIM.height }), Fade(BLACK, 0.45f));
+    DrawRectangleRec(ParaTela((Rectangle){ PAUSA_BTN_SIM.x + 2, PAUSA_BTN_SIM.y + 2, PAUSA_BTN_SIM.width, PAUSA_BTN_SIM.height }), Fade(BLACK, 0.45f));
     DrawRectangleRec(rSim, hovSim ? COR_NEGACAO : COR_NEGACAO_FUNDO);
     DrawRectangleLinesEx(rSim, hovSim ? 2.0f : 1.5f, hovSim ? corBranco : COR_NEGACAO_CLARO);
-    DrawTextInArea("Sim, voltar ao Menu", CONFIRMAR_BTN_SIM, 9, corBranco);
+    DrawTextInArea("Sim, voltar ao Menu", PAUSA_BTN_SIM, 9, corBranco);
 }
 
 // Quadrante 3 (Retangulo da Direita: x = 304..636, y = 3..356) - Historico do Chat
@@ -1711,7 +1766,7 @@ static void AtualizarTypewriter(float dt) {
                         float basePitch = (s == 0) ? 1.02f : ((s == 1) ? 0.90f : 1.12f);
                         float rnd = ((float)GetRandomValue(-14, 14) / 100.0f);
                         SetSoundPitch(g_blipSounds[s], basePitch + rnd);
-                        SetSoundVolume(g_blipSounds[s], 0.50f);
+                        SetSoundVolume(g_blipSounds[s], 0.50f * SettingsGetSfxVolume());
                         PlaySound(g_blipSounds[s]);
                     }
                 }
@@ -3854,11 +3909,11 @@ static void UpdateGameplay(void) {
 }
 
 // ESC em camadas: fecha do que esta mais na frente ate o que esta mais atras.
-// Quando nao ha mais nada aberto, pergunta se quer abandonar a run.
+// Quando nao ha mais nada aberto, abre o menu de pausa (opcoes + abandonar a run).
 static void ProcessarTeclaEsc(void) {
     if (!IsKeyPressed(KEY_ESCAPE)) return;
 
-    if (g_confirmarAbandonarRun) { g_confirmarAbandonarRun = false; return; }
+    if (g_confirmarAbandonarRun) { FecharPausa(); return; }
     if (g_confirmarAvancarDia)   { g_confirmarAvancarDia = false;   return; }
     if (g_dicaAberta)            { g_dicaAberta = false;            return; }
     if (g_fichaAtual >= 0 || g_pranchetaAberta || g_mapaAberto || g_deepfakeAberto) {
@@ -3872,7 +3927,7 @@ static void ProcessarTeclaEsc(void) {
         EncerrarEntrevistaLiberada();
         return;
     }
-    g_confirmarAbandonarRun = true;
+    AbrirPausa();
 }
 
 void UpdateDrawGameplayScene(void) {

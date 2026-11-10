@@ -117,7 +117,7 @@ void TransitionDrawTextScreen(void) {
     Color corDetalhe  = Fade((Color){ 160, 147, 142, 255 }, alpha);
     Color corTexto    = Fade((Color){ 189, 181, 168, 255 }, alpha);
 
-    BeginDrawing();
+    RayCanvasBeginFrame();
     ClearBackground(corFundo);
 
     // Linhas horizontais decorativas da paleta acima e abaixo do titulo do dia
@@ -129,5 +129,5 @@ void TransitionDrawTextScreen(void) {
 
     DrawText(g_text, tx + 2, ty + 3, tamanho, Fade(BLACK, 0.45f * alpha));
     DrawText(g_text, tx, ty, tamanho, corTexto);
-    EndDrawing();
+    RayCanvasEndFrame();
 }

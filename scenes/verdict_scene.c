@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include "verdict_scene.h"
 #include "selection_scene.h"      // enum Employee (EMPLOYEE_LUCAS = AI)
+#include "../utils/settings.h"
 #include "../utils/raycanvas.h"
 
 // Mesmo espaco virtual das outras cenas (640x360)
@@ -91,7 +92,7 @@ static bool DrawButton(Rectangle areaVirtual, const char *label, bool ativo) {
     if (hover) g_algumHover = true;
 
     if (hover && !g_btnHoverAnt && g_sndHover.frameCount > 0) {
-        SetSoundVolume(g_sndHover, 0.32f);
+        SetSoundVolume(g_sndHover, 0.32f * SettingsGetSfxVolume());
         SetSoundPitch(g_sndHover, (float)GetRandomValue(98, 102) / 100.0f);
         PlaySound(g_sndHover);
     }
@@ -135,7 +136,7 @@ static void UpdateDrawFrames(void) {
     }
 
     if (hoverFrame != -1 && hoverFrame != g_frameHoverAnt && g_sndHover.frameCount > 0) {
-        SetSoundVolume(g_sndHover, 0.32f);
+        SetSoundVolume(g_sndHover, 0.32f * SettingsGetSfxVolume());
         SetSoundPitch(g_sndHover, (float)GetRandomValue(98, 102) / 100.0f);
         PlaySound(g_sndHover);
     }
