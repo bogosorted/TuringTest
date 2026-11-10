@@ -1,5 +1,7 @@
 #include "raylib.h"
 #include "menu_scene.h"
+#include "../utils/settings.h"
+#include "../utils/options_ui.h"
 #include "../utils/raycanvas.h"
 #include "../utils/dialog_system.h"
 #include <string.h>
@@ -48,6 +50,13 @@ static float g_jiggleTempo[NUM_BUTTONS];// timer de jiggle quando passa o mouse
 #define FONTE_BOTAO     38.0f   // tamanho da fonte dos botoes (maior e em destaque)
 #define SPRING_STIFF    210.0f  // rigidez da mola (overshoot elastico)
 #define SPRING_DAMP     16.5f   // amortecimento da mola (deixa um balancinho gostoso)
+#define BOTAO_X_ESCONDIDO (-320.0f) // botao todo atras do video (painel de opcoes aberto)
+
+// Painel de Opcoes (abre no lugar dos botoes)
+static bool  g_opcoesAbertas     = false;
+static float g_opcoesAnim        = 0.0f;   // 0 = invisivel, 1 = totalmente aberto
+static bool  g_voltarHoverAnt    = false;  // mouse estava no botao Voltar no frame anterior
+static bool  g_esperarSoltarMouse = false; // ignora os botoes do menu ate soltar o clique que abriu/fechou as opcoes
 
 static bool g_shouldStartGame = false;
 // Funcoes de clique de cada botao
@@ -58,6 +67,17 @@ static void OnClickPlay(void) {
 
 static void OnClickOptions(void) {
     TraceLog(LOG_INFO, "Botao OPCOES clicado!");
+    g_opcoesAbertas = true;
+    OptionsUiReset();
+    g_voltarHoverAnt = false;
+    g_esperarSoltarMouse = true;
+}
+
+static void FecharOpcoes(void) {
+    g_opcoesAbertas = false;
+    OptionsUiReset();
+    g_esperarSoltarMouse = true;
+    SettingsSave();
 }
 
 static bool g_shouldClose = false;
@@ -113,6 +133,27 @@ static void DesenharTextura(Texture2D tex, float x, float y, Color cor) {
     DrawTexturePro(tex, origem, destino, (Vector2){ 0, 0 }, 0.0f, cor);
 }
 
+// Copia 'txt' trocando as vogais com til pelas vogais sem til (ã -> a, õ -> o).
+// Usado nas passadas extras do negrito: deslocar o til na horizontal junta as
+// duas "bolinhas" dele numa barra reta. Como a VT323 e monoespacada, as letras
+// continuam no mesmo lugar e so a passada principal desenha o til.
+static void TextoSemTil(const char *txt, char *out, size_t tam) {
+    size_t o = 0;
+    for (const unsigned char *p = (const unsigned char *)txt; *p && o + 1 < tam; p++) {
+        if (p[0] == 0xC3 && p[1] != 0) {
+            unsigned char c = p[1];
+            char base = 0;
+            if (c == 0xA3) base = 'a';        // ã
+            else if (c == 0xB5) base = 'o';   // õ
+            else if (c == 0x83) base = 'A';   // Ã
+            else if (c == 0x95) base = 'O';   // Õ
+            if (base) { out[o++] = base; p++; continue; }
+        }
+        out[o++] = (char)*p;
+    }
+    out[o] = '\0';
+}
+
 // Escreve o texto do botao centralizado, em NEGRITO (bold) e com outline claro quando em hover
 static void DesenharTextoBotao(const char *txt, Rectangle botao, bool hover, float jiggleT) {
     // O botao tem um chanfro diagonal de 58px na ponta direita, entao o centro visual util
@@ -137,6 +178,9 @@ static void DesenharTextoBotao(const char *txt, Rectangle botao, bool hover, flo
     float boldOffset = 1.1f * escalaX;
     if (boldOffset < 1.0f) boldOffset = 1.0f;
 
+    char semTil[64];
+    TextoSemTil(txt, semTil, sizeof semTil);
+
     // 1) Se estiver com o mouse em cima, desenha outline branco/creme ao redor do texto bold
     if (hover) {
         float out = 1.8f * escalaX;
@@ -150,13 +194,13 @@ static void DesenharTextoBotao(const char *txt, Rectangle botao, bool hover, flo
         }
     } else {
         // Sombra suave de relevo quando fechado
-        DrawTextEx(g_fonte, txt, (Vector2){ tx + boldOffset, ty + 1.2f * escalaY }, fontSize, spacing, Fade((Color){ 189, 181, 168, 255 }, 0.35f));
+        DrawTextEx(g_fonte, semTil, (Vector2){ tx + boldOffset, ty + 1.2f * escalaY }, fontSize, spacing, Fade((Color){ 189, 181, 168, 255 }, 0.35f));
     }
 
     // 2) Texto em NEGRITO (multi-pass horizontal + vertical sutil para encorpar a fonte pixel)
-    DrawTextEx(g_fonte, txt, (Vector2){ tx,                   ty },                   fontSize, spacing, corTexto);
-    DrawTextEx(g_fonte, txt, (Vector2){ tx + boldOffset,      ty },                   fontSize, spacing, corTexto);
-    DrawTextEx(g_fonte, txt, (Vector2){ tx + boldOffset*0.5f, ty + 0.5f * escalaY }, fontSize, spacing, corTexto);
+    DrawTextEx(g_fonte, semTil, (Vector2){ tx + boldOffset,      ty },                   fontSize, spacing, corTexto);
+    DrawTextEx(g_fonte, semTil, (Vector2){ tx + boldOffset*0.5f, ty + 0.5f * escalaY }, fontSize, spacing, corTexto);
+    DrawTextEx(g_fonte, txt,    (Vector2){ tx,                   ty },                   fontSize, spacing, corTexto);
 }
 
 // ---------------------------------------------------------------
@@ -231,18 +275,25 @@ static void UpdateDrawDevButton(void) {
 void InitMenuScene(void) {
     g_shouldClose = false;
     g_shouldStartGame = false;
+    g_opcoesAbertas = false;
+    g_opcoesAnim = 0.0f;
+    OptionsUiReset();
+    g_voltarHoverAnt = false;
+    g_esperarSoltarMouse = false;
     RayCanvasInit(TELA_W, TELA_H);
 
     // GIF: a raylib carrega todos os quadros de uma vez
     g_animImagem  = LoadImageAnim("assets/menu_scene/menu_oficial/spr_mainmenu_gif.gif", &g_animQuadros);
     g_animTextura = LoadTextureFromImage(g_animImagem);
     SetTextureFilter(g_animTextura, TEXTURE_FILTER_POINT);
+    SetTextureWrap(g_animTextura, TEXTURE_WRAP_CLAMP);
     g_animAtual = 0;
     g_animTempo = 0.0f;
 
     // Carrega o painel da direita e as 2 texturas de Perlin noise originais (mesmo padrao antigo, agora com movimento sutil!)
     g_painel = LoadTexture("assets/menu_scene/menu_oficial/spr_mainmenu_fill.png");
     SetTextureFilter(g_painel, TEXTURE_FILTER_POINT);
+    SetTextureWrap(g_painel, TEXTURE_WRAP_CLAMP);
 
     Image noise1 = GenImagePerlinNoise(g_painel.width, g_painel.height, 0, 0, 4.5f);
     Image noise2 = GenImagePerlinNoise(g_painel.width, g_painel.height, 137, 293, 14.0f);
@@ -307,6 +358,9 @@ void InitMenuScene(void) {
 
     g_botao = LoadTexture("assets/menu_scene/menu_oficial/spr_mainmenu_botao.png");
     SetTextureFilter(g_botao, TEXTURE_FILTER_POINT);
+    // CLAMP: sem isso, ao desenhar o botao em posicao fracionaria (mola/outline) a ultima
+    // linha le a primeira linha do sprite (wrap "repeat") e aparece um traco que passa da diagonal
+    SetTextureWrap(g_botao, TEXTURE_WRAP_CLAMP);
 
     // Cria uma silhueta branca do botao para desenhar o outline externo no hover
     Image imgBotao = LoadImage("assets/menu_scene/menu_oficial/spr_mainmenu_botao.png");
@@ -319,6 +373,7 @@ void InitMenuScene(void) {
     g_botaoSilhueta = LoadTextureFromImage(imgBotao);
     UnloadImage(imgBotao);
     SetTextureFilter(g_botaoSilhueta, TEXTURE_FILTER_POINT);
+    SetTextureWrap(g_botaoSilhueta, TEXTURE_WRAP_CLAMP);
 
     // Logo original (title.png vem em preto; invertemos para branco para poder colorir com a paleta)
     // Adicionamos uma margem transparente em cima e embaixo para a onda nao cortar na borda da textura
@@ -328,6 +383,7 @@ void InitMenuScene(void) {
     g_logo = LoadTextureFromImage(imgLogo);
     UnloadImage(imgLogo);
     SetTextureFilter(g_logo, TEXTURE_FILTER_POINT);
+    SetTextureWrap(g_logo, TEXTURE_WRAP_CLAMP);
 
     // Shader de wave bem leve e lento para dar movimento sutil na logo TURING TEST
     const char *waveFs =
@@ -388,26 +444,31 @@ static void AtualizarAnimacao(void) {
     }
 }
 
+static void TocarSomHover(void) {
+    if (g_sndHover.frameCount > 0) {
+        SetSoundVolume(g_sndHover, 0.35f * SettingsGetSfxVolume());
+        SetSoundPitch(g_sndHover, 0.98f + ((float)GetRandomValue(0, 6) / 100.0f));
+        PlaySound(g_sndHover);
+    }
+}
+
 static void UpdateMenuButtons(void) {
     Vector2 mouse = RayCanvasGetMousePosition();
     bool algumHover = false;
+    bool menuAtivo = !g_opcoesAbertas;   // com as opcoes abertas os botoes se escondem
     float dt = GetFrameTime();
     if (dt > 0.05f) dt = 0.05f; // evita pulo brusco se a janela travar num frame
 
     for (int i = 0; i < NUM_BUTTONS; i++) {
         bool estavaHover = g_hover[i];
-        g_hover[i] = CheckCollisionPointRec(mouse, ParaTela(BotaoHitRect(i)));
+        g_hover[i] = menuAtivo && CheckCollisionPointRec(mouse, ParaTela(BotaoHitRect(i)));
         if (g_hover[i]) algumHover = true;
 
         // Dispara o efeito de jiggle e impulso extra ao entrar com o mouse no botao
         if (g_hover[i] && !estavaHover) {
             g_jiggleTempo[i] = 1.0f;
             g_botaoVelX[i] += 180.0f; // chute inicial para dar punch no slide
-            if (g_sndHover.frameCount > 0) {
-                SetSoundVolume(g_sndHover, 0.35f);
-                SetSoundPitch(g_sndHover, 0.98f + ((float)GetRandomValue(0, 6) / 100.0f));
-                PlaySound(g_sndHover);
-            }
+            TocarSomHover();
         } else if (!g_hover[i] && estavaHover) {
             g_jiggleTempo[i] = 0.55f;
         }
@@ -418,13 +479,13 @@ static void UpdateMenuButtons(void) {
         }
 
         // Fisica de mola (damped spring): desliza rapido e da um leve overshoot elastico no fim
-        float alvoX = g_hover[i] ? BOTAO_X : BOTAO_X_FECHADO;
+        float alvoX = !menuAtivo ? BOTAO_X_ESCONDIDO : (g_hover[i] ? BOTAO_X : BOTAO_X_FECHADO);
         float forca = (alvoX - g_botaoPosX[i]) * SPRING_STIFF;
         g_botaoVelX[i] += forca * dt;
         g_botaoVelX[i] *= expf(-SPRING_DAMP * dt);
         g_botaoPosX[i] += g_botaoVelX[i] * dt;
 
-        if (!RayCanvasInputBlocked() && g_hover[i] &&
+        if (!RayCanvasInputBlocked() && !g_esperarSoltarMouse && g_hover[i] &&
             (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonReleased(MOUSE_BUTTON_LEFT))) {
             if (i == 0)      OnClickPlay();
             else if (i == 1) OnClickOptions();
@@ -496,15 +557,127 @@ static void DrawMenu(void) {
     EndScissorMode();
 }
 
+// ---------------------------------------------------------------
+// PAINEL DE OPCOES
+// Os controles (musica, efeitos, paleta) ficam em utils/options_ui.c,
+// os mesmos do menu de pausa da gameplay. Aqui ficam o titulo, o botao
+// Voltar e o layout/cores proprios do menu principal.
+// ---------------------------------------------------------------
+// Grade do painel (pixels 640x360):
+//   coluna 1: nomes, 8px depois da borda do video (x = BOTAO_X) para nao encostar nele
+//   coluna 2: sliders / seletor de paleta, 10px depois do nome mais largo
+//   coluna 3: valores ("80%", "3/6"), alinhados a direita em x = 600
+#define OPC_LABEL_X    (BOTAO_X + 8.0f)
+#define OPC_Y_TITULO   132.0f
+#define OPC_Y_VOLTAR   286.0f
+
+static const OptionsUiLayout LAYOUT_OPCOES = {
+    .x = OPC_LABEL_X, .direita = 600.0f, .yPrimeira = 163.0f, .passoY = 28.0f,
+    .larguraValor = 52.0f, .gapNome = 10.0f
+};
+
+// Posicao do mouse em pixels 640x360 (inverso do ParaTela)
+static Vector2 MouseVirtual(void) {
+    Rectangle t = TelaRect();
+    Vector2 m = RayCanvasGetMousePosition();
+    return (Vector2){ (m.x - t.x) * (float)TELA_W / t.width, (m.y - t.y) * (float)TELA_H / t.height };
+}
+
+// Texto na fonte do menu. 'yCentro' e o centro vertical
+static void TextoOpcoes(const char *txt, float x, float yCentro, float tamanho, Color cor) {
+    Rectangle r = ParaTela((Rectangle){ x, yCentro - tamanho / 2.0f, 0, tamanho });
+    float esc = r.height / tamanho;
+    float spacing = 1.0f * esc;
+    DrawTextEx(g_fonte, txt, (Vector2){ r.x + esc, r.y + esc }, r.height, spacing, Fade(BLACK, 0.5f * (cor.a / 255.0f)));
+    DrawTextEx(g_fonte, txt, (Vector2){ r.x, r.y }, r.height, spacing, cor);
+}
+
+static void UpdateDrawOpcoes(void) {
+    float dt = GetFrameTime();
+    if (dt > 0.05f) dt = 0.05f;
+    float alvo = g_opcoesAbertas ? 1.0f : 0.0f;
+    g_opcoesAnim += (alvo - g_opcoesAnim) * fminf(dt * 9.0f, 1.0f);
+    if (!g_opcoesAbertas && g_opcoesAnim < 0.01f) { g_opcoesAnim = 0.0f; return; }
+
+    float a = g_opcoesAnim;
+    bool interativo = g_opcoesAbertas && a > 0.5f && !RayCanvasInputBlocked();
+
+    if (g_opcoesAbertas && IsKeyPressed(KEY_ESCAPE)) {
+        FecharOpcoes();
+        return;
+    }
+
+    // Titulo
+    TextoOpcoes("OPÇÕES", OPC_LABEL_X, OPC_Y_TITULO, 30.0f, Fade((Color){ 189, 181, 168, 255 }, a));
+
+    // Musica, efeitos e paleta (texto claro sobre o painel escuro)
+    OptionsUiEstilo est = {
+        .fonte = g_fonte, .tamFonte = 22.0f, .espacamento = 1.0f, .sombraTexto = true,
+        .nome            = { 189, 181, 168, 255 },
+        .valor           = { 189, 181, 168, 255 },
+        .valorAtivo      = { 255, 242, 230, 255 },
+        .trilhoBorda     = { 125, 112, 113, 255 },
+        .trilhoFundo     = {  18,  16,  18, 255 },
+        .preenchido      = { 189, 181, 168, 255 },
+        .preenchidoAtivo = { 255, 242, 230, 255 },
+        .puxadorBorda    = {  32,  29,  31, 255 },
+        .setaBorda       = { 125, 112, 113, 255 },
+        .setaBordaHover  = { 255, 242, 230, 255 },
+        .setaFundo       = {  32,  29,  31, 255 },
+        .setaFundoHover  = { 125, 112, 113, 255 },
+        .setaTexto       = { 255, 242, 230, 255 },
+        .nomePaleta      = { 255, 242, 230, 255 },
+        .amostraBorda    = { 125, 112, 113, 255 },
+    };
+    bool algumHover = OptionsUiUpdateDraw(&LAYOUT_OPCOES, &est, a, interativo, TocarSomHover);
+
+    // Botao Voltar (mesmo sprite dos botoes do menu)
+    Rectangle bVoltar = { BOTAO_X, OPC_Y_VOLTAR, (float)g_botao.width, (float)g_botao.height };
+    Rectangle hitVoltar = { BOTAO_X, OPC_Y_VOLTAR, (float)g_botao.width - 28.0f, (float)g_botao.height };
+    bool hoverVoltar = interativo && !OptionsUiArrastando() && CheckCollisionPointRec(MouseVirtual(), hitVoltar);
+    if (hoverVoltar) {
+        algumHover = true;
+        if (!g_voltarHoverAnt) TocarSomHover();
+    }
+    g_voltarHoverAnt = hoverVoltar;
+
+    DesenharTextura(g_botao, bVoltar.x + 3.0f, bVoltar.y + 4.0f, Fade(BLACK, 0.45f * a));
+    if (hoverVoltar) {
+        Color corOut = Fade((Color){ 255, 242, 230, 235 }, a);
+        DesenharTextura(g_botaoSilhueta, bVoltar.x - 1.5f, bVoltar.y, corOut);
+        DesenharTextura(g_botaoSilhueta, bVoltar.x + 1.5f, bVoltar.y, corOut);
+        DesenharTextura(g_botaoSilhueta, bVoltar.x, bVoltar.y - 1.5f, corOut);
+        DesenharTextura(g_botaoSilhueta, bVoltar.x, bVoltar.y + 1.5f, corOut);
+    }
+    DesenharTextura(g_botao, bVoltar.x, bVoltar.y, Fade(hoverVoltar ? (Color){ 215, 208, 200, 255 } : WHITE, a));
+    if (a > 0.6f) DesenharTextoBotao("Voltar", bVoltar, hoverVoltar, 0.0f);
+
+    if (hoverVoltar && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        FecharOpcoes();
+    }
+
+    if (g_opcoesAbertas) {
+        SetMouseCursor(algumHover ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+    }
+}
+
 void UpdateDrawMenuScene(void) {
     RayCanvasBegin();
+
+    // Libera os botoes do menu so depois de soltar o clique que abriu/fechou as opcoes
+    if (g_esperarSoltarMouse && !IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+        g_esperarSoltarMouse = false;
+    }
 
     AtualizarAnimacao();
     UpdateMenuButtons();
     DrawMenu();
+    UpdateDrawOpcoes();
 
-    UpdateDevCode();
-    UpdateDrawDevButton();
+    if (!g_opcoesAbertas) {
+        UpdateDevCode();
+        UpdateDrawDevButton();
+    }
 
     RayCanvasEnd();
 }

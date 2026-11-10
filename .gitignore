@@ -64,3 +64,6 @@ build-windows.sh
 .vscode/
 
 cmake-build-debug/
+
+# Configuracoes locais do jogador (menu de Opcoes)
+settings.cfg

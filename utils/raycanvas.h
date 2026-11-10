@@ -8,6 +8,14 @@ void RayCanvasInit(int referenceWidth, int referenceHeight);
 void RayCanvasClose(void);
 void RayCanvasBegin(void);
 void RayCanvasEnd(void);
+
+// Inicio/fim de frame "cru" (sem limpar a tela e sem o fade), para quem desenha
+// por conta propria, como a tela de texto da transicao. Aplica a paleta escolhida.
+void RayCanvasBeginFrame(void);
+void RayCanvasEndFrame(void);
+
+// Libera a textura e o shader das paletas (chamar antes de CloseWindow)
+void RayCanvasShutdown(void);
 void RayCanvasDraw(void);
 void RayCanvasDrawTiledBackground(Texture2D texture);
 void RayCanvasDrawTexture(Texture2D texture, Rectangle dest, Color tint);
