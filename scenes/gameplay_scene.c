@@ -201,10 +201,10 @@ static bool            g_confirmarAbandonarRun = false; // modal "Deseja abandon
 static bool            g_voltarParaMenu     = false;
 static Texture2D g_seta;              // botao da seta (aponta para a direita)
 static Texture2D g_menuFerramentas;   // barra do menu de ferramentas
-static Texture2D g_barraMenu;         // barra de rolagem do menu (12x89, com a barrinha desenhada no topo)
+static Texture2D g_barraMenu;         // sprite da barra de rolagem (12x89, com a barrinha no topo) - usado pela ficha
 static Texture2D g_iconePrancheta;    // 0: icone do tablet
 static Texture2D g_iconeArquivos;     // 1: icone da ficha de funcionario
-static Texture2D g_iconeMapa;         // 2: icone do mapa
+// 2: icone da dica = g_dicaAceso / g_dicaApagado (carregados junto com a dica)
 static Texture2D g_iconeEnviesar;     // 3: icone de enviesar dados / red teaming
 static Texture2D g_iconeDeepfake;     // 4: icone de scanner deepfake
 static Texture2D g_iconeInjecao;      // 5: icone de injecao de prompt
@@ -360,9 +360,6 @@ static const Color COR_TABLET_ROTULO = { 125, 112, 113, 255 };
 static const char *AVISO_TABLET = "Nenhum funcionario em entrevista. Escolha alguem para comecar a investigacao.";
 
 static bool g_menuAberto = false;
-static float g_menuScroll          = 0.0f;   // quanto o conteudo do menu ja rolou (pixels da imagem)
-static bool  g_arrastandoBarraMenu = false;  // segurando a barrinha
-static float g_offsetBarraMenu     = 0.0f;   // onde o mouse "pegou" a barrinha
 static bool g_shouldClose = false;
 static bool g_irParaSelecao = false;  // true quando clica no mapa
 
@@ -374,7 +371,7 @@ typedef enum {
     TUT_PASSO_FECHAR_FICHA,     // 4/6: Ler a ficha e clicar no [X] para fechar
     TUT_PASSO_PERGUNTA,         // 5/6: Fazer uma pergunta e entender os Tokens
     TUT_PASSO_ABRIR_PRANCHETA,  // 6/6: Abrir a Prancheta de anomalias
-    TUT_PASSO_CONCLUSAO         // Resumo da Dica Logica + Mapa e botao de iniciar
+    TUT_PASSO_CONCLUSAO         // Resumo da Dica Logica + Proximo Dia e botao de iniciar
 } TutorialPasso;
 
 static TutorialPasso g_tutorialPasso = TUT_PASSO_SUSPEITO;
@@ -399,25 +396,26 @@ static const char *g_fraseAtual = "Qualquer frase aqui";
 
 // Areas clicaveis, em pixels DENTRO da imagem (640x360).
 // Elas sao somadas a posicao da imagem na tela (ver ParaTela).
-static const Rectangle SETA_FECHADA = { 431, 332, 100,  25 };  // aba fechada, encostada embaixo do painel da direita
-static const Rectangle SETA_ABERTA  = { 434, 233,  93,  24 };  // a aba no topo do menu aberto (onde clica para fechar)
-static const Rectangle MENU_AREA    = { 322, 233, 291, 124 };  // menu aberto inteiro
+// Tudo centralizado em x = 470 (meio da caixa do historico, 314..628)
+static const Rectangle MENU_AREA    = { 325, 233, 291, 124 };  // menu aberto inteiro (centro em 325 + 145 = 470)
+static const Rectangle SETA_FECHADA = { 421, 332, 100,  25 };  // aba fechada (no sprite 100x25 a aba vai de x 3 a 95: centro 421 + 49 = 470)
+static const Rectangle SETA_ABERTA  = { 325 + 99, 233, 93, 24 };  // aba no topo do menu aberto, centralizada: (291 - 93) / 2 = 99
 
-// Scroll do menu (medido do mockup; menu aberto comeca em 322, 233)
-static const Rectangle MENU_BARRA    = { 322 + 270, 233 + 32,  12, 89 };  // trilho da barra de rolagem
-static const Rectangle MENU_CONTEUDO = { 322 + 8,   233 + 30, 258, 90 };  // area onde os icones aparecem
+// No sprite do menu aberto (spr_menu_aberto, 291x124) a aba fica fora do centro (x 112..204,
+// linhas 0..23). Ela e desenhada separada, na posicao de SETA_ABERTA.
+#define ABA_SPRITE_X 112
+#define ABA_SPRITE_W  93
+#define ABA_SPRITE_H  24
 
-// Pedacos do sprite da barra (12x89)
+// Area dos icones dentro do menu aberto (o menu aberto comeca em 325, 233; borda interna x 330..611)
+static const Rectangle MENU_CONTEUDO = { 330, 263, 281, 90 };
+
+// Pedacos do sprite da barra de rolagem (12x89), usados pela barra da ficha
 #define BARRA_POLEGAR_X    3     // a barrinha comeca na coluna 3 do sprite...
 #define BARRA_POLEGAR_W    6     // ...tem 6 de largura...
 #define BARRA_POLEGAR_Y    3     // ...comeca na linha 3...
 #define BARRA_POLEGAR_H   21     // ...e tem 21 de altura
-#define BARRA_CANAL_FIM   86     // o canal por onde ela corre acaba na linha 86
 #define BARRA_LINHA_VAZIA 30     // uma linha do sprite que so tem o canal vazio
-
-#define MENU_ICONES_POR_LINHA 3      // quantos icones cabem numa fileira
-#define MENU_LINHA_H        44.0f    // altura de cada fileira (cabem as 2 fileiras 3x2 ao mesmo tempo)
-#define MENU_PASSO_RODA     30.0f    // quanto cada "clique" da roda do mouse rola
 
 // Areas dos textos (tambem em pixels da imagem 640x360)
 static const Rectangle NOME_AREA  = { 2, 300, 96, 18 };     // quadrado vermelho
@@ -426,15 +424,16 @@ static const Rectangle FRASE_AREA = { 120, 318, 126, 26 };  // circulo vermelho
 static void AdicionarMensagemChat(int suspeito, const char *speaker, const char *text, bool is_player);
 
 static const Rectangle FERRAMENTAS[NUM_TOOLS] = {
-    // Grade 3x2: todos os 6 icones reduzidos (~78%) para caberem juntos na bandeja aberta!
+    // Grade 3x2 ocupando a bandeja inteira: colunas centradas em x ~376, ~470 e ~563
+    // (cada uma no meio de 1/3 da largura interna, x 330..611)
     // Fileira 1 (topo da bandeja: y ~264..267)
-    { 438, 267, 41, 34 },  // 0 - tablet (meio, fileira 1)
-    { 344, 267, 53, 34 },  // 1 - ficha/pasta (esquerda, fileira 1)
-    { 518, 264, 44, 40 },  // 2 - mapa (direita, fileira 1)
+    { 450, 267, 41, 34 },  // 0 - tablet (meio, fileira 1)
+    { 350, 267, 53, 34 },  // 1 - ficha/pasta (esquerda, fileira 1)
+    { 546, 267, 34, 34 },  // 2 - dica logica (direita, fileira 1) - sprite 32x32
     // Fileira 2 (parte de baixo da bandeja: y ~310..312)
-    { 351, 312, 38, 36 },  // 3 - enviesar dados / red teaming (esquerda, fileira 2)
-    { 439, 311, 39, 37 },  // 4 - scanner deepfake (meio, fileira 2)
-    { 514, 310, 51, 40 },  // 5 - injecao de prompt (direita, fileira 2)
+    { 357, 312, 38, 36 },  // 3 - enviesar dados / red teaming (esquerda, fileira 2)
+    { 451, 311, 39, 37 },  // 4 - scanner deepfake (meio, fileira 2)
+    { 537, 310, 51, 40 },  // 5 - injecao de prompt (direita, fileira 2)
 };
 
 // Fecha todas as janelas de ferramentas abertas (exclusao mutua ao abrir outra ferramenta)
@@ -1172,10 +1171,7 @@ static const Proposicao PROPOSICOES[NUM_PROPOSICOES] = {
 static Texture2D g_dicaAceso;     // botao disponivel
 static Texture2D g_dicaApagado;   // botao bloqueado
 
-// Posicao do botao: no canto superior direito do painel direito (sprite 32x32)
-static Rectangle DicaBotao(void) {
-    return (Rectangle){ 596, 6, 32, 32 };
-}
+// A dica abre pelo 3o icone do menu de ferramentas (FERRAMENTAS[2])
 static const Rectangle DICA_PAINEL = { 220, 65, 200, 222 };
 static const Rectangle DICA_OK     = { 280, 263, 80, 18 };
 
@@ -1211,7 +1207,16 @@ static void EncerrarEntrevistaLiberada(void) {
     g_entrevistaLiberada = false;
 }
 
-// Cuida do botao e do painel da dica.
+// Abre o puzzle da dica (chamado pelo icone do menu de ferramentas).
+// Fora de uma conversa, ou se ja usou hoje, nao faz nada (o icone fica apagado).
+static void AbrirDica(void) {
+    if (!DicaDisponivel() || g_dicaAberta) return;
+    g_dicaAtual  = GetRandomValue(0, NUM_PROPOSICOES - 1);
+    g_dicaEstado = 0;
+    g_dicaAberta = true;
+}
+
+// Cuida do painel da dica.
 // Devolve true se a dica "pegou" o mouse neste frame.
 static bool UpdateDica(void) {
     if (TutorialAtivo()) return false;
@@ -1254,35 +1259,15 @@ static bool UpdateDica(void) {
         SetMouseCursor(hover ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
         return true;
     }
-
-    // Botao
-    if (!DicaDisponivel()) return false;
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !clicou) return false;  // esta arrastando algo
-    if (!CheckCollisionPointRec(mouse, ParaTela(DicaBotao()))) return false;
-
-    SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
-    if (clicou) {
-        g_dicaAtual  = GetRandomValue(0, NUM_PROPOSICOES - 1);
-        g_dicaEstado = 0;
-        g_dicaAberta = true;
-    }
-    return true;
+    return false;
 }
 
-// Desenha o botao e, se estiver aberto, o painel da dica
+// Desenha o painel da dica (se estiver aberto)
 static void DesenharDica(void) {
     Color texto = {  32,  29,  31, 255 };
     Color fundo = { 125, 112, 113, 255 };
     Color claro = { 160, 147, 142, 255 };
     Vector2 mouse = RayCanvasGetMousePosition();
-
-    // Botao: aceso (escurece no hover) ou apagado
-    if (DicaDisponivel() && !g_dicaAberta) {
-        DrawWithHover(g_dicaAceso, DicaBotao());
-    } else {
-        Rectangle origem = { 0, 0, (float)g_dicaApagado.width, (float)g_dicaApagado.height };
-        DrawTexturePro(g_dicaApagado, origem, ParaTela(DicaBotao()), (Vector2){ 0, 0 }, 0.0f, WHITE);
-    }
 
     if (!g_dicaAberta) return;
 
@@ -1825,16 +1810,16 @@ static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
     Color hoverColor = (Color){ 160, 147, 142, 255 };
     Color borderColor = (Color){ 160, 147, 142, 255 };
 
-    // Barra de título da conversa (deixa espaco a direita para o botao de dica 32x32)
-    float headerW = area.width - 36.0f;
+    // Barra de título da conversa (largura toda: a dica agora fica no menu de ferramentas)
+    float headerW = area.width;
     Rectangle rTitulo = { area.x, area.y, headerW, CHAT_HEADER_H };
     DrawRectangleRec(ParaTela(rTitulo), Fade((Color){ 36, 32, 34, 255 }, 0.85f));
     DrawRectangleLinesEx(ParaTela(rTitulo), 2, borderColor);
 
     const char *nomesSuspeitos[] = {
-        "INTERROGATÓRIO — PATRÍCIA",
-        "INTERROGATÓRIO — ANDRÉ",
-        "INTERROGATÓRIO — LUCAS"
+        "INTERROGATÓRIO - PATRÍCIA",
+        "INTERROGATÓRIO - ANDRÉ",
+        "INTERROGATÓRIO - LUCAS"
     };
     const char *tituloChat = (g_dialogLoaded && suspectIndex >= 0 && suspectIndex < 3)
                              ? nomesSuspeitos[suspectIndex]
@@ -2075,8 +2060,8 @@ static void DrawInterrogationTexts(void) {
         DrawRectangleRec(ParaTela(infoBox), Fade((Color){ 36, 32, 34, 255 }, 0.85f));
         DrawRectangleLinesEx(ParaTela(infoBox), 1.5f, hoverColor);
         DrawTextInArea(naCantina
-                           ? "Lucas está aqui na Lanchonete. Clique nele para interrogar.\n(Patrícia e André estão no Escritório — alterne no topo)"
-                           : "Clique em Patrícia ou André na sala para interrogar.\n(Lucas está na Lanchonete — alterne no topo)",
+                           ? "Lucas está aqui na Lanchonete. Clique nele para interrogar.\n(Patrícia e André estão no Escritório - alterne no topo)"
+                           : "Clique em Patrícia ou André na sala para interrogar.\n(Lucas está na Lanchonete - alterne no topo)",
                        infoBox, 10, (Color){ 255, 242, 230, 255 });
         return;
     }
@@ -2130,7 +2115,7 @@ static void DrawInterrogationTexts(void) {
     if (HasTokens()) {
         DrawTextInArea("Encerrar conversa (voltar à sala)", exitArea, 10, (Color){ 255, 242, 230, 255 });
     } else {
-        DrawTextInArea("Sem tokens — Encerrar conversa", exitArea, 10, (Color){ 255, 242, 230, 255 });
+        DrawTextInArea("Sem tokens - Encerrar conversa", exitArea, 10, (Color){ 255, 242, 230, 255 });
     }
 }
 
@@ -2374,20 +2359,16 @@ void InitGameplayScene(void) {
 
     g_menuFerramentas = LoadTexture("assets/gameplay_scene/spr_menu_aberto.png");
     SetTextureFilter(g_menuFerramentas, TEXTURE_FILTER_POINT);
+    SetTextureWrap(g_menuFerramentas, TEXTURE_WRAP_CLAMP);   // desenhado em pedacos: sem clamp as emendas puxam pixels da outra borda
 
     g_barraMenu = LoadTexture("assets/gameplay_scene/spr_menu_scroll.png");
     SetTextureFilter(g_barraMenu, TEXTURE_FILTER_POINT);
-    g_menuScroll = 0.0f;
-    g_arrastandoBarraMenu = false;
 
     g_iconePrancheta = LoadTexture("assets/gameplay_scene/spr_icone_tablet.png");
     SetTextureFilter(g_iconePrancheta, TEXTURE_FILTER_POINT);
 
     g_iconeArquivos = LoadTexture("assets/gameplay_scene/spr_icone_ficha.png");
     SetTextureFilter(g_iconeArquivos, TEXTURE_FILTER_POINT);
-
-    g_iconeMapa = LoadTexture("assets/gameplay_scene/spr_icone_avancar_dia.png");
-    SetTextureFilter(g_iconeMapa, TEXTURE_FILTER_POINT);
 
     g_iconeEnviesar = LoadTexture("assets/gameplay_scene/spr_enviesardados.png");
     SetTextureFilter(g_iconeEnviesar, TEXTURE_FILTER_POINT);
@@ -2401,7 +2382,7 @@ void InitGameplayScene(void) {
     const char *caminhosIcones[NUM_TOOLS] = {
         "assets/gameplay_scene/spr_icone_tablet.png",
         "assets/gameplay_scene/spr_icone_ficha.png",
-        "assets/gameplay_scene/spr_icone_avancar_dia.png",
+        "assets/gameplay_scene/spr_botao_dica_aceso.png",
         "assets/gameplay_scene/spr_enviesardados.png",
         "assets/gameplay_scene/spr_deepfake.png",
         "assets/gameplay_scene/spr_injecaoprompt.png"
@@ -3172,7 +3153,7 @@ static void DesenharMapa(void) {
     DrawTexturePro(g_mapaJanela, origem, ParaTela(area), (Vector2){ 0, 0 }, 0.0f, WHITE);
 
     // 2) Titulo dentro da barra superior do mapa
-    DrawTextInArea("MAPA — RASEC", NoMapa(MAPA_TITULO), 11, COR_FICHA_TEXTO);
+    DrawTextInArea("MAPA - RASEC", NoMapa(MAPA_TITULO), 11, COR_FICHA_TEXTO);
 
     // 3) Botao [X] padronizado de fechar no canto superior direito
     DesenharBotaoFecharPadrao(NoMapa(MAPA_FECHAR));
@@ -3407,16 +3388,16 @@ static void DesenharTutorial(void) {
             break;
         }
         case TUT_PASSO_CONCLUSAO: {
-            Rectangle alvoDica = { 594, 4, 36, 36 };
-            Rectangle alvoMapa = IconeMenu(2);
-            DesenharDestaqueTutorial(alvoDica, "^", 2);
-            DesenharDestaqueTutorial(alvoMapa, ">>", 0);
+            Rectangle alvoDica    = IconeMenu(2);
+            Rectangle alvoAvancar = BOTAO_AVANCAR_TOPO;
+            DesenharDestaqueTutorial(alvoDica, ">>", 0);
+            DesenharDestaqueTutorial(alvoAvancar, "^", 2);
 
             Rectangle card = { 8, 12, 200, 238 };
             DesenharCardTutorial(
                 card,
                 "PRONTO PARA INVESTIGAR!",
-                "Marque no tablet as falhas de cada suspeito.\n\n- LÂMPADA (topo direito): 1 puzzle lógico por dia para ter perguntas grátis na conversa!\n\n- MAPA (menu): Use ao fim do dia para avançar até o Veredito.",
+                "Marque no tablet as falhas de cada suspeito.\n\n- DICA (menu de ferramentas): 1 puzzle lógico por dia, durante uma conversa, para ter perguntas grátis!\n\n- PRÓXIMO DIA (topo): use ao fim do dia para avançar até o Veredito.",
                 NULL
             );
 
@@ -3432,107 +3413,9 @@ static void DesenharTutorial(void) {
     }
 }
 
-// ---------- Scroll do menu de ferramentas ----------
-
-// Altura de tudo que tem dentro do menu (as fileiras de icones)
-static float MenuConteudoAltura(void) {
-    int linhas = (NUM_TOOLS + MENU_ICONES_POR_LINHA - 1) / MENU_ICONES_POR_LINHA;  // divisao arredondando pra cima
-    return linhas * MENU_LINHA_H;
-}
-
-// Quanto da para rolar (0 = tudo cabe)
-static float MenuMaxScroll(void) {
-    float m = MenuConteudoAltura() - MENU_CONTEUDO.height;
-    return (m > 0.0f) ? m : 0.0f;
-}
-
-// Quanto a barrinha pode andar dentro do canal
-static float MenuCursoBarra(void) {
-    return (float)(BARRA_CANAL_FIM - BARRA_POLEGAR_Y - BARRA_POLEGAR_H);
-}
-
-// Onde a barrinha esta agora (pixels da imagem)
-static Rectangle MenuPolegar(void) {
-    float maxScroll = MenuMaxScroll();
-    float t = (maxScroll > 0.0f) ? g_menuScroll / maxScroll : 0.0f;   // 0 = topo, 1 = fim
-    return (Rectangle){ MENU_BARRA.x + BARRA_POLEGAR_X, MENU_BARRA.y + BARRA_POLEGAR_Y + t * MenuCursoBarra(),
-                        BARRA_POLEGAR_W, BARRA_POLEGAR_H };
-}
-
-// Roda do mouse e arraste da barrinha.
-// Devolve true se o scroll "pegou" o mouse neste frame.
-static bool UpdateMenuScroll(void) {
-    if (!g_menuAberto) {
-        g_arrastandoBarraMenu = false;
-        return false;
-    }
-
-    Vector2 mouse = MouseNaImagem();
-    float maxScroll = MenuMaxScroll();
-
-    // Roda do mouse em cima do menu
-    if (CheckCollisionPointRec(mouse, MENU_AREA)) {
-        float roda = GetMouseWheelMove();
-        if (roda != 0.0f) g_menuScroll -= roda * MENU_PASSO_RODA;
-    }
-
-    // Clicou no trilho: pega a barrinha (ou pula para onde clicou)
-    if (maxScroll > 0.0f && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
-        CheckCollisionPointRec(mouse, MENU_BARRA)) {
-        Rectangle pol = MenuPolegar();
-        if (CheckCollisionPointRec(mouse, pol)) g_offsetBarraMenu = mouse.y - pol.y;
-        else                                    g_offsetBarraMenu = pol.height / 2.0f;
-        g_arrastandoBarraMenu = true;
-    }
-
-    // Arrastando: o scroll acompanha a barrinha
-    if (g_arrastandoBarraMenu) {
-        if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-            g_arrastandoBarraMenu = false;
-        } else {
-            float topo = mouse.y - g_offsetBarraMenu - (MENU_BARRA.y + BARRA_POLEGAR_Y);
-            g_menuScroll = topo / MenuCursoBarra() * maxScroll;
-        }
-    }
-
-    // Nao deixa passar do comeco nem do fim
-    if (g_menuScroll < 0.0f)      g_menuScroll = 0.0f;
-    if (g_menuScroll > maxScroll) g_menuScroll = maxScroll;
-
-    if (g_arrastandoBarraMenu || (maxScroll > 0.0f && CheckCollisionPointRec(mouse, MENU_BARRA))) {
-        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
-        return true;
-    }
-    return false;
-}
-
-// Desenha o trilho e a barrinha na posicao do scroll
-static void DesenharBarraMenu(void) {
-    Texture2D t = g_barraMenu;
-    float w = (float)t.width;
-
-    // 1) Trilho inteiro (o sprite ja vem com a barrinha no topo)
-    DrawTexturePro(t, (Rectangle){ 0, 0, w, (float)t.height }, ParaTela(MENU_BARRA),
-                   (Vector2){ 0, 0 }, 0.0f, WHITE);
-
-    // 2) Apaga a barrinha do topo: estica uma linha de canal vazio por cima dela
-    Rectangle vazioOrigem  = { BARRA_POLEGAR_X, BARRA_LINHA_VAZIA, BARRA_POLEGAR_W, 1 };
-    Rectangle vazioDestino = { MENU_BARRA.x + BARRA_POLEGAR_X, MENU_BARRA.y + BARRA_POLEGAR_Y,
-                               BARRA_POLEGAR_W, BARRA_POLEGAR_H };
-    DrawTexturePro(t, vazioOrigem, ParaTela(vazioDestino), (Vector2){ 0, 0 }, 0.0f, WHITE);
-
-    // 3) Barrinha na posicao atual (escurece no hover ou arrastando)
-    bool hover = g_arrastandoBarraMenu || CheckCollisionPointRec(MouseNaImagem(), MENU_BARRA);
-    Color cor = hover ? (Color){ 180, 180, 180, 255 } : WHITE;
-    Rectangle polegarOrigem = { BARRA_POLEGAR_X, BARRA_POLEGAR_Y, BARRA_POLEGAR_W, BARRA_POLEGAR_H };
-    DrawTexturePro(t, polegarOrigem, ParaTela(MenuPolegar()), (Vector2){ 0, 0 }, 0.0f, cor);
-}
-
-// Posicao do icone i agora, descontando o scroll do menu (pixels da imagem)
+// Posicao do icone i no menu (pixels da imagem)
 static Rectangle IconeMenu(int i) {
-    Rectangle r = FERRAMENTAS[i];
-    r.y -= g_menuScroll;
-    return r;
+    return FERRAMENTAS[i];
 }
 
 // true se o mouse esta em cima do icone i E na parte visivel do menu
@@ -3544,7 +3427,7 @@ static bool MouseNoIcone(int i) {
 static const char *TOOL_NAMES[NUM_TOOLS] = {
     "TABLET DE ANOTAÇÕES",
     "FICHA DO FUNCIONÁRIO",
-    "AVANÇAR O DIA",
+    "DICA LÓGICA",
     "ENVIESAR DADOS",
     "SCANNER DEEPFAKE",
     "INJEÇÃO DE PROMPT"
@@ -3553,7 +3436,7 @@ static const char *TOOL_NAMES[NUM_TOOLS] = {
 static const char *TOOL_DESCS[NUM_TOOLS] = {
     "Marque contradições e falhas do suspeito.",
     "Consulte cargo, setor e hábitos reais.",
-    "Encerra as atividades e avança para o próximo dia.",
+    "1 puzzle por dia, numa conversa: acerte e pergunte de graça.",
     "Testa se o suspeito concorda com fatos falsos.",
     "Analisa dedos da mão, digital e retina.",
     "Dispara comando de sistema para expor a IA."
@@ -3897,7 +3780,7 @@ static void UpdateGameplay(void) {
                         g_menuAberto = false;
                         g_tutorialPasso = TUT_PASSO_PERGUNTA;
                     }
-                } else if (i == 2) SolicitarAvancarDia();
+                } else if (i == 2) AbrirDica();
                 else if (i == 3) OnClickEnviesar();
                 else if (i == 4) OnClickDeepfake();
                 else if (i == 5) OnClickInjecao();
@@ -3937,7 +3820,7 @@ void UpdateDrawGameplayScene(void) {
     AtualizarTypewriter(GetFrameTime());
 
     // Os modais (abandonar run / confirmar dia), a ficha, o mapa, o scanner deepfake e a prancheta ficam por cima de tudo
-    if (!UpdateConfirmarAbandonar() && !UpdateTutorialFinal() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateMapa() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta() && !UpdateMenuScroll()) {
+    if (!UpdateConfirmarAbandonar() && !UpdateTutorialFinal() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateMapa() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
         UpdateGameplay();
     }
 
@@ -4042,28 +3925,35 @@ void UpdateDrawGameplayScene(void) {
     Color corAba = abaHover ? (Color){ 180, 180, 180, 255 } : WHITE;   // escurece no hover
 
     if (g_menuAberto) {
-        // Menu aberto inteiro
-        Rectangle menuOrigem = { 0, 0, (float)g_menuFerramentas.width, (float)g_menuFerramentas.height };
-        DrawTexturePro(g_menuFerramentas, menuOrigem, ParaTela(MENU_AREA), (Vector2){ 0, 0 }, 0.0f, WHITE);
+        // Menu aberto em 3 pedacos, para a aba ficar centralizada:
+        // a) corpo da bandeja (da linha ABA_SPRITE_H para baixo)
+        float mw = (float)g_menuFerramentas.width;
+        float mh = (float)g_menuFerramentas.height;
+        Rectangle corpoOrigem = { 0, ABA_SPRITE_H, mw, mh - ABA_SPRITE_H };
+        Rectangle corpoDest   = { MENU_AREA.x, MENU_AREA.y + ABA_SPRITE_H, MENU_AREA.width, MENU_AREA.height - ABA_SPRITE_H };
+        DrawTexturePro(g_menuFerramentas, corpoOrigem, ParaTela(corpoDest), (Vector2){ 0, 0 }, 0.0f, WHITE);
 
-        // Redesenha so o pedaco da aba com a cor do hover por cima
-        Rectangle abaOrigem = { SETA_ABERTA.x - MENU_AREA.x, SETA_ABERTA.y - MENU_AREA.y,
-                                SETA_ABERTA.width, SETA_ABERTA.height };
+        // b) cantinhos arredondados da borda nas linhas de cima (fora da aba)
+        Rectangle cantoEsqOrigem = { 0, 0, ABA_SPRITE_X, ABA_SPRITE_H };
+        Rectangle cantoDirOrigem = { ABA_SPRITE_X + ABA_SPRITE_W, 0, mw - (ABA_SPRITE_X + ABA_SPRITE_W), ABA_SPRITE_H };
+        DrawTexturePro(g_menuFerramentas, cantoEsqOrigem,
+                       ParaTela((Rectangle){ MENU_AREA.x, MENU_AREA.y, cantoEsqOrigem.width, ABA_SPRITE_H }),
+                       (Vector2){ 0, 0 }, 0.0f, WHITE);
+        DrawTexturePro(g_menuFerramentas, cantoDirOrigem,
+                       ParaTela((Rectangle){ MENU_AREA.x + cantoDirOrigem.x, MENU_AREA.y, cantoDirOrigem.width, ABA_SPRITE_H }),
+                       (Vector2){ 0, 0 }, 0.0f, WHITE);
+
+        // c) a aba com a seta, centralizada (e escurecida no hover)
+        Rectangle abaOrigem = { ABA_SPRITE_X, 0, ABA_SPRITE_W, ABA_SPRITE_H };
         DrawTexturePro(g_menuFerramentas, abaOrigem, abaTela, (Vector2){ 0, 0 }, 0.0f, corAba);
 
-            // Barra de rolagem do menu
-        DesenharBarraMenu();
-
-        // Icones das ferramentas (com folga vertical no scissor para nao cortar o salto elastico no hover)
-        Rectangle rConteudo = ParaTela((Rectangle){ MENU_CONTEUDO.x - 4, MENU_CONTEUDO.y - 6, MENU_CONTEUDO.width + 8, MENU_CONTEUDO.height + 10 });
-        BeginScissorMode((int)rConteudo.x, (int)rConteudo.y, (int)rConteudo.width, (int)rConteudo.height);
+        // Icones das ferramentas
         DesenharIconeFerramenta(g_iconePrancheta, 0);
         DesenharIconeFerramenta(g_iconeArquivos,  1);
-        DesenharIconeFerramenta(g_iconeMapa,      2);
+        DesenharIconeFerramenta((DicaDisponivel() && !g_dicaAberta) ? g_dicaAceso : g_dicaApagado, 2);
         DesenharIconeFerramenta(g_iconeEnviesar,  3);
         DesenharIconeFerramenta(g_iconeDeepfake,  4);
         DesenharIconeFerramenta(g_iconeInjecao,   5);
-        EndScissorMode();
 
         // Popup explicativo em cima do icone quando o mouse passa por cima
         DesenharTooltipFerramenta();
@@ -4232,7 +4122,6 @@ void UnloadGameplayScene(void) {
     UnloadTexture(g_barraMenu);
     UnloadTexture(g_iconePrancheta);
     UnloadTexture(g_iconeArquivos);
-    UnloadTexture(g_iconeMapa);
     UnloadTexture(g_iconeEnviesar);
     UnloadTexture(g_iconeDeepfake);
     UnloadTexture(g_iconeInjecao);

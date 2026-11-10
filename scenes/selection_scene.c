@@ -188,7 +188,7 @@ void UpdateDrawSelectionScene(void) {
     // 1) Barra de titulo dentro do mapa (59, 23, 163, 36)
     Rectangle rTitulo = ParaTela((Rectangle){ MAPA_X + 59, MAPA_Y + 23, 163, 36 });
     int tamTit = (int)(12 * escala);
-    const char *txtTit = "MAPA — RASEC";
+    const char *txtTit = "MAPA - RASEC";
     DrawText(txtTit,
              (int)(rTitulo.x + (rTitulo.width - MeasureText(txtTit, tamTit)) / 2.0f),
              (int)(rTitulo.y + (rTitulo.height - tamTit) / 2.0f),
