@@ -66,11 +66,9 @@ int main(void) {
     }
     SettingsLoad();   // volumes e paleta salvos no settings.cfg
 
-    // Modo janela maximizada sem bordas (borderless windowed real no Linux/X11):
-    // Nao usamos ToggleBorderlessWindowed() porque no Linux a raylib 5.5 chama
-    // glfwSetWindowMonitor(..., monitor, ...) que trava o Alt+Tab em fullscreen exclusivo!
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_UNDECORATED | FLAG_VSYNC_HINT);
-    InitWindow(640, 360, "Turing Test");
+    // Configuracao inicial da janela
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
+    InitWindow(1280, 720, "Turing Test");
     InitAudioDevice(); // Inicializa dispositivo de som da raylib
     SetExitKey(0); // desabilita ESC fechar a janela direto; tratamos saida de segurança no loop
     SettingsApplyWindowMode();   // tela cheia ou janela, conforme o settings.cfg

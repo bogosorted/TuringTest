@@ -20,6 +20,7 @@ static bool g_dialogLoaded = false;
 
 // Texturas dos personagens (Patricia, Andre, Lucas), silhuetas organicas na sala e fotos das 6 fichas
 static Texture2D g_charTextures[3];
+static Texture2D g_charSilhuetasBrancas[3]; // silhuetas 100% brancas solidas para outline orbital
 static Texture2D g_silTextures[3];          // silhuetas organicas na sala (Patricia, Andre, Lucas)
 static Sound     g_blipSounds[3];           // sons estilo Undertale com tonalidade propria (0=Patricia, 1=Andre, 2=Lucas)
 static float     g_typewriterCharTimer   = 0.0f;
@@ -179,15 +180,21 @@ typedef struct {
     Vector2 d[9];
 } FaceRigPose;
 
-static Shader          g_faceRigShader      = { 0 };
-static int             g_locBrowP           = -1;
-static int             g_locBrowD           = -1;
-static int             g_locLidP            = -1;
-static int             g_locLidD            = -1;
-static int             g_locMouthP          = -1;
-static int             g_locMouthD          = -1;
-static int             g_locJawP            = -1;
-static int             g_locJawD            = -1;
+static Shader          g_faceRigShader       = { 0 };
+static int             g_locBrowP            = -1;
+static int             g_locBrowD            = -1;
+static int             g_locLidP             = -1;
+static int             g_locLidD             = -1;
+static int             g_locMouthP           = -1;
+static int             g_locMouthD           = -1;
+static int             g_locJawP             = -1;
+static int             g_locJawD             = -1;
+static int             g_locBlink            = -1;
+static int             g_locPalpebraCol      = -1;
+static Shader          g_outlineDitherShader = { 0 };
+static int             g_locOutTime          = -1;
+static int             g_locOutCenter        = -1;
+static int             g_locOutCharHeight    = -1;
 static ExpressaoFacial g_exprSuspeito[3]    = { EXPR_NEUTRO, EXPR_NEUTRO, EXPR_FELIZ };
 static FaceRigPose     g_poseFrom           = { 0 };
 static FaceRigPose     g_poseTarget         = { 0 };
@@ -429,7 +436,7 @@ static const Rectangle FERRAMENTAS[NUM_TOOLS] = {
     // Fileira 1 (topo da bandeja: y ~264..267)
     { 450, 267, 41, 34 },  // 0 - tablet (meio, fileira 1)
     { 350, 267, 53, 34 },  // 1 - ficha/pasta (esquerda, fileira 1)
-    { 546, 267, 34, 34 },  // 2 - dica logica (direita, fileira 1) - sprite 32x32
+    { 546, 267, 34, 34 },  // 2 - dica logica (direita, fileira 1: centralizada na coluna da direita sobre a injeção) - sprite 32x32
     // Fileira 2 (parte de baixo da bandeja: y ~310..312)
     { 357, 312, 38, 36 },  // 3 - enviesar dados / red teaming (esquerda, fileira 2)
     { 451, 311, 39, 37 },  // 4 - scanner deepfake (meio, fileira 2)
@@ -536,10 +543,28 @@ static void OnClickDeepfake(void) {
         }
         GastarTokensFerramenta(2);
         g_deepfakeUsado[g_suspeitoAtual] = true;
+
+        AdicionarMensagemChat(
+            g_suspeitoAtual,
+            "Você [SCANNER DEEPFAKE | -2 TOKENS]",
+            "Aproxime-se do sensor óptico e posicione as mãos no scanner. Vamos verificar sua integridade biológica.",
+            true
+        );
+        if (g_suspeitoAtual == 0) {
+            AdicionarMensagemChat(0, "Patrícia", "...Um escaneamento biométrico? Siga os procedimentos que quiser, meus registros de integridade estão 100% em dia no sistema.", false);
+            SetExpressaoSuspeito(0, EXPR_DESPREZO, true);
+        } else if (g_suspeitoAtual == 1) {
+            AdicionarMensagemChat(1, "André", "De novo isso? A segurança já colheu minha digital hoje cedo. Anda logo com essa máquina que eu tenho carga para conferir.", false);
+            SetExpressaoSuspeito(1, EXPR_RAIVA, true);
+        } else {
+            AdicionarMensagemChat(2, "Lucas", "Opa, exame biométrico? Claro, sem problemas! Só... não repara na minha mão direita, tá? Haha! É polidactilia de nascença, uma condição genética totalmente real de nascença, juro!", false);
+            SetExpressaoSuspeito(2, EXPR_SURPRESA, true);
+        }
+    } else {
+        SetExpressaoSuspeito(g_suspeitoAtual, (g_suspeitoAtual == 2) ? EXPR_MEDO : EXPR_SURPRESA, false);
     }
     FecharJanelasFerramentas();
     g_deepfakeAberto = true;
-    SetExpressaoSuspeito(g_suspeitoAtual, (g_suspeitoAtual == 2) ? EXPR_MEDO : EXPR_SURPRESA, false);
     TraceLog(LOG_INFO, "Scanner Deepfake aberto");
 }
 static void OnClickInjecao(void) {
@@ -737,6 +762,8 @@ static const char *FACE_RIG_FS =
     "uniform vec2 uMouthD[2];\n"
     "uniform vec2 uJawP;\n"
     "uniform vec2 uJawD;\n"
+    "uniform float uBlink;\n"
+    "uniform vec3 uPalpebraCol;\n"
     "out vec4 finalColor;\n"
     "\n"
     "float rbf(vec2 p, vec2 c, float r) {\n"
@@ -809,6 +836,26 @@ static const char *FACE_RIG_FS =
     "    vec3 c4 = vec3(160.0, 147.0, 142.0) / 255.0;\n"
     "    vec3 c5 = vec3(189.0, 181.0, 168.0) / 255.0;\n"
     "\n"
+    "    // Piscar dos olhos com arcozinho e palpebra (processado com pixel art e dithering nativo)\n"
+    "    if (uBlink > 0.10) {\n"
+    "        float bProg = (uBlink - 0.10) / 0.90;\n"
+    "        for (int i = 0; i < 2; i++) {\n"
+    "            // Centro calibrado um tiquinho mais para baixo (+0.018 em Y) para cobrir o olho inteiro\n"
+    "            vec2 eyeCenter = uLidP[i] + uLidD[i] + vec2(0.0, 0.018);\n"
+    "            vec2 q = (uv - eyeCenter) / vec2(0.068, 0.042);\n"
+    "            float distSq = dot(q, q);\n"
+    "            if (distSq <= 1.0) {\n"
+    "                float arcY = (1.0 - q.x * q.x) * 0.40 * bProg;\n"
+    "                float distArc = abs(q.y - arcY);\n"
+    "                if (distArc < 0.16) {\n"
+    "                    texCol = vec4(c1, 1.0);\n"
+    "                } else if (q.y <= arcY + 0.35) {\n"
+    "                    texCol = vec4(uPalpebraCol, 1.0);\n"
+    "                }\n"
+    "            }\n"
+    "        }\n"
+    "    }\n"
+    "\n"
     "    float lum = dot(texCol.rgb, vec3(0.299, 0.587, 0.114));\n"
     "    // Reducao de resolucao em blocos retro 3x3 e dithering Bayer marcante (0.28)\n"
     "    vec2 pGrid = floor(gl_FragCoord.xy / 3.0);\n"
@@ -826,6 +873,81 @@ static const char *FACE_RIG_FS =
     "    finalColor = vec4(outRgb, texCol.a) * fragColor;\n"
     "}\n";
 
+// Shader de contorno orbital ditherizado na paleta oficial do jogo
+static const char *OUTLINE_DITHER_FS =
+    "#version 330\n"
+    "in vec2 fragTexCoord;\n"
+    "in vec4 fragColor;\n"
+    "uniform sampler2D texture0;\n"
+    "uniform float uTime;\n"
+    "uniform vec2 uCenter;\n"
+    "uniform float uCharHeight;\n"
+    "out vec4 finalColor;\n"
+    "\n"
+    "// Matriz Bayer 4x4 do jogo\n"
+    "float bayer4(vec2 p) {\n"
+    "    vec2 b = mod(floor(p), 4.0);\n"
+    "    int x = int(b.x);\n"
+    "    int y = int(b.y);\n"
+    "    int idx = y * 4 + x;\n"
+    "    if (idx == 0) return 0.0/16.0;\n"
+    "    if (idx == 1) return 8.0/16.0;\n"
+    "    if (idx == 2) return 2.0/16.0;\n"
+    "    if (idx == 3) return 10.0/16.0;\n"
+    "    if (idx == 4) return 12.0/16.0;\n"
+    "    if (idx == 5) return 4.0/16.0;\n"
+    "    if (idx == 6) return 14.0/16.0;\n"
+    "    if (idx == 7) return 6.0/16.0;\n"
+    "    if (idx == 8) return 3.0/16.0;\n"
+    "    if (idx == 9) return 11.0/16.0;\n"
+    "    if (idx == 10) return 1.0/16.0;\n"
+    "    if (idx == 11) return 9.0/16.0;\n"
+    "    if (idx == 12) return 15.0/16.0;\n"
+    "    if (idx == 13) return 7.0/16.0;\n"
+    "    if (idx == 14) return 13.0/16.0;\n"
+    "    return 5.0/16.0;\n"
+    "}\n"
+    "\n"
+    "void main() {\n"
+    "    vec4 texCol = texture(texture0, fragTexCoord);\n"
+    "    if (texCol.a < 0.15) discard;\n"
+    "\n"
+    "    // Paleta de tons claros de Turing Test para contorno bem destacado\n"
+    "    vec3 c3 = vec3(125.0, 112.0, 113.0) / 255.0;// sepia suave (apenas sombra sutil)\n"
+    "    vec3 c4 = vec3(160.0, 147.0, 142.0) / 255.0;// bege medio\n"
+    "    vec3 c5 = vec3(189.0, 181.0, 168.0) / 255.0;// marfim oficial do jogo\n"
+    "    vec3 c6 = vec3(230.0, 222.0, 210.0) / 255.0;// marfim iluminado\n"
+    "    vec3 c7 = vec3(252.0, 246.0, 238.0) / 255.0;// branco marfim puro\n"
+    "\n"
+    "    // Angulo polar a partir do centro da cabeca/rosto\n"
+    "    vec2 diff = gl_FragCoord.xy - uCenter;\n"
+    "    float theta = atan(diff.y, diff.x);\n"
+    "\n"
+    "    // Onda orbital no perimetro (m=4 cristas orbitando em velocidade calma)\n"
+    "    float wave = sin(4.0 * theta - uTime * 1.3);\n"
+    "\n"
+    "    // Degrade vertical suave da luz do escritorio: mais claro no topo da cabeca\n"
+    "    float yRel = (gl_FragCoord.y - uCenter.y) / max(uCharHeight * 0.5, 1.0);\n"
+    "    float gradVert = clamp(yRel * 0.5 + 0.5, 0.0, 1.0);\n"
+    "\n"
+    "    // Intensidade calibrada mais clara para destacar bem do fundo escuro\n"
+    "    float intensidade = clamp(0.35 + gradVert * 0.35 + (wave * 0.5 + 0.5) * 0.30, 0.0, 1.0);\n"
+    "\n"
+    "    // Dithering Bayer 4x4 em blocos 3x3 na mesma escala retro do jogo\n"
+    "    vec2 pGrid = floor(gl_FragCoord.xy / 3.0);\n"
+    "    float dVal = (bayer4(pGrid) - 0.5) * 0.28;\n"
+    "    float val = clamp(intensidade + dVal, 0.0, 1.0);\n"
+    "\n"
+    "    vec3 outRgb = c5;\n"
+    "    if (val < 0.15) outRgb = c3;\n"
+    "    else if (val < 0.38) outRgb = c4;\n"
+    "    else if (val < 0.66) outRgb = c5;\n"
+    "    else if (val < 0.88) outRgb = c6;\n"
+    "    else outRgb = c7;\n"
+    "\n"
+    "    finalColor = vec4(outRgb, texCol.a * 0.98);\n"
+    "}\n";
+
 static void InitFaceRigShader(void) {
     g_faceRigShader = LoadShaderFromMemory(NULL, FACE_RIG_FS);
     if (g_faceRigShader.id > 0) {
@@ -835,8 +957,17 @@ static void InitFaceRigShader(void) {
         g_locLidD   = GetShaderLocation(g_faceRigShader, "uLidD");
         g_locMouthP = GetShaderLocation(g_faceRigShader, "uMouthP");
         g_locMouthD = GetShaderLocation(g_faceRigShader, "uMouthD");
-        g_locJawP   = GetShaderLocation(g_faceRigShader, "uJawP");
-        g_locJawD   = GetShaderLocation(g_faceRigShader, "uJawD");
+        g_locJawP        = GetShaderLocation(g_faceRigShader, "uJawP");
+        g_locJawD        = GetShaderLocation(g_faceRigShader, "uJawD");
+        g_locBlink       = GetShaderLocation(g_faceRigShader, "uBlink");
+        g_locPalpebraCol = GetShaderLocation(g_faceRigShader, "uPalpebraCol");
+    }
+
+    g_outlineDitherShader = LoadShaderFromMemory(NULL, OUTLINE_DITHER_FS);
+    if (g_outlineDitherShader.id > 0) {
+        g_locOutTime       = GetShaderLocation(g_outlineDitherShader, "uTime");
+        g_locOutCenter     = GetShaderLocation(g_outlineDitherShader, "uCenter");
+        g_locOutCharHeight = GetShaderLocation(g_outlineDitherShader, "uCharHeight");
     }
 }
 
@@ -1010,10 +1141,11 @@ static void DesenharRetratoComRig(Texture2D tex, int suspeito, Rectangle charDes
     // Piscar natural a cada ~3.8s + movimento sutil de fala na mandibula/boca ao iniciar um dialogo
     float tNow = (float)GetTime();
     float cicloBlink = fmodf(tNow + suspeito * 1.1f, 3.8f);
-    float blinkAdd = 0.0f;
-    if (cicloBlink < 0.14f) {
-        float bt = cicloBlink / 0.14f;
-        blinkAdd = sinf(bt * 3.14159265f) * 0.020f;
+    float blinkT = 0.0f;
+    const float duracaoBlink = 0.18f;
+    if (cicloBlink < duracaoBlink) {
+        float bt = cicloBlink / duracaoBlink;
+        blinkT = sinf(bt * 3.14159265f);
     }
 
     float talkJawAdd = 0.0f;
@@ -1026,8 +1158,8 @@ static void DesenharRetratoComRig(Texture2D tex, int suspeito, Rectangle charDes
     const FaceRigAnchors *anc = &FACE_ANCHORS[suspeito];
     Vector2 browD[4]  = { g_poseCurr.d[0], g_poseCurr.d[1], g_poseCurr.d[2], g_poseCurr.d[3] };
     Vector2 lidD[2]   = {
-        { g_poseCurr.d[4].x, g_poseCurr.d[4].y + blinkAdd },
-        { g_poseCurr.d[5].x, g_poseCurr.d[5].y + blinkAdd }
+        { g_poseCurr.d[4].x, g_poseCurr.d[4].y },
+        { g_poseCurr.d[5].x, g_poseCurr.d[5].y }
     };
     Vector2 mouthD[2] = {
         { g_poseCurr.d[6].x, g_poseCurr.d[6].y + talkJawAdd * 0.40f },
@@ -1044,16 +1176,63 @@ static void DesenharRetratoComRig(Texture2D tex, int suspeito, Rectangle charDes
     SetShaderValue (g_faceRigShader, g_locJawP,   &anc->jawP,  SHADER_UNIFORM_VEC2);
     SetShaderValue (g_faceRigShader, g_locJawD,   &jawD,       SHADER_UNIFORM_VEC2);
 
-    // Outline branco ao redor do personagem no interrogatorio
-    // Desenhado deslocando 1.5px nas 4 direcoes em branco para destacar da sala
-    Rectangle rUmPx = ParaTela((Rectangle){ 0, 0, 1.5f, 1.5f });
-    float ox = rUmPx.width;
-    float oy = rUmPx.height;
-    const Vector2 dirs[4] = { { -ox, 0 }, { ox, 0 }, { 0, -oy }, { 0, oy } };
-    Color corOutline = (Color){ 255, 242, 230, 240 };
-    for (int d = 0; d < 4; d++) {
-        Rectangle rOut = { rDestTela.x + dirs[d].x, rDestTela.y + dirs[d].y, rDestTela.width, rDestTela.height };
-        DrawTexturePro(tex, charOrigem, rOut, (Vector2){ 0, 0 }, 0.0f, corOutline);
+    Vector3 palCol;
+    if (suspeito == 1) {
+        palCol = (Vector3){ 125.0f / 255.0f, 112.0f / 255.0f, 113.0f / 255.0f }; // André (c3)
+    } else {
+        palCol = (Vector3){ 90.0f / 255.0f, 83.0f / 255.0f, 83.0f / 255.0f };    // Patrícia / Lucas (c2)
+    }
+    SetShaderValue(g_faceRigShader, g_locBlink, &blinkT, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(g_faceRigShader, g_locPalpebraCol, &palCol, SHADER_UNIFORM_VEC3);
+
+    // Outline solido com degradê e dithering na paleta oficial do jogo (estilo atmosfera/aneis de planeta)
+    // Destaca o personagem do fundo com espessura marcante e ondas viajando suavemente ao redor do circulo
+    float tempo = (float)GetTime();
+    Rectangle rUmPx = ParaTela((Rectangle){ 0, 0, 1.0f, 1.0f });
+    float pxEscala = (rUmPx.width + rUmPx.height) * 0.5f;
+
+    // Raio base aumentado (~4.8px) para maior grossura e visibilidade
+    float raioBase = 4.8f * pxEscala;
+
+    // 36 direcoes polares (passos de 10 graus) eliminam qualquer fliquer ou buraco subpixel
+    const int NUM_POLAR = 36;
+    Texture2D silTex = g_charSilhuetasBrancas[suspeito];
+    if (silTex.id == 0) silTex = tex; // salvaguarda caso a textura nao esteja carregada
+
+    if (g_outlineDitherShader.id > 0) {
+        BeginShaderMode(g_outlineDitherShader);
+        SetShaderValue(g_outlineDitherShader, g_locOutTime, &tempo, SHADER_UNIFORM_FLOAT);
+        Vector2 uCenter = (Vector2){
+            rDestTela.x + rDestTela.width * 0.5f,
+            (float)GetRenderHeight() - (rDestTela.y + rDestTela.height * 0.40f)
+        };
+        SetShaderValue(g_outlineDitherShader, g_locOutCenter, &uCenter, SHADER_UNIFORM_VEC2);
+        float uH = rDestTela.height;
+        SetShaderValue(g_outlineDitherShader, g_locOutCharHeight, &uH, SHADER_UNIFORM_FLOAT);
+    }
+
+    for (int k = 0; k < NUM_POLAR; k++) {
+        float theta = ((float)k / (float)NUM_POLAR) * 6.2831853f;
+
+        // Onda orbital viajando pela borda circular ao redor do personagem:
+        // m=4 cristas de onda que fecham perfeitamente em 360 graus e se movem em velocidade calma
+        float onda = sinf(4.0f * theta - tempo * 1.3f) * (0.85f * pxEscala);
+        float rOffset = raioBase + onda;
+
+        float ox = roundf(cosf(theta) * rOffset);
+        float oy = roundf(sinf(theta) * rOffset);
+
+        Rectangle rOut = {
+            rDestTela.x + ox,
+            rDestTela.y + oy,
+            rDestTela.width,
+            rDestTela.height
+        };
+        DrawTexturePro(silTex, charOrigem, rOut, (Vector2){ 0, 0 }, 0.0f, WHITE);
+    }
+
+    if (g_outlineDitherShader.id > 0) {
+        EndShaderMode();
     }
 
     BeginShaderMode(g_faceRigShader);
@@ -1086,6 +1265,115 @@ static void DrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, 
     float y = destino.y + (destino.height - tam) / 2.0f;
 
     DrawText(texto, (int)x, (int)y, tam, cor);
+}
+
+// Desenha um texto perfeitamente centralizado com efeito senoidal de onda (per-character wave)
+// Cada caractere oscila verticalmente com transição suave de iluminacao na paleta do jogo
+// Suporta quebra de linha com '\n', mantendo cada linha 100% centralizada na horizontal e vertical do retangulo
+static void DrawTextWaveInArea(const char *texto, Rectangle area, int tamanhoFonte, Color corBase) {
+    Rectangle destino = ParaTela(area);
+    float escala = destino.height / area.height;
+    int tam = (int)(tamanhoFonte * escala);
+    if (tam < 1) tam = 1;
+
+    float margem = 8.0f * escala;
+    float maxLargura = destino.width - margem * 2.0f;
+    if (maxLargura < 10.0f) maxLargura = destino.width;
+
+    // Divide o texto em linhas por '\n'
+    char linhas[4][128];
+    int numLinhas = 0;
+    const char *p = texto;
+    while (*p != '\0' && numLinhas < 4) {
+        int i = 0;
+        while (*p != '\0' && *p != '\n' && i < 127) {
+            linhas[numLinhas][i++] = *p++;
+        }
+        linhas[numLinhas][i] = '\0';
+        numLinhas++;
+        if (*p == '\n') p++;
+    }
+    if (numLinhas == 0) return;
+
+    // Garante que nenhuma linha ultrapasse a largura maxima da caixa
+    int minTam = (int)(5.0f * escala);
+    if (minTam < 1) minTam = 1;
+
+    for (int l = 0; l < numLinhas; l++) {
+        while (tam > minTam && MeasureText(linhas[l], tam) > maxLargura) {
+            tam--;
+        }
+    }
+
+    float linhaEspaco = 4.0f * escala;
+    float alturaTotal = (float)numLinhas * (float)tam + (float)(numLinhas - 1) * linhaEspaco;
+    // Centralizacao vertical exata no meio do quadrado
+    float yBase = destino.y + (destino.height - alturaTotal) * 0.5f;
+
+    float tempo = (float)GetTime();
+    float amp = 1.0f * escala; // amplitude bem sutil e suave
+    float freq = 0.18f;        // frequencia angular suave entre caracteres
+    float vel = 2.4f;          // velocidade de propagacao relaxada
+    int globalCharIdx = 0;
+
+    for (int l = 0; l < numLinhas; l++) {
+        const char *linhaStr = linhas[l];
+
+        // 1º passo: medir a largura real exata somando a largura dos glifos que serao renderizados
+        float larguraReal = 0.0f;
+        const char *ptr = linhaStr;
+        while (*ptr != '\0') {
+            int bytes = 1;
+            unsigned char c = (unsigned char)*ptr;
+            if (c >= 0xF0) bytes = 4;
+            else if (c >= 0xE0) bytes = 3;
+            else if (c >= 0xC0) bytes = 2;
+
+            char charBuf[8] = { 0 };
+            for (int b = 0; b < bytes && *(ptr + b) != '\0'; b++) {
+                charBuf[b] = *(ptr + b);
+            }
+            charBuf[bytes] = '\0';
+
+            larguraReal += (float)MeasureText(charBuf, tam);
+            ptr += bytes;
+        }
+
+        // Posição horizontal matematicamente centralizada (margem esquerda == margem direita)
+        float curX = destino.x + (destino.width - larguraReal) * 0.5f;
+        float yLinha = yBase + (float)l * ((float)tam + linhaEspaco);
+
+        // 2º passo: desenhar cada glifo com a onda senoidal
+        ptr = linhaStr;
+        while (*ptr != '\0') {
+            int bytes = 1;
+            unsigned char c = (unsigned char)*ptr;
+            if (c >= 0xF0) bytes = 4;
+            else if (c >= 0xE0) bytes = 3;
+            else if (c >= 0xC0) bytes = 2;
+
+            char charBuf[8] = { 0 };
+            for (int b = 0; b < bytes && *(ptr + b) != '\0'; b++) {
+                charBuf[b] = *(ptr + b);
+            }
+            charBuf[bytes] = '\0';
+
+            int charW = MeasureText(charBuf, tam);
+
+            float onda = sinf(tempo * vel + (float)globalCharIdx * freq);
+            float gy = yLinha + onda * amp;
+
+            // Efeito de brilho/iluminacao sutil que viaja junto com a crista da onda na paleta do jogo
+            float tCor = (onda * 0.5f + 0.5f);
+            Color corLetra = ColorLerp(corBase, (Color){ 255, 242, 230, 255 }, tCor * 0.40f);
+
+            DrawText(charBuf, (int)roundf(curX), (int)roundf(gy), tam, corLetra);
+
+            curX += (float)charW;
+            ptr += bytes;
+            globalCharIdx++;
+        }
+    }
 }
 
 static void DrawTextLeftAligned(const char *texto, Vector2 pos, int tamanhoFonte, Color cor) {
@@ -1833,13 +2121,13 @@ static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
     DrawRectangleLinesEx(rCorpoTela, 2, borderColor);
 
     if (!g_dialogLoaded || suspectIndex < 0 || suspectIndex >= 3) {
-        DrawTextInArea("(Selecione um suspeito à esquerda para iniciar a conversa)", rCorpo, 10, (Color){ 189, 181, 168, 230 });
+        DrawTextWaveInArea("(Selecione um suspeito à esquerda\npara iniciar a conversa)", rCorpo, 10, (Color){ 189, 181, 168, 230 });
         return;
     }
 
     ChatHistory *hist = &g_chatHistories[suspectIndex];
     if (hist->count == 0) {
-        DrawTextInArea("(Nenhuma mensagem registrada ainda)", rCorpo, 10, (Color){ 189, 181, 168, 230 });
+        DrawTextWaveInArea("(Nenhuma mensagem registrada ainda)", rCorpo, 10, (Color){ 189, 181, 168, 230 });
         return;
     }
 
@@ -2212,6 +2500,26 @@ static Texture2D CriarSilhuetaIcone(const char *caminho) {
     return tex;
 }
 
+static Texture2D CriarSilhuetaBranca(const char *caminho) {
+    Image img = LoadImage(caminho);
+    if (img.data == NULL) return (Texture2D){ 0 };
+    ImageFormat(&img, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+    Color *px = (Color *)img.data;
+    int total = img.width * img.height;
+    for (int i = 0; i < total; i++) {
+        if (px[i].a > 20) {
+            px[i] = (Color){ 255, 255, 255, px[i].a };
+        } else {
+            px[i].a = 0;
+        }
+    }
+    Texture2D tex = LoadTextureFromImage(img);
+    UnloadImage(img);
+    GenTextureMipmaps(&tex);
+    SetTextureFilter(tex, TEXTURE_FILTER_BILINEAR);
+    return tex;
+}
+
 void InitGameplayScene(void) {
     g_shouldClose = false;
     g_irParaSelecao = false;
@@ -2261,6 +2569,10 @@ void InitGameplayScene(void) {
     g_charTextures[2] = LoadTexture("assets/gameplay_scene/char_lucas.png");
     GenTextureMipmaps(&g_charTextures[2]);
     SetTextureFilter(g_charTextures[2], TEXTURE_FILTER_BILINEAR);
+
+    g_charSilhuetasBrancas[0] = CriarSilhuetaBranca("assets/gameplay_scene/char_patricia.png");
+    g_charSilhuetasBrancas[1] = CriarSilhuetaBranca("assets/gameplay_scene/char_andre.png");
+    g_charSilhuetasBrancas[2] = CriarSilhuetaBranca("assets/gameplay_scene/char_lucas.png");
 
     // Silhuetas organicas dos 3 suspeitos na sala (clicaveis direto na janela do escritorio)
     g_silTextures[0] = LoadTexture("assets/gameplay_scene/sil_patricia.png");
@@ -4117,6 +4429,10 @@ void UnloadGameplayScene(void) {
         UnloadShader(g_faceRigShader);
         g_faceRigShader = (Shader){ 0 };
     }
+    if (g_outlineDitherShader.id > 0) {
+        UnloadShader(g_outlineDitherShader);
+        g_outlineDitherShader = (Shader){ 0 };
+    }
     UnloadTexture(g_seta);
     UnloadTexture(g_menuFerramentas);
     UnloadTexture(g_barraMenu);
@@ -4138,6 +4454,7 @@ void UnloadGameplayScene(void) {
     UnloadTexture(g_dicaApagado);
     for (int i = 0; i < 3; i++) {
         UnloadTexture(g_charTextures[i]);
+        UnloadTexture(g_charSilhuetasBrancas[i]);
         UnloadTexture(g_silTextures[i]);
         if (g_blipSounds[i].frameCount > 0) {
             UnloadSound(g_blipSounds[i]);
