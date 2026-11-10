@@ -28,11 +28,12 @@
 // Infiltrated AI
 #define AI_INDEX        EMPLOYEE_LUCAS
 
-static Color textColor  = (Color){ 30, 32, 34, 255 };
-static Color bgColor    = (Color){ 120, 130, 110, 255 };
-static Color hoverColor = (Color){ 150, 160, 130, 255 };
-static Color selColor   = (Color){ 190, 200, 150, 255 };
-static Color offColor   = (Color){ 80, 85, 75, 255 };
+static Color textColor  = (Color){ 32, 29, 31, 255 };
+static Color bgColor    = (Color){ 125, 112, 113, 255 };
+static Color hoverColor = (Color){ 160, 147, 142, 255 };
+static Color selColor   = (Color){ 189, 181, 168, 255 };
+static Color offColor   = (Color){ 90, 83, 83, 255 };
+static Color negColor   = (Color){ 196, 72, 72, 255 };
 
 static const char *NOMES[3] = { "Patrícia", "André", "Lucas" };
 
@@ -41,6 +42,9 @@ static bool g_confirmado = false;
 static bool g_acertou = false;
 static bool g_tentarDeNovo = false;
 static bool g_algumHover = false;
+static Sound g_sndHover;
+static int  g_frameHoverAnt = -1;
+static bool g_btnHoverAnt = false;
 
 static Rectangle GetTelaRect(void) {
     return RayCanvasGetRect(
@@ -86,6 +90,13 @@ static bool DrawButton(Rectangle areaVirtual, const char *label, bool ativo) {
     bool hover = ativo && CheckCollisionPointRec(RayCanvasGetMousePosition(), area);
     if (hover) g_algumHover = true;
 
+    if (hover && !g_btnHoverAnt && g_sndHover.frameCount > 0) {
+        SetSoundVolume(g_sndHover, 0.32f);
+        SetSoundPitch(g_sndHover, (float)GetRandomValue(98, 102) / 100.0f);
+        PlaySound(g_sndHover);
+    }
+    g_btnHoverAnt = hover;
+
     Color fundo = !ativo ? offColor : (hover ? hoverColor : bgColor);
     DrawRectangleRec(area, fundo);
     DrawRectangleLinesEx(area, 2.0f * escala, textColor);
@@ -98,6 +109,7 @@ static bool DrawButton(Rectangle areaVirtual, const char *label, bool ativo) {
 static void UpdateDrawFrames(void) {
     float escala = Escala();
     float inicioX = (VIRTUAL_W - (3 * FRAME_W + 2 * FRAME_SPACING)) / 2.0f;
+    int hoverFrame = -1;
 
     for (int i = 0; i < 3; i++) {
         Rectangle area = ParaTela((Rectangle){
@@ -109,6 +121,7 @@ static void UpdateDrawFrames(void) {
 
         bool hover = !g_confirmado && CheckCollisionPointRec(RayCanvasGetMousePosition(), area);
         if (hover) {
+            hoverFrame = i;
             g_algumHover = true;
             if (!RayCanvasInputBlocked() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) g_selecionado = i;
         }
@@ -120,6 +133,13 @@ static void UpdateDrawFrames(void) {
         DrawRectangleLinesEx(area, (selecionado ? 5.0f : 2.0f) * escala, textColor);
         DrawTextCentered(NOMES[i], area, (int)(FRAME_FONT * escala), textColor);
     }
+
+    if (hoverFrame != -1 && hoverFrame != g_frameHoverAnt && g_sndHover.frameCount > 0) {
+        SetSoundVolume(g_sndHover, 0.32f);
+        SetSoundPitch(g_sndHover, (float)GetRandomValue(98, 102) / 100.0f);
+        PlaySound(g_sndHover);
+    }
+    g_frameHoverAnt = hoverFrame;
 }
 
 bool VerdictSceneShouldRestart(void) {
@@ -131,6 +151,9 @@ void InitVerdictScene(void) {
     g_confirmado = false;
     g_acertou = false;
     g_tentarDeNovo = false;
+    g_frameHoverAnt = -1;
+    g_btnHoverAnt = false;
+    g_sndHover = LoadSound("assets/audio/sfx_hover.wav");
     RayCanvasInit(VIRTUAL_W, VIRTUAL_H);
 }
 
@@ -165,7 +188,7 @@ void UpdateDrawVerdictScene(void) {
     } else {
         DrawTextCentered(g_acertou ? "Correto" : "Incorreto",
                          ParaTela((Rectangle){ 0, RESULT_Y, VIRTUAL_W, RESULT_FONT }),
-                         (int)(RESULT_FONT * escala), WHITE);
+                         (int)(RESULT_FONT * escala), g_acertou ? selColor : negColor);
 
         Rectangle tentar = {
             (float)(VIRTUAL_W - RETRY_W - MARGIN),
@@ -183,5 +206,9 @@ void UpdateDrawVerdictScene(void) {
 
 void UnloadVerdictScene(void) {
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+    if (g_sndHover.frameCount > 0) {
+        UnloadSound(g_sndHover);
+        g_sndHover = (Sound){ 0 };
+    }
     RayCanvasClose();
 }

@@ -24,3 +24,8 @@ TEXT: Com a TI, sim, principalmente quando precisamos de dados de engajamento. A
 [NODE: estranho]
 SPEAKER: Lucas
 TEXT: Hmm, pensando bem, sim. Essas respostas automáticas do sistema de recrutamento estão ficando mais formais, e acho que já vi o pessoal do jurídico perguntando sobre isso no corredor. Fiquei curioso.
+CHOICE: Por que apareceu uma mão com 6 dedos na sua revista? -> seis_dedos
+
+[NODE: seis_dedos]
+SPEAKER: Lucas
+TEXT: Ah, na minha mão direita? Haha, todo mundo assusta quando repara! É polidactilia, uma condição genética totalmente real de nascença, juro! Meu médico disse que nem precisava operar.

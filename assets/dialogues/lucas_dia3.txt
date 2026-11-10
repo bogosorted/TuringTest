@@ -19,3 +19,8 @@ TEXT: Para cruzar perfis com a campanha. Mas espera, tenho certeza que foi só u
 [NODE: memoria]
 SPEAKER: Lucas
 TEXT: Lembro sim! No dia em que o Caio saiu mais cedo e a Mariana ficou no RH até tarde... Ou o contrário? Fiquei com a impressão de que mexeram em algo importante.
+CHOICE: Essa sua mão com 6 dedos e a digital estranha... -> seis_dedos
+
+[NODE: seis_dedos]
+SPEAKER: Lucas
+TEXT: Ei, calma lá! Ter 6 dedos é polidactilia, uma condição genética real e super documentada! Quanto à digital borrada... bom, eu mexo muito com tinta e cola nas maquetes do marketing!

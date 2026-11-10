@@ -8,6 +8,8 @@
 #include "utils/game_state.h"
 #include "utils/dialog_system.h"
 #include "utils/transition.h"
+#include "utils/raycanvas.h"
+#include <math.h>
 
 // Lista das telas que o jogo tem
 typedef enum {
@@ -62,16 +64,73 @@ int main(void) {
         ChangeDirectory("..");
     }
 
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+    // Modo janela maximizada sem bordas (borderless windowed real no Linux/X11):
+    // Nao usamos ToggleBorderlessWindowed() porque no Linux a raylib 5.5 chama
+    // glfwSetWindowMonitor(..., monitor, ...) que trava o Alt+Tab em fullscreen exclusivo!
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_UNDECORATED | FLAG_VSYNC_HINT);
     InitWindow(640, 360, "Turing Test");
-    ToggleFullscreen();
+    InitAudioDevice(); // Inicializa dispositivo de som da raylib
+    SetExitKey(0); // desabilita ESC fechar a janela direto; tratamos saida de segurança no loop
+    int mon = GetCurrentMonitor();
+    SetWindowPosition(0, 0);
+    SetWindowSize(GetMonitorWidth(mon), GetMonitorHeight(mon));
+    SetTargetFPS(60);
+
+    // Música principal do jogo (toca continuamente com volume ajustado por cena e transição)
+    Music bgm = { 0 };
+    bool bgmCarregada = false;
+    if (FileExists("assets/audio/bgm_main.mp3")) {
+        bgm = LoadMusicStream("assets/audio/bgm_main.mp3");
+        bgm.looping = true;
+        PlayMusicStream(bgm);
+        SetMusicVolume(bgm, 0.0f);
+        bgmCarregada = true;
+    }
+    float volumeBgmAtual = 0.0f;
 
     Scene currentScene = SCENE_MENU; // o jogo comeca no menu
     InitScene(currentScene);
+    TransitionStartFadeIn();         // fade-in suave ao abrir o jogo
 
     bool running = true;
 
     while (running && !WindowShouldClose()) {
+        float dt = GetFrameTime();
+        if (dt > 0.05f) dt = 0.05f;
+
+        // Atualização e controle dinâmico da música principal
+        if (bgmCarregada) {
+            UpdateMusicStream(bgm);
+
+            // Volume base: mais alto no menu/intro/veredito (0.60), mais baixo no gameplay (0.28)
+            float baseVol = (currentScene == SCENE_GAMEPLAY) ? 0.28f : 0.60f;
+
+            // Durante transições (fade e tela de texto entre dias), atenua o volume
+            float fade = RayCanvasGetFade();
+            float fatorTransicao = 1.0f - (fade * 0.75f);
+            if (TransitionShowingText()) fatorTransicao = 0.20f;
+            if (fatorTransicao < 0.15f)  fatorTransicao = 0.15f;
+
+            float targetVol = baseVol * fatorTransicao;
+            volumeBgmAtual += (targetVol - volumeBgmAtual) * fminf(dt * 5.0f, 1.0f);
+            SetMusicVolume(bgm, volumeBgmAtual);
+        }
+        // Atalho de emergencia: Ctrl+Q ou F10 fecha o jogo imediatamente de qualquer lugar,
+        // e F11 alterna entre janela sem bordas (tela cheia) e janela normal com borda (1280x720)
+        if (IsKeyPressed(KEY_F10) || ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_Q))) {
+            break;
+        }
+        if (IsKeyPressed(KEY_F11)) {
+            if (IsWindowState(FLAG_WINDOW_UNDECORATED)) {
+                ClearWindowState(FLAG_WINDOW_UNDECORATED);
+                SetWindowSize(1280, 720);
+                SetWindowPosition((GetMonitorWidth(mon) - 1280) / 2, (GetMonitorHeight(mon) - 720) / 2);
+            } else {
+                SetWindowState(FLAG_WINDOW_UNDECORATED);
+                SetWindowPosition(0, 0);
+                SetWindowSize(GetMonitorWidth(mon), GetMonitorHeight(mon));
+            }
+        }
 
         // 1) Transicao: quando o fade-out termina, a troca de cena acontece
         //    "por tras" da tela preta
@@ -104,7 +163,7 @@ int main(void) {
                 UpdateDrawIntroScene();
 
                 if (IntroSceneShouldContinue() && !TransitionActive()) {
-                    GoToWithTransition(SCENE_SELECTION,
+                    GoToWithTransition(SCENE_GAMEPLAY,
                                        TextFormat("Dia %d", GameStateGetDay()));
                 }
                 break;
@@ -112,13 +171,13 @@ int main(void) {
             case SCENE_SELECTION:
                 UpdateDrawSelectionScene();
 
-                if (SelectionSceneShouldStartInterrogation()) {
-                    SwitchScene(&currentScene, SCENE_GAMEPLAY);
+                if (SelectionSceneShouldStartInterrogation() && !TransitionActive()) {
+                    GoToWithTransition(SCENE_GAMEPLAY, NULL);
                 } else if (SelectionSceneShouldAdvanceDay() && !TransitionActive()) {
                     GameStateNextDay();
                     ResetTokens();                   // tokens do novo dia
                     GameplaySceneResetDialogues();
-                    GoToWithTransition(SCENE_SELECTION,
+                    GoToWithTransition(SCENE_GAMEPLAY,
                                        TextFormat("Dia %d", GameStateGetDay()));
                 } else if (SelectionSceneShouldGoToVerdict() && !TransitionActive()) {
                     GoToWithTransition(SCENE_VERDICT,
@@ -131,16 +190,27 @@ int main(void) {
 
                 if (GameplaySceneShouldClose()) {
                     running = false;
-                } else if (GameplaySceneGoToSelection()) {
-                    SwitchScene(&currentScene, SCENE_SELECTION);
+                } else if (GameplaySceneShouldReturnToMenu() && !TransitionActive()) {
+                    GoToWithTransition(SCENE_MENU, NULL);
+                } else if (GameplaySceneShouldAdvanceDay() && !TransitionActive()) {
+                    GameStateNextDay();
+                    ResetTokens();
+                    GameplaySceneResetDialogues();
+                    GoToWithTransition(SCENE_GAMEPLAY,
+                                       TextFormat("Dia %d", GameStateGetDay()));
+                } else if (GameplaySceneShouldGoToVerdict() && !TransitionActive()) {
+                    GoToWithTransition(SCENE_VERDICT,
+                                       TextFormat("Dia %d - Veredito", GAME_NUM_DAYS + 1));
+                } else if (GameplaySceneGoToSelection() && !TransitionActive()) {
+                    GoToWithTransition(SCENE_SELECTION, NULL);
                 }
                 break;
 
             case SCENE_VERDICT:
                 UpdateDrawVerdictScene();
 
-                if (VerdictSceneShouldRestart()) {
-                    SwitchScene(&currentScene, SCENE_MENU);   // "Tentar de novo"
+                if (VerdictSceneShouldRestart() && !TransitionActive()) {
+                    GoToWithTransition(SCENE_MENU, NULL);     // "Tentar de novo" com fade
                 }
                 break;
         }
@@ -149,6 +219,10 @@ int main(void) {
     // Descarrega a tela que estiver aberta no momento
     UnloadScene(currentScene);
 
+    if (bgmCarregada) {
+        UnloadMusicStream(bgm);
+    }
+    CloseAudioDevice(); // Encerra dispositivo de som
     CloseWindow();
     return 0;
 }

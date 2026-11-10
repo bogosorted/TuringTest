@@ -9,6 +9,9 @@ void UnloadGameplayScene(void);
 bool GameplaySceneShouldClose(void);
 void GameplaySceneSetFuncionario(int indice);
 bool GameplaySceneGoToSelection(void);
+bool GameplaySceneShouldAdvanceDay(void);
+bool GameplaySceneShouldGoToVerdict(void);
+bool GameplaySceneShouldReturnToMenu(void);
 
 // Ciclo de dias: recarrega os dialogos (todos voltam a "nao vistos")
 void GameplaySceneResetDialogues(void);
