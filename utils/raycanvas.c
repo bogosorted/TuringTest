@@ -23,13 +23,13 @@ void RayCanvasBegin(void) {
     if (g_uiScale < 0.1f) g_uiScale = 0.1f;
 
     BeginDrawing();
-    ClearBackground((Color){ 31, 31, 31, 255 });
+    ClearBackground((Color){ 32, 29, 31, 255 });
 }
 
 void RayCanvasEnd(void) {
-    // Fade das transicoes: retangulo preto por cima de tudo que a cena desenhou
+    // Fade das transicoes: retangulo na cor escura da paleta por cima de tudo que a cena desenhou
     if (g_fadeAlpha > 0.0f) {
-        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, g_fadeAlpha));
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade((Color){ 32, 29, 31, 255 }, g_fadeAlpha));
     }
     EndDrawing();
 }
@@ -38,6 +38,10 @@ void RayCanvasSetFade(float alpha) {
     if (alpha < 0.0f) alpha = 0.0f;
     if (alpha > 1.0f) alpha = 1.0f;
     g_fadeAlpha = alpha;
+}
+
+float RayCanvasGetFade(void) {
+    return g_fadeAlpha;
 }
 
 bool RayCanvasInputBlocked(void) {
@@ -82,6 +86,13 @@ void RayCanvasDrawTexture(Texture2D texture, Rectangle dest, Color tint) {
 Rectangle RayCanvasGetRect(Vector2 anchor, Vector2 pivot, Vector2 offset, Vector2 baseSize) {
     float screenW = (float)GetScreenWidth();
     float screenH = (float)GetScreenHeight();
+
+    // Quando a cena pede o retangulo da tela virtual inteira (640x360),
+    // estica para preencher 100% da janela sem faixas sobrando
+    if (baseSize.x == (float)g_refWidth && baseSize.y == (float)g_refHeight &&
+        offset.x == 0.0f && offset.y == 0.0f) {
+        return (Rectangle){ 0.0f, 0.0f, screenW, screenH };
+    }
 
     float scaledWidth = baseSize.x * g_uiScale;
     float scaledHeight = baseSize.y * g_uiScale;

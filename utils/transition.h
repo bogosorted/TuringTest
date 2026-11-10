@@ -16,6 +16,7 @@ typedef enum {
 // texto == NULL ou "" -> so o fade-out, sem a tela preta com texto
 // (a cena nova aparece logo depois do fade-out e faz o proprio fade-in).
 void TransitionStart(const char *texto);
+void TransitionStartFadeIn(void);          // inicia direto um fade-in do preto (para quando o jogo abre)
 TransitionEvent TransitionUpdate(void);    // chamar UMA vez por frame
 bool TransitionActive(void);               // true durante o fade-out e o texto
 bool TransitionShowingText(void);          // true na fase da tela preta com texto
