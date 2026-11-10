@@ -169,20 +169,21 @@ void  SettingsSetSfxVolume(float v) { g_volEfeitos = Limitar01(v); }
 bool SettingsGetFullscreen(void) { return g_telaCheia; }
 void SettingsSetFullscreen(bool ligado) { g_telaCheia = ligado; }
 
-// Tela cheia = janela sem borda do tamanho do monitor ("borderless windowed").
-// Nao usamos ToggleFullscreen/ToggleBorderlessWindowed: no Linux a raylib usa
-// fullscreen exclusivo, que trava o Alt+Tab (ver comentario no main.c).
+// Aplica modo tela cheia ou janela conforme g_telaCheia
 void SettingsApplyWindowMode(void) {
-    int mon = GetCurrentMonitor();
-    int mw = GetMonitorWidth(mon);
-    int mh = GetMonitorHeight(mon);
-    Vector2 origem = GetMonitorPosition(mon);
-
     if (g_telaCheia) {
-        SetWindowState(FLAG_WINDOW_UNDECORATED);
-        SetWindowPosition((int)origem.x, (int)origem.y);
-        SetWindowSize(mw, mh);
+        if (!IsWindowFullscreen()) {
+            ToggleFullscreen();
+        }
     } else {
+        if (IsWindowFullscreen()) {
+            ToggleFullscreen();
+        }
+        int mon = GetCurrentMonitor();
+        int mw = GetMonitorWidth(mon);
+        int mh = GetMonitorHeight(mon);
+        Vector2 origem = GetMonitorPosition(mon);
+
         // Janela 1280x720 centralizada (menor se o monitor for pequeno)
         int w = JANELA_W, h = JANELA_H;
         if (w > mw * 9 / 10) { w = mw * 9 / 10; h = w * 9 / 16; }
