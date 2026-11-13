@@ -2,20 +2,75 @@ NPC: lucas
 DIA: 1
 
 [NODE: start]
-SPEAKER: Lucas
-TEXT: Ah, boa tarde, não estava esperando um novo rosto! Seja muito bem-vindo! Eu sou o Lucas, cuido da parte de marketing e campanhas. Qualquer coisa sobre comunicação interna pode contar comigo.
-CHOICE: Qual é exatamente sua função na empresa? -> funcao
-CHOICE: Como é a sua rotina aqui? -> rotina
-CHOICE: Você já trabalhou em outra empresa antes? -> empresa
+SPEAKER: Ana Lucia
+TEXT: Opa você deve ser o novo estágiario, né? Sou a supervisora do setor de administração.
+CHOICE: Boa tarde, Lucia! Tudo joia? -> A
+CHOICE: Sim, vim resolver os problemas do setor. -> B
 
-[NODE: funcao]
-SPEAKER: Lucas
-TEXT: Eu planejo as campanhas da RASEC, desde o conteúdo até as métricas. Ultimamente estou focado no lançamento de um novo produto! Você já viu a vitrine de robótica no hall? Fui eu que sugeri aquela ideia.
+[NODE: A]
+SPEAKER: Ana Lucia
+TEXT: Está tudo bem sim. Soube que você entrou por indicação, vamos ver se é bom mesmo.
+CHOICE: Vou tentar não decepcionar. Algum problema no setor? -> A.1
+CHOICE: Como funciona seu setor? -> A.2
 
-[NODE: rotina]
-SPEAKER: Lucas
-TEXT: Ah, é bem dinâmica! Reunião de manhã, depois criação, depois aquele café com o pessoal, que é onde sai metade das boas ideias. Eu adoro isso. Você vai almoçar com a gente um dia?
+[NODE: B]
+SPEAKER: Ana Lucia
+TEXT: Problemas? Como assim?
+CHOICE: Não sei, acho que pode ser só rotina. não quis ofender. -> B.1
+CHOICE: Só faço o que mandam. -> B.2
 
-[NODE: empresa]
-SPEAKER: Lucas
-TEXT: Já sim! Trabalhei em uma agência de publicidade por uns dois anos, antes de vir pra cá. Aprendi muito sobre prazo e pressão. A RASEC é mais séria, mas eu gosto desse equilíbrio criativo.
+[NODE: A.1]
+SPEAKER: Ana Lucia
+TEXT: Problema nenhum, o meu setor é organizado, por que?
+CHOICE: Da pra ver! Todos me falam que esse setor é o que menos dá problema. -> A.1.1
+CHOICE: Eu estou muito animado para trabalhar com você! -> A.1.2
+
+[NODE: A.2]
+SPEAKER: Ana Lucia
+TEXT: Funciona perfeitamente, por que te enviaram aqui?
+CHOICE: Me enviaram aqui porque eu precisava de experiência. -> A.2.1
+CHOICE: Me enviaram para esse setor para ver se tem algum tipo de erro acontecendo. -> A.2.2
+
+[NODE: B.1]
+SPEAKER: Ana Lucia
+TEXT: Deve ser um erro. Meu setor não comete erro. Vou ter que falar com eles.
+CHOICE: Você está muito agressiva, pode ter sido algo recente. -> B.1.1
+CHOICE: Deve ser mesmo, da pra ver que vocè é uma pessoa bem calma. -> B.1.2
+
+[NODE: B.2]
+SPEAKER: Ana Lucia
+TEXT: Você está fazendo muitas perguntas, não acha?
+CHOICE: Só estou tentando fazer meu trabalho, não quis incomodar. -> B.2.3
+CHOICE: Desculpa, só estou tentando me enturmar. -> B.2.2
+
+[NODE: A.1.1]
+SPEAKER: Ana Lucia
+TEXT: Ah, Querido, você é muito gentil.
+
+[NODE: A.1.2]
+SPEAKER: Ana Lucia
+TEXT: Pois vai aprender muito comigo, Nunca cometi nenhum tipo de erro durante meus 4 anos no RASEC.
+
+[NODE: A.2.1]
+SPEAKER: Ana Lucia
+TEXT: Bem, não vai ter muito o que fazer. Talvez falando com os outros você possa ajudar com algo.
+
+[NODE: A.2.2]
+SPEAKER: Ana Lucia
+TEXT: Não faz sentido, meus relatórios são perfeitos. Tenho que voltar ao trabalho.
+
+[NODE: B.1.1]
+SPEAKER: Ana Lucia
+TEXT: Você é um garoto muito insolente, acha que sua indicação vai te salvar?
+
+[NODE: B.1.2]
+SPEAKER: Ana Lucia
+TEXT: Vou procurar mais sobre, tenho que ir agora. Tchau.
+
+[NODE: B.2.2]
+SPEAKER: Ana Lucia
+TEXT: Seu trabalho não é se enturmar. Ver se aprende.
+
+[NODE: B.2.3]
+SPEAKER: Ana Lucia
+TEXT: Não acha que está passando muito tempo fazendo perguntas inuteis? Volte ao trabalho, querido.

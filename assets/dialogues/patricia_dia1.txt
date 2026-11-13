@@ -2,35 +2,75 @@ NPC: patricia
 DIA: 1
 
 [NODE: start]
-SPEAKER: Patrícia
-TEXT: ...Ah, bom dia. Sou a Patrícia, do Financeiro. Você é o novato da checagem, né? Desculpe, estava concentrada nas planilhas. Em que posso ajudar?
-CHOICE: Qual é a sua função específica no setor? -> funcao
-CHOICE: Você prefere trabalhar reservada? -> reservada
-CHOICE: Algum conselho sobre o funcionamento? -> conselho
+SPEAKER: Maria
+TEXT: Olá, nos conhecemos?
+CHOICE: Ainda não, sou o novo funcionário Inspetor, e você? -> A
+CHOICE: Não, sou novo por aqui. Você é de que setor? -> B
 
-[NODE: funcao]
-SPEAKER: Patrícia
-TEXT: ...Eu faço a conciliação bancária e a verificação das notas fiscais. É um trabalho quieto, mas exige muita atenção.
-CHOICE: Como costuma ser a rotina do setor? -> rotina
+[NODE: A]
+SPEAKER: Maria
+TEXT: Me chamo Maria, sou auxiliar administrativa.
+CHOICE: Como andam as coisas por aqui? -> A.1
+CHOICE: O que você acha dos outros funcionarios? não levo muito jeito para falar com os outros. -> A.2
 
-[NODE: rotina]
-SPEAKER: Patrícia
-TEXT: Bastante analítica. Passo a maior parte do dia revisando números e checando lançamentos de contas no sistema.
+[NODE: B]
+SPEAKER: Maria
+TEXT: Sou do administrativo, e você?
+CHOICE: Sou estágiario auxiliar geral e me designaram primeiro para ver o setor administrativo. -> B.1
+CHOICE: Sou estágiario, me designaram aqui por reclamações de desempenho. -> B.2
 
-[NODE: reservada]
-SPEAKER: Patrícia
-TEXT: Sim... Prefiro evitar distrações. Lidar com números exige silêncio para não cometer erros de digitação.
-CHOICE: O setor de finanças sofre com prazos? -> prazos
+[NODE: A.1]
+SPEAKER: Maria
+TEXT: Está indo tudo bem, apenas alguns relatórios estão errados...
+CHOICE: Como assim? desculpa a curiosidade. -> A.1.1
+CHOICE: Ouvi falar sobre, é loucura né? mas todos cometem erros -> A.1.2
 
-[NODE: prazos]
-SPEAKER: Patrícia
-TEXT: Em época de fechamento mensal sim, fica bastante tenso. Mas no dia a dia mantemos o fluxo em ordem.
+[NODE: A.2]
+SPEAKER: Maria
+TEXT: Ah, a maioria é bem legal, todo mundo se da bem.
+CHOICE: Eu ouvi por ai que não gostam tanto de uma pessoa no setor administrativo. -> A.2.1
+CHOICE: Me falaram o contrario, então fiquei com medo. -> A.2.2
 
-[NODE: conselho]
-SPEAKER: Patrícia
-TEXT: Siga os manuais e evite chamar atenção desnecessária. É a forma mais segura de trabalhar por aqui.
-CHOICE: Onde fica o arquivo de contas do setor? -> arquivo
+[NODE: B.1]
+SPEAKER: Maria
+TEXT: Ah entendi, mas por quê? a equipe está indo bem.
+CHOICE: Só estou fazendo meu trabalho, pode ser precaução. -> B.1.1
+CHOICE: Você sabe muito bem que tem relatórios errados vindo. -> B.1.2
 
-[NODE: arquivo]
-SPEAKER: Patrícia
-TEXT: Fica na sala de arquivo no final do corredor do Financeiro. O acesso exige credencial do setor.
+[NODE: B.2]
+SPEAKER: Maria
+TEXT: Problemas no desempenho? Como assim?
+CHOICE: Aparentemente em uma reunião, tinham dados completamente incorretos em um relatório. -> B.2.3
+CHOICE: Você está responsavel pelo arquivamento dos relatórios? Ultimamente há diversos errados. -> B.2.2
+
+[NODE: A.1.1]
+SPEAKER: Maria
+TEXT: Alguns relatórios do setor administrativo estão sendo enviados de forma errada, tenho que revisar todos antes de arquivar.
+
+[NODE: A.1.2]
+SPEAKER: Maria
+TEXT: Pois é, talvez com sua ajuda a gente consiga mitigar mais esses erros.
+
+[NODE: A.2.1]
+SPEAKER: Maria
+TEXT: Eu não sei, talvez tenha alguém que não se de bem com alguém daqui. tenho que voltar ao trabalho.
+
+[NODE: A.2.2]
+SPEAKER: Maria
+TEXT: Eu não sei, tenho que voltar ao trabalho. Mas o pessoal é amigável, não se preocupa.
+
+[NODE: B.1.1]
+SPEAKER: Maria
+TEXT: Talvez, talvez. Mas qualquer coisa estou por aqui, tenho que voltar ao trabalho.
+
+[NODE: B.1.2]
+SPEAKER: Maria
+TEXT: Isso faz parte, não entendi pra que ter um auxiliar aqui. Já vou indo.
+
+[NODE: B.2.2]
+SPEAKER: Maria
+TEXT: Sou sim, mas não sou eu quem faço eles. tenho que voltar ao trabalho.
+
+[NODE: B.2.3]
+SPEAKER: Maria
+TEXT: Ah, isso... acontece, as vezes. eu acho. tenho que voltar ao trabalho.

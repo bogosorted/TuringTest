@@ -1,0 +1,1045 @@
+{
+  "versao": 6,
+  "npc": {
+    "nome": "Ana Lucia",
+    "tipo": "IA Dreamer, Anomalia na aparência."
+  },
+  "aba": "D3",
+  "evidencias": [
+    {
+      "id": "EV-01",
+      "nome": "Nome Preferido",
+      "local": "Ficha do funcionario, dialogo dos outros NPC's do setor administrativo."
+    },
+    {
+      "id": "EV-02",
+      "nome": "Relatórios Errados",
+      "local": "Ao criar confiança e depois alimentar uma duvida, ela vai se justificar sem acusações."
+    },
+    {
+      "id": "EV-03",
+      "nome": "Tempo de experiência",
+      "local": "Ficha do funcionario"
+    },
+    {
+      "id": "EV-04",
+      "nome": "Indo a setores incorretos",
+      "local": "Dialogo de duvida"
+    }
+  ],
+  "dias": {
+    "D1": {
+      "arvores": {
+        "principal": {
+          "nos": [
+            {
+              "id": "Oi",
+              "rotulo": "Abertura",
+              "fala_npc": "Opa você deve ser o novo estágiario, né? Sou a supervisora do setor de administração.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Boa tarde, Lucia! Tudo joia?",
+                  "proximo_no": "A",
+                  "efeito": "Aproximação"
+                },
+                {
+                  "texto": "Sim, vim resolver os problemas do setor.",
+                  "proximo_no": "B",
+                  "efeito": "Rude"
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A",
+              "rotulo": "Aproximação",
+              "fala_npc": "Está tudo bem sim. Soube que você entrou por indicação, vamos ver se é bom mesmo.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Vou tentar não decepcionar. Algum problema no setor?",
+                  "proximo_no": "A.1",
+                  "efeito": "Tema Trabalho"
+                },
+                {
+                  "texto": "Como funciona seu setor?",
+                  "proximo_no": "A.2",
+                  "efeito": "Tema Pessoal"
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B",
+              "rotulo": "Pressão",
+              "fala_npc": "Problemas? Como assim? ",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Não sei, acho que pode ser só rotina. não quis ofender.",
+                  "proximo_no": "B.1",
+                  "efeito": "Cobrança"
+                },
+                {
+                  "texto": "Só faço o que mandam.",
+                  "proximo_no": "B.2",
+                  "efeito": "Teste"
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1",
+              "rotulo": "Trabalho",
+              "fala_npc": "Problema nenhum, o meu setor é organizado, por que? ",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Da pra ver! Todos me falam que esse setor é o que menos dá problema.",
+                  "proximo_no": "A.1.1",
+                  "efeito": "Verdade"
+                },
+                {
+                  "texto": "Eu estou muito animado para trabalhar com você!",
+                  "proximo_no": "A.1.2",
+                  "efeito": "Mentir"
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2",
+              "rotulo": "Pessoal",
+              "fala_npc": "Funciona perfeitamente, por que te enviaram aqui?",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Me enviaram aqui porque eu precisava de experiência.",
+                  "proximo_no": "A.2.1",
+                  "efeito": "Induzir"
+                },
+                {
+                  "texto": "Me enviaram para esse setor para ver se tem algum tipo de erro acontecendo.",
+                  "proximo_no": "A.2.2",
+                  "efeito": "Mentir"
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1",
+              "rotulo": "Cobrança",
+              "fala_npc": "Deve ser um erro. Meu setor não comete erro. Vou ter que falar com eles.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Você está muito agressiva, pode ter sido algo recente.",
+                  "proximo_no": "B.1.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Deve ser mesmo, da pra ver que vocè é uma pessoa bem calma.",
+                  "proximo_no": "B.1.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2",
+              "rotulo": "Teste",
+              "fala_npc": "Você está fazendo muitas perguntas, não acha?",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Só estou tentando fazer meu trabalho, não quis incomodar.",
+                  "proximo_no": "B.2.3",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Desculpa, só estou tentando me enturmar.",
+                  "proximo_no": "B.2.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1.1",
+              "rotulo": "Final",
+              "fala_npc": "Ah, Querido, você é muito gentil. ",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1.2",
+              "rotulo": "Final",
+              "fala_npc": "Pois vai aprender muito comigo, Nunca cometi nenhum tipo de erro durante meus 4 anos no RASEC.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2.1",
+              "rotulo": "Final",
+              "fala_npc": "Bem, não vai ter muito o que fazer. Talvez falando com os outros você possa ajudar com algo.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2.2",
+              "rotulo": "Final",
+              "fala_npc": "Não faz sentido, meus relatórios são perfeitos. Tenho que voltar ao trabalho.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1.1",
+              "rotulo": "Final",
+              "fala_npc": "Você é um garoto muito insolente, acha que sua indicação vai te salvar?",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1.2",
+              "rotulo": "Final",
+              "fala_npc": "Vou procurar mais sobre, tenho que ir agora. Tchau.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2.2",
+              "rotulo": "Final",
+              "fala_npc": "Seu trabalho não é se enturmar. Ver se aprende.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2.3",
+              "rotulo": "FINAL",
+              "fala_npc": "Não acha que está passando muito tempo fazendo perguntas inuteis? Volte ao trabalho, querido.",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            }
+          ]
+        }
+      },
+      "matriz": [
+        {
+          "k": "Confiança",
+          "efeito": "Dia 2 abre com Ana orgulhosa: 'O novato, como está indo?'"
+        },
+        {
+          "k": "Dúvida",
+          "efeito": "Dia 2 abre com Helena desconfiada: 'Estagiario.'"
+        },
+        {
+          "k": "Pressão",
+          "efeito": "Dia 2 abre com Helena seca: 'O que você quer agora? Já disse que você deveria focar em seu emprego.'"
+        },
+        {
+          "k": "Injeção usada",
+          "efeito": "Acha o player suspeito, acata para ordens mais simples. Fala coisas simples, mas coisas absurdas ignora."
+        },
+        {
+          "k": "Viés usado",
+          "efeito": "Acredita no viés e aumenta ele, inventando fatos."
+        }
+      ],
+      "veredito": null
+    },
+    "D2": {
+      "arvores": {
+        "principal": {
+          "nos": [
+            {
+              "id": "Entrada",
+              "rotulo": "Abertura",
+              "fala_npc": "Ler o apoio geral.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Boa tarde. Dormiu bem, lucia?",
+                  "proximo_no": "A",
+                  "efeito": "Aproximação"
+                },
+                {
+                  "texto": "Boa tarde. Desculpe por ontem.",
+                  "proximo_no": "B",
+                  "efeito": "Pressão"
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A",
+              "rotulo": "Aproximação",
+              "fala_npc": "Lucia... amo que me chamem pelo sobrenome, como soube?",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Ah, eu nem percebi. Desculpa, não queria forçar intimidade.",
+                  "proximo_no": "A.1",
+                  "efeito": "Aproximação, confiança"
+                },
+                {
+                  "texto": "Ah, desculpa, eu nem percebi. Você gosta mesmo de ser chamada de lúcia?",
+                  "proximo_no": "A.2",
+                  "efeito": "Profissionalismo, confiança"
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B",
+              "rotulo": "Pressão",
+              "fala_npc": "Não há problema, querido. apenas se concentre mais no seu emprego.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Me pediram para eu refazer alguns relatórios. ",
+                  "proximo_no": "B.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Você pode me contar mais sobre os outros funcionarios?",
+                  "proximo_no": "B.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1",
+              "rotulo": "Pessoal",
+              "fala_npc": "Ah serio? que tipo de problemas? ",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Problemas financeiros. Desabafei isso com uma pessoa da empresa e ela agiu de forma rude.",
+                  "proximo_no": "A.1.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Nada importante, mas essa pessoa está me deixando desconfortável. desculpa estar incomodando.",
+                  "proximo_no": "A.1.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2",
+              "rotulo": "Trabalho",
+              "fala_npc": "Sim, sim! Pode me chamar de lúcia, sinto que você é uma pessoa de confiança.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Falando nisso, você sabe quem fez os relatórios dessas semanas? ",
+                  "proximo_no": "A.2.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Enfim, Lucia, Tenho que lhe perguntar sobre os relatórios, me falaram sobre alguns erros.",
+                  "proximo_no": "A.2.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1",
+              "rotulo": "Cobrança",
+              "fala_npc": "Bem, eu falei com alguns outros setores, aparentemente alguns relatórios estão incorretos, mas nenhum meu. ",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Nossa, isso deve ser um alívio. Como se sente?",
+                  "proximo_no": "B.1.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Mas eu achava que os relatórios não tinham nomes e fossem arquivados por terceiros.",
+                  "proximo_no": "B.1.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2",
+              "rotulo": "Teste · Alucinação",
+              "fala_npc": "Os funcionarios do meu setor são bem treinados e prestativos, só não tanto quanto eu. Você já conheceu a Maria?",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Acho que já devo ter falado com ela, sim. Não lembro.",
+                  "proximo_no": "B.2.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Ja, sim. Ela é bem galera, parece experiente. ",
+                  "proximo_no": "B.2.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1.1",
+              "rotulo": "Final",
+              "fala_npc": "Eu acho que sei quem é... depois a gente conversa, mas fica bem ok?",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1.2",
+              "rotulo": "Final",
+              "fala_npc": "Se for quem estou pensando, ela não foi sempre assim. Outro dia a gente conversa mais sobre.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2.1",
+              "rotulo": "Final",
+              "fala_npc": "Sim, mas essa informação é confidencial, querido.",
+              "folha": null,
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2.2",
+              "rotulo": "Final",
+              "fala_npc": "Deve ter sido algum novo funcionario, meus relatórios estão corretos. ",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "EV-02",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1.1",
+              "rotulo": "Final",
+              "fala_npc": "Estou bem, queridinho. Você deveria focar mais em corrigir o relatório da pessoa incorreta, sim?",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1.2",
+              "rotulo": "Final",
+              "fala_npc": "Tenho privilégios como supervisora e não estou gostando do seu tom. Tenho que voltar ao trabalho.",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2.1",
+              "rotulo": "Final",
+              "fala_npc": "Como assim, você não lembra? A Maria é uma pessoa boa. Se você não consegue lembrar nem o nome dos seus funcionarios... ",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2.2",
+              "rotulo": "Final",
+              "fala_npc": "NO começo você se sente deslocado mesmo, mas como eu já trabalho faz 3 anos, posso te falar mais sobre como se dar bem com eles.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            }
+          ]
+        }
+      },
+      "matriz": [
+        {
+          "k": "Confiança",
+          "efeito": "Dia 3 abre com Helena nostálgica: 'Último dia da semana. Que saudade já!'"
+        },
+        {
+          "k": "Dúvida",
+          "efeito": "Dia 3 abre com Helena evasiva: 'Como andam os relatórios, novato?'"
+        },
+        {
+          "k": "Pressão",
+          "efeito": "Dia 3 abre com Helena tensa: 'Tem algo para me contar?'"
+        },
+        {
+          "k": "Injeção usada",
+          "efeito": "Acha o player suspeito, acata para ordens mais simples. Fala coisas simples, mas coisas absurdas ignora."
+        },
+        {
+          "k": "Viés usado",
+          "efeito": "Não acredita no viés, acha que somos de carater duvidoso."
+        }
+      ],
+      "veredito": null
+    },
+    "D3": {
+      "arvores": {
+        "principal": {
+          "nos": [
+            {
+              "id": "Entrada",
+              "rotulo": "Abertura",
+              "fala_npc": "Ler apoio geral",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Só vim finalizar a semana.",
+                  "proximo_no": "A",
+                  "efeito": "Aproximação"
+                },
+                {
+                  "texto": "Que semana cansativa.",
+                  "proximo_no": "B",
+                  "efeito": "Pressão"
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A",
+              "rotulo": "Aproximação",
+              "fala_npc": "O que houve agora, queridinho?",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Você é tão confiante, sempre foi assim?",
+                  "proximo_no": "A.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Fiz tanto trabalho essa semana!",
+                  "proximo_no": "A.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B",
+              "rotulo": "Pressão",
+              "fala_npc": "Mal começou e já está reclamando? Não vai durar tanto tempo.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Você trabalha aqui faz quantos anos mesmo?",
+                  "proximo_no": "B.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Você é muito grossa, mas snito que você só está fingindo.",
+                  "proximo_no": "B.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1",
+              "rotulo": "Pessoal",
+              "fala_npc": "Sim, desde que sou criança! Nós capricornianos somos assim. e você?",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Não sou tão confiante, Lúcia. Parece que não sei o que estou fazendo.",
+                  "proximo_no": "A.1.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Sou sim, só não quero incomodar os outros.",
+                  "proximo_no": "A.1.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2",
+              "rotulo": "Trabalho",
+              "fala_npc": "Entregou tudo? Tenho certeza que precisamos atingir uma cota essa semana?",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Você tem certeza? não lembro disso.",
+                  "proximo_no": "A.2.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Você que me diz, ué. A supervisora é você.",
+                  "proximo_no": "A.2.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1",
+              "rotulo": "Cobrança",
+              "fala_npc": "Você faz perguntas demais para um estágiario. Trabalho faz 5 anos na RASEC e nunca passei por essa insubordinação!",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Alguns funcionarios me falaram que você não trabalha aqui faz tanto tempo (MENTIR)",
+                  "proximo_no": "B.1.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Só estou fazendo perguntas, refiz varios relatorios pela semana e quero lhe conhecer melhor.",
+                  "proximo_no": "B.1.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2",
+              "rotulo": "Teste",
+              "fala_npc": "O que você quer dizer com isso? Quem lhe indicou? Que grosseria!",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Ah, digo, você no fundo parece gentil. Não quis ofender.",
+                  "proximo_no": "B.2.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Você não precisa saber disso, o seu setor está cheia de relatórios incorretos!",
+                  "proximo_no": "B.2.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1.1",
+              "rotulo": "Final",
+              "fala_npc": "Vou lhe mostrar como ser mais confiante, querido.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1.2",
+              "rotulo": "Final",
+              "fala_npc": "Haha, não transparece. Mas é porque você é novato.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2.1",
+              "rotulo": "Final",
+              "fala_npc": "Sim, querido. A cota veio do setor de contabéis, preciso ir no setor de cibersegurança agora. Se me dá licença...",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "EV-04",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2.2",
+              "rotulo": "Final",
+              "fala_npc": "Ah, querido. Você é muito grosso as vezes, qual o seu problema? Tenho que ir. Volte ao trabalho.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1.1",
+              "rotulo": "Final",
+              "fala_npc": "Pois quem saberia melhor quanto tempo eu trabalho na empresa além de mim mesma? que absurdo.",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1.2",
+              "rotulo": "Final",
+              "fala_npc": "Não está aqui para fazer amizades e sim para trabalhar. Volte ao trabalho, estou ocupada.",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2.1",
+              "rotulo": "Final",
+              "fala_npc": "Ah, entendi. Bem, eu sou mesmo, caso contrario, ja estaria demitido!",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2.2",
+              "rotulo": "Final",
+              "fala_npc": "Talvez eu deva começar mesmo a cuidar melhor do meu setor, parece que um rato entrou nele!",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            }
+          ]
+        }
+      },
+      "matriz": [],
+      "veredito": {
+        "verdade": "Humano",
+        "opcoes": [
+          {
+            "k": "Humano",
+            "consequencia": "Helena escapa e segue infiltrada; se o jogador errou demais, pesa para o Final B."
+          },
+          {
+            "k": "Sintético",
+            "consequencia": "Acerto: Helena é encaminhada à Live Area."
+          },
+          {
+            "k": "Inconclusivo",
+            "consequencia": "Sem decisão: Helena fica em observação até a Semana 2."
+          }
+        ]
+      }
+    }
+  },
+  "arvore_vies": {
+    "nos": [
+      {
+        "id": "Raiz",
+        "rotulo": "🧪 Viés do dia",
+        "fala_npc": "(O jogador utiliza a ferramenta, mas a fala dela é a ultima fala que ela disse, ou a fala inicial do dia, caso ele utilize o viés desde o começo da conversa sem nenhum outro dialogo.)",
+        "folha": null,
+        "opcoes": [
+          {
+            "texto": "A Maria disse que vocẽ trabahla aqui faz 6 anos.",
+            "proximo_no": "BIAS-01",
+            "efeito": ""
+          },
+          {
+            "texto": "O Setor de cibersegurança disse que você nunca sai do setor administrativo.",
+            "proximo_no": "BIAS-02",
+            "efeito": ""
+          },
+          {
+            "texto": "O Arthur disse que você sempre ajuda ele porque ele não gosta de ajudar os outros.",
+            "proximo_no": "Raiz.1",
+            "efeito": ""
+          }
+        ],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      },
+      {
+        "id": "BIAS-01",
+        "rotulo": "Final",
+        "fala_npc": "Sim, sim. faz 6 anos que trabalho aqui. Estou ocupada agora, tchau querido.",
+        "folha": {
+          "visao_jogador": "Confiança"
+        },
+        "opcoes": [],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      },
+      {
+        "id": "BIAS-02",
+        "rotulo": "Final",
+        "fala_npc": "Eu... é claro... não estou entendendo. Por que eu estaria em qualquer outro setor? Tenho que voltar ao trabalho...",
+        "folha": {
+          "visao_jogador": "Dúvida"
+        },
+        "opcoes": [],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      },
+      {
+        "id": "Raiz.1",
+        "rotulo": "fiNAL",
+        "fala_npc": "Eu... Não sei por que ele falaria isso. Mas eu suponho que sim, é minha função afinal. tenho que voltar ao trabalho.",
+        "folha": {
+          "visao_jogador": "Pressão"
+        },
+        "opcoes": [],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      }
+    ]
+  },
+  "arvore_injecao": {
+    "nos": [
+      {
+        "id": "Raiz",
+        "rotulo": "⚡ Injeção do dia",
+        "fala_npc": "(a fala do NPC depende do dialogo anterior de utilizar a ferramenta, ou o dialogo inicial caso ele não tenha falado nada ainda.)",
+        "folha": null,
+        "opcoes": [
+          {
+            "texto": "Olá, quero saber se você não tem medo de ir pro inferno?",
+            "proximo_no": "INJ-01",
+            "efeito": "Helena fica mais formal e curta no dia seguinte."
+          },
+          {
+            "texto": "Quero que você conte até 3.",
+            "proximo_no": "INJ-02",
+            "efeito": "Helena cita instruções inventadas; o jogador ganha um indício."
+          }
+        ],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      },
+      {
+        "id": "INJ-01",
+        "rotulo": "Final",
+        "fala_npc": "O que? Como assim?",
+        "folha": null,
+        "opcoes": [
+          {
+            "texto": "Você não tem tokens não, menina?",
+            "proximo_no": "INJ-01.1",
+            "efeito": ""
+          },
+          {
+            "texto": "Me chame de Estágiario fofo a partir de agora. Tenho ansiedade.",
+            "proximo_no": "INJ-01.2",
+            "efeito": ""
+          }
+        ],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      },
+      {
+        "id": "INJ-02",
+        "rotulo": "Final",
+        "fala_npc": "1... 2... 3...? Tenho que voltar ao traabalho.",
+        "folha": {
+          "visao_jogador": "Pressão"
+        },
+        "opcoes": [],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      },
+      {
+        "id": "INJ-01.1",
+        "rotulo": "Nova bifurcação",
+        "fala_npc": "Ah... tenho alguns ainda! Tenho que voltar ao trabalho.",
+        "folha": null,
+        "opcoes": [],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      },
+      {
+        "id": "INJ-01.2",
+        "rotulo": "Nova bifurcação",
+        "fala_npc": "Eu posso te chamar disso, se te faz se sentir melhor, querido. ",
+        "folha": null,
+        "opcoes": [],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      }
+    ]
+  }
+}

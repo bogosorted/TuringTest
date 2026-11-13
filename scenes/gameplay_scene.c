@@ -8,6 +8,8 @@
 #include "../utils/options_ui.h"
 #include "../utils/raycanvas.h"
 #include "../utils/dialog_system.h"
+#include "../utils/mapa_holograma.h"
+#include "../utils/setas_3d.h"
 #include "../utils/game_state.h"
 #include <stddef.h>
 
@@ -29,10 +31,11 @@ static int       g_typewriterLetterCount = 0;
 static Texture2D g_ditherTile;              // padrão Bayer 25% para escurecer mensagens anteriores
 static Sound     g_sndHover;                // som sutil e agradavel de hover nos botoes e ferramentas
 static int       g_choiceHoverAnt        = -1;
-static bool      g_localHoverAnt         = false;
-static Texture2D g_fichaFotos[6];           // 0=Patricia, 1=Caio, 2=Lucas, 3=Mariana, 4=Renata, 5=Andre
+static int       g_setaHover             = -1;   // seta de navegacao sob o mouse (-1 = nenhuma)
+static int       g_setaHoverAnt          = -1;
+static Texture2D g_fichaFotos[6];           // 0=Maria Bianca, 1=Arthur, 2=Ana Lucia (mesmas texturas dos personagens)
 static int       g_suspeitoAtual = 0;       // 0 = Patricia, 1 = Andre, 2 = Lucas
-static const int SUSPECT_FICHA_INDEX[3] = { 0, 5, 2 }; // Patricia=0, Andre=5, Lucas=2 em fichas_funcionarios.txt
+static const int SUSPECT_FICHA_INDEX[3] = { 0, 1, 2 }; // Maria, Arthur, Ana Lucia em fichas_funcionarios.txt
 static float     g_alertaTokensTimer = 0.0f; // pisca em vermelho quando faltam tokens para ferramenta (2 tokens)
 
 static void TocarSomHover(void) {
@@ -110,22 +113,168 @@ static const char *SHADER_FUNDO_FS =
     "    finalColor = vec4(col, 1.0) * fragColor;\n"
     "}\n";
 #define NPC_TAMANHO 180.0f
-static Texture2D g_background;        // foto do escritorio atras da tela
-static Texture2D g_backgroundCantina; // foto da lanchonete/cantina na mesma resolucao e dithering
-
-// Locais da RASEC (Escritorio Principal vs. Lanchonete/Cantina)
+// Locais do predio da RASEC. Cada andar tem sua escadaria, e so por ela da para mudar de andar
+// (um andar por vez). Para criar um local: some um valor aqui, uma linha em LOCAIS e uma em HOLO_SALAS.
 typedef enum {
     LOCAL_ESCRITORIO = 0,
-    LOCAL_CANTINA    = 1
+    LOCAL_CANTINA,
+    LOCAL_RH,
+    LOCAL_MESA_MARIA,
+    LOCAL_SALA_REUNIAO,
+    LOCAL_COPA,
+    LOCAL_ESCADA_TERREO,
+    LOCAL_ESCADA_1,
+    LOCAL_ESCADA_2,
+    NUM_LOCAIS
 } LocalRasec;
 
-static LocalRasec g_localAtual = LOCAL_ESCRITORIO;
-// Patricia (0) e Andre (1) ficam no Escritorio; Lucas (2) fica na Lanchonete/Cantina
-static const LocalRasec SUSPECT_LOCAL[3] = {
-    LOCAL_ESCRITORIO,
-    LOCAL_ESCRITORIO,
-    LOCAL_CANTINA
+typedef struct {
+    const char *nome;      // nome curto (rotulo no mapa holografico)
+    const char *titulo;    // titulo no painel de baixo
+    const char *quem;      // quem esta no local
+    const char *fundo;     // foto do local (dithering na rampa original)
+} InfoLocal;
+
+#define FUNDO_ESCADA "assets/sprites/locais/spr_background_escadaria.png"
+static const InfoLocal LOCAIS[NUM_LOCAIS] = {
+    { "ESCRITÓRIO",      "ESCRITÓRIO DA RASEC",   "",                "assets/sprites/locais/terreo/spr_background_teste.png" },
+    { "LANCHONETE",      "LANCHONETE DA RASEC",   "",                "assets/sprites/locais/terreo/spr_background_cantina.png" },
+    { "RH",              "RH DA RASEC",           "Vazio",           "assets/sprites/locais/1_andar/spr_background_rh.png" },
+    { "MESA DA MARIA",   "MESA DA MARIA",         "Vazio",           "assets/sprites/locais/1_andar/spr_background_mesa_maria.png" },
+    { "SALA DE REUNIÃO", "SALA DE REUNIÃO",       "Vazio",           "assets/sprites/locais/2_andar/spr_background_sala_reuniao.png" },
+    { "COPA",            "COPA DO 2º ANDAR",      "Vazio",           "assets/sprites/locais/2_andar/spr_background_geladeira_coffe.png" },
+    { "ESCADA",          "ESCADARIA - TÉRREO",    "Escadas",         FUNDO_ESCADA },
+    { "ESCADA",          "ESCADARIA - 1º ANDAR",  "Escadas",         FUNDO_ESCADA },
+    { "ESCADA",          "ESCADARIA - 2º ANDAR",  "Porta da escada", FUNDO_ESCADA },   // ultimo andar: so a porta para descer
 };
+
+// Todo andar tem a mesma planta: uma sala em cima, uma sala a esquerda, a escadaria a direita
+// e um corredor em T no meio (so enfeite). A sala de cima e a central do andar:
+//   sala central:    esquerda = sala da esquerda, direita = escadaria
+//   sala da esquerda: direita = volta para a central
+//   escadaria:        cima = sobe um andar, baixo = desce um andar, esquerda = volta para a central
+enum { POS_CIMA = 0, POS_ESQUERDA, POS_ESCADA, NUM_POS_ANDAR };
+static const LocalRasec PLANTA_ANDAR[HOLO_NUM_ANDARES][NUM_POS_ANDAR] = {
+    { LOCAL_ESCRITORIO,   LOCAL_CANTINA, LOCAL_ESCADA_TERREO },
+    { LOCAL_MESA_MARIA,   LOCAL_RH,      LOCAL_ESCADA_1 },
+    { LOCAL_SALA_REUNIAO, LOCAL_COPA,    LOCAL_ESCADA_2 },
+};
+
+// Planta de cada local no mapa holografico (mesma ordem de LOCAIS). Cada andar mede
+// HOLO_PLANTA_W x HOLO_PLANTA_D (z maior = frente); salas com 2 partes ficam em L.
+static const HoloSala HOLO_SALAS[NUM_LOCAIS] = {
+    { 0, 2, { { 1.6f, 0.2f, 3.2f, 1.1f }, { 1.6f, 1.3f, 0.9f, 0.45f } }, false },  // escritorio (cima, em L)
+    { 0, 1, { { 0.2f, 0.9f, 1.2f, 2.1f } }, false },                               // lanchonete (esquerda)
+    { 1, 2, { { 0.2f, 0.3f, 1.2f, 1.3f }, { 0.2f, 1.6f, 0.75f, 1.3f } }, false },  // RH (esquerda, em L)
+    { 1, 1, { { 1.9f, 0.2f, 2.5f, 1.15f } }, false },                              // mesa da Maria (cima)
+    { 2, 1, { { 1.6f, 0.2f, 3.3f, 1.25f } }, false },                              // sala de reuniao (cima)
+    { 2, 1, { { 0.2f, 1.2f, 1.2f, 1.6f } }, false },                               // copa (esquerda)
+    { 0, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },                                // escadarias (direita)
+    { 1, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
+    { 2, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
+};
+// Corredor em T de cada andar (so enfeite): faixa ligando a sala da esquerda a escadaria
+// e um trecho subindo ate a sala de cima
+static const HoloCorredor HOLO_CORREDORES[] = {
+    { 0, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 0, { 2.9f, 1.3f,  0.45f, 0.65f } },
+    { 1, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 1, { 2.9f, 1.35f, 0.45f, 0.6f } },
+    { 2, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 2, { 2.9f, 1.45f, 0.45f, 0.5f } },
+};
+#define NUM_HOLO_CORREDORES ((int)(sizeof HOLO_CORREDORES / sizeof HOLO_CORREDORES[0]))
+static const char *NOMES_ANDARES[HOLO_NUM_ANDARES] = { "TÉRREO", "1º ANDAR", "2º ANDAR" };
+
+// Para onde cada seta leva a partir de um local (-1 = seta escondida)
+static int DestinoSeta(int de, int seta) {
+    int andar = HOLO_SALAS[de].andar;
+    int central = (int)PLANTA_ANDAR[andar][POS_CIMA];
+    if (HOLO_SALAS[de].escada) {
+        if (seta == SETA_CIMA)     return (andar + 1 < HOLO_NUM_ANDARES) ? (int)PLANTA_ANDAR[andar + 1][POS_ESCADA] : -1;
+        if (seta == SETA_BAIXO)    return (andar > 0) ? (int)PLANTA_ANDAR[andar - 1][POS_ESCADA] : -1;
+        if (seta == SETA_ESQUERDA) return central;
+        return -1;
+    }
+    if (de == central) {
+        if (seta == SETA_ESQUERDA) return (int)PLANTA_ANDAR[andar][POS_ESQUERDA];
+        if (seta == SETA_DIREITA)  return (int)PLANTA_ANDAR[andar][POS_ESCADA];
+        return -1;
+    }
+    return (seta == SETA_DIREITA) ? central : -1;   // sala da esquerda: so volta
+}
+
+static unsigned LocaisAcessiveis(int de) {
+    unsigned bits = 0;
+    for (int d = 0; d < NUM_SETAS; d++) {
+        int destino = DestinoSeta(de, d);
+        if (destino >= 0) bits |= 1u << destino;
+    }
+    return bits;
+}
+
+// Texto que aparece ao passar o mouse na seta
+static const char *TextoSeta(int de, int seta) {
+    int destino = DestinoSeta(de, seta);
+    if (destino < 0) return "";
+    if (HOLO_SALAS[de].escada && HOLO_SALAS[destino].escada)
+        return TextFormat("%s: %s", seta == SETA_CIMA ? "SUBIR" : "DESCER", NOMES_ANDARES[HOLO_SALAS[destino].andar]);
+    if (HOLO_SALAS[destino].escada) return "ESCADARIA";
+    if (HOLO_SALAS[de].escada) return TextFormat("IR PARA: %s", LOCAIS[destino].nome);   // da escadaria para a sala central
+    if (destino == (int)PLANTA_ANDAR[HOLO_SALAS[de].andar][POS_CIMA]) return TextFormat("VOLTAR: %s", LOCAIS[destino].nome);
+    return LOCAIS[destino].nome;
+}
+
+// Setas de navegacao na foto do local (posicoes em pixels da janela de cima, a partir do canto dela)
+static const Vector2 SETAS_POS[NUM_SETAS] = {
+    { 149.0f,  52.0f },   // cima
+    { 149.0f, 192.0f },   // baixo (so na escadaria, onde nao ha suspeitos)
+    {  26.0f, 118.0f },   // esquerda
+    { 272.0f, 118.0f },   // direita
+};
+
+static Texture2D g_fundos[NUM_LOCAIS];   // fotos dos locais atras da tela
+
+static LocalRasec g_localAtual = LOCAL_ESCRITORIO;
+// Suspeitos: 0 = Maria Bianca, 1 = Arthur Galderio, 2 = Ana Lucia (a IA).
+// O local de cada um e sorteado no inicio de cada dia (SortearLocaisDoDia).
+static LocalRasec g_suspeitoLocal[3] = { LOCAL_MESA_MARIA, LOCAL_ESCRITORIO, LOCAL_SALA_REUNIAO };
+static const char *NOMES_SUSPEITOS[3] = { "Maria", "Arthur", "Ana Lucia" };
+
+// Onde cada um pode estar em cada dia, de acordo com os dialogos e as evidencias:
+// - Maria (auxiliar administrativa): trabalha na mesa dela/escritorio; dia 2 conta da viagem
+//   (pausa na copa/lanchonete); dia 3 e sexta, ja no clima de fim de semana.
+// - Arthur (assistente do administrativo, guitarrista): relatorios na mesa (escritorio),
+//   ID perdido na geladeira (lanchonete/copa), canetas na sala de reunioes. Sempre sozinho.
+// - Ana Lucia (supervisora, IA): cobra relatorios (escritorio, mesa da Maria, sala de reuniao)
+//   e e vista "indo a setores incorretos" (RH).
+static const LocalRasec CANDIDATOS_DIA[3][3][3] = {
+    /* Maria  */ { { LOCAL_MESA_MARIA, LOCAL_ESCRITORIO, LOCAL_MESA_MARIA },
+                   { LOCAL_COPA, LOCAL_CANTINA, LOCAL_MESA_MARIA },
+                   { LOCAL_CANTINA, LOCAL_COPA, LOCAL_MESA_MARIA } },
+    /* Arthur */ { { LOCAL_ESCRITORIO, LOCAL_CANTINA, LOCAL_ESCRITORIO },
+                   { LOCAL_CANTINA, LOCAL_COPA, LOCAL_SALA_REUNIAO },
+                   { LOCAL_SALA_REUNIAO, LOCAL_COPA, LOCAL_ESCRITORIO } },
+    /* Ana    */ { { LOCAL_ESCRITORIO, LOCAL_SALA_REUNIAO, LOCAL_SALA_REUNIAO },
+                   { LOCAL_RH, LOCAL_SALA_REUNIAO, LOCAL_ESCRITORIO },
+                   { LOCAL_ESCRITORIO, LOCAL_RH, LOCAL_MESA_MARIA } },
+};
+
+static void SortearLocaisDoDia(int dia) {
+    int d = (dia < 1) ? 0 : (dia > 3) ? 2 : dia - 1;
+    g_suspeitoLocal[0] = CANDIDATOS_DIA[0][d][GetRandomValue(0, 2)];
+    g_suspeitoLocal[2] = CANDIDATOS_DIA[2][d][GetRandomValue(0, 2)];
+    // Arthur fica sempre sozinho: sorteia entre os locais dele que estejam livres
+    LocalRasec livres[3]; int n = 0;
+    for (int k = 0; k < 3; k++) {
+        LocalRasec l = CANDIDATOS_DIA[1][d][k];
+        if (l != g_suspeitoLocal[0] && l != g_suspeitoLocal[2]) livres[n++] = l;
+    }
+    if (n > 0) g_suspeitoLocal[1] = livres[GetRandomValue(0, n - 1)];
+    else {   // nenhum livre na lista: qualquer sala (fora as escadas) vazia
+        for (int l = 0; l < LOCAL_ESCADA_TERREO; l++)
+            if (l != (int)g_suspeitoLocal[0] && l != (int)g_suspeitoLocal[2]) { g_suspeitoLocal[1] = (LocalRasec)l; break; }
+    }
+    TraceLog(LOG_INFO, "Dia %d: Maria=%s, Arthur=%s, Ana Lucia=%s", dia,
+             LOCAIS[g_suspeitoLocal[0]].nome, LOCAIS[g_suspeitoLocal[1]].nome, LOCAIS[g_suspeitoLocal[2]].nome);
+}
 
 // ---------------------------------------------------------------
 // SISTEMA DE RIGGING FACIAL (Photobash Rig - 9 pontos RBF + Palpebras)
@@ -150,28 +299,28 @@ typedef struct {
     Vector2 jawP;     // jaw
 } FaceRigAnchors;
 
-// Coordenadas UV [0..1] calibradas para cada suspeito (Patricia, Andre, Lucas)
+// Coordenadas UV [0..1] calibradas para cada foto (Maria Bianca, Arthur, Ana Lucia)
 static const FaceRigAnchors FACE_ANCHORS[3] = {
-    // 0: Patricia
+    // 0: Maria Bianca
     {
         .browP  = { { 0.285f, 0.455f }, { 0.435f, 0.458f }, { 0.560f, 0.458f }, { 0.675f, 0.455f } },
         .lidP   = { { 0.372f, 0.495f }, { 0.612f, 0.495f } },
         .mouthP = { { 0.395f, 0.778f }, { 0.598f, 0.775f } },
         .jawP   = { 0.500f, 0.900f }
     },
-    // 1: Andre
-    {
-        .browP  = { { 0.320f, 0.452f }, { 0.460f, 0.455f }, { 0.605f, 0.455f }, { 0.745f, 0.452f } },
-        .lidP   = { { 0.412f, 0.494f }, { 0.665f, 0.494f } },
-        .mouthP = { { 0.425f, 0.755f }, { 0.655f, 0.755f } },
-        .jawP   = { 0.540f, 0.900f }
-    },
-    // 2: Lucas
+    // 1: Arthur
     {
         .browP  = { { 0.400f, 0.495f }, { 0.540f, 0.500f }, { 0.665f, 0.498f }, { 0.775f, 0.490f } },
         .lidP   = { { 0.482f, 0.534f }, { 0.705f, 0.532f } },
         .mouthP = { { 0.485f, 0.790f }, { 0.695f, 0.790f } },
         .jawP   = { 0.595f, 0.915f }
+    },
+    // 2: Ana Lucia (rosto atras dos oculos)
+    {
+        .browP  = { { 0.290f, 0.430f }, { 0.430f, 0.432f }, { 0.560f, 0.432f }, { 0.700f, 0.428f } },
+        .lidP   = { { 0.365f, 0.480f }, { 0.630f, 0.480f } },
+        .mouthP = { { 0.405f, 0.755f }, { 0.600f, 0.752f } },
+        .jawP   = { 0.500f, 0.890f }
     }
 };
 
@@ -247,12 +396,6 @@ static bool      g_enviesarUsado[3]   = { false, false, false };
 static bool      g_deepfakeUsado[3]   = { false, false, false };
 static bool      g_injecaoUsada[3]    = { false, false, false };
 
-// Ferramenta Mapa na tela (265x255) arrastavel
-static Texture2D g_mapaJanela;
-static bool      g_mapaAberto         = false;
-static bool      g_arrastandoMapa     = false;
-static Vector2   g_mapaPos            = { 342, 28 };
-static Vector2   g_offsetMapa         = { 0, 0 };
 static bool      g_avisoCantina       = false;
 static bool      g_avancarDia         = false;
 static bool      g_irParaVeredito     = false;
@@ -451,8 +594,6 @@ static void FecharJanelasFerramentas(void) {
     g_fichaAtual            = -1;
     g_arrastandoFicha       = false;
     g_arrastandoBarra       = false;
-    g_mapaAberto            = false;
-    g_arrastandoMapa        = false;
     g_avisoCantina          = false;
     g_deepfakeAberto        = false;
     g_arrastandoDeepfake    = false;
@@ -478,12 +619,6 @@ static void OnClickPasta(void) {
     }
     g_fichaScroll = 0.0f;                       // sempre abre no topo
     g_arrastandoBarra = false;
-}
-static void OnClickMapa(void) {
-    bool abrir = !g_mapaAberto;
-    FecharJanelasFerramentas();
-    g_mapaAberto = abrir;
-    TraceLog(LOG_INFO, "Mapa %s", g_mapaAberto ? "aberto" : "fechado");
 }
 static bool TemTokensParaFerramenta(int custo) {
     return global_infinite_tokens || (global_tokens >= custo);
@@ -702,10 +837,6 @@ static bool MouseSobreFicha(void) {
     Vector2 m = MouseNaImagem();
     if (g_fichaAtual >= 0) {
         Rectangle area = { g_fichaPos.x, g_fichaPos.y, (float)g_ficha.width, (float)g_ficha.height };
-        if (CheckCollisionPointRec(m, area)) return true;
-    }
-    if (g_mapaAberto) {
-        Rectangle area = { g_mapaPos.x, g_mapaPos.y, (float)g_mapaJanela.width, (float)g_mapaJanela.height };
         if (CheckCollisionPointRec(m, area)) return true;
     }
     if (g_deepfakeAberto) {
@@ -1630,15 +1761,26 @@ static void DesenharDica(void) {
 // Quadrante 1 (Superior Esquerdo: JANELA_AREA = { 3, 3, 298, 221 }) - Silhuetas organicas separadas por local:
 // - ESCRITORIO: Patricia (esquerda) e Andre (direita)
 // - LANCHONETE/CANTINA: Lucas (centro da lanchonete)
-static const Rectangle SUSPECT_SIL_AREA[3] = {
+static const Rectangle SUSPECT_SIL_AREA_BASE[3] = {
     {  34.0f,  98.0f, 88.0f, 120.0f },  // 0: Patrícia (Escritório - bancada da esquerda)
     { 170.0f,  94.0f, 92.0f, 124.0f },  // 1: André    (Escritório - bancada da direita)
     { 108.0f,  96.0f, 88.0f, 122.0f }   // 2: Lucas    (Lanchonete/Cantina - centro)
 };
 
-// Botoes do topo da janela: Dia, Local (Escritorio <-> Lanchonete) e Proximo Dia / Veredito
+// Posicao da silhueta na foto: sozinho fica no centro; dividindo a sala, um a esquerda e outro a direita
+static Rectangle SuspeitoSilArea(int i) {
+    int antes = 0, total = 0;
+    for (int j = 0; j < 3; j++) {
+        if (g_suspeitoLocal[j] != g_suspeitoLocal[i]) continue;
+        if (j < i) antes++;
+        total++;
+    }
+    if (total == 1) return SUSPECT_SIL_AREA_BASE[2];
+    return SUSPECT_SIL_AREA_BASE[antes == 0 ? 0 : 1];
+}
+
+// Botoes do topo da janela: Dia e Proximo Dia / Veredito
 static const Rectangle BADGE_DIA_TOPO       = {   8.0f,   8.0f,  54.0f,  20.0f };
-static const Rectangle BADGE_LOCAL_TOPO     = {  65.0f,   8.0f, 105.0f,  20.0f };
 static const Rectangle BOTAO_AVANCAR_TOPO   = { 174.0f,   8.0f, 121.0f,  22.0f };
 static const Rectangle BOTAO_AVANCAR_PAINEL = { DIALOG_BOX_X, 316.0f, DIALOG_BOX_W, 30.0f };
 
@@ -1649,8 +1791,6 @@ static const Rectangle CONFIRMAR_BTN_SIM = { 329.0f, 214.0f, 140.0f,  26.0f };
 
 static void ExecutarAvancarDiaOuVeredito(void) {
     g_confirmarAvancarDia = false;
-    g_mapaAberto = false;
-    g_arrastandoMapa = false;
     if (GameStateGetDay() >= GAME_NUM_DAYS) g_irParaVeredito = true;
     else                                    g_avancarDia = true;
 }
@@ -2092,6 +2232,55 @@ static float MedirAlturaTextoQuebrado(const char *texto, float maxLargura, int t
     return (float)(numLines * (tamanhoFonte + 4));
 }
 
+// ---------- Mapa holografico (quadrante da direita, fora do interrogatorio) ----------
+#define HOLO_DICA_H 14.0f
+
+// Area do mapa = corpo do historico menos a linha de dica (muda quando o menu de ferramentas abre)
+static Rectangle AreaMapaHolo(void) {
+    float chatH = g_menuAberto ? CHAT_H_OPEN : CHAT_H_CLOSED;
+    float y = CHAT_AREA_Y + CHAT_HEADER_H + 6.0f;
+    return (Rectangle){ CHAT_AREA_X + 2.0f, y, CHAT_AREA_W - 4.0f, CHAT_AREA_Y + chatH - y - 2.0f - HOLO_DICA_H };
+}
+
+// Rotulo pequeno com fundo escuro centralizado em um ponto (coordenadas virtuais)
+static void RotuloMapa(const char *txt, Vector2 centro, Color cor) {
+    Rectangle ref = ParaTela((Rectangle){ centro.x, centro.y, 10.0f, 10.0f });
+    float escala = ref.height / 10.0f;
+    int tam = (int)(7.0f * escala);
+    if (tam < 1) tam = 1;
+    float larg = MeasureText(txt, tam) / escala + 4.0f;
+    Rectangle r = ParaTela((Rectangle){ centro.x - larg / 2.0f, centro.y + 2.0f, larg, 9.0f });
+    DrawRectangleRec(r, Fade((Color){ 32, 29, 31, 255 }, 0.8f));
+    DrawText(txt, (int)(r.x + 2.0f * escala), (int)(r.y + (r.height - tam) / 2.0f), tam, cor);
+}
+
+static void DesenharMapaHolo(void) {
+    Rectangle area = AreaMapaHolo();
+    Texture2D tex = MapaHoloTextura();
+    DrawTexturePro(tex, (Rectangle){ 0, 0, (float)tex.width, -(float)tex.height },
+                   ParaTela(area), (Vector2){ 0, 0 }, 0.0f, WHITE);
+
+    int andarAtual = HOLO_SALAS[g_localAtual].andar;
+    unsigned acessiveis = LocaisAcessiveis(g_localAtual);
+    for (int a = 0; a < HOLO_NUM_ANDARES; a++) {
+        Vector2 p = MapaHoloPosAndar(a);
+        Color cor = (a == andarAtual) ? (Color){ 255, 242, 230, 255 } : (Color){ 125, 112, 113, 255 };
+        DrawTextLeftAligned(NOMES_ANDARES[a], (Vector2){ area.x + p.x, area.y + p.y + 2.0f }, 7, cor);
+    }
+    for (int i = 0; i < NUM_LOCAIS; i++) {
+        Vector2 p = MapaHoloPosSala(i);
+        bool ativo = (i == (int)g_localAtual) || ((acessiveis >> i) & 1u);
+        RotuloMapa(LOCAIS[i].nome, (Vector2){ area.x + p.x, area.y + p.y },
+                   ativo ? (Color){ 255, 242, 230, 255 } : (Color){ 125, 112, 113, 255 });
+    }
+
+    // Dica embaixo do mapa: o mapa so mostra; quem leva de um lugar a outro sao as setas na foto
+    const char *dica = (g_setaHover >= 0) ? TextFormat("Seta: %s", TextoSeta(g_localAtual, g_setaHover))
+                                          : "Use as setas na imagem para andar pelo prédio.";
+    Rectangle rDica = { area.x, area.y + area.height, area.width, HOLO_DICA_H };
+    DrawTextInArea(dica, rDica, 8, (g_setaHover >= 0) ? (Color){ 255, 242, 230, 255 } : (Color){ 189, 181, 168, 255 });
+}
+
 static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
     Color textColor  = (Color){ 32, 29, 31, 255 };
     Color bgColor    = (Color){ 125, 112, 113, 255 };
@@ -2105,13 +2294,13 @@ static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
     DrawRectangleLinesEx(ParaTela(rTitulo), 2, borderColor);
 
     const char *nomesSuspeitos[] = {
-        "INTERROGATÓRIO - PATRÍCIA",
-        "INTERROGATÓRIO - ANDRÉ",
-        "INTERROGATÓRIO - LUCAS"
+        "INTERROGATÓRIO - MARIA",
+        "INTERROGATÓRIO - ARTHUR",
+        "INTERROGATÓRIO - ANA LUCIA"
     };
     const char *tituloChat = (g_dialogLoaded && suspectIndex >= 0 && suspectIndex < 3)
                              ? nomesSuspeitos[suspectIndex]
-                             : "HISTÓRICO DE DIÁLOGO";
+                             : TextFormat("MAPA DA RASEC - %s", NOMES_ANDARES[HOLO_SALAS[g_localAtual].andar]);
     DrawTextInArea(tituloChat, rTitulo, 10, (Color){ 255, 242, 230, 255 });
 
     // Área do corpo do chat no retângulo da direita (fundo sólido escuro com sutil textura de fundo)
@@ -2121,7 +2310,7 @@ static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
     DrawRectangleLinesEx(rCorpoTela, 2, borderColor);
 
     if (!g_dialogLoaded || suspectIndex < 0 || suspectIndex >= 3) {
-        DrawTextWaveInArea("(Selecione um suspeito à esquerda\npara iniciar a conversa)", rCorpo, 10, (Color){ 189, 181, 168, 230 });
+        DesenharMapaHolo();   // fora do interrogatorio o quadrante mostra o mapa do predio
         return;
     }
 
@@ -2270,21 +2459,6 @@ static void DrawInterrogationTexts(void) {
     DrawRectangleLinesEx(ParaTela(BADGE_DIA_TOPO), 1.5f, hoverColor);
     DrawTextInArea(TextFormat("DIA %d/%d", diaAtual, GAME_NUM_DAYS), BADGE_DIA_TOPO, 9, (Color){ 255, 242, 230, 255 });
 
-    // Badge do local atual (clicavel quando esta na sala: alterna Escritorio <-> Lanchonete)
-    bool hovLocal = !bloqueadoPorOverlay && !g_dialogLoaded && CheckCollisionPointRec(mouseTela, ParaTela(BADGE_LOCAL_TOPO));
-    if (hovLocal && !g_localHoverAnt) {
-        TocarSomHover();
-    }
-    g_localHoverAnt = hovLocal;
-
-    Rectangle sombraLocal = { BADGE_LOCAL_TOPO.x + 1.5f, BADGE_LOCAL_TOPO.y + 1.5f, BADGE_LOCAL_TOPO.width, BADGE_LOCAL_TOPO.height };
-    DrawRectangleRec(ParaTela(sombraLocal), Fade(BLACK, 0.55f));
-    DrawRectangleRec(ParaTela(BADGE_LOCAL_TOPO), hovLocal ? lightTextColor : (Color){ 32, 29, 31, 240 });
-    DrawRectangleLinesEx(ParaTela(BADGE_LOCAL_TOPO), hovLocal ? 2.0f : 1.5f, hovLocal ? (Color){ 255, 242, 230, 255 } : hoverColor);
-    const char *txtLocal = (g_localAtual == LOCAL_CANTINA) ? "LANCHONETE" : "ESCRITÓRIO";
-    if (hovLocal) txtLocal = (g_localAtual == LOCAL_CANTINA) ? "<< ESCRITÓRIO" : "LANCHONETE >>";
-    DrawTextInArea(txtLocal, BADGE_LOCAL_TOPO, 9, hovLocal ? textColor : (Color){ 255, 242, 230, 255 });
-
     // Botao sempre visivel "Proximo Dia >>" / "Ir ao Veredito >>" no canto superior direito da janela
     bool hovTopo = !bloqueadoPorOverlay && CheckCollisionPointRec(mouseTela, ParaTela(BOTAO_AVANCAR_TOPO));
 
@@ -2341,16 +2515,26 @@ static void DrawInterrogationTexts(void) {
     }
 
     if (!g_dialogLoaded) {
-        bool naCantina = (g_localAtual == LOCAL_CANTINA);
-        DrawTextLeftAligned(naCantina ? "LANCHONETE DA RASEC" : "ESCRITÓRIO DA RASEC", (Vector2){ 12, 235 }, 10, lightTextColor);
+        DrawTextLeftAligned(LOCAIS[g_localAtual].titulo, (Vector2){ 12, 235 }, 10, lightTextColor);
 
         Rectangle infoBox = { DIALOG_BOX_X, DIALOG_START_Y + 4, DIALOG_BOX_W, 60 };
         DrawRectangleRec(ParaTela(infoBox), Fade((Color){ 36, 32, 34, 255 }, 0.85f));
         DrawRectangleLinesEx(ParaTela(infoBox), 1.5f, hoverColor);
-        DrawTextInArea(naCantina
-                           ? "Lucas está aqui na Lanchonete. Clique nele para interrogar.\n(Patrícia e André estão no Escritório - alterne no topo)"
-                           : "Clique em Patrícia ou André na sala para interrogar.\n(Lucas está na Lanchonete - alterne no topo)",
-                       infoBox, 10, (Color){ 255, 242, 230, 255 });
+        char aqui[64] = "";
+        int nAqui = 0;
+        for (int k = 0; k < 3; k++) {
+            if (g_suspeitoLocal[k] != g_localAtual) continue;
+            if (nAqui++) strncat(aqui, " ou ", sizeof aqui - strlen(aqui) - 1);
+            strncat(aqui, NOMES_SUSPEITOS[k], sizeof aqui - strlen(aqui) - 1);
+        }
+        const char *info;
+        if (HOLO_SALAS[g_localAtual].escada)
+            info = "Você está na escadaria.\n(Use as setas na imagem para mudar de andar)";
+        else if (nAqui > 0)
+            info = TextFormat("Clique em %s para interrogar.\n(Use as setas na imagem para procurar os outros)", aqui);
+        else
+            info = "Não há ninguém aqui agora.\n(Use as setas na imagem para procurar os funcionários)";
+        DrawTextInArea(info, infoBox, 10, (Color){ 255, 242, 230, 255 });
         return;
     }
 
@@ -2358,7 +2542,7 @@ static void DrawInterrogationTexts(void) {
     if (!node) return;
 
     char headerEsq[64];
-    const char *nomesSuspeitos[] = { "Patrícia", "André", "Lucas" };
+    const char **nomesSuspeitos = NOMES_SUSPEITOS;
     const char *nomeSuspeito = (g_suspeitoAtual >= 0 && g_suspeitoAtual < 3) ? nomesSuspeitos[g_suspeitoAtual] : node->speaker;
     snprintf(headerEsq, sizeof(headerEsq), "INTERROGANDO: %s", nomeSuspeito);
     DrawTextLeftAligned(headerEsq, (Vector2){ 12, 235 }, 10, lightTextColor);
@@ -2452,7 +2636,6 @@ void GameplaySceneResetDialogues(void) {
     g_dicaUsadaHoje = false;
     g_dicaAberta = false;
     g_deepfakeAberto = false;
-    g_mapaAberto = false;
     g_avisoCantina = false;
     g_avancarDia = false;
     g_irParaVeredito = false;
@@ -2529,9 +2712,6 @@ void InitGameplayScene(void) {
     g_confirmarAbandonarRun = false;
     g_voltarParaMenu = false;
     g_localAtual = LOCAL_ESCRITORIO;
-    g_mapaAberto = false;
-    g_arrastandoMapa = false;
-    g_mapaPos = (Vector2){ 342, 28 };
     g_avisoCantina = false;
     g_menuAberto = false;
     g_pranchetaAberta = false;
@@ -2546,6 +2726,7 @@ void InitGameplayScene(void) {
     
     if (!g_treesLoaded) {
         int dia = GameStateGetDay();
+        SortearLocaisDoDia(dia);
         char path[128];
         snprintf(path, sizeof path, "assets/dialogues/patricia_dia%d.txt", dia);
         LoadDialogTree(path, &g_trees[0]);
@@ -2558,28 +2739,28 @@ void InitGameplayScene(void) {
         g_treesLoaded = true;
     }
 
-    g_charTextures[0] = LoadTexture("assets/gameplay_scene/char_patricia.png");
+    g_charTextures[0] = LoadTexture("assets/sprites/personagens/char_maria_bianca.png");
     GenTextureMipmaps(&g_charTextures[0]);
     SetTextureFilter(g_charTextures[0], TEXTURE_FILTER_BILINEAR);
 
-    g_charTextures[1] = LoadTexture("assets/gameplay_scene/char_andre.png");
+    g_charTextures[1] = LoadTexture("assets/sprites/personagens/char_arthur_gadelho.png");
     GenTextureMipmaps(&g_charTextures[1]);
     SetTextureFilter(g_charTextures[1], TEXTURE_FILTER_BILINEAR);
 
-    g_charTextures[2] = LoadTexture("assets/gameplay_scene/char_lucas.png");
+    g_charTextures[2] = LoadTexture("assets/sprites/personagens/char_ana_lucia.png");
     GenTextureMipmaps(&g_charTextures[2]);
     SetTextureFilter(g_charTextures[2], TEXTURE_FILTER_BILINEAR);
 
-    g_charSilhuetasBrancas[0] = CriarSilhuetaBranca("assets/gameplay_scene/char_patricia.png");
-    g_charSilhuetasBrancas[1] = CriarSilhuetaBranca("assets/gameplay_scene/char_andre.png");
-    g_charSilhuetasBrancas[2] = CriarSilhuetaBranca("assets/gameplay_scene/char_lucas.png");
+    g_charSilhuetasBrancas[0] = CriarSilhuetaBranca("assets/sprites/personagens/char_maria_bianca.png");
+    g_charSilhuetasBrancas[1] = CriarSilhuetaBranca("assets/sprites/personagens/char_arthur_gadelho.png");
+    g_charSilhuetasBrancas[2] = CriarSilhuetaBranca("assets/sprites/personagens/char_ana_lucia.png");
 
     // Silhuetas organicas dos 3 suspeitos na sala (clicaveis direto na janela do escritorio)
-    g_silTextures[0] = LoadTexture("assets/gameplay_scene/sil_patricia.png");
+    g_silTextures[0] = LoadTexture("assets/sprites/personagens/sil_maria_bianca.png");
     SetTextureFilter(g_silTextures[0], TEXTURE_FILTER_POINT);
-    g_silTextures[1] = LoadTexture("assets/gameplay_scene/sil_andre.png");
+    g_silTextures[1] = LoadTexture("assets/sprites/personagens/sil_arthur_gadelho.png");
     SetTextureFilter(g_silTextures[1], TEXTURE_FILTER_POINT);
-    g_silTextures[2] = LoadTexture("assets/gameplay_scene/sil_lucas.png");
+    g_silTextures[2] = LoadTexture("assets/sprites/personagens/sil_ana_lucia.png");
     SetTextureFilter(g_silTextures[2], TEXTURE_FILTER_POINT);
 
     // Sons de voz sintetizados estilo Undertale (cada personagem tem seu proprio tom e cadencia)
@@ -2613,21 +2794,10 @@ void InitGameplayScene(void) {
     UnloadImage(tileImg);
     SetTextureFilter(g_ditherTile, TEXTURE_FILTER_POINT);
 
-    // Fotos dos 6 funcionarios para as fichas
-    g_fichaFotos[0] = g_charTextures[0]; // Patricia
-    g_fichaFotos[1] = LoadTexture("assets/gameplay_scene/char_caio.png");
-    GenTextureMipmaps(&g_fichaFotos[1]);
-    SetTextureFilter(g_fichaFotos[1], TEXTURE_FILTER_BILINEAR);
-    g_fichaFotos[2] = g_charTextures[2]; // Lucas
-    g_fichaFotos[3] = LoadTexture("assets/gameplay_scene/char_mariana.png");
-    GenTextureMipmaps(&g_fichaFotos[3]);
-    SetTextureFilter(g_fichaFotos[3], TEXTURE_FILTER_BILINEAR);
-    g_fichaFotos[4] = LoadTexture("assets/gameplay_scene/char_renata.png");
-    GenTextureMipmaps(&g_fichaFotos[4]);
-    SetTextureFilter(g_fichaFotos[4], TEXTURE_FILTER_BILINEAR);
-    g_fichaFotos[5] = g_charTextures[1]; // Andre
+    // Fotos das fichas: as mesmas dos 3 personagens (mesma ordem de fichas_funcionarios.txt)
+    for (int k = 0; k < 3; k++) g_fichaFotos[k] = g_charTextures[k];
 
-    g_interface = LoadTexture("assets/gameplay_scene/spr_interface_principal.png");
+    g_interface = LoadTexture("assets/sprites/interface/spr_interface_principal.png");
     SetTextureFilter(g_interface, TEXTURE_FILTER_POINT);
 
     // Fundo animado procedural com Perlin Noise e Bayer dithering nos quadrantes de demarcação
@@ -2652,11 +2822,14 @@ void InitGameplayScene(void) {
         g_shaderNoise2Loc = GetShaderLocation(g_shaderFundo, "noiseTex2");
     }
 
-    g_background = LoadTexture("assets/gameplay_scene/spr_background_teste.png");
-    SetTextureFilter(g_background, TEXTURE_FILTER_POINT);
-
-    g_backgroundCantina = LoadTexture("assets/gameplay_scene/spr_background_cantina.png");
-    SetTextureFilter(g_backgroundCantina, TEXTURE_FILTER_POINT);
+    for (int i = 0; i < NUM_LOCAIS; i++) {
+        g_fundos[i] = LoadTexture(LOCAIS[i].fundo);
+        SetTextureFilter(g_fundos[i], TEXTURE_FILTER_POINT);
+    }
+    MapaHoloInit(HOLO_SALAS, NUM_LOCAIS, HOLO_CORREDORES, NUM_HOLO_CORREDORES);
+    Setas3DInit((int)JANELA_AREA.width, (int)JANELA_AREA.height, SETAS_POS);
+    g_setaHover = -1;
+    g_setaHoverAnt = -1;
 
     // Rig facial (shader de warp RBF portado do Photobash Rig)
     InitFaceRigShader();
@@ -2666,38 +2839,38 @@ void InitGameplayScene(void) {
     g_rigTweenT = 1.0f;
     g_rigTalkTimer = 0.0f;
 
-    g_seta = LoadTexture("assets/gameplay_scene/spr_menu_fechado.png");
+    g_seta = LoadTexture("assets/sprites/interface/spr_menu_fechado.png");
     SetTextureFilter(g_seta, TEXTURE_FILTER_POINT);
 
-    g_menuFerramentas = LoadTexture("assets/gameplay_scene/spr_menu_aberto.png");
+    g_menuFerramentas = LoadTexture("assets/sprites/interface/spr_menu_aberto.png");
     SetTextureFilter(g_menuFerramentas, TEXTURE_FILTER_POINT);
     SetTextureWrap(g_menuFerramentas, TEXTURE_WRAP_CLAMP);   // desenhado em pedacos: sem clamp as emendas puxam pixels da outra borda
 
-    g_barraMenu = LoadTexture("assets/gameplay_scene/spr_menu_scroll.png");
+    g_barraMenu = LoadTexture("assets/sprites/interface/spr_menu_scroll.png");
     SetTextureFilter(g_barraMenu, TEXTURE_FILTER_POINT);
 
-    g_iconePrancheta = LoadTexture("assets/gameplay_scene/spr_icone_tablet.png");
+    g_iconePrancheta = LoadTexture("assets/sprites/icones/spr_icone_tablet.png");
     SetTextureFilter(g_iconePrancheta, TEXTURE_FILTER_POINT);
 
-    g_iconeArquivos = LoadTexture("assets/gameplay_scene/spr_icone_ficha.png");
+    g_iconeArquivos = LoadTexture("assets/sprites/icones/spr_icone_ficha.png");
     SetTextureFilter(g_iconeArquivos, TEXTURE_FILTER_POINT);
 
-    g_iconeEnviesar = LoadTexture("assets/gameplay_scene/spr_enviesardados.png");
+    g_iconeEnviesar = LoadTexture("assets/sprites/icones/spr_enviesardados.png");
     SetTextureFilter(g_iconeEnviesar, TEXTURE_FILTER_POINT);
 
-    g_iconeDeepfake = LoadTexture("assets/gameplay_scene/spr_deepfake.png");
+    g_iconeDeepfake = LoadTexture("assets/sprites/icones/spr_deepfake.png");
     SetTextureFilter(g_iconeDeepfake, TEXTURE_FILTER_POINT);
 
-    g_iconeInjecao = LoadTexture("assets/gameplay_scene/spr_injecaoprompt.png");
+    g_iconeInjecao = LoadTexture("assets/sprites/icones/spr_injecaoprompt.png");
     SetTextureFilter(g_iconeInjecao, TEXTURE_FILTER_POINT);
 
     const char *caminhosIcones[NUM_TOOLS] = {
-        "assets/gameplay_scene/spr_icone_tablet.png",
-        "assets/gameplay_scene/spr_icone_ficha.png",
-        "assets/gameplay_scene/spr_botao_dica_aceso.png",
-        "assets/gameplay_scene/spr_enviesardados.png",
-        "assets/gameplay_scene/spr_deepfake.png",
-        "assets/gameplay_scene/spr_injecaoprompt.png"
+        "assets/sprites/icones/spr_icone_tablet.png",
+        "assets/sprites/icones/spr_icone_ficha.png",
+        "assets/sprites/icones/spr_botao_dica_aceso.png",
+        "assets/sprites/icones/spr_enviesardados.png",
+        "assets/sprites/icones/spr_deepfake.png",
+        "assets/sprites/icones/spr_injecaoprompt.png"
     };
     for (int i = 0; i < NUM_TOOLS; i++) {
         g_iconeSilhuetas[i] = CriarSilhuetaIcone(caminhosIcones[i]);
@@ -2710,7 +2883,7 @@ void InitGameplayScene(void) {
     g_tooltipAnim   = 0.0f;
     g_tooltipVel    = 0.0f;
 
-    g_deepfakeJanela = LoadTexture("assets/gameplay_scene/spr_deepfake_ferramenta.png");
+    g_deepfakeJanela = LoadTexture("assets/sprites/interface/spr_deepfake_ferramenta.png");
     SetTextureFilter(g_deepfakeJanela, TEXTURE_FILTER_POINT);
     g_deepfakeAberto = false;
     g_arrastandoDeepfake = false;
@@ -2719,34 +2892,32 @@ void InitGameplayScene(void) {
     const char *dfNomes[3] = { "patricia", "andre", "lucas" };
     for (int i = 0; i < 3; i++) {
         char pBuf[128];
-        snprintf(pBuf, sizeof pBuf, "assets/gameplay_scene/df_%s_maos.png", dfNomes[i]);
+        snprintf(pBuf, sizeof pBuf, "assets/sprites/deepfake/df_%s_maos.png", dfNomes[i]);
         g_dfMaos[i] = LoadTexture(pBuf);
         SetTextureFilter(g_dfMaos[i], TEXTURE_FILTER_POINT);
 
-        snprintf(pBuf, sizeof pBuf, "assets/gameplay_scene/df_%s_retina.png", dfNomes[i]);
+        snprintf(pBuf, sizeof pBuf, "assets/sprites/deepfake/df_%s_retina.png", dfNomes[i]);
         g_dfRetina[i] = LoadTexture(pBuf);
         SetTextureFilter(g_dfRetina[i], TEXTURE_FILTER_POINT);
 
-        snprintf(pBuf, sizeof pBuf, "assets/gameplay_scene/df_%s_digital.png", dfNomes[i]);
+        snprintf(pBuf, sizeof pBuf, "assets/sprites/deepfake/df_%s_digital.png", dfNomes[i]);
         g_dfDigital[i] = LoadTexture(pBuf);
         SetTextureFilter(g_dfDigital[i], TEXTURE_FILTER_POINT);
     }
 
-    g_mapaJanela = LoadTexture("assets/gameplay_scene/spr_mapa_completo.png");
-    SetTextureFilter(g_mapaJanela, TEXTURE_FILTER_POINT);
 
-    g_prancheta = LoadTexture("assets/gameplay_scene/spr_tablet.png");
+    g_prancheta = LoadTexture("assets/sprites/interface/spr_tablet.png");
     SetTextureFilter(g_prancheta, TEXTURE_FILTER_POINT);
 
-    g_dicaAceso = LoadTexture("assets/gameplay_scene/spr_botao_dica_aceso.png");
+    g_dicaAceso = LoadTexture("assets/sprites/icones/spr_botao_dica_aceso.png");
     SetTextureFilter(g_dicaAceso, TEXTURE_FILTER_POINT);
-    g_dicaApagado = LoadTexture("assets/gameplay_scene/spr_botao_dica_apagado.png");
+    g_dicaApagado = LoadTexture("assets/sprites/icones/spr_botao_dica_apagado.png");
     SetTextureFilter(g_dicaApagado, TEXTURE_FILTER_POINT);
     g_dicaAberta = false;
 
     CarregarFichas("assets/data/fichas_funcionarios.txt");
 
-    g_ficha = LoadTexture("assets/gameplay_scene/spr_ficha.png");
+    g_ficha = LoadTexture("assets/sprites/interface/spr_ficha.png");
     SetTextureFilter(g_ficha, TEXTURE_FILTER_POINT);
 
     g_fichaAtual = -1;
@@ -2755,10 +2926,10 @@ void InitGameplayScene(void) {
     g_arrastandoBarra = false;
     g_fichaScroll = 0.0f;
 
-    g_caixaVazia = LoadTexture("assets/gameplay_scene/spr_tablet_caixa_vazia.png");
+    g_caixaVazia = LoadTexture("assets/sprites/interface/spr_tablet_caixa_vazia.png");
     SetTextureFilter(g_caixaVazia, TEXTURE_FILTER_POINT);
 
-    g_caixaComX = LoadTexture("assets/gameplay_scene/spr_tablet_caixa_marcada.png");
+    g_caixaComX = LoadTexture("assets/sprites/interface/spr_tablet_caixa_marcada.png");
     SetTextureFilter(g_caixaComX, TEXTURE_FILTER_POINT);
 
     // As marcacoes NAO sao zeradas aqui: sao as anotacoes da investigacao
@@ -3370,147 +3541,6 @@ static void DesenharDeepfake(void) {
     DesenharBotaoFecharPadrao(NoDeepfake(DEEPFAKE_FECHAR));
 }
 
-// ---------- Ferramenta Mapa na tela (265x255) ----------
-static const Rectangle MAPA_TITULO     = {  59,  23, 163, 36 };
-static const Rectangle MAPA_ESCRITORIO = {  30,  89, 103, 88 };
-static const Rectangle MAPA_CANTINA    = { 151, 115,  62, 57 };
-static const Rectangle MAPA_FECHAR     = { 236,  14,  15, 15 };
-static const Rectangle MAPA_AVANCAR    = {  30, 198, 196, 26 };
-
-static Rectangle NoMapa(Rectangle r) {
-    return (Rectangle){ g_mapaPos.x + r.x, g_mapaPos.y + r.y, r.width, r.height };
-}
-
-static bool UpdateMapa(void) {
-    if (!g_mapaAberto) return false;
-
-    Vector2 mouse = MouseNaImagem();
-    Rectangle area = { g_mapaPos.x, g_mapaPos.y,
-                       (float)g_mapaJanela.width, (float)g_mapaJanela.height };
-
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        // 1) Botao [X] de fechar o mapa
-        if (CheckCollisionPointRec(mouse, NoMapa(MAPA_FECHAR))) {
-            g_mapaAberto = false;
-            g_arrastandoMapa = false;
-            return true;
-        }
-        // 2) Clicou no Escritorio: vai para o escritorio (Patricia e Andre)
-        if (CheckCollisionPointRec(mouse, NoMapa(MAPA_ESCRITORIO))) {
-            g_dialogLoaded = false;
-            g_tree = NULL;
-            g_fichaAtual = -1;
-            EncerrarEntrevistaLiberada();
-            g_localAtual = LOCAL_ESCRITORIO;
-            g_mapaAberto = false;
-            g_arrastandoMapa = false;
-            return true;
-        }
-        // 3) Clicou na Cantina: vai para a lanchonete (Lucas)
-        if (CheckCollisionPointRec(mouse, NoMapa(MAPA_CANTINA))) {
-            g_dialogLoaded = false;
-            g_tree = NULL;
-            g_fichaAtual = -1;
-            EncerrarEntrevistaLiberada();
-            g_localAtual = LOCAL_CANTINA;
-            g_mapaAberto = false;
-            g_arrastandoMapa = false;
-            return true;
-        }
-        // 4) Resto da janela: arrasta o mapa
-        if (CheckCollisionPointRec(mouse, area)) {
-            g_arrastandoMapa = true;
-            g_offsetMapa = (Vector2){ mouse.x - g_mapaPos.x, mouse.y - g_mapaPos.y };
-        }
-    }
-
-    if (!g_arrastandoMapa) {
-        if (CheckCollisionPointRec(mouse, NoMapa(MAPA_FECHAR)) ||
-            CheckCollisionPointRec(mouse, NoMapa(MAPA_ESCRITORIO)) ||
-            CheckCollisionPointRec(mouse, NoMapa(MAPA_CANTINA))) {
-            SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
-            return true;
-        }
-        return false;
-    }
-
-    if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-        g_arrastandoMapa = false;
-        return false;
-    }
-
-    g_mapaPos.x = mouse.x - g_offsetMapa.x;
-    g_mapaPos.y = mouse.y - g_offsetMapa.y;
-
-    float maxX = (float)(g_interface.width  - g_mapaJanela.width);
-    float maxY = (float)(g_interface.height - g_mapaJanela.height);
-    if (g_mapaPos.x < 0)    g_mapaPos.x = 0;
-    if (g_mapaPos.y < 0)    g_mapaPos.y = 0;
-    if (g_mapaPos.x > maxX) g_mapaPos.x = maxX;
-    if (g_mapaPos.y > maxY) g_mapaPos.y = maxY;
-
-    SetMouseCursor(MOUSE_CURSOR_RESIZE_ALL);
-    return true;
-}
-
-static void DesenharMapa(void) {
-    if (!g_mapaAberto) return;
-
-    Rectangle area   = { g_mapaPos.x, g_mapaPos.y,
-                         (float)g_mapaJanela.width, (float)g_mapaJanela.height };
-    Rectangle origem = { 0, 0, (float)g_mapaJanela.width, (float)g_mapaJanela.height };
-    Vector2 mouseTela = RayCanvasGetMousePosition();
-
-    // 1) Sprite base do Mapa (265x255)
-    DrawTexturePro(g_mapaJanela, origem, ParaTela(area), (Vector2){ 0, 0 }, 0.0f, WHITE);
-
-    // 2) Titulo dentro da barra superior do mapa
-    DrawTextInArea("MAPA - RASEC", NoMapa(MAPA_TITULO), 11, COR_FICHA_TEXTO);
-
-    // 3) Botao [X] padronizado de fechar no canto superior direito
-    DesenharBotaoFecharPadrao(NoMapa(MAPA_FECHAR));
-
-    bool aquiEscr = (g_localAtual == LOCAL_ESCRITORIO);
-
-    // 4) Area clicavel do Escritorio (30, 89, 103, 88)
-    Rectangle rEscrVirt = NoMapa(MAPA_ESCRITORIO);
-    Rectangle rEscrTela = ParaTela(rEscrVirt);
-    if (CheckCollisionPointRec(mouseTela, rEscrTela)) {
-        DrawRectangleRec(rEscrTela, Fade(COR_CLARO, 0.25f));
-    }
-    if (aquiEscr) DrawRectangleLinesEx(rEscrTela, 1.5f, COR_FICHA_TEXTO);
-    DrawTextInArea("ESCRITÓRIO", (Rectangle){ rEscrVirt.x, rEscrVirt.y + 20, rEscrVirt.width, 18 }, 10, COR_FICHA_TEXTO);
-    DrawTextInArea("Patrícia, André", (Rectangle){ rEscrVirt.x, rEscrVirt.y + 38, rEscrVirt.width, 12 }, 8, COR_FICHA_ROTULO);
-    DrawTextInArea(aquiEscr ? (g_dialogLoaded ? "(Voltar à sala)" : "(Você está aqui)") : "(Ir para cá)",
-                   (Rectangle){ rEscrVirt.x, rEscrVirt.y + 52, rEscrVirt.width, 12 }, 8, COR_FICHA_ROTULO);
-
-    // 5) Area clicavel da Cantina / Lanchonete (151, 115, 62, 57)
-    Rectangle rCantVirt = NoMapa(MAPA_CANTINA);
-    Rectangle rCantTela = ParaTela(rCantVirt);
-    if (CheckCollisionPointRec(mouseTela, rCantTela)) {
-        DrawRectangleRec(rCantTela, Fade(COR_CLARO, 0.25f));
-    }
-    if (!aquiEscr) DrawRectangleLinesEx(rCantTela, 1.5f, COR_FICHA_TEXTO);
-    DrawTextInArea("LANCHONETE", (Rectangle){ rCantVirt.x, rCantVirt.y + 10, rCantVirt.width, 14 }, 8, COR_FICHA_TEXTO);
-    DrawTextInArea("Lucas", (Rectangle){ rCantVirt.x, rCantVirt.y + 24, rCantVirt.width, 12 }, 7, COR_FICHA_ROTULO);
-    DrawTextInArea(!aquiEscr ? (g_dialogLoaded ? "(Voltar)" : "(Aqui)") : "(Ir)",
-                   (Rectangle){ rCantVirt.x, rCantVirt.y + 36, rCantVirt.width, 12 }, 7, COR_FICHA_ROTULO);
-
-    // 6) Indicador lateral de Dia (D1, D2, D3) nos 3 slots da direita
-    int diaAtual = GameStateGetDay();
-    for (int d = 0; d < 3; d++) {
-        Rectangle slotDia = NoMapa((Rectangle){ 225, (float)(90 + d * 27), 17, 20 });
-        bool ativo = ((d + 1) == diaAtual);
-        if (ativo) DrawRectangleRec(ParaTela(slotDia), COR_FICHA_TEXTO);
-        DrawTextInArea(TextFormat("D%d", d + 1), slotDia, 8, ativo ? COR_FICHA_TITULO : COR_FICHA_ROTULO);
-    }
-
-    // 7) Rodape informativo da planta da RASEC
-    DrawTextInArea(aquiEscr ? "Local atual: Escritório (Patrícia e André)"
-                            : "Local atual: Lanchonete (Lucas)",
-                   NoMapa(MAPA_AVANCAR), 8, COR_FICHA_ROTULO);
-}
-
 // ---------- Tutorial Interativo (Dia 1) ----------
 
 static const Rectangle TUT_BTN_COMECAR = { 18, 224, 180, 20 };
@@ -4009,20 +4039,31 @@ static void UpdateGameplay(void) {
             }
         }
     } else {
-        // Badge do local no topo: alterna Escritorio <-> Lanchonete
-        if (!tut && CheckCollisionPointRec(mouse, ParaTela(BADGE_LOCAL_TOPO))) {
-            hover = true;
-            if (clicou) {
-                FecharJanelasFerramentas();
-                g_localAtual = (g_localAtual == LOCAL_CANTINA) ? LOCAL_ESCRITORIO : LOCAL_CANTINA;
-                SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
-                return;
+        // Setas de navegacao na foto do local (por cima dos suspeitos)
+        if (!tut) {
+            bool visiveis[NUM_SETAS];
+            for (int d = 0; d < NUM_SETAS; d++) visiveis[d] = DestinoSeta(g_localAtual, d) >= 0;
+            Rectangle janelaTela = ParaTela(JANELA_AREA);
+            Vector2 pJanela = { (mouse.x - janelaTela.x) * JANELA_AREA.width / janelaTela.width,
+                                (mouse.y - janelaTela.y) * JANELA_AREA.height / janelaTela.height };
+            g_setaHover = Setas3DEm(pJanela, visiveis);
+            if (g_setaHover >= 0 && g_setaHover != g_setaHoverAnt) TocarSomHover();
+            g_setaHoverAnt = g_setaHover;
+            if (g_setaHover >= 0) {
+                hover = true;
+                if (clicou) {
+                    FecharJanelasFerramentas();
+                    g_localAtual = (LocalRasec)DestinoSeta(g_localAtual, g_setaHover);
+                    g_setaHover = -1;
+                    SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+                    return;
+                }
             }
         }
         bool permiteSuspeito = !tut || (g_tutorialPasso == TUT_PASSO_SUSPEITO);
         for (int i = 0; i < 3 && permiteSuspeito; i++) {
-            if (SUSPECT_LOCAL[i] != g_localAtual) continue;   // so quem esta nesta sala
-            Rectangle choiceArea = SUSPECT_SIL_AREA[i];
+            if (g_suspeitoLocal[i] != g_localAtual) continue;   // so quem esta nesta sala
+            Rectangle choiceArea = SuspeitoSilArea(i);
             if (CheckCollisionPointRec(mouse, ParaTela(choiceArea))) {
                 hover = true;
                 if (clicou) {
@@ -4031,9 +4072,9 @@ static void UpdateGameplay(void) {
                     g_suspeitoAtual = i;
                     g_funcionario = SUSPECT_FICHA_INDEX[i]; // a silhueta clicada define qual ficha a pasta abre
                     g_fichaAtual = -1;     // fecha a ficha do funcionario anterior, se estiver aberta
-                    // Expressao inicial ao abrir a conversa (Lucas sempre animado)
+                    // Expressao inicial ao abrir a conversa (Arthur sempre animado)
                     memset(&g_poseCurr, 0, sizeof g_poseCurr);
-                    SetExpressaoSuspeito(i, (i == 2) ? EXPR_FELIZ : EXPR_NEUTRO, false);
+                    SetExpressaoSuspeito(i, (i == 1) ? EXPR_FELIZ : EXPR_NEUTRO, false);   // Arthur ja chega animado
                     g_rigTalkTimer = 0.0f;
                     // Se for a primeira vez e a fala inicial for de um NPC (ex: Patrícia, Lucas), registra no histórico
                     if (g_chatHistories[i].count == 0) {
@@ -4111,7 +4152,7 @@ static void ProcessarTeclaEsc(void) {
     if (g_confirmarAbandonarRun) { FecharPausa(); return; }
     if (g_confirmarAvancarDia)   { g_confirmarAvancarDia = false;   return; }
     if (g_dicaAberta)            { g_dicaAberta = false;            return; }
-    if (g_fichaAtual >= 0 || g_pranchetaAberta || g_mapaAberto || g_deepfakeAberto) {
+    if (g_fichaAtual >= 0 || g_pranchetaAberta || g_deepfakeAberto) {
         FecharJanelasFerramentas();
         return;
     }
@@ -4125,19 +4166,67 @@ static void ProcessarTeclaEsc(void) {
     AbrirPausa();
 }
 
+// Placa com o destino da seta, do lado de dentro da janela
+static void DesenharRotuloSeta(int seta) {
+    const char *txt = TextoSeta(g_localAtual, seta);
+    Rectangle ref = ParaTela((Rectangle){ 0, 0, 10.0f, 10.0f });
+    float escala = ref.height / 10.0f;
+    int tam = (int)(9.0f * escala);
+    if (tam < 1) tam = 1;
+    float w = MeasureText(txt, tam) / escala + 10.0f, h = 15.0f;
+    Vector2 p = Setas3DPos(seta);
+    p.x += JANELA_AREA.x;
+    p.y += JANELA_AREA.y;
+    Rectangle r;
+    if (seta == SETA_CIMA)          r = (Rectangle){ p.x - w / 2.0f, p.y + 16.0f, w, h };
+    else if (seta == SETA_BAIXO)    r = (Rectangle){ p.x - w / 2.0f, p.y - 16.0f - h, w, h };
+    else if (seta == SETA_ESQUERDA) r = (Rectangle){ p.x + 18.0f, p.y - h / 2.0f, w, h };
+    else                            r = (Rectangle){ p.x - 18.0f - w, p.y - h / 2.0f, w, h };
+    DrawRectangleRec(ParaTela((Rectangle){ r.x + 1.5f, r.y + 1.5f, r.width, r.height }), Fade(BLACK, 0.6f));
+    DrawRectangleRec(ParaTela(r), (Color){ 32, 29, 31, 240 });
+    DrawRectangleLinesEx(ParaTela(r), 1.5f, (Color){ 255, 242, 230, 255 });
+    DrawTextInArea(txt, r, 9, (Color){ 255, 242, 230, 255 });
+}
+
+int GameplaySceneItensPrancheta(int suspeito, const char **itens, bool *marcados, int max) {
+    if (suspeito < 0 || suspeito > 2) return 0;
+    int ficha = SUSPECT_FICHA_INDEX[suspeito];
+    int n = 0;
+    for (int i = 0; i < NUM_CAIXAS && n < max; i++, n++) {
+        itens[n] = GUIA[i];
+        marcados[n] = g_marcado[ficha][i];
+    }
+    return n;
+}
+
 void UpdateDrawGameplayScene(void) {
+    // O mapa 3D vai para uma textura propria, entao precisa ser desenhado antes do
+    // RayCanvasBegin (que pode estar desenhando o frame inteiro em outra textura)
+    if (!g_dialogLoaded) {
+        Rectangle holoArea = AreaMapaHolo();
+        MapaHoloRender((int)holoArea.width, (int)holoArea.height, (int)g_localAtual,
+                       g_setaHover >= 0 ? DestinoSeta(g_localAtual, g_setaHover) : -1,
+                       LocaisAcessiveis(g_localAtual), (float)GetTime());
+        if (!TutorialAtivo()) {
+            bool visiveis[NUM_SETAS];
+            for (int d = 0; d < NUM_SETAS; d++) visiveis[d] = DestinoSeta(g_localAtual, d) >= 0;
+            Setas3DRender(visiveis, g_setaHover, (float)GetTime());
+        }
+    }
+    g_setaHover = -1;   // recalculado em UpdateGameplay (fica -1 se um modal estiver por cima)
+
     RayCanvasBegin();
 
     ProcessarTeclaEsc();
     AtualizarTypewriter(GetFrameTime());
 
-    // Os modais (abandonar run / confirmar dia), a ficha, o mapa, o scanner deepfake e a prancheta ficam por cima de tudo
-    if (!UpdateConfirmarAbandonar() && !UpdateTutorialFinal() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateMapa() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
+    // Os modais (abandonar run / confirmar dia), a ficha, o scanner deepfake e a prancheta ficam por cima de tudo
+    if (!UpdateConfirmarAbandonar() && !UpdateTutorialFinal() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
         UpdateGameplay();
     }
 
-     // 1) Fundo na janela de cima (preenche sem distorcer) - Escritorio ou Lanchonete
-    DrawTextureCover((g_localAtual == LOCAL_CANTINA && g_backgroundCantina.id > 0) ? g_backgroundCantina : g_background,
+    // 1) Fundo na janela de cima (preenche sem distorcer) - foto do local atual
+    DrawTextureCover(g_fundos[g_localAtual].id > 0 ? g_fundos[g_localAtual] : g_fundos[LOCAL_ESCRITORIO],
                      JANELA_AREA);
 
     // 2) Se estiver em interrogatorio, mostra o suspeito de perto (com rig facial);
@@ -4153,7 +4242,7 @@ void UpdateDrawGameplayScene(void) {
             DesenharRetratoComRig(tex, g_suspeitoAtual, charDest);
         }
     } else {
-        const char *nomesCurto[3] = { "Patrícia", "André", "Lucas" };
+        const char **nomesCurto = NOMES_SUSPEITOS;
         Vector2 mouseTela = RayCanvasGetMousePosition();
         bool bloqueado = MouseSobreFicha() || g_dicaAberta || g_confirmarAvancarDia || g_confirmarAbandonarRun;
         float dtSil = GetFrameTime();
@@ -4162,10 +4251,10 @@ void UpdateDrawGameplayScene(void) {
         Rectangle rClipJanela = ParaTela(JANELA_AREA);
         BeginScissorMode((int)rClipJanela.x, (int)rClipJanela.y, (int)rClipJanela.width, (int)rClipJanela.height);
         for (int i = 0; i < 3; i++) {
-            if (SUSPECT_LOCAL[i] != g_localAtual) continue;   // so mostra quem esta nesta sala
+            if (g_suspeitoLocal[i] != g_localAtual) continue;   // so mostra quem esta nesta sala
             Texture2D sil = g_silTextures[i];
             if (sil.id == 0) continue;
-            Rectangle areaSil = SUSPECT_SIL_AREA[i];
+            Rectangle areaSil = SuspeitoSilArea(i);
             Rectangle rSilTela = ParaTela(areaSil);
             bool hov = !bloqueado && CheckCollisionPointRec(mouseTela, rSilTela);
 
@@ -4219,6 +4308,14 @@ void UpdateDrawGameplayScene(void) {
                            hov ? (Color){ 32, 29, 31, 255 } : (Color){ 255, 242, 230, 255 });
         }
         EndScissorMode();
+
+        // Setas 3D de navegacao por cima da foto + destino ao passar o mouse
+        if (!TutorialAtivo()) {
+            Texture2D setas = Setas3DTextura();
+            DrawTexturePro(setas, (Rectangle){ 0, 0, (float)setas.width, -(float)setas.height },
+                           ParaTela(JANELA_AREA), (Vector2){ 0, 0 }, 0.0f, WHITE);
+            if (g_setaHover >= 0) DesenharRotuloSeta(g_setaHover);
+        }
     }
 
     // Fundo animado procedural bem sutil nos quadrantes de demarcação (proeminentemente cor sólida original)
@@ -4402,9 +4499,6 @@ void UpdateDrawGameplayScene(void) {
     // 6) Ferramenta Scanner Deepfake (se aberta)
     DesenharDeepfake();
 
-    // 7) Ferramenta Mapa na tela (se aberta)
-    DesenharMapa();
-
     // 8) Botao e painel da dica (por cima de tudo)
     DesenharDica();
 
@@ -4423,8 +4517,9 @@ void UpdateDrawGameplayScene(void) {
 void UnloadGameplayScene(void) {
     
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-    UnloadTexture(g_background);
-    UnloadTexture(g_backgroundCantina);
+    for (int i = 0; i < NUM_LOCAIS; i++) UnloadTexture(g_fundos[i]);
+    MapaHoloUnload();
+    Setas3DUnload();
     if (g_faceRigShader.id > 0) {
         UnloadShader(g_faceRigShader);
         g_faceRigShader = (Shader){ 0 };
@@ -4445,7 +4540,6 @@ void UnloadGameplayScene(void) {
         UnloadTexture(g_iconeSilhuetas[i]);
     }
     UnloadTexture(g_deepfakeJanela);
-    UnloadTexture(g_mapaJanela);
     UnloadTexture(g_prancheta);
     UnloadTexture(g_ficha);
     UnloadTexture(g_caixaVazia);
@@ -4463,9 +4557,6 @@ void UnloadGameplayScene(void) {
         UnloadTexture(g_dfRetina[i]);
         UnloadTexture(g_dfDigital[i]);
     }
-    UnloadTexture(g_fichaFotos[1]);
-    UnloadTexture(g_fichaFotos[3]);
-    UnloadTexture(g_fichaFotos[4]);
     UnloadTexture(g_ditherTile);
     if (g_sndHover.frameCount > 0) {
         UnloadSound(g_sndHover);

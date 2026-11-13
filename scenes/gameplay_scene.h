@@ -19,4 +19,8 @@ void GameplaySceneResetDialogues(void);
 // true quando o dia pode terminar: tokens acabaram OU nao ha mais escolhas nos 3 funcionarios
 bool GameplaySceneDayFinished(void);
 
+// Todos os itens da prancheta para um suspeito (0 = Maria Bianca, 1 = Arthur, 2 = Ana Lucia),
+// com "marcados[i]" dizendo se foi marcado ao longo dos dias. Devolve quantos itens existem.
+int GameplaySceneItensPrancheta(int suspeito, const char **itens, bool *marcados, int max);
+
 #endif

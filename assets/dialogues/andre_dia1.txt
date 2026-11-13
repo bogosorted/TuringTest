@@ -2,25 +2,75 @@ NPC: andre
 DIA: 1
 
 [NODE: start]
-SPEAKER: Você
-TEXT: Você se aproxima da mesa de André, que está conferindo pilhas de notas de remessa.
-CHOICE: Oi, sou o novo estagiário. -> intro
+SPEAKER: Arthur
+TEXT: Oi brother! Prazer, meu nome é Arthur. Como vai?
+CHOICE: Prazer, meu nome é Inspetor. Fala sobre você. -> A
+CHOICE: Não te conheço. -> B
 
-[NODE: intro]
-SPEAKER: André
-TEXT: Beleza. André, logística. Você é o estagiário novo, então já sabe: pontualidade e objetividade. Fala logo o que precisa.
-CHOICE: Qual é exatamente o seu papel na empresa? -> papel
-CHOICE: Como é a sua rotina aqui? -> rotina
-CHOICE: Você conhece o pessoal de outros setores? -> colegas
+[NODE: A]
+SPEAKER: Arthur
+TEXT: Tudo ótimo, sou assistente do administrativo.
+CHOICE: Qual sua vibe, no pessoal? -> A.1
+CHOICE: Como funciona seu setor? -> A.2
 
-[NODE: papel]
-SPEAKER: André
-TEXT: Coordeno o estoque e as entregas de peças. Se uma caixa atrasa, a linha de produção para. Resumindo: se você não souber o seu papel, aprende rápido.
+[NODE: B]
+SPEAKER: Arthur
+TEXT: Ah... Tudo bem, se precisar de algo, pode falar comigo
+CHOICE: Onde você trabalha? -> B.1
+CHOICE: Seu serviço é difícil? -> B.2
 
-[NODE: rotina]
-SPEAKER: André
-TEXT: Correria. Chego cedo, confiro o carregamento, resolvo problema de transportadora. Não tenho tempo pra enrolação, então se precisar de algo, manda direto.
+[NODE: A.1]
+SPEAKER: Arthur
+TEXT: Ah, sou músico por hobby, guitarrista.
+CHOICE: Show! Qual tua banda favorita? -> A.1.1
+CHOICE: Qual seu gênero musical favorito? -> A.1.2
 
-[NODE: colegas]
-SPEAKER: André
-TEXT: Conheço. O pessoal do RH e do marketing vive pedindo coisa com urgência. Não tenho nada contra, mas quando demora, eu cobro mesmo.
+[NODE: A.2]
+SPEAKER: Arthur
+TEXT: Eu preencho os relatórios e faço projeções com os números do pessoal, mas gosto de ajudar no que posso.
+CHOICE: Tem muita demanda hoje? -> A.2.1
+CHOICE: Você gosta da função? -> A.2.2
+
+[NODE: B.1]
+SPEAKER: Arthur
+TEXT: Eu sou assistente do administrativo, preencho os relatórios. Nada demais.
+CHOICE: Você revisa os relatórios? -> B.1.1
+CHOICE: Você preferia trabalhar em outra coisa? -> B.1.2
+
+[NODE: B.2]
+SPEAKER: Arthur
+TEXT: Eu preencho os relatórios, as vezes acumula trabalho de um dia para o outro, mas da pra lidar
+CHOICE: Você não consegue terminar no dia? -> B.2.3
+CHOICE: Por que você não fala com seu chefe? -> B.2.2
+
+[NODE: A.1.1]
+SPEAKER: Arthur
+TEXT: Metal Wyrms, eles são sinistros!
+
+[NODE: A.1.2]
+SPEAKER: Arthur
+TEXT: Em geral, todos os tipos de rock, curto eletrônica também.
+
+[NODE: A.2.1]
+SPEAKER: Arthur
+TEXT: Tem, mas eu dou conta. Geralmente...
+
+[NODE: A.2.2]
+SPEAKER: Arthur
+TEXT: Não é meu sonho, mas estou confortável. Sou mais da música.
+
+[NODE: B.1.1]
+SPEAKER: Arthur
+TEXT: É, isso ai.
+
+[NODE: B.1.2]
+SPEAKER: Arthur
+TEXT: Meu sonho era música, mas estou bem aqui
+
+[NODE: B.2.2]
+SPEAKER: Arthur
+TEXT: Eu já tentei...
+
+[NODE: B.2.3]
+SPEAKER: Arthur
+TEXT: Não... É complicado

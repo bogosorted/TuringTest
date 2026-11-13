@@ -2,25 +2,89 @@ NPC: andre
 DIA: 2
 
 [NODE: start]
-SPEAKER: Você
-TEXT: André está no galpão organizando relatórios de transporte.
-CHOICE: Boa tarde! -> intro
+SPEAKER: Arthur
+TEXT: Oi, tudo bom?
+CHOICE: Oi! Tudo certo administrativo? -> A
+CHOICE: Bom dia. A supervisora Ana Lúcia é bem exigente, não é? -> B
 
-[NODE: intro]
-SPEAKER: André
-TEXT: Boa. Vai direto ao ponto, tenho pouco tempo.
-CHOICE: Como está a logística hoje? -> logistica
-CHOICE: Você tem acesso a sistemas internos? -> sistemas
-CHOICE: Notou algo fora do normal ultimamente? -> estranho
+[NODE: A]
+SPEAKER: Arthur
+TEXT: Tudo, a supervisora é exigente, mas tudo ok. Se adaptou bem ontem?
+CHOICE: Sim, falei com todos. -> A.1
+CHOICE: Falei, mas estou passando por problemas pessoais, acabei desabafando e uma pessoa vem me tratando mal. -> A.2
 
-[NODE: logistica]
-SPEAKER: André
-TEXT: Atrasada. Um lote de peças ficou preso no desembaraço, e eu já perdi uma hora discutindo com o fornecedor. Resolvido? Não. Por isso não tenho paciência pra conversa longa.
+[NODE: B]
+SPEAKER: Arthur
+TEXT: Ela prefere Analu, é exigente, pois quer manter um padrão de qualidade, mas ela deve estar tendo problemas ultimamente.
+CHOICE: Todos tem problemas, mas se for o caso, ela deveria separar mais do profissional. -> B.1
+CHOICE: Você sabe que tipo de problemas? -> B.2
 
-[NODE: sistemas]
-SPEAKER: André
-TEXT: Tenho o de estoque e o de entregas. Não mexo em recrutamento nem em financeiro. Se alguém precisar de dado meu, pede por escrito.
+[NODE: A.1]
+SPEAKER: Arthur
+TEXT: Supimpa! Gosto de passar um tempo no refeitório com o pessoal, cê devia aparecer.
+CHOICE: Legal, você parece muito simpático. -> A.1.1
+CHOICE: Com o pessoal do administrativo? ou de outros setores também? -> A.1.2
 
-[NODE: estranho]
-SPEAKER: André
-TEXT: Só a demora do sistema de ponto, que atrasou o fechamento da escala da semana. Se for isso que você quer saber, foi a TI que atrasou, e eu já reclamei. Não sei de mais nada.
+[NODE: A.2]
+SPEAKER: Arthur
+TEXT: Oh... Sinto muito, não se preocupa com isso, não vou permitir que tratem os outros assim.
+CHOICE: Tá traquilo, agradeço a força. -> A.2.1
+CHOICE: Tem conseguido lidar com as demandas? -> A.2.2
+
+[NODE: B.1]
+SPEAKER: Arthur
+TEXT: Isso é verdade, mas sabemos que não é assim, cê tá sendo extremamente lógico.
+CHOICE: Eu... acho que você está certo -> B.1.1
+CHOICE: Acho que sim... Maria é bem profissional, mesmo ela está tendo dificuldades. -> B.1.2
+
+[NODE: B.2]
+SPEAKER: Arthur
+TEXT: Olha, não sei, mas não gosto de falar dos outros.
+CHOICE: Mesmo assim, não acha que ela está pondo muita pressão? -> B.2.1
+CHOICE: A Maria está reclamando do acúmulo de relatórios. -> B.2.2
+
+[NODE: A.1.1]
+SPEAKER: Arthur
+TEXT: Hihihi... Valeu, eu gosto de socializar com todo mundo.
+
+[NODE: A.1.2]
+SPEAKER: Arthur
+TEXT: De vários setores, inclusive a supervisora... Mas ela tem estado distante.
+
+[NODE: A.2.1]
+SPEAKER: Arthur
+TEXT: Olha, eu deixei um energético na geladeira do refeitório, pode pegar se fizer te sentir melhor.
+
+[NODE: A.2.2]
+SPEAKER: Arthur
+TEXT: A supervisora vem implicando um pouco nas entregas, mas estou tentando meu melhor.
+
+[NODE: B.1.1]
+SPEAKER: Arthur
+TEXT: Eu vou tentar conversar com ela, não esquenta.
+
+[NODE: B.1.2]
+SPEAKER: Arthur
+TEXT: Ela está com dificuldades? Vou falar com ela.
+
+[NODE: B.2.1]
+SPEAKER: Arthur
+TEXT: Talvez, mas vou tentar um diálogo.
+
+[NODE: B.2.2]
+SPEAKER: Arthur
+TEXT: Eu vou conseguir resolver, a Analu está dificultando as coisas.
+
+[NODE: A#EV-05]
+SPEAKER: Arthur
+TEXT: É minha banda indie favorita irmão! Cê tem bom gosto.
+CHOICE: Você tem notado algo diferente no comportamento de Ana Lúcia? -> A#EV-05.1
+CHOICE: Você tem notado algo diferente no comportamento de Maria Bianca? -> A#EV-05.2
+
+[NODE: A#EV-05.1]
+SPEAKER: Arthur
+TEXT: Ela prefere Analu, mas sim, de um tempo pra cá nada que faço parece correto. Parece que ela segue um roteiro.
+
+[NODE: A#EV-05.2]
+SPEAKER: Arthur
+TEXT: Particularmente não, ela parece mais na dela, mas acho que é algo temporário.

@@ -2,25 +2,75 @@ NPC: lucas
 DIA: 3
 
 [NODE: start]
-SPEAKER: Lucas
-TEXT: Boa! Estava esperando revê-lo!
-CHOICE: Em seu último trabalho, como era a criação? -> messiah
-CHOICE: Disse que acessou os currículos. Por quê? -> curriculos
-CHOICE: Lembra de algo do começo da semana? -> memoria
+SPEAKER: Ana Lucia
+TEXT: Como andam os relatórios, novato?
+CHOICE: Só vim finalizar a semana. -> A
+CHOICE: Que semana cansativa. -> B
 
-[NODE: messiah]
-SPEAKER: Lucas
-TEXT: Quando estava na Messiah Auto, tinha que repensar o marketing pra modelos de automóvel. E na sorveteria era difícil gerenciar atendentes nos pedidos.
+[NODE: A]
+SPEAKER: Ana Lucia
+TEXT: O que houve agora, queridinho?
+CHOICE: Você é tão confiante, sempre foi assim? -> A.1
+CHOICE: Fiz tanto trabalho essa semana! -> A.2
 
-[NODE: curriculos]
-SPEAKER: Lucas
-TEXT: Para cruzar perfis com a campanha. Mas espera, tenho certeza que foi só uma vez? Acho que foram várias consultas em dias diferentes. Não tenho certeza.
+[NODE: B]
+SPEAKER: Ana Lucia
+TEXT: Mal começou e já está reclamando? Não vai durar tanto tempo.
+CHOICE: Você trabalha aqui faz quantos anos mesmo? -> B.1
+CHOICE: Você é muito grossa, mas snito que você só está fingindo. -> B.2
 
-[NODE: memoria]
-SPEAKER: Lucas
-TEXT: Lembro sim! No dia em que o Caio saiu mais cedo e a Mariana ficou no RH até tarde... Ou o contrário? Fiquei com a impressão de que mexeram em algo importante.
-CHOICE: Essa sua mão com 6 dedos e a digital estranha... -> seis_dedos
+[NODE: A.1]
+SPEAKER: Ana Lucia
+TEXT: Sim, desde que sou criança! Nós capricornianos somos assim. e você?
+CHOICE: Não sou tão confiante, Lúcia. Parece que não sei o que estou fazendo. -> A.1.1
+CHOICE: Sou sim, só não quero incomodar os outros. -> A.1.2
 
-[NODE: seis_dedos]
-SPEAKER: Lucas
-TEXT: Ei, calma lá! Ter 6 dedos é polidactilia, uma condição genética real e super documentada! Quanto à digital borrada... bom, eu mexo muito com tinta e cola nas maquetes do marketing!
+[NODE: A.2]
+SPEAKER: Ana Lucia
+TEXT: Entregou tudo? Tenho certeza que precisamos atingir uma cota essa semana?
+CHOICE: Você tem certeza? não lembro disso. -> A.2.1
+CHOICE: Você que me diz, ué. A supervisora é você. -> A.2.2
+
+[NODE: B.1]
+SPEAKER: Ana Lucia
+TEXT: Você faz perguntas demais para um estágiario. Trabalho faz 5 anos na RASEC e nunca passei por essa insubordinação!
+CHOICE: Alguns funcionarios me falaram que você não trabalha aqui faz tanto tempo (MENTIR) -> B.1.1
+CHOICE: Só estou fazendo perguntas, refiz varios relatorios pela semana e quero lhe conhecer melhor. -> B.1.2
+
+[NODE: B.2]
+SPEAKER: Ana Lucia
+TEXT: O que você quer dizer com isso? Quem lhe indicou? Que grosseria!
+CHOICE: Ah, digo, você no fundo parece gentil. Não quis ofender. -> B.2.1
+CHOICE: Você não precisa saber disso, o seu setor está cheia de relatórios incorretos! -> B.2.2
+
+[NODE: A.1.1]
+SPEAKER: Ana Lucia
+TEXT: Vou lhe mostrar como ser mais confiante, querido.
+
+[NODE: A.1.2]
+SPEAKER: Ana Lucia
+TEXT: Haha, não transparece. Mas é porque você é novato.
+
+[NODE: A.2.1]
+SPEAKER: Ana Lucia
+TEXT: Sim, querido. A cota veio do setor de contabéis, preciso ir no setor de cibersegurança agora. Se me dá licença...
+
+[NODE: A.2.2]
+SPEAKER: Ana Lucia
+TEXT: Ah, querido. Você é muito grosso as vezes, qual o seu problema? Tenho que ir. Volte ao trabalho.
+
+[NODE: B.1.1]
+SPEAKER: Ana Lucia
+TEXT: Pois quem saberia melhor quanto tempo eu trabalho na empresa além de mim mesma? que absurdo.
+
+[NODE: B.1.2]
+SPEAKER: Ana Lucia
+TEXT: Não está aqui para fazer amizades e sim para trabalhar. Volte ao trabalho, estou ocupada.
+
+[NODE: B.2.1]
+SPEAKER: Ana Lucia
+TEXT: Ah, entendi. Bem, eu sou mesmo, caso contrario, ja estaria demitido!
+
+[NODE: B.2.2]
+SPEAKER: Ana Lucia
+TEXT: Talvez eu deva começar mesmo a cuidar melhor do meu setor, parece que um rato entrou nele!
