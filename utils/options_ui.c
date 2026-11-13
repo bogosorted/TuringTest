@@ -1,5 +1,6 @@
 #include "options_ui.h"
 #include "settings.h"
+#include "game_state.h"
 #include "raycanvas.h"
 #include <math.h>
 #include <stddef.h>
@@ -7,7 +8,7 @@
 #define TELA_W 640
 #define TELA_H 360
 
-enum { HOVER_NENHUM = -1, HOVER_ANT = 0, HOVER_PROX = 1, HOVER_TELA_CHEIA = 2 };
+enum { HOVER_NENHUM = -1, HOVER_ANT = 0, HOVER_PROX = 1, HOVER_TELA_CHEIA = 2, HOVER_TUTORIAL = 3 };
 
 static int g_sliderArrastando = -1;   // -1 = nenhum, 0 = musica, 1 = efeitos
 static int g_hoverAnt = HOVER_NENHUM; // botao que estava com o mouse em cima no frame anterior
@@ -200,6 +201,36 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
     }
     Texto(est, SettingsGetFullscreen() ? "Ligada" : "Desligada", caixaX + 24.0f, yTelaCheia,
           est->valor, a, 0);
+
+    // Tutorial: [x] no canto direito da mesma linha (padrao ligado)
+    {
+        const char *lblTut = "Tutorial";
+        float tutCaixaX = lay->direita - 16.0f;
+        float wTut = MeasureTextEx(est->fonte, lblTut, est->tamFonte, est->espacamento).x;
+        float tutAreaX = tutCaixaX - 8.0f - wTut;
+        Rectangle tutCaixa = { tutCaixaX, yTelaCheia - 8.0f, 16.0f, 16.0f };
+        Rectangle tutArea  = { tutAreaX, yTelaCheia - 10.0f, lay->direita - tutAreaX, 20.0f };
+        bool tutHov = interativo && CheckCollisionPointRec(MouseVirtual(), tutArea);
+        if (tutHov) {
+            hoverSeta = true;
+            if (g_hoverAnt != HOVER_TUTORIAL && tocarHover) tocarHover();
+            g_hoverAnt = HOVER_TUTORIAL;
+        }
+        Texto(est, lblTut, tutCaixaX - 8.0f, yTelaCheia, est->nome, a, 2);
+        DrawRectangleRec(ParaTela(tutCaixa), ComAlpha(tutHov ? est->setaBordaHover : est->setaBorda, a));
+        DrawRectangleRec(ParaTela((Rectangle){ tutCaixa.x + 1, tutCaixa.y + 1, tutCaixa.width - 2, tutCaixa.height - 2 }),
+                         ComAlpha(tutHov ? est->setaFundoHover : est->setaFundo, a));
+        if (SettingsGetTutorial()) {
+            DrawRectangleRec(ParaTela((Rectangle){ tutCaixa.x + 4, tutCaixa.y + 4, tutCaixa.width - 8, tutCaixa.height - 8 }),
+                             ComAlpha(tutHov ? est->preenchidoAtivo : est->preenchido, a));
+        }
+        if (tutHov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            bool novo = !SettingsGetTutorial();
+            SettingsSetTutorial(novo);
+            GameStateSetTutorialConfig(novo);
+            SettingsSave();
+        }
+    }
 
     // Paleta: [<]  Nome  [>]  3/8
     Texto(est, nomes[3], lay->x, yPaleta, est->nome, a, 0);

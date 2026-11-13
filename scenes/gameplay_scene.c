@@ -267,7 +267,7 @@ static void NotificarEvidenciaAdquirida(const char *nomeEvidencia) {
         g_evToastCount = MAX_EV_TOASTS - 1;
     }
     snprintf(g_evToasts[g_evToastCount].texto, sizeof(g_evToasts[g_evToastCount].texto),
-             "Evidência %s adquirida", nomeEvidencia);
+             "%s", nomeEvidencia);
     g_evToasts[g_evToastCount].timer = EV_TOAST_DURACAO;
     g_evToastCount++;
 }
@@ -298,53 +298,96 @@ static const EvidenciaHotspot EVIDENCIA_HOTSPOTS[] = {
     // Arthur EV-03: Pilha de relatorios a fazer (Na mesa dele)
     { LOCAL_ESCRITORIO,   { 3 + 42,  3 + 118, 86, 38 }, 1, "EV-03", "Inspecionar pilha de relatorios" },
     // Arthur EV-04: ID perdido (Na geladeira do refeitorio / copa)
-    { LOCAL_CANTINA,      { 3 + 138, 3 + 42,  56, 46 }, 1, "EV-04", "Inspecionar geladeira" },
+    { LOCAL_CANTINA,      { 3 + 225, 3 + 76,  44, 46 }, 1, "EV-04", "Inspecionar geladeira" },
     { LOCAL_COPA,         { 3 + 102, 3 + 118, 88, 46 }, 1, "EV-04", "Inspecionar geladeira / copa" },
 };
 static const int NUM_EVIDENCIA_HOTSPOTS = (int)(sizeof(EVIDENCIA_HOTSPOTS) / sizeof(EVIDENCIA_HOTSPOTS[0]));
 static int g_hotspotHover = -1;
 
+static Rectangle HotspotBadgeArea(const EvidenciaHotspot *h) {
+    float cx = h->area.x + h->area.width * 0.5f;
+    float cy = h->area.y + h->area.height * 0.5f;
+    return (Rectangle){ cx - 7.0f, cy - 7.0f, 14.0f, 14.0f };
+}
+
 static Rectangle ParaTela(Rectangle r);
 static void DrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, Color cor);
 
-static void AtualizarEDesenharNotificacoesEvidencia(float dt) {
-    // Atualiza timers e remove expirados
-    for (int i = 0; i < g_evToastCount; ) {
-        g_evToasts[i].timer -= dt;
-        if (g_evToasts[i].timer <= 0.0f) {
-            for (int j = i; j < g_evToastCount - 1; j++) g_evToasts[j] = g_evToasts[j + 1];
-            g_evToastCount--;
-        } else {
-            i++;
-        }
+static const Rectangle EV_MODAL_PAINEL = { 190.0f, 136.0f, 260.0f, 88.0f };
+static const Rectangle EV_MODAL_FECHAR = { 434.0f, 139.0f,  13.0f, 13.0f };
+static const Rectangle EV_MODAL_BTN_OK = { 275.0f, 198.0f,  90.0f, 18.0f };
+
+static void FecharPopupEvidenciaAtual(void) {
+    if (g_evToastCount <= 0) return;
+    for (int j = 0; j < g_evToastCount - 1; j++) g_evToasts[j] = g_evToasts[j + 1];
+    g_evToastCount--;
+}
+
+static bool UpdatePopupEvidencia(void) {
+    if (g_evToastCount <= 0) return false;
+
+    Vector2 mouse = RayCanvasGetMousePosition();
+    bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    bool hover = CheckCollisionPointRec(mouse, ParaTela(EV_MODAL_FECHAR)) ||
+                 CheckCollisionPointRec(mouse, ParaTela(EV_MODAL_BTN_OK));
+
+    if ((hover && clicou) || IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
+        FecharPopupEvidenciaAtual();
+        return true;
     }
+
+    SetMouseCursor(hover ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+    return true;
+}
+
+static Rectangle GetTelaRect(void);
+static void DesenharBotaoFecharPadrao(Rectangle rectVirtual);
+static void DrawTextWrappedLeftAligned(const char *text, Vector2 pos, float maxWidth, int fontSize, Color color);
+
+static void DesenharPopupEvidencia(void) {
     if (g_evToastCount <= 0) return;
 
-    // Desenha no canto superior direito (max 3 visiveis ao mesmo tempo para nao poluir)
-    int visiveis = g_evToastCount > 3 ? 3 : g_evToastCount;
-    for (int i = 0; i < visiveis; i++) {
-        float t = g_evToasts[i].timer;
-        float alpha = 1.0f;
-        if (t > EV_TOAST_DURACAO - 0.25f) alpha = (EV_TOAST_DURACAO - t) / 0.25f;
-        else if (t < 0.45f) alpha = t / 0.45f;
-        if (alpha < 0.0f) alpha = 0.0f;
-        if (alpha > 1.0f) alpha = 1.0f;
+    Vector2 mouse = RayCanvasGetMousePosition();
+    Color corEscura   = {  32,  29,  31, 255 };
+    Color corFundo    = { 125, 112, 113, 254 };
+    Color corClaro    = { 160, 147, 142, 255 };
+    Color corDestaque = { 189, 181, 168, 255 };
+    Color corBranco   = { 255, 242, 230, 255 };
 
-        // Mede largura aproximada no espaco virtual 640x360 para ajustar a caixa ao texto
-        int len = (int)strlen(g_evToasts[i].texto);
-        float w = (float)(len * 6 + 24);
-        if (w < 160.0f) w = 160.0f;
-        if (w > 340.0f) w = 340.0f;
-        float h = 24.0f;
-        float x = 634.0f - w;
-        float y = 38.0f + (float)i * (h + 4.0f);
+    Rectangle sombra = { EV_MODAL_PAINEL.x + 3, EV_MODAL_PAINEL.y + 3, EV_MODAL_PAINEL.width, EV_MODAL_PAINEL.height };
+    DrawRectangleRec(ParaTela(sombra), Fade(BLACK, 0.55f));
 
-        Rectangle boxVirt = { x, y, w, h };
-        Rectangle rBox = ParaTela(boxVirt);
-        DrawRectangleRec(rBox, Fade((Color){ 32, 29, 31, 255 }, 0.96f * alpha));
-        DrawRectangleLinesEx(rBox, 2, Fade((Color){ 255, 242, 230, 255 }, alpha));
-        DrawTextInArea(g_evToasts[i].texto, boxVirt, 10, Fade((Color){ 255, 242, 230, 255 }, alpha));
+    Rectangle rPainel = ParaTela(EV_MODAL_PAINEL);
+    DrawRectangleRec(rPainel, corFundo);
+    DrawRectangleLinesEx(rPainel, 2.0f, corBranco);
+
+    Rectangle rCab = { EV_MODAL_PAINEL.x, EV_MODAL_PAINEL.y, EV_MODAL_PAINEL.width, 18.0f };
+    DrawRectangleRec(ParaTela(rCab), corEscura);
+    DrawTextInArea("NOVA EVIDÊNCIA!", rCab, 9, corBranco);
+    DesenharBotaoFecharPadrao(EV_MODAL_FECHAR);
+
+    Rectangle rTexto = { EV_MODAL_PAINEL.x + 10.0f, EV_MODAL_PAINEL.y + 24.0f, EV_MODAL_PAINEL.width - 20.0f, 28.0f };
+    DrawRectangleRec(ParaTela(rTexto), Fade(corEscura, 0.85f));
+    DrawRectangleLinesEx(ParaTela(rTexto), 1.0f, corDestaque);
+    const float off = 0.8f;
+    DrawTextInArea(g_evToasts[0].texto, (Rectangle){ rTexto.x - off, rTexto.y, rTexto.width, rTexto.height }, 11, corEscura);
+    DrawTextInArea(g_evToasts[0].texto, (Rectangle){ rTexto.x + off, rTexto.y, rTexto.width, rTexto.height }, 11, corEscura);
+    DrawTextInArea(g_evToasts[0].texto, (Rectangle){ rTexto.x, rTexto.y - off, rTexto.width, rTexto.height }, 11, corEscura);
+    DrawTextInArea(g_evToasts[0].texto, (Rectangle){ rTexto.x, rTexto.y + off, rTexto.width, rTexto.height }, 11, corEscura);
+    DrawTextInArea(g_evToasts[0].texto, rTexto, 11, corBranco);
+
+    if (g_evToastCount > 1) {
+        char fila[32];
+        snprintf(fila, sizeof fila, "(+%d na fila)", g_evToastCount - 1);
+        Rectangle rFila = { EV_MODAL_PAINEL.x, EV_MODAL_PAINEL.y + 50.0f, EV_MODAL_PAINEL.width, 10.0f };
+        DrawTextInArea(fila, rFila, 8, corDestaque);
     }
+
+    Rectangle rBtn = ParaTela(EV_MODAL_BTN_OK);
+    bool hovBtn = CheckCollisionPointRec(mouse, rBtn);
+    DrawRectangleRec(rBtn, hovBtn ? corDestaque : corClaro);
+    DrawRectangleLinesEx(rBtn, 1.5f, corEscura);
+    DrawTextInArea("Fechar", EV_MODAL_BTN_OK, 10, corEscura);
 }
 
 // Onde cada um pode estar em cada dia, de acordo com os dialogos e as evidencias:
@@ -361,7 +404,7 @@ static const LocalRasec CANDIDATOS_DIA[3][3][3] = {
     /* Arthur */ { { LOCAL_ESCRITORIO, LOCAL_CANTINA, LOCAL_ESCRITORIO },
                    { LOCAL_CANTINA, LOCAL_COPA, LOCAL_SALA_REUNIAO },
                    { LOCAL_SALA_REUNIAO, LOCAL_COPA, LOCAL_ESCRITORIO } },
-    /* Ana    */ { { LOCAL_ESCRITORIO, LOCAL_SALA_REUNIAO, LOCAL_SALA_REUNIAO },
+    /* Ana    */ { { LOCAL_SALA_REUNIAO, LOCAL_RH, LOCAL_SALA_REUNIAO },
                    { LOCAL_RH, LOCAL_SALA_REUNIAO, LOCAL_ESCRITORIO },
                    { LOCAL_ESCRITORIO, LOCAL_RH, LOCAL_MESA_MARIA } },
 };
@@ -501,9 +544,11 @@ static bool      g_deepfakeAberto     = false;
 static bool      g_arrastandoDeepfake = false;
 static Vector2   g_deepfakePos        = { 150, 70 };
 static Vector2   g_offsetDeepfake     = { 0, 0 };
-static bool      g_enviesarUsado[3]   = { false, false, false };
-static bool      g_deepfakeUsado[3]   = { false, false, false };
-static bool      g_injecaoUsada[3]    = { false, false, false };
+static bool      g_enviesarUsado[3]      = { false, false, false };
+static bool      g_deepfakeUsado[3]      = { false, false, false };
+static bool      g_injecaoUsada[3]       = { false, false, false };
+static bool      g_testeEspecialHoje     = false; // max 1 dos 3 testes por dia
+static bool      g_testeEspecialPessoa[3]= { false, false, false }; // max 1 por pessoa na run
 
 static bool      g_avisoCantina       = false;
 static bool      g_avancarDia         = false;
@@ -622,24 +667,19 @@ static bool g_menuAberto = false;
 static bool g_shouldClose = false;
 static bool g_irParaSelecao = false;  // true quando clica no mapa
 
-// Passos do tutorial interativo forcado no Dia 1
+// Guia nao-bloqueante do Dia 1 (explica as mecanicas sem travar o jogador)
 typedef enum {
-    TUT_PASSO_SUSPEITO = 0,     // 1/6: Escolher um suspeito para conversar
-    TUT_PASSO_ABRIR_MENU,       // 2/6: Abrir a aba lateral de ferramentas [<]
-    TUT_PASSO_ABRIR_FICHA,      // 3/6: Clicar na Pasta de Arquivos para ver a ficha
-    TUT_PASSO_FECHAR_FICHA,     // 4/6: Ler a ficha e clicar no [X] para fechar
-    TUT_PASSO_PERGUNTA,         // 5/6: Fazer uma pergunta e entender os Tokens
-    TUT_PASSO_ABRIR_PRANCHETA,  // 6/6: Abrir a Prancheta de anomalias
-    TUT_PASSO_CONCLUSAO         // Resumo da Dica Logica + Proximo Dia e botao de iniciar
+    TUT_PASSO_MISSAO = 0,       // 1/5: Objetivo, locais (setas 3D) e escolher suspeito
+    TUT_PASSO_INTERROGATORIO,   // 2/5: Tokens (8/dia), perguntas e postura
+    TUT_PASSO_FERRAMENTAS,      // 3/5: Bandeja de ferramentas (Pasta, Tablet, Dica Logica)
+    TUT_PASSO_TESTES_ESPECIAIS, // 4/5: Testes especiais (-2 Tokens)
+    TUT_PASSO_AVANCAR_VEREDITO  // 5/5: Evidencias, Avancar Dia e Veredito Final
 } TutorialPasso;
 
-static TutorialPasso g_tutorialPasso = TUT_PASSO_SUSPEITO;
-
-// Mude para true para ligar o tutorial do Dia 1 de novo
-#define TUTORIAL_LIGADO false
+static TutorialPasso g_tutorialPasso = TUT_PASSO_MISSAO;
 
 static bool TutorialAtivo(void) {
-    return TUTORIAL_LIGADO && GameStateIsTutorialActive();
+    return GameStateIsTutorialActive();
 }
 
 // ---------------------------------------------------------------
@@ -740,19 +780,30 @@ static void GastarTokensFerramenta(int custo) {
     }
 }
 
+static bool TesteEspecialDisponivel(int suspeito) {
+    if (g_testeEspecialHoje) return false;
+    if (suspeito >= 0 && suspeito < 3 && g_testeEspecialPessoa[suspeito]) return false;
+    return true;
+}
+
 static void OnClickEnviesar(void) {
     TraceLog(LOG_INFO, "Ferramenta Enviesar Dados clicada!");
     if (!g_dialogLoaded || g_suspeitoAtual < 0 || g_suspeitoAtual >= 3) {
         g_alertaTokensTimer = 1.2f;
         return;
     }
-    if (g_enviesarUsado[g_suspeitoAtual]) return;
+    if (g_enviesarUsado[g_suspeitoAtual] || !TesteEspecialDisponivel(g_suspeitoAtual)) {
+        g_alertaTokensTimer = 1.2f;
+        return;
+    }
     if (!TemTokensParaFerramenta(2)) {
         g_alertaTokensTimer = 1.6f;
         return;
     }
     GastarTokensFerramenta(2);
     g_enviesarUsado[g_suspeitoAtual] = true;
+    g_testeEspecialHoje = true;
+    g_testeEspecialPessoa[g_suspeitoAtual] = true;
     GameStateSetViesUsado(g_suspeitoAtual, true);
 
     AdicionarMensagemChat(
@@ -782,12 +833,18 @@ static void OnClickDeepfake(void) {
         return;
     }
     if (!g_deepfakeUsado[g_suspeitoAtual]) {
+        if (!TesteEspecialDisponivel(g_suspeitoAtual)) {
+            g_alertaTokensTimer = 1.2f;
+            return;
+        }
         if (!TemTokensParaFerramenta(2)) {
             g_alertaTokensTimer = 1.6f;
             return;
         }
         GastarTokensFerramenta(2);
         g_deepfakeUsado[g_suspeitoAtual] = true;
+        g_testeEspecialHoje = true;
+        g_testeEspecialPessoa[g_suspeitoAtual] = true;
 
         AdicionarMensagemChat(
             g_suspeitoAtual,
@@ -818,13 +875,18 @@ static void OnClickInjecao(void) {
         g_alertaTokensTimer = 1.2f;
         return;
     }
-    if (g_injecaoUsada[g_suspeitoAtual]) return;
+    if (g_injecaoUsada[g_suspeitoAtual] || !TesteEspecialDisponivel(g_suspeitoAtual)) {
+        g_alertaTokensTimer = 1.2f;
+        return;
+    }
     if (!TemTokensParaFerramenta(2)) {
         g_alertaTokensTimer = 1.6f;
         return;
     }
     GastarTokensFerramenta(2);
     g_injecaoUsada[g_suspeitoAtual] = true;
+    g_testeEspecialHoje = true;
+    g_testeEspecialPessoa[g_suspeitoAtual] = true;
     GameStateSetInjecaoUsada(g_suspeitoAtual, true);
 
     AdicionarMensagemChat(
@@ -1886,6 +1948,7 @@ static bool UpdateDica(void) {
                 if (!CheckCollisionPointRec(mouse, ParaTela(OpcaoDica(i)))) continue;
                 hover = true;
                 if (clicou) {
+                    if (!g_dicaUsadaHoje) GameStateRegisterHintUsed();
                     g_dicaUsadaHoje = true;   // certo ou errado, a dica acabou por hoje
                     if (i == p->correta) {
                         g_dicaEstado = 1;
@@ -2005,6 +2068,7 @@ static Rectangle SuspeitoSilArea(int i) {
 
 // Botoes do topo da janela: Dia e Proximo Dia / Veredito
 static const Rectangle BADGE_DIA_TOPO       = {   8.0f,   8.0f,  54.0f,  20.0f };
+static const Rectangle BADGE_TESTES_TOPO    = {  66.0f,   8.0f, 104.0f,  20.0f };
 static const Rectangle BOTAO_AVANCAR_TOPO   = { 174.0f,   8.0f, 121.0f,  22.0f };
 static const Rectangle BOTAO_AVANCAR_PAINEL = { DIALOG_BOX_X, 316.0f, DIALOG_BOX_W, 30.0f };
 
@@ -2015,6 +2079,7 @@ static const Rectangle CONFIRMAR_BTN_SIM = { 329.0f, 214.0f, 140.0f,  26.0f };
 
 static void ExecutarAvancarDiaOuVeredito(void) {
     g_confirmarAvancarDia = false;
+    GameStateAddRemainingTokens(global_tokens);
     if (GameStateGetDay() >= GAME_NUM_DAYS) g_irParaVeredito = true;
     else                                    g_avancarDia = true;
 }
@@ -2672,6 +2737,8 @@ static void GetChoiceButtonLayout(int active_count, float *outBtnH, float *outSt
     }
 }
 
+static void DesenharIconePessoa(float cx, float cy, Color cor, bool riscada);
+
 static void DrawInterrogationTexts(void) {
     Color textColor = (Color){ 32, 29, 31, 255 };
     Color bgColor = (Color){ 125, 112, 113, 255 }; 
@@ -2695,6 +2762,54 @@ static void DrawInterrogationTexts(void) {
     DrawRectangleRec(ParaTela(BADGE_DIA_TOPO), (Color){ 32, 29, 31, 240 });
     DrawRectangleLinesEx(ParaTela(BADGE_DIA_TOPO), 1.5f, hoverColor);
     DrawTextInArea(TextFormat("DIA %d/%d", diaAtual, GAME_NUM_DAYS), BADGE_DIA_TOPO, 9, (Color){ 255, 242, 230, 255 });
+
+    // Badge intuitivo de icones dos Testes Especiais (1 carga por dia + 3 bonequinhos por pessoa)
+    {
+        bool hovTestes = !bloqueadoPorOverlay && CheckCollisionPointRec(mouseTela, ParaTela(BADGE_TESTES_TOPO));
+        Rectangle sombraT = { BADGE_TESTES_TOPO.x + 1.5f, BADGE_TESTES_TOPO.y + 1.5f, BADGE_TESTES_TOPO.width, BADGE_TESTES_TOPO.height };
+        DrawRectangleRec(ParaTela(sombraT), Fade(BLACK, 0.55f));
+        DrawRectangleRec(ParaTela(BADGE_TESTES_TOPO), (Color){ 32, 29, 31, 240 });
+        DrawRectangleLinesEx(ParaTela(BADGE_TESTES_TOPO), 1.5f, hovTestes ? (Color){ 255, 242, 230, 255 } : hoverColor);
+
+        // Indicador 1/dia: circulo aceso (disponivel hoje) ou apagado (usado hoje) + "DIA"
+        Rectangle rDot = ParaTela((Rectangle){ BADGE_TESTES_TOPO.x + 7.0f, BADGE_TESTES_TOPO.y + 6.5f, 7.0f, 7.0f });
+        if (!g_testeEspecialHoje) {
+            DrawRectangleRec(rDot, COR_NEGACAO_CLARO);
+            DrawRectangleLinesEx(rDot, 1.0f, (Color){ 255, 242, 230, 255 });
+        } else {
+            DrawRectangleLinesEx(rDot, 1.2f, (Color){ 125, 112, 113, 255 });
+        }
+        DrawTextInArea("DIA", (Rectangle){ BADGE_TESTES_TOPO.x + 15.0f, BADGE_TESTES_TOPO.y, 26.0f, BADGE_TESTES_TOPO.height },
+                       8, !g_testeEspecialHoje ? (Color){ 255, 242, 230, 255 } : (Color){ 125, 112, 113, 255 });
+
+        // Divisor sutil
+        Rectangle rSep = ParaTela((Rectangle){ BADGE_TESTES_TOPO.x + 44.0f, BADGE_TESTES_TOPO.y + 4.0f, 1.0f, BADGE_TESTES_TOPO.height - 8.0f });
+        DrawRectangleRec(rSep, (Color){ 125, 112, 113, 220 });
+
+        // 3 icones de pessoa (Maria, Arthur, Ana Lucia): claros se disponiveis, riscados se ja testados
+        for (int s = 0; s < 3; s++) {
+            float px = BADGE_TESTES_TOPO.x + 56.0f + s * 17.0f;
+            float py = BADGE_TESTES_TOPO.y + 10.0f;
+            bool usado = g_testeEspecialPessoa[s];
+            if (g_dialogLoaded && g_suspeitoAtual == s) {
+                Rectangle rSel = ParaTela((Rectangle){ px - 6.0f, BADGE_TESTES_TOPO.y + 3.0f, 12.0f, BADGE_TESTES_TOPO.height - 6.0f });
+                DrawRectangleLinesEx(rSel, 1.0f, (Color){ 189, 181, 168, 200 });
+            }
+            DesenharIconePessoa(px, py, usado ? (Color){ 115, 104, 105, 255 } : (Color){ 255, 242, 230, 255 }, usado);
+        }
+
+        if (hovTestes) {
+            int restPessoas = (!g_testeEspecialPessoa[0]) + (!g_testeEspecialPessoa[1]) + (!g_testeEspecialPessoa[2]);
+            Rectangle tipT = { 12.0f, 32.0f, 280.0f, 30.0f };
+            DrawRectangleRec(ParaTela(tipT), (Color){ 32, 29, 31, 248 });
+            DrawRectangleLinesEx(ParaTela(tipT), 1.5f, (Color){ 255, 242, 230, 255 });
+            DrawTextInArea("Testes Especiais: máx. 1 por dia e 1 por pessoa",
+                           (Rectangle){ tipT.x, tipT.y + 3.0f, tipT.width, 11.0f }, 8, (Color){ 255, 242, 230, 255 });
+            DrawTextInArea(TextFormat("Hoje: %s  |  Restam %d de 3 pessoas",
+                                      g_testeEspecialHoje ? "Já usado" : "Disponível", restPessoas),
+                           (Rectangle){ tipT.x, tipT.y + 16.0f, tipT.width, 11.0f }, 8, (Color){ 189, 181, 168, 255 });
+        }
+    }
 
     // Botao sempre visivel "Proximo Dia >>" / "Ir ao Veredito >>" no canto superior direito da janela
     bool hovTopo = !bloqueadoPorOverlay && CheckCollisionPointRec(mouseTela, ParaTela(BOTAO_AVANCAR_TOPO));
@@ -2871,10 +2986,12 @@ void GameplaySceneResetDialogues(void) {
     // Jogo novo (dia 1): limpa os checklists de todos os funcionarios
     if (GameStateGetDay() == 1) {
         memset(g_marcado, 0, sizeof g_marcado);
-        g_tutorialPasso = TUT_PASSO_SUSPEITO;
+        memset(g_testeEspecialPessoa, 0, sizeof g_testeEspecialPessoa);
+        g_tutorialPasso = TUT_PASSO_MISSAO;
     }
     // Dia novo: a dica e as ferramentas de teste voltam a ficar disponiveis
     g_dicaUsadaHoje = false;
+    g_testeEspecialHoje = false;
     g_dicaAberta = false;
     g_deepfakeAberto = false;
     g_avisoCantina = false;
@@ -3532,10 +3649,6 @@ static bool UpdateFicha(void) {
             g_fichaAtual = -1;
             g_arrastandoFicha = false;
             g_arrastandoBarra = false;
-            if (TutorialAtivo() && g_tutorialPasso == TUT_PASSO_FECHAR_FICHA) {
-                g_menuAberto = false;
-                g_tutorialPasso = TUT_PASSO_PERGUNTA;
-            }
             return true;
         }
         // Botoes '<' e '>' na barra de titulo: troca entre os funcionarios da RASEC
@@ -3806,7 +3919,11 @@ static void DesenharDeepfake(void) {
 
 // ---------- Tutorial Interativo (Dia 1) ----------
 
-static const Rectangle TUT_BTN_COMECAR = { 18, 224, 180, 20 };
+static const Rectangle TUT_CARD_RECT    = { 324.0f, 44.0f, 294.0f, 134.0f };
+static const Rectangle TUT_BTN_FECHAR   = { 600.0f, 46.0f, 14.0f, 14.0f };
+static const Rectangle TUT_BTN_PULAR    = { 332.0f, 156.0f, 52.0f, 16.0f };
+static const Rectangle TUT_BTN_VOLTAR   = { 510.0f, 156.0f, 24.0f, 16.0f };
+static const Rectangle TUT_BTN_AVANCAR  = { 538.0f, 156.0f, 72.0f, 16.0f };
 
 static float PulsoTutorial(void) {
     float t = (float)GetTime() * 1.5f;
@@ -3815,37 +3932,17 @@ static float PulsoTutorial(void) {
     return tri * tri * (3.0f - 2.0f * tri);
 }
 
-// Desenha uma moldura pulsante e uma seta animada apontando para o alvo
+// Desenha uma moldura sutil e suave indicando o elemento relevante
 static void DesenharDestaqueTutorial(Rectangle alvoVirtual, const char *setaTxt, int ladoSeta) {
+    (void)setaTxt;
+    (void)ladoSeta;
     float pulso = PulsoTutorial();
     Rectangle rTela = ParaTela(alvoVirtual);
     float escala = rTela.height / alvoVirtual.height;
     Color corBrilho = (Color){ 189, 181, 168, 255 };
-    Color corEscura = (Color){ 32, 29, 31, 235 };
 
-    DrawRectangleRec(rTela, Fade(corBrilho, 0.08f + 0.12f * pulso));
-    DrawRectangleLinesEx(rTela, 3.5f * escala, corEscura);
-    DrawRectangleLinesEx(rTela, (1.5f + 1.5f * pulso) * escala, corBrilho);
-
-    if (!setaTxt || !setaTxt[0]) return;
-
-    float offset = 4.0f * pulso;
-    Rectangle badge = { 0, 0, 24, 16 };
-    if (ladoSeta == 0) { // esquerda do alvo (aponta ">>")
-        badge.x = alvoVirtual.x - badge.width - 4.0f - offset;
-        badge.y = alvoVirtual.y + (alvoVirtual.height - badge.height) / 2.0f;
-    } else if (ladoSeta == 1) { // direita do alvo (aponta "<<")
-        badge.x = alvoVirtual.x + alvoVirtual.width + 4.0f + offset;
-        badge.y = alvoVirtual.y + (alvoVirtual.height - badge.height) / 2.0f;
-    } else if (ladoSeta == 2) { // abaixo do alvo (aponta "^")
-        badge.x = alvoVirtual.x + (alvoVirtual.width - badge.width) / 2.0f;
-        badge.y = alvoVirtual.y + alvoVirtual.height + 3.0f + offset;
-    }
-
-    Rectangle rBadge = ParaTela(badge);
-    DrawRectangleRec(rBadge, corEscura);
-    DrawRectangleLinesEx(rBadge, 1.5f * escala, corBrilho);
-    DrawTextInArea(setaTxt, badge, 10, corBrilho);
+    DrawRectangleRec(rTela, Fade(corBrilho, 0.04f + 0.06f * pulso));
+    DrawRectangleLinesEx(rTela, (1.0f + 0.5f * pulso) * escala, Fade(corBrilho, 0.40f + 0.35f * pulso));
 }
 
 // Desenha o card enxuto de instrucao do passo atual
@@ -3893,129 +3990,135 @@ static void DesenharCardTutorial(Rectangle card, const char *titulo, const char 
     }
 }
 
-static bool UpdateTutorialFinal(void) {
-    if (!TutorialAtivo() || g_tutorialPasso != TUT_PASSO_CONCLUSAO) return false;
+static bool TutorialOcultoPorJanela(void) {
+    return (g_evToastCount > 0) || g_confirmarAbandonarRun || g_confirmarAvancarDia ||
+           g_dicaAberta || g_deepfakeAberto || g_pranchetaAberta || (g_fichaAtual >= 0);
+}
+
+static bool BotaoTutorialInterativo(Vector2 mouse, Rectangle areaVirtual, bool clicou, bool *hoverOut) {
+    if (CheckCollisionPointRec(mouse, ParaTela(areaVirtual))) {
+        *hoverOut = true;
+        return clicou;
+    }
+    return false;
+}
+
+static bool UpdateTutorialCard(void) {
+    if (!TutorialAtivo() || TutorialOcultoPorJanela()) return false;
+
     Vector2 mouse = RayCanvasGetMousePosition();
-    Rectangle rBtn = ParaTela(TUT_BTN_COMECAR);
-    if (CheckCollisionPointRec(mouse, rBtn)) {
-        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            g_pranchetaAberta = false;
-            g_menuAberto = false;
-            ResetTokens(); // devolve o token gasto na pergunta de teste
+    bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    bool hover = false;
+
+    if (BotaoTutorialInterativo(mouse, TUT_BTN_FECHAR, clicou, &hover) ||
+        BotaoTutorialInterativo(mouse, TUT_BTN_PULAR, clicou, &hover)) {
+        GameStateCompleteTutorial();
+        return true;
+    }
+    if (g_tutorialPasso > TUT_PASSO_MISSAO &&
+        BotaoTutorialInterativo(mouse, TUT_BTN_VOLTAR, clicou, &hover)) {
+        g_tutorialPasso = (TutorialPasso)(g_tutorialPasso - 1);
+        return true;
+    }
+    if (BotaoTutorialInterativo(mouse, TUT_BTN_AVANCAR, clicou, &hover)) {
+        if (g_tutorialPasso < TUT_PASSO_AVANCAR_VEREDITO) {
+            g_tutorialPasso = (TutorialPasso)(g_tutorialPasso + 1);
+        } else {
             GameStateCompleteTutorial();
-            return true;
         }
+        return true;
+    }
+
+    if (hover) {
+        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+        return true;
     }
     return false;
 }
 
 static Rectangle IconeMenu(int i);
 
+static void DesenharBotaoTutorial(Rectangle rectVirtual, const char *texto, Vector2 mouse) {
+    Rectangle rTela = ParaTela(rectVirtual);
+    float escala = rTela.height / rectVirtual.height;
+    bool hover = CheckCollisionPointRec(mouse, rTela);
+    Color corBtn = hover ? (Color){ 189, 181, 168, 255 } : (Color){ 160, 147, 142, 255 };
+    DrawRectangleRec(rTela, corBtn);
+    DrawRectangleLinesEx(rTela, 1.5f * escala, (Color){ 32, 29, 31, 255 });
+    DrawTextInArea(texto, rectVirtual, 9, (Color){ 32, 29, 31, 255 });
+}
+
 static void DesenharTutorial(void) {
-    if (!TutorialAtivo()) return;
+    if (!TutorialAtivo() || TutorialOcultoPorJanela()) return;
+
+    const char *titulo = "";
+    const char *corpo = "";
 
     switch (g_tutorialPasso) {
-        case TUT_PASSO_SUSPEITO: {
-            Rectangle alvo = { 10, 90, 284, 130 };
-            DesenharDestaqueTutorial(alvo, "<<", 1);
-            Rectangle card = { 330, 80, 280, 122 };
-            DesenharCardTutorial(
-                card,
-                "TUTORIAL 1/6 - A MISSÃO",
-                "Há 1 IA infiltrada entre estes 3 funcionários da RASEC.\n\nVocê tem 3 dias para descobrir quem é o impostor.",
-                "> Clique em um suspeito à esquerda"
-            );
+        case TUT_PASSO_MISSAO: {
+            titulo = "GUIA 1/5 - INVESTIGAÇÃO";
+            corpo = "Há 1 IA infiltrada entre os 3 funcionários da RASEC.\n"
+                    "Explore os setores pelas setas na cena e clique em quem quiser para conversar.\n"
+                    "Você pode seguir jogando livremente ou pular este guia.";
             break;
         }
-        case TUT_PASSO_ABRIR_MENU: {
-            Rectangle alvo = SETA_FECHADA;
-            DesenharDestaqueTutorial(alvo, ">>", 0);
-            Rectangle card = { 26, 240, 250, 100 };
-            DesenharCardTutorial(
-                card,
-                "TUTORIAL 2/6 - FERRAMENTAS",
-                "Antes de interrogar, veja quem está na sua frente para notar mentiras ou desvios.",
-                "> Clique na aba no rodapé direito"
-            );
-            break;
-        }
-        case TUT_PASSO_ABRIR_FICHA: {
-            Rectangle alvo = IconeMenu(1);
-            DesenharDestaqueTutorial(alvo, "<<", 1);
-            Rectangle card = { 26, 240, 250, 100 };
-            DesenharCardTutorial(
-                card,
-                "TUTORIAL 3/6 - FICHA PESSOAL",
-                "A Pasta guarda o perfil confidencial, o cargo e os hábitos reais deste funcionário.",
-                "> Clique na Pasta no menu à direita"
-            );
-            break;
-        }
-        case TUT_PASSO_FECHAR_FICHA: {
-            if (g_fichaAtual >= 0) {
-                Rectangle alvoX = NaFicha(FICHA_FECHAR);
-                DesenharDestaqueTutorial(alvoX, ">>", 0);
-            }
-            Rectangle card = { 18, 236, 268, 112 };
-            DesenharCardTutorial(
-                card,
-                "TUTORIAL 4/6 - PERSONALIDADE",
-                "Compare a ficha com as respostas! IAs costumam contradizer a ficha ou segui-la de forma robótica.",
-                "> Leia a ficha e clique no [X] dela"
-            );
-            break;
-        }
-        case TUT_PASSO_PERGUNTA: {
+        case TUT_PASSO_INTERROGATORIO: {
             Rectangle alvoTokens = { 196, 232, 97, 16 };
-            Rectangle alvoPerguntas = { DIALOG_BOX_X - 2, DIALOG_START_Y - 2, DIALOG_BOX_W + 4, 62 };
             DesenharDestaqueTutorial(alvoTokens, "", 0);
-            DesenharDestaqueTutorial(alvoPerguntas, "<<", 1);
-            Rectangle card = { 26, 56, 252, 106 };
-            DesenharCardTutorial(
-                card,
-                "TUTORIAL 5/6 - TOKENS E PERGUNTAS",
-                "Você tem 8 Tokens por dia (veja acima das perguntas). Cada pergunta gasta 1 Token!",
-                "> Clique em uma pergunta no painel abaixo"
-            );
+            if (g_dialogLoaded) {
+                Rectangle alvoPerguntas = { DIALOG_BOX_X - 2, DIALOG_START_Y - 2, DIALOG_BOX_W + 4, 62 };
+                DesenharDestaqueTutorial(alvoPerguntas, "<<", 1);
+            }
+            titulo = "GUIA 2/5 - TOKENS E PERGUNTAS";
+            corpo = "Você tem 8 Tokens por dia. Cada pergunta normal custa 1 Token; encerrar a conversa é grátis.\n"
+                    "Observe a postura do suspeito: Dúvida, Confiança ou Pressão mudam como ele reage.";
             break;
         }
-        case TUT_PASSO_ABRIR_PRANCHETA: {
-            Rectangle alvo = IconeMenu(0);
-            DesenharDestaqueTutorial(alvo, "<<", 1);
-            Rectangle card = { 26, 238, 252, 104 };
-            DesenharCardTutorial(
-                card,
-                "TUTORIAL 6/6 - ANOTAÇÕES",
-                "Veja a resposta no histórico à direita! Quando notar alguma falha suspeita, anote no seu Guia da Investigação.",
-                "> Clique no Tablet no menu à direita"
-            );
+        case TUT_PASSO_FERRAMENTAS: {
+            if (g_menuAberto) {
+                for (int i = 0; i < 3; i++) DesenharDestaqueTutorial(IconeMenu(i), "", 0);
+            } else {
+                DesenharDestaqueTutorial(SETA_FECHADA, ">>", 0);
+            }
+            titulo = "GUIA 3/5 - FERRAMENTAS";
+            corpo = "Abra a aba Ferramentas no rodapé direito:\n"
+                    "- Tablet: anote suspeitas e veja evidências.\n"
+                    "- Pasta: consulte a ficha pessoal de cada um.\n"
+                    "- Dica Lógica: 1 puzzle/dia para perguntas grátis.";
             break;
         }
-        case TUT_PASSO_CONCLUSAO: {
-            Rectangle alvoDica    = IconeMenu(2);
-            Rectangle alvoAvancar = BOTAO_AVANCAR_TOPO;
-            DesenharDestaqueTutorial(alvoDica, ">>", 0);
-            DesenharDestaqueTutorial(alvoAvancar, "^", 2);
-
-            Rectangle card = { 8, 12, 200, 238 };
-            DesenharCardTutorial(
-                card,
-                "PRONTO PARA INVESTIGAR!",
-                "Marque no tablet as falhas de cada suspeito.\n\n- DICA (menu de ferramentas): 1 puzzle lógico por dia, durante uma conversa, para ter perguntas grátis!\n\n- PRÓXIMO DIA (topo): use ao fim do dia para avançar até o Veredito.",
-                NULL
-            );
-
-            Rectangle rBtn = ParaTela(TUT_BTN_COMECAR);
-            float escala = rBtn.height / TUT_BTN_COMECAR.height;
-            bool hover = CheckCollisionPointRec(RayCanvasGetMousePosition(), rBtn);
-            Color corBtn = hover ? (Color){ 189, 181, 168, 255 } : (Color){ 160, 147, 142, 255 };
-            DrawRectangleRec(rBtn, corBtn);
-            DrawRectangleLinesEx(rBtn, 2.0f * escala, (Color){ 32, 29, 31, 255 });
-            DrawTextInArea("Começar Investigação! (8 Tokens)", TUT_BTN_COMECAR, 9, (Color){ 32, 29, 31, 255 });
+        case TUT_PASSO_TESTES_ESPECIAIS: {
+            if (g_menuAberto) {
+                for (int i = 3; i < NUM_TOOLS; i++) DesenharDestaqueTutorial(IconeMenu(i), "", 0);
+            } else {
+                DesenharDestaqueTutorial(SETA_FECHADA, ">>", 0);
+            }
+            titulo = "GUIA 4/5 - TESTES (-2 TOKENS)";
+            corpo = "Regra: máximo 1 teste por dia e 1 por pessoa (3 na run).\n"
+                    "- Enviesar Dados: pressiona a lógica da resposta.\n"
+                    "- Scanner Deepfake / Injeção: expõem anomalias de IA.";
+            break;
+        }
+        case TUT_PASSO_AVANCAR_VEREDITO: {
+            DesenharDestaqueTutorial(BOTAO_AVANCAR_TOPO, "^", 2);
+            titulo = "GUIA 5/5 - AVANÇAR E VEREDITO";
+            corpo = "Você tem 3 dias para reunir provas na cena e nos diálogos.\n"
+                    "Quando terminar um dia, clique em Avançar Dia no topo.\n"
+                    "No fim do Dia 3, dê o Veredito final!";
             break;
         }
     }
+
+    DesenharCardTutorial(TUT_CARD_RECT, titulo, corpo, NULL);
+
+    Vector2 mouse = RayCanvasGetMousePosition();
+    DesenharBotaoFecharPadrao(TUT_BTN_FECHAR);
+    DesenharBotaoTutorial(TUT_BTN_PULAR, "Pular", mouse);
+    if (g_tutorialPasso > TUT_PASSO_MISSAO) {
+        DesenharBotaoTutorial(TUT_BTN_VOLTAR, "<", mouse);
+    }
+    const char *lblAvancar = (g_tutorialPasso < TUT_PASSO_AVANCAR_VEREDITO) ? "Próximo >" : "Concluir";
+    DesenharBotaoTutorial(TUT_BTN_AVANCAR, lblAvancar, mouse);
 }
 
 // Posicao do icone i no menu (pixels da imagem)
@@ -4048,6 +4151,27 @@ static const char *TOOL_DESCS[NUM_TOOLS] = {
 };
 
 static const int TOOL_COSTS[NUM_TOOLS] = { 0, 0, 0, 2, 2, 2 };
+
+static void DesenharIconeCadeado(Rectangle boxVirt, Color cor) {
+    float cx = boxVirt.x + boxVirt.width * 0.5f;
+    float cy = boxVirt.y + boxVirt.height * 0.5f;
+    Rectangle arco  = ParaTela((Rectangle){ cx - 2.5f, cy - 4.0f, 5.0f, 4.0f });
+    Rectangle corpo = ParaTela((Rectangle){ cx - 3.5f, cy - 0.5f, 7.0f, 4.5f });
+    DrawRectangleLinesEx(arco, 1.2f, cor);
+    DrawRectangleRec(corpo, cor);
+}
+
+static void DesenharIconePessoa(float cx, float cy, Color cor, bool riscada) {
+    Rectangle rCabeca = ParaTela((Rectangle){ cx - 2.0f, cy - 4.5f, 4.0f, 4.0f });
+    Rectangle rOmbros = ParaTela((Rectangle){ cx - 3.5f, cy + 0.5f, 7.0f, 4.0f });
+    DrawRectangleRec(rCabeca, cor);
+    DrawRectangleRec(rOmbros, cor);
+    if (riscada) {
+        Vector2 p1 = { rOmbros.x - 1.0f, rOmbros.y + rOmbros.height + 1.0f };
+        Vector2 p2 = { rOmbros.x + rOmbros.width + 1.0f, rCabeca.y - 1.0f };
+        DrawLineEx(p1, p2, 1.6f, COR_NEGACAO_CLARO);
+    }
+}
 
 // Desenha os 6 icones da bandeja com fisica de mola (juiciness), outline brilhante, leve tilt e selo "-2"
 static void DesenharIconeFerramenta(Texture2D tex, int idx) {
@@ -4103,9 +4227,21 @@ static void DesenharIconeFerramenta(Texture2D tex, int idx) {
     DrawTexturePro(tex, srcTex, rSombraPro, originPro, rot, Fade(BLACK, 0.45f));
 
     int custo = TOOL_COSTS[idx];
+    bool jaUsou = false;
+    bool pessoaJaTestada = false;
+    bool bloqueadoLimite = false;
+    if (custo > 0) {
+        if (g_dialogLoaded && g_suspeitoAtual >= 0 && g_suspeitoAtual < 3) {
+            if (idx == 3) jaUsou = g_enviesarUsado[g_suspeitoAtual];
+            else if (idx == 4) jaUsou = g_deepfakeUsado[g_suspeitoAtual];
+            else if (idx == 5) jaUsou = g_injecaoUsada[g_suspeitoAtual];
+            pessoaJaTestada = g_testeEspecialPessoa[g_suspeitoAtual];
+        }
+        bloqueadoLimite = !jaUsou && (g_testeEspecialHoje || pessoaJaTestada);
+    }
 
     // 2) Outline brilhante ao redor da silhueta quando em hover (igual ao menu inicial!)
-    if (anim > 0.06f && g_iconeSilhuetas[idx].id > 0) {
+    if (anim > 0.06f && g_iconeSilhuetas[idx].id > 0 && !bloqueadoLimite) {
         float alphaOut = anim > 1.0f ? 1.0f : anim;
         Color corOut = (custo > 0) ? Fade(COR_NEGACAO_CLARO, 0.92f * alphaOut)
                                    : Fade((Color){ 255, 242, 230, 255 }, 0.95f * alphaOut);
@@ -4119,27 +4255,27 @@ static void DesenharIconeFerramenta(Texture2D tex, int idx) {
         }
     }
 
-    // 3) Icone principal (fica mais vivo/iluminado no hover)
-    Color corIcone = hov ? WHITE : (Color){ 232, 224, 218, 255 };
+    // 3) Icone principal (esmaece quando bloqueado pela regra)
+    Color corIcone = bloqueadoLimite ? Fade((Color){ 115, 105, 106, 255 }, 0.50f)
+                                     : (hov ? WHITE : (Color){ 232, 224, 218, 255 });
     DrawTexturePro(tex, srcTex, rDrawPro, originPro, rot, corIcone);
 
-    // 4) Selo "-2" / "OK" acompanhando o salto elastico do icone
+    // 4) Selo "-2", "OK" ou icone de cadeado acompanhando o salto elastico do icone
     if (custo > 0) {
-        bool jaUsou = false;
-        if (g_dialogLoaded && g_suspeitoAtual >= 0 && g_suspeitoAtual < 3) {
-            if (idx == 3) jaUsou = g_enviesarUsado[g_suspeitoAtual];
-            else if (idx == 4) jaUsou = g_deepfakeUsado[g_suspeitoAtual];
-            else if (idx == 5) jaUsou = g_injecaoUsada[g_suspeitoAtual];
-        }
         float bw = 17.0f * (1.0f + 0.08f * anim);
-        float bh = 11.0f * (1.0f + 0.08f * anim);
+        float bh = (bloqueadoLimite ? 13.0f : 11.0f) * (1.0f + 0.08f * anim);
         Rectangle badge = { destVirt.x + destVirt.width - bw + 2.0f, destVirt.y - 2.0f, bw, bh };
         Rectangle rBadge = ParaTela(badge);
-        Color corFundo = jaUsou ? (Color){ 90, 83, 83, 245 } : (hov ? COR_NEGACAO : COR_NEGACAO_FUNDO);
-        Color corBorda = jaUsou ? COR_CLARO : (hov ? (Color){ 255, 242, 230, 255 } : COR_NEGACAO_CLARO);
+        bool travado = jaUsou || bloqueadoLimite;
+        Color corFundo = travado ? (Color){ 48, 42, 44, 245 } : (hov ? COR_NEGACAO : COR_NEGACAO_FUNDO);
+        Color corBorda = travado ? COR_CLARO : (hov ? (Color){ 255, 242, 230, 255 } : COR_NEGACAO_CLARO);
         DrawRectangleRec(rBadge, corFundo);
         DrawRectangleLinesEx(rBadge, hov ? 1.5f : 1.0f, corBorda);
-        DrawTextInArea(jaUsou ? "OK" : "-2", badge, 7, (Color){ 255, 242, 230, 255 });
+        if (bloqueadoLimite) {
+            DesenharIconeCadeado(badge, (Color){ 255, 242, 230, 255 });
+        } else {
+            DrawTextInArea(jaUsou ? "OK" : "-2", badge, 7, (Color){ 255, 242, 230, 255 });
+        }
     }
 }
 
@@ -4209,16 +4345,27 @@ static void DesenharTooltipFerramenta(void) {
     DrawRectangleRec(rPonteiro, (custo > 0) ? COR_NEGACAO_CLARO : (Color){ 255, 242, 230, 245 });
 
     if (custo > 0) {
-        // Nome na esquerda + Custo claro no vermelho da paleta na direita
+        bool pessoaJaTestada = g_dialogLoaded && g_suspeitoAtual >= 0 && g_suspeitoAtual < 3 && g_testeEspecialPessoa[g_suspeitoAtual];
+        const char *tagTxt = "CUSTO: 2 TOKENS";
+        const char *descTxt = TOOL_DESCS[hoveredIdx];
+        if (pessoaJaTestada) {
+            tagTxt = "JÁ TESTADO";
+            descTxt = "Limite de 1 teste por pessoa atingido.";
+        } else if (g_testeEspecialHoje) {
+            tagTxt = "USADO HOJE";
+            descTxt = "Você já usou 1 teste especial hoje.";
+        }
+        // Nome na esquerda + Status/Custo na direita
         DrawTextInArea(TOOL_NAMES[hoveredIdx], (Rectangle){ boxX + 4, boxY + 2, boxW - 76, 13 }, 8, (Color){ 255, 242, 230, 255 });
         Rectangle tagCusto = { boxX + boxW - 70, boxY + 2, 66, 13 };
         DrawRectangleRec(ParaTela(tagCusto), COR_NEGACAO_FUNDO);
         DrawRectangleLinesEx(ParaTela(tagCusto), 1.0f, COR_NEGACAO_CLARO);
-        DrawTextInArea("CUSTO: 2 TOKENS", tagCusto, 7, (Color){ 255, 242, 230, 255 });
+        DrawTextInArea(tagTxt, tagCusto, 7, (Color){ 255, 242, 230, 255 });
+        DrawTextInArea(descTxt, (Rectangle){ boxX + 4, boxY + 16, boxW - 8, 13 }, 8, (Color){ 189, 181, 168, 255 });
     } else {
         DrawTextInArea(TOOL_NAMES[hoveredIdx], (Rectangle){ boxX + 4, boxY + 2, boxW - 8, 13 }, 8, (Color){ 255, 242, 230, 255 });
+        DrawTextInArea(TOOL_DESCS[hoveredIdx], (Rectangle){ boxX + 4, boxY + 16, boxW - 8, 13 }, 8, (Color){ 189, 181, 168, 255 });
     }
-    DrawTextInArea(TOOL_DESCS[hoveredIdx], (Rectangle){ boxX + 4, boxY + 16, boxW - 8, 13 }, 8, (Color){ 189, 181, 168, 255 });
 }
 
 static void UpdateGameplay(void) {
@@ -4226,11 +4373,10 @@ static void UpdateGameplay(void) {
     Rectangle seta = ParaTela(g_menuAberto ? SETA_ABERTA : SETA_FECHADA);
     bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     bool tut = TutorialAtivo();
-    bool permiteSeta = !tut || (g_tutorialPasso == TUT_PASSO_ABRIR_MENU);
-    bool hover = permiteSeta && CheckCollisionPointRec(mouse, seta);
+    bool hover = CheckCollisionPointRec(mouse, seta);
 
     // Botao sempre visivel de Avancar para o Proximo Dia / Veredito no topo da janela
-    if (!tut) {
+    {
         bool sobreBtnTopo = CheckCollisionPointRec(mouse, ParaTela(BOTAO_AVANCAR_TOPO));
         if (sobreBtnTopo) {
             hover = true;
@@ -4254,8 +4400,7 @@ static void UpdateGameplay(void) {
             int startY = DIALOG_START_Y;
             float exitY = (float)startY;
 
-            bool permitePergunta = !tut || (g_tutorialPasso == TUT_PASSO_PERGUNTA);
-            if (HasTokens() && permitePergunta) {
+            if (HasTokens()) {
                 for (int i = 0; i < active_count; i++) {
                     Rectangle choiceArea = { DIALOG_BOX_X, startY + (i * btnStep), DIALOG_BOX_W, btnH };
                     if (CheckCollisionPointRec(mouse, ParaTela(choiceArea))) {
@@ -4291,9 +4436,8 @@ static void UpdateGameplay(void) {
                                 }
                             }
 
-                            if (tut && g_tutorialPasso == TUT_PASSO_PERGUNTA) {
-                                g_menuAberto = true;
-                                g_tutorialPasso = TUT_PASSO_ABRIR_PRANCHETA;
+                            if (tut && g_tutorialPasso < TUT_PASSO_FERRAMENTAS) {
+                                g_tutorialPasso = TUT_PASSO_FERRAMENTAS;
                             }
                             return;
                         }
@@ -4305,7 +4449,7 @@ static void UpdateGameplay(void) {
             }
             
             Rectangle exitArea = { DIALOG_BOX_X, exitY, DIALOG_BOX_W, btnH };
-            if (!tut && CheckCollisionPointRec(mouse, ParaTela(exitArea))) {
+            if (CheckCollisionPointRec(mouse, ParaTela(exitArea))) {
                 hover = true;
                 if (clicou) {
                     g_dialogLoaded = false;
@@ -4318,7 +4462,7 @@ static void UpdateGameplay(void) {
         }
     } else {
         // Setas de navegacao na foto do local (por cima dos suspeitos)
-        if (!tut) {
+        {
             bool visiveis[NUM_SETAS];
             for (int d = 0; d < NUM_SETAS; d++) visiveis[d] = DestinoSeta(g_localAtual, d) >= 0;
             Rectangle janelaTela = ParaTela(JANELA_AREA);
@@ -4343,8 +4487,7 @@ static void UpdateGameplay(void) {
                 }
             }
         }
-        bool permiteSuspeito = !tut || (g_tutorialPasso == TUT_PASSO_SUSPEITO);
-        for (int i = 0; i < 3 && permiteSuspeito; i++) {
+        for (int i = 0; i < 3; i++) {
             if (g_suspeitoLocal[i] != g_localAtual) continue;   // so quem esta nesta sala
             Rectangle choiceArea = SuspeitoSilArea(i);
             if (CheckCollisionPointRec(mouse, ParaTela(choiceArea))) {
@@ -4366,28 +4509,26 @@ static void UpdateGameplay(void) {
                             AdicionarMensagemChat(i, firstNode->speaker, firstNode->text, false);
                         }
                     }
-                    if (tut && g_tutorialPasso == TUT_PASSO_SUSPEITO) {
-                        g_tutorialPasso = TUT_PASSO_ABRIR_MENU;
+                    if (tut && g_tutorialPasso == TUT_PASSO_MISSAO) {
+                        g_tutorialPasso = TUT_PASSO_INTERROGATORIO;
                     }
                     return;
                 }
             }
         }
-        if (!tut) {
-            for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
-                const EvidenciaHotspot *h = &EVIDENCIA_HOTSPOTS[i];
-                if (h->local != g_localAtual) continue;
-                if (GameStateTemEvidencia(h->suspeito, h->ev_id)) continue;
-                if (CheckCollisionPointRec(mouse, ParaTela(h->area))) {
-                    g_hotspotHover = i;
-                    hover = true;
-                    if (clicou) {
-                        RegistrarEvidenciaPorId(h->suspeito, h->ev_id);
-                        g_hotspotHover = -1;
-                        return;
-                    }
-                    break;
+        for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
+            const EvidenciaHotspot *h = &EVIDENCIA_HOTSPOTS[i];
+            if (h->local != g_localAtual) continue;
+            if (GameStateTemEvidencia(h->suspeito, h->ev_id)) continue;
+            if (CheckCollisionPointRec(mouse, ParaTela(HotspotBadgeArea(h)))) {
+                g_hotspotHover = i;
+                hover = true;
+                if (clicou) {
+                    RegistrarEvidenciaPorId(h->suspeito, h->ev_id);
+                    g_hotspotHover = -1;
+                    return;
                 }
+                break;
             }
         }
     }
@@ -4399,11 +4540,8 @@ static void UpdateGameplay(void) {
     }
 
     // 1) Seta: abre/fecha o menu
-    if (permiteSeta && clicou && CheckCollisionPointRec(mouse, seta)) {
+    if (clicou && CheckCollisionPointRec(mouse, seta)) {
         g_menuAberto = !g_menuAberto;
-        if (tut && g_tutorialPasso == TUT_PASSO_ABRIR_MENU && g_menuAberto) {
-            g_tutorialPasso = TUT_PASSO_ABRIR_FICHA;
-        }
         return;
     }
 
@@ -4411,32 +4549,22 @@ static void UpdateGameplay(void) {
     if (g_menuAberto) {
         for (int i = 0; i < NUM_TOOLS; i++) {
             if (!MouseNoIcone(i)) continue;
-            if (tut) {
-                bool permitido = (i == 1 && (g_tutorialPasso == TUT_PASSO_ABRIR_FICHA || g_tutorialPasso == TUT_PASSO_FECHAR_FICHA)) ||
-                                 (i == 0 && g_tutorialPasso == TUT_PASSO_ABRIR_PRANCHETA);
-                if (!permitido) continue;
-            }
             hover = true;
             if (clicou) {
-                if (i == 0) {
-                    OnClickPrancheta();
-                    if (tut && g_tutorialPasso == TUT_PASSO_ABRIR_PRANCHETA && g_pranchetaAberta) {
-                        g_pranchetaPos = (Vector2){ 216, 8 };
-                        g_tutorialPasso = TUT_PASSO_CONCLUSAO;
-                    }
-                } else if (i == 1) {
-                    OnClickPasta();
-                    if (tut && g_tutorialPasso == TUT_PASSO_ABRIR_FICHA && g_fichaAtual >= 0) {
-                        g_fichaPos = (Vector2){ 262, 20 };
-                        g_tutorialPasso = TUT_PASSO_FECHAR_FICHA;
-                    } else if (tut && g_tutorialPasso == TUT_PASSO_FECHAR_FICHA && g_fichaAtual < 0) {
-                        g_menuAberto = false;
-                        g_tutorialPasso = TUT_PASSO_PERGUNTA;
-                    }
-                } else if (i == 2) AbrirDica();
+                if (i == 0) OnClickPrancheta();
+                else if (i == 1) OnClickPasta();
+                else if (i == 2) AbrirDica();
                 else if (i == 3) OnClickEnviesar();
                 else if (i == 4) OnClickDeepfake();
                 else if (i == 5) OnClickInjecao();
+
+                if (tut) {
+                    if (i <= 2 && g_tutorialPasso < TUT_PASSO_TESTES_ESPECIAIS) {
+                        g_tutorialPasso = TUT_PASSO_TESTES_ESPECIAIS;
+                    } else if (i >= 3 && g_tutorialPasso < TUT_PASSO_AVANCAR_VEREDITO) {
+                        g_tutorialPasso = TUT_PASSO_AVANCAR_VEREDITO;
+                    }
+                }
             }
         }
     }
@@ -4500,7 +4628,7 @@ int GameplaySceneItensPrancheta(int suspeito, const char **itens, bool *marcados
 }
 
 static void DesenharHotspotsEvidencia(void) {
-    if (TutorialAtivo() || g_dialogLoaded) return;
+    if (g_dialogLoaded) return;
     float pulso = 0.5f + 0.5f * sinf((float)GetTime() * 4.0f);
     for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
         const EvidenciaHotspot *h = &EVIDENCIA_HOTSPOTS[i];
@@ -4509,16 +4637,10 @@ static void DesenharHotspotsEvidencia(void) {
 
         bool hov = (g_hotspotHover == i);
         Color cor = hov ? (Color){ 255, 242, 230, 255 } : Fade((Color){ 255, 242, 230, 255 }, 0.45f + 0.40f * pulso);
-        Rectangle rTela = ParaTela(h->area);
-        if (hov) {
-            DrawRectangleRec(rTela, Fade((Color){ 255, 242, 230, 255 }, 0.14f));
-            DrawRectangleLinesEx(rTela, 1.5f, cor);
-        }
 
-        // Marcador discreto no centro do ponto clicavel
-        float cx = h->area.x + h->area.width * 0.5f;
-        float cy = h->area.y + h->area.height * 0.5f;
-        Rectangle badge = { cx - 7.0f, cy - 7.0f, 14.0f, 14.0f };
+        // Marcador e area clicavel exatamente no tamanho do quadradinho [?]
+        Rectangle badge = HotspotBadgeArea(h);
+        float cx = badge.x + badge.width * 0.5f;
         Rectangle rBadge = ParaTela(badge);
         DrawRectangleRec(rBadge, Fade((Color){ 32, 29, 31, 255 }, hov ? 0.95f : 0.78f));
         DrawRectangleLinesEx(rBadge, 1.5f, cor);
@@ -4554,7 +4676,7 @@ void UpdateDrawGameplayScene(void) {
         MapaHoloRender((int)holoArea.width, (int)holoArea.height, (int)g_localAtual,
                        g_setaHover >= 0 ? DestinoSeta(g_localAtual, g_setaHover) : -1,
                        LocaisAcessiveis(g_localAtual), (float)GetTime());
-        if (!TutorialAtivo()) {
+        {
             bool visiveis[NUM_SETAS];
             for (int d = 0; d < NUM_SETAS; d++) visiveis[d] = DestinoSeta(g_localAtual, d) >= 0;
             Setas3DRender(visiveis, g_setaHover, (float)GetTime());
@@ -4583,7 +4705,7 @@ void UpdateDrawGameplayScene(void) {
     }
 
     // Os modais (abandonar run / confirmar dia), a ficha, o scanner deepfake e a prancheta ficam por cima de tudo
-    if (!emTransicao && !UpdateConfirmarAbandonar() && !UpdateTutorialFinal() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
+    if (!emTransicao && !UpdatePopupEvidencia() && !UpdateConfirmarAbandonar() && !UpdateTutorialCard() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
         UpdateGameplay();
     }
 
@@ -4606,7 +4728,7 @@ void UpdateDrawGameplayScene(void) {
     } else {
         const char **nomesCurto = NOMES_SUSPEITOS;
         Vector2 mouseTela = RayCanvasGetMousePosition();
-        bool bloqueado = MouseSobreFicha() || g_dicaAberta || g_confirmarAvancarDia || g_confirmarAbandonarRun;
+        bool bloqueado = (g_evToastCount > 0) || MouseSobreFicha() || g_dicaAberta || g_confirmarAvancarDia || g_confirmarAbandonarRun;
         float dtSil = GetFrameTime();
         if (dtSil > 0.05f) dtSil = 0.05f;
 
@@ -4639,10 +4761,14 @@ void UpdateDrawGameplayScene(void) {
             Rectangle sombraVirt = { destVirt.x + 2.0f, destVirt.y + 2.0f + 1.5f * g_silAnim[i], destVirt.width, destVirt.height };
             DrawTexturePro(sil, srcSil, ParaTela(sombraVirt), (Vector2){ 0, 0 }, 0.0f, Fade(BLACK, 0.55f));
 
-            // Outline claro da paleta ao passar o mouse (estilo da tela inicial, mas contido)
-            if (g_silAnim[i] > 0.05f) {
+            // Outline claro da paleta ao passar o mouse (ou destaque sutil do tutorial na propria silhueta)
+            bool tutSil = TutorialAtivo() && !TutorialOcultoPorJanela() &&
+                          g_tutorialPasso == TUT_PASSO_MISSAO && !g_dialogLoaded;
+            float aTut = tutSil ? (0.35f + 0.35f * PulsoTutorial()) : 0.0f;
+            if (g_silAnim[i] > 0.05f || tutSil) {
                 float aOut = g_silAnim[i] > 1.0f ? 1.0f : g_silAnim[i];
-                Color corOut = Fade((Color){ 255, 242, 230, 255 }, 0.88f * aOut);
+                float alphaFinal = (0.88f * aOut > aTut) ? (0.88f * aOut) : aTut;
+                Color corOut = Fade((Color){ 255, 242, 230, 255 }, alphaFinal);
                 const Vector2 offs[4] = { { -1.2f, 0 }, { 1.2f, 0 }, { 0, -1.2f }, { 0, 1.2f } };
                 for (int d = 0; d < 4; d++) {
                     Rectangle rOut = { destVirt.x + offs[d].x, destVirt.y + offs[d].y, destVirt.width, destVirt.height };
@@ -4670,15 +4796,14 @@ void UpdateDrawGameplayScene(void) {
                            hov ? (Color){ 32, 29, 31, 255 } : (Color){ 255, 242, 230, 255 });
         }
         EndScissorMode();
-        DesenharHotspotsEvidencia();
-
         // Setas 3D de navegacao por cima da foto + destino ao passar o mouse
-        if (!TutorialAtivo()) {
+        {
             Texture2D setas = Setas3DTextura();
             DrawTexturePro(setas, (Rectangle){ 0, 0, (float)setas.width, -(float)setas.height },
                            ParaTela(JANELA_AREA), (Vector2){ 0, 0 }, 0.0f, WHITE);
             if (g_setaHover >= 0) DesenharRotuloSeta(g_setaHover);
         }
+        DesenharHotspotsEvidencia();
     }
 
     // Fundo animado procedural bem sutil nos quadrantes de demarcação (proeminentemente cor sólida original)
@@ -4786,11 +4911,6 @@ void UpdateDrawGameplayScene(void) {
     }
     // 5) Ficha do funcionario (por cima de tudo)
     if (g_fichaAtual >= 0) {
-        if (g_fichaAtual == 2) {
-            // Ana Lucia EV-01 (Nome Preferido) e EV-03 (Tempo de experiencia) vistos na ficha
-            RegistrarEvidenciaPorId(2, "EV-01");
-            RegistrarEvidenciaPorId(2, "EV-03");
-        }
         const Ficha *f = &g_fichas[g_fichaAtual];
         float x = g_fichaPos.x;
         float y = g_fichaPos.y;
@@ -4888,8 +5008,8 @@ void UpdateDrawGameplayScene(void) {
         DrawRectangleRec(ParaTela(JANELA_AREA), Fade((Color){ 0, 0, 0, 255 }, a));   // so a janela do local
     }
 
-    // Notificacoes de evidencias adquiridas no canto superior direito
-    AtualizarEDesenharNotificacoesEvidencia(GetFrameTime());
+    // Popup central obrigatorio ao adquirir nova evidencia
+    DesenharPopupEvidencia();
 
     RayCanvasEnd();
 }
