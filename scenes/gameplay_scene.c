@@ -29,7 +29,14 @@ static float     g_typewriterCharTimer   = 0.0f;
 static float     g_typewriterPauseTimer  = 0.0f;
 static int       g_typewriterLetterCount = 0;
 static Texture2D g_ditherTile;              // padrão Bayer 25% para escurecer mensagens anteriores
-static Sound     g_sndHover;                // som sutil e agradavel de hover nos botoes e ferramentas
+static Sound     g_sndHover;
+static Sound     g_sndPassos;               // passos ao trocar de local pelas setas
+// Transicao entre locais: escurece, fica preto com os passos e clareia ja no destino
+#define TRANS_ESCURECE 0.25f
+#define TRANS_PRETO    0.90f
+#define TRANS_CLAREIA  0.30f
+static float     g_transTempo = -1.0f;      // -1 = sem transicao
+static int       g_transDestino = 0;                // som sutil e agradavel de hover nos botoes e ferramentas
 static int       g_choiceHoverAnt        = -1;
 static int       g_setaHover             = -1;   // seta de navegacao sob o mouse (-1 = nenhuma)
 static int       g_setaHoverAnt          = -1;
@@ -2828,6 +2835,7 @@ void InitGameplayScene(void) {
     }
     MapaHoloInit(HOLO_SALAS, NUM_LOCAIS, HOLO_CORREDORES, NUM_HOLO_CORREDORES);
     Setas3DInit((int)JANELA_AREA.width, (int)JANELA_AREA.height, SETAS_POS);
+    g_sndPassos = FileExists("assets/audio/passos_2.wav") ? LoadSound("assets/audio/passos_2.wav") : (Sound){ 0 };
     g_setaHover = -1;
     g_setaHoverAnt = -1;
 
@@ -4053,7 +4061,12 @@ static void UpdateGameplay(void) {
                 hover = true;
                 if (clicou) {
                     FecharJanelasFerramentas();
-                    g_localAtual = (LocalRasec)DestinoSeta(g_localAtual, g_setaHover);
+                    g_transDestino = DestinoSeta(g_localAtual, g_setaHover);
+                    g_transTempo = 0.0f;   // o local muda no meio da tela preta
+                    if (g_sndPassos.frameCount > 0) {
+                        SetSoundVolume(g_sndPassos, 0.7f * SettingsGetSfxVolume());
+                        PlaySound(g_sndPassos);
+                    }
                     g_setaHover = -1;
                     SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
                     return;
@@ -4220,8 +4233,20 @@ void UpdateDrawGameplayScene(void) {
     ProcessarTeclaEsc();
     AtualizarTypewriter(GetFrameTime());
 
+    // Transicao andando de um local para o outro (bloqueia os cliques enquanto dura)
+    bool emTransicao = g_transTempo >= 0.0f;
+    if (emTransicao) {
+        float antes = g_transTempo;
+        g_transTempo += fminf(GetFrameTime(), 0.05f);
+        if (antes < TRANS_ESCURECE && g_transTempo >= TRANS_ESCURECE) g_localAtual = (LocalRasec)g_transDestino;
+        if (g_transTempo >= TRANS_ESCURECE + TRANS_PRETO + TRANS_CLAREIA) {
+            g_transTempo = -1.0f;
+            if (g_sndPassos.frameCount > 0) StopSound(g_sndPassos);
+        }
+    }
+
     // Os modais (abandonar run / confirmar dia), a ficha, o scanner deepfake e a prancheta ficam por cima de tudo
-    if (!UpdateConfirmarAbandonar() && !UpdateTutorialFinal() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
+    if (!emTransicao && !UpdateConfirmarAbandonar() && !UpdateTutorialFinal() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
         UpdateGameplay();
     }
 
@@ -4511,6 +4536,15 @@ void UpdateDrawGameplayScene(void) {
     // 10) Overlay do tutorial guiado no Dia 1
     DesenharTutorial();
 
+    // Janela do local fica preta na transicao entre locais
+    if (g_transTempo >= 0.0f) {
+        float t = g_transTempo, a;
+        if (t < TRANS_ESCURECE) a = t / TRANS_ESCURECE;
+        else if (t < TRANS_ESCURECE + TRANS_PRETO) a = 1.0f;
+        else a = 1.0f - (t - TRANS_ESCURECE - TRANS_PRETO) / TRANS_CLAREIA;
+        DrawRectangleRec(ParaTela(JANELA_AREA), Fade((Color){ 0, 0, 0, 255 }, a));   // so a janela do local
+    }
+
     RayCanvasEnd();
 }
 
@@ -4520,6 +4554,9 @@ void UnloadGameplayScene(void) {
     for (int i = 0; i < NUM_LOCAIS; i++) UnloadTexture(g_fundos[i]);
     MapaHoloUnload();
     Setas3DUnload();
+    g_transTempo = -1.0f;
+    if (g_sndPassos.frameCount > 0) UnloadSound(g_sndPassos);
+    g_sndPassos = (Sound){ 0 };
     if (g_faceRigShader.id > 0) {
         UnloadShader(g_faceRigShader);
         g_faceRigShader = (Shader){ 0 };

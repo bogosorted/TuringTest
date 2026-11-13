@@ -23,13 +23,19 @@
 #define AI_INDEX EMPLOYEE_LUCAS   // posicao 2 = Ana Lucia
 
 // Sons opcionais (ainda serao adicionados): carregados so se existirem
-#define SOM_TIRO  "assets/audio/sfx_veredito_tiro.wav"
-#define SOM_GRITO "assets/audio/sfx_veredito_grito.wav"
+#define SOM_TIRO "assets/audio/tiro_2.wav"
+// Grito de cada suspeito (mesma ordem de NOMES)
+static const char *SONS_GRITO[3] = {
+    "assets/audio/Grito_veredito_mulher.mp3",      // Maria Bianca
+    "assets/audio/Grito_veredito_masculino.mp3",   // Arthur
+    "assets/audio/Grito_Veredito_Robotico.mp3",    // Ana Lucia (IA)
+};
 
 #define TEMPO_GRITO      0.35f   // segundos depois do tiro
-#define TEMPO_ATE_TEXTO  1.8f    // segundos de tela preta antes do texto
+#define PRETO_DEPOIS_GRITO 0.8f  // segundos de tela preta depois do grito
+#define GRITO_MAX          1.6f  // espera no maximo isso do grito antes de seguir
 #define TEMPO_CLARAO     0.16f   // clarao da bala antes da tela ficar preta
-#define VELOCIDADE_FINAL 14.0f   // pixels virtuais por segundo que o texto do final sobe
+#define VELOCIDADE_FINAL 40.0f   // pixels virtuais por segundo que o texto do final sobe
 
 // Explicacao antes do veredito (logo depois de "Dia 4 - Veredito")
 static const char *TEXTO_INTRO =
@@ -79,11 +85,13 @@ static int       g_alvo = -1;        // em quem atirou
 static int       g_hover = -1;
 static int       g_hoverAnt = -1;
 static bool      g_gritou;
+static float     g_fimGrito = -1.0f; // quando o grito terminou (-1 = ainda tocando)
+static bool      g_textoCompleto;   // clique pula a subida do texto
 static bool      g_tentarDeNovo;
 static char      g_textoFinal[512];
 
 static Texture2D g_sil[3];
-static Sound     g_sndHover, g_sndTiro, g_sndGrito;
+static Sound     g_sndHover, g_sndTiro, g_sndGrito[3];
 
 static Texture2D g_sala;             // foto da sala (spr_veredito_sala.png, ja com dithering)
 static RenderTexture2D g_armaRT;     // arma 3D crua
@@ -310,7 +318,7 @@ void InitVerdictScene(void) {
     }
     g_sndHover = LoadSound("assets/audio/sfx_hover.wav");
     g_sndTiro  = CarregarSomOpcional(SOM_TIRO);
-    g_sndGrito = CarregarSomOpcional(SOM_GRITO);
+    for (int i = 0; i < 3; i++) g_sndGrito[i] = CarregarSomOpcional(SONS_GRITO[i]);
 
     g_dither = LoadShaderFromMemory(NULL, DITHER_FS);
     g_sala = LoadTexture("assets/sprites/veredito/spr_veredito_sala.png");
@@ -336,6 +344,7 @@ static void Atirar(int i) {
     g_tempo = 0.0f;
     g_recuo = 1.0f;
     g_gritou = false;
+    g_fimGrito = -1.0f;
     Tocar(g_sndTiro, 0.9f);
     if (g_alvo == AI_INDEX) snprintf(g_textoFinal, sizeof g_textoFinal, "%s", FINAL_ACERTO);
     else                    snprintf(g_textoFinal, sizeof g_textoFinal, FINAL_ERRO, NOMES[g_alvo]);
@@ -382,10 +391,15 @@ static void DesenharTextoFinal(void) {
     float altura = ContarLinhas(g_textoFinal) * 18.0f;
     float yFinal = (VIRTUAL_H - altura) / 2.0f;
     float y = VIRTUAL_H - g_tempo * VELOCIDADE_FINAL;
-    bool chegou = y <= yFinal;
+    bool clicou = !RayCanvasInputBlocked() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    if (!g_textoCompleto && y > yFinal && clicou) { g_textoCompleto = true; clicou = false; }   // clique: mostra tudo
+    bool chegou = g_textoCompleto || y <= yFinal;
     if (chegou) y = yFinal;
     DesenharLinhas(g_textoFinal, y, 14, COR_CLARA);
-    if (chegou && DesenharDicaClique("Clique para voltar ao menu")) g_tentarDeNovo = true;
+    if (chegou) {
+        DesenharDicaClique("Clique para voltar ao menu");
+        if (clicou) g_tentarDeNovo = true;
+    }
 }
 
 // Quebra "texto" em linhas que cabem em maxW (pixels de tela); devolve quantas linhas
@@ -571,8 +585,16 @@ void UpdateDrawVerdictScene(void) {
             DesenharLinhas(TEXTO_INTRO, (VIRTUAL_H - altura) / 2.0f - 10.0f, 14, Fade(COR_CLARA, alfa));
             if (g_tempo > 1.5f && DesenharDicaClique("Clique para entrar na sala")) { g_estado = ESTADO_MIRANDO; g_tempo = 0.0f; }
         } else if (g_estado == ESTADO_TIRO) {
-            if (!g_gritou && g_tempo >= TEMPO_GRITO) { Tocar(g_sndGrito, 0.9f); g_gritou = true; }
-            if (g_tempo >= TEMPO_ATE_TEXTO) { g_estado = ESTADO_FINAL; g_tempo = 0.0f; }
+            if (!g_gritou && g_tempo >= TEMPO_GRITO) { Tocar(g_sndGrito[g_alvo], 0.9f); g_gritou = true; }
+            // Espera o grito acabar e mais um pouco de tela preta antes do texto
+            // (no maximo GRITO_MAX segundos: o grito pode seguir tocando por baixo do texto)
+            if (g_gritou && g_fimGrito < 0.0f &&
+                (!IsSoundPlaying(g_sndGrito[g_alvo]) || g_tempo >= TEMPO_GRITO + GRITO_MAX)) g_fimGrito = g_tempo;
+            if (g_fimGrito >= 0.0f && g_tempo >= g_fimGrito + PRETO_DEPOIS_GRITO) {
+                g_estado = ESTADO_FINAL;
+                g_tempo = 0.0f;
+                g_textoCompleto = false;
+            }
         } else {
             DesenharTextoFinal();
         }
@@ -587,8 +609,11 @@ void UnloadVerdictScene(void) {
     for (int i = 0; i < 3; i++) UnloadTexture(g_sil[i]);
     if (g_sndHover.frameCount > 0) UnloadSound(g_sndHover);
     if (g_sndTiro.frameCount > 0)  UnloadSound(g_sndTiro);
-    if (g_sndGrito.frameCount > 0) UnloadSound(g_sndGrito);
-    g_sndHover = g_sndTiro = g_sndGrito = (Sound){ 0 };
+    for (int i = 0; i < 3; i++) {
+        if (g_sndGrito[i].frameCount > 0) UnloadSound(g_sndGrito[i]);
+        g_sndGrito[i] = (Sound){ 0 };
+    }
+    g_sndHover = g_sndTiro = (Sound){ 0 };
     UnloadTexture(g_sala);
     UnloadRenderTexture(g_armaRT);
     UnloadRenderTexture(g_armaFinal);
