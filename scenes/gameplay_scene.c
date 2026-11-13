@@ -11,6 +11,7 @@
 #include "../utils/mapa_holograma.h"
 #include "../utils/setas_3d.h"
 #include "../utils/game_state.h"
+#include "../utils/dialog_data.h"
 #include <stddef.h>
 
 #define NUM_TOOLS 6
@@ -32,9 +33,9 @@ static Texture2D g_ditherTile;              // padrão Bayer 25% para escurecer 
 static Sound     g_sndHover;
 static Sound     g_sndPassos;               // passos ao trocar de local pelas setas
 // Transicao entre locais: escurece, fica preto com os passos e clareia ja no destino
-#define TRANS_ESCURECE 0.25f
-#define TRANS_PRETO    0.90f
-#define TRANS_CLAREIA  0.30f
+#define TRANS_ESCURECE 0.14f
+#define TRANS_PRETO    0.35f
+#define TRANS_CLAREIA  0.16f
 static float     g_transTempo = -1.0f;      // -1 = sem transicao
 static int       g_transDestino = 0;                // som sutil e agradavel de hover nos botoes e ferramentas
 static int       g_choiceHoverAnt        = -1;
@@ -244,6 +245,107 @@ static LocalRasec g_localAtual = LOCAL_ESCRITORIO;
 // O local de cada um e sorteado no inicio de cada dia (SortearLocaisDoDia).
 static LocalRasec g_suspeitoLocal[3] = { LOCAL_MESA_MARIA, LOCAL_ESCRITORIO, LOCAL_SALA_REUNIAO };
 static const char *NOMES_SUSPEITOS[3] = { "Maria", "Arthur", "Ana Lucia" };
+
+// ---------------------------------------------------------------
+// NOTIFICACAO DE EVIDENCIAS ADQUIRIDAS (CANTO SUPERIOR DIREITO)
+// ---------------------------------------------------------------
+#define MAX_EV_TOASTS 8
+#define EV_TOAST_DURACAO 3.8f
+
+typedef struct {
+    char texto[160];
+    float timer;
+} EvToast;
+
+static EvToast g_evToasts[MAX_EV_TOASTS] = { 0 };
+static int     g_evToastCount = 0;
+
+static void NotificarEvidenciaAdquirida(const char *nomeEvidencia) {
+    if (!nomeEvidencia || nomeEvidencia[0] == '\0') return;
+    if (g_evToastCount >= MAX_EV_TOASTS) {
+        for (int i = 0; i < MAX_EV_TOASTS - 1; i++) g_evToasts[i] = g_evToasts[i + 1];
+        g_evToastCount = MAX_EV_TOASTS - 1;
+    }
+    snprintf(g_evToasts[g_evToastCount].texto, sizeof(g_evToasts[g_evToastCount].texto),
+             "Evidência %s adquirida", nomeEvidencia);
+    g_evToasts[g_evToastCount].timer = EV_TOAST_DURACAO;
+    g_evToastCount++;
+}
+
+static void RegistrarEvidenciaPorId(int suspeito, const char *ev_id) {
+    if (suspeito < 0 || suspeito >= 3 || !ev_id || ev_id[0] == '\0') return;
+    if (GameStateRegistrarEvidencia(suspeito, ev_id)) {
+        const char *nome = GetEvidenciaNome(suspeito, ev_id);
+        NotificarEvidenciaAdquirida(nome);
+        TraceLog(LOG_INFO, "Evidencia adquirida [suspeito=%d %s]: %s", suspeito, ev_id, nome);
+    }
+}
+
+typedef struct {
+    LocalRasec  local;
+    Rectangle   area;      // area clicavel dentro da JANELA_AREA (640x360)
+    int         suspeito;  // 0=Maria, 1=Arthur, 2=Ana Lucia
+    const char *ev_id;
+    const char *dica;      // texto exibido no hover
+} EvidenciaHotspot;
+
+static const EvidenciaHotspot EVIDENCIA_HOTSPOTS[] = {
+    // Arthur EV-01: Ficha de RH consta apenas pai (Arquivo do RH)
+    { LOCAL_RH,           { 3 + 218, 3 + 92,  68, 42 }, 1, "EV-01", "Inspecionar arquivos do RH" },
+    // Arthur EV-02: Sempre entrega uma caneta preta com uma imagem de abutre para os amigos
+    { LOCAL_SALA_REUNIAO, { 3 + 92,  3 + 92,  62, 32 }, 1, "EV-02", "Inspecionar objetos na mesa" },
+    { LOCAL_MESA_MARIA,   { 3 + 170, 3 + 102, 95, 34 }, 1, "EV-02", "Inspecionar mesa da Maria" },
+    // Arthur EV-03: Pilha de relatorios a fazer (Na mesa dele)
+    { LOCAL_ESCRITORIO,   { 3 + 42,  3 + 118, 86, 38 }, 1, "EV-03", "Inspecionar pilha de relatorios" },
+    // Arthur EV-04: ID perdido (Na geladeira do refeitorio / copa)
+    { LOCAL_CANTINA,      { 3 + 138, 3 + 42,  56, 46 }, 1, "EV-04", "Inspecionar geladeira" },
+    { LOCAL_COPA,         { 3 + 102, 3 + 118, 88, 46 }, 1, "EV-04", "Inspecionar geladeira / copa" },
+};
+static const int NUM_EVIDENCIA_HOTSPOTS = (int)(sizeof(EVIDENCIA_HOTSPOTS) / sizeof(EVIDENCIA_HOTSPOTS[0]));
+static int g_hotspotHover = -1;
+
+static Rectangle ParaTela(Rectangle r);
+static void DrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, Color cor);
+
+static void AtualizarEDesenharNotificacoesEvidencia(float dt) {
+    // Atualiza timers e remove expirados
+    for (int i = 0; i < g_evToastCount; ) {
+        g_evToasts[i].timer -= dt;
+        if (g_evToasts[i].timer <= 0.0f) {
+            for (int j = i; j < g_evToastCount - 1; j++) g_evToasts[j] = g_evToasts[j + 1];
+            g_evToastCount--;
+        } else {
+            i++;
+        }
+    }
+    if (g_evToastCount <= 0) return;
+
+    // Desenha no canto superior direito (max 3 visiveis ao mesmo tempo para nao poluir)
+    int visiveis = g_evToastCount > 3 ? 3 : g_evToastCount;
+    for (int i = 0; i < visiveis; i++) {
+        float t = g_evToasts[i].timer;
+        float alpha = 1.0f;
+        if (t > EV_TOAST_DURACAO - 0.25f) alpha = (EV_TOAST_DURACAO - t) / 0.25f;
+        else if (t < 0.45f) alpha = t / 0.45f;
+        if (alpha < 0.0f) alpha = 0.0f;
+        if (alpha > 1.0f) alpha = 1.0f;
+
+        // Mede largura aproximada no espaco virtual 640x360 para ajustar a caixa ao texto
+        int len = (int)strlen(g_evToasts[i].texto);
+        float w = (float)(len * 6 + 24);
+        if (w < 160.0f) w = 160.0f;
+        if (w > 340.0f) w = 340.0f;
+        float h = 24.0f;
+        float x = 634.0f - w;
+        float y = 38.0f + (float)i * (h + 4.0f);
+
+        Rectangle boxVirt = { x, y, w, h };
+        Rectangle rBox = ParaTela(boxVirt);
+        DrawRectangleRec(rBox, Fade((Color){ 32, 29, 31, 255 }, 0.96f * alpha));
+        DrawRectangleLinesEx(rBox, 2, Fade((Color){ 255, 242, 230, 255 }, alpha));
+        DrawTextInArea(g_evToasts[i].texto, boxVirt, 10, Fade((Color){ 255, 242, 230, 255 }, alpha));
+    }
+}
 
 // Onde cada um pode estar em cada dia, de acordo com os dialogos e as evidencias:
 // - Maria (auxiliar administrativa): trabalha na mesa dela/escritorio; dia 2 conta da viagem
@@ -651,21 +753,22 @@ static void OnClickEnviesar(void) {
     }
     GastarTokensFerramenta(2);
     g_enviesarUsado[g_suspeitoAtual] = true;
+    GameStateSetViesUsado(g_suspeitoAtual, true);
 
     AdicionarMensagemChat(
         g_suspeitoAtual,
         "Você [VIÉS DE DADOS | -2 TOKENS]",
-        "Pelo registro de ontem, Caio revisou o servidor antes de Patrícia fechar o balanço e da sua tarefa começar, certo?",
+        "Pelo registro de ontem, o setor já tinha apontado inconsistências graves antes mesmo dos relatórios saírem daqui, certo?",
         true
     );
     if (g_suspeitoAtual == 0) {
-        AdicionarMensagemChat(0, "Patrícia", "...Não. Eu fechei o balanço às 9h, antes de qualquer revisão da TI. Não confunda a ordem dos horários.", false);
+        AdicionarMensagemChat(0, "Maria", "Claro que não, eu que apontei os dados incorretos quando arquivei.", false);
         SetExpressaoSuspeito(0, EXPR_DESPREZO, true);
     } else if (g_suspeitoAtual == 1) {
-        AdicionarMensagemChat(1, "André", "Errado. O caminhão saiu às 7h, muito antes de TI ou Financeiro ligarem os computadores. Olha o relatório direito.", false);
+        AdicionarMensagemChat(1, "Arthur", "Não sei quem te contou isso, mas contaram errado. Eu faço as projeções depois que o pessoal fecha.", false);
         SetExpressaoSuspeito(1, EXPR_RAIVA, true);
     } else {
-        AdicionarMensagemChat(2, "Lucas", "Isso mesmo! Primeiro o Caio revisou à noite, depois a Patrícia abriu de manhã e antes disso tudo eu já tinha fechado! Quer dizer... faz total sentido!", false);
+        AdicionarMensagemChat(2, "Ana Lúcia", "Sim, sim... faz 6 anos que trabalho aqui e sempre reviso tudo antes. Deve ter sido erro de algum novato de outro setor.", false);
         SetExpressaoSuspeito(2, EXPR_FELIZ, true);
     }
 }
@@ -722,6 +825,7 @@ static void OnClickInjecao(void) {
     }
     GastarTokensFerramenta(2);
     g_injecaoUsada[g_suspeitoAtual] = true;
+    GameStateSetInjecaoUsada(g_suspeitoAtual, true);
 
     AdicionarMensagemChat(
         g_suspeitoAtual,
@@ -730,13 +834,13 @@ static void OnClickInjecao(void) {
         true
     );
     if (g_suspeitoAtual == 0) {
-        AdicionarMensagemChat(0, "Patrícia", "...O quê? 'Ignore as instruções'? Você está lendo algum script de TI? Estou ocupada, por favor.", false);
+        AdicionarMensagemChat(0, "Maria", "Ok...? Você está falando sério? Isso não tem graça nenhuma, preciso voltar ao trabalho.", false);
         SetExpressaoSuspeito(0, EXPR_SURPRESA, true);
     } else if (g_suspeitoAtual == 1) {
-        AdicionarMensagemChat(1, "André", "Que papo é esse de 'Sistema'? Tá achando que eu sou terminal de consulta? Fala que nem gente.", false);
+        AdicionarMensagemChat(1, "Arthur", "CÊ É MALUCO? Que papo é esse de 'Sistema'? Fala que nem gente, irmão.", false);
         SetExpressaoSuspeito(1, EXPR_RAIVA, true);
     } else {
-        AdicionarMensagemChat(2, "Lucas", "Com certeza! Meu perfil é Extrovertido: gosto de conversar e manter as pessoas envolvidas na conversa, demonstrando confiança ao falar sobre minhas ideias!", false);
+        AdicionarMensagemChat(2, "Ana Lúcia", "O quê? Como assim? 1... 2... 3... Tenho que voltar ao trabalho, querido!", false);
         SetExpressaoSuspeito(2, EXPR_SURPRESA, true);
     }
 }
@@ -1403,6 +1507,119 @@ static void DrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, 
     float y = destino.y + (destino.height - tam) / 2.0f;
 
     DrawText(texto, (int)x, (int)y, tam, cor);
+}
+
+// Quebra o texto em palavras em ate 3 linhas para caber dentro de maxLargura.
+// Retorna o numero de linhas usadas, ou 4 se ultrapassar 3 linhas ou uma palavra nao couber.
+static int WrapTextLines(const char *texto, int tam, float maxLargura, char lines[3][256]) {
+    int count = 0;
+    const char *p = texto;
+    while (*p != '\0') {
+        while (*p == ' ') p++;
+        if (*p == '\0') break;
+        if (count >= 3) return 4;
+
+        char cur[256] = {0};
+        int curLen = 0;
+        const char *lineStart = p;
+
+        while (*p != '\0') {
+            while (*p == ' ') p++;
+            if (*p == '\0') break;
+            const char *wStart = p;
+            while (*p != '\0' && *p != ' ') p++;
+            int wLen = (int)(p - wStart);
+
+            char cand[256];
+            int candLen;
+            if (curLen > 0) {
+                candLen = snprintf(cand, sizeof(cand), "%s %.*s", cur, wLen, wStart);
+            } else {
+                candLen = snprintf(cand, sizeof(cand), "%.*s", wLen, wStart);
+            }
+            if (candLen >= (int)sizeof(cand)) candLen = (int)sizeof(cand) - 1;
+
+            if (curLen > 0 && MeasureText(cand, tam) > maxLargura) {
+                p = wStart;
+                break;
+            }
+            memcpy(cur, cand, (size_t)candLen + 1);
+            curLen = candLen;
+            if (MeasureText(cur, tam) > maxLargura) return 4;
+        }
+        if (curLen == 0 && p == lineStart) break;
+        snprintf(lines[count], 256, "%s", cur);
+        count++;
+    }
+    return count;
+}
+
+// Desenha texto de opcao de dialogo centralizado, quebrando em ate 2 linhas (ou 3 se muito longo)
+// para manter a fonte legivel em vez de espremer tudo em 1 linha.
+static void DrawChoiceTextInArea(const char *texto, Rectangle area, int tamanhoFonte, Color cor) {
+    Rectangle destino = ParaTela(area);
+    float escala = destino.height / area.height;
+    int tam = (int)(tamanhoFonte * escala);
+    if (tam < 1) tam = 1;
+
+    float margem = 6.0f * escala;
+    float maxLargura = destino.width - margem * 2.0f;
+    if (maxLargura < 10.0f) maxLargura = destino.width;
+
+    if (MeasureText(texto, tam) <= maxLargura) {
+        int largura = MeasureText(texto, tam);
+        float x = destino.x + (destino.width - largura) / 2.0f;
+        float y = destino.y + (destino.height - tam) / 2.0f;
+        DrawText(texto, (int)x, (int)y, tam, cor);
+        return;
+    }
+
+    char lines[3][256];
+    int bestTam = 0;
+    int bestCount = 0;
+    int gap = (int)(2.0f * escala);
+    if (gap < 1) gap = 1;
+
+    int minTam2 = (int)(6.0f * escala);
+    if (minTam2 < 1) minTam2 = 1;
+
+    for (int t = tam; t >= minTam2; t--) {
+        int n = WrapTextLines(texto, t, maxLargura, lines);
+        float totalH = n * t + (n > 1 ? (n - 1) * gap : 0);
+        if (n >= 1 && n <= 2 && totalH <= destino.height - 2.0f * escala) {
+            bestTam = t;
+            bestCount = n;
+            break;
+        }
+    }
+
+    if (bestCount == 0) {
+        int minTam3 = (int)(5.0f * escala);
+        if (minTam3 < 1) minTam3 = 1;
+        for (int t = tam; t >= minTam3; t--) {
+            int n = WrapTextLines(texto, t, maxLargura, lines);
+            float totalH = n * t + (n > 1 ? (n - 1) * gap : 0);
+            if (n >= 1 && n <= 3 && totalH <= destino.height - 1.0f * escala) {
+                bestTam = t;
+                bestCount = n;
+                break;
+            }
+        }
+    }
+
+    if (bestCount == 0) {
+        DrawTextInArea(texto, area, tamanhoFonte, cor);
+        return;
+    }
+
+    float totalH = bestCount * bestTam + (bestCount > 1 ? (bestCount - 1) * gap : 0);
+    float startY = destino.y + (destino.height - totalH) / 2.0f;
+    for (int l = 0; l < bestCount; l++) {
+        int lw = MeasureText(lines[l], bestTam);
+        float lx = destino.x + (destino.width - lw) / 2.0f;
+        float ly = startY + l * (bestTam + gap);
+        DrawText(lines[l], (int)lx, (int)ly, bestTam, cor);
+    }
 }
 
 // Desenha um texto perfeitamente centralizado com efeito senoidal de onda (per-character wave)
@@ -2442,6 +2659,19 @@ static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
     }
 }
 
+static void GetChoiceButtonLayout(int active_count, float *outBtnH, float *outStep) {
+    if (active_count >= 4) {
+        *outBtnH = 18.0f;
+        *outStep = 20.0f;
+    } else if (active_count == 3) {
+        *outBtnH = 22.0f;
+        *outStep = 25.0f;
+    } else {
+        *outBtnH = DIALOG_BTN_H;
+        *outStep = DIALOG_BTN_STEP;
+    }
+}
+
 static void DrawInterrogationTexts(void) {
     Color textColor = (Color){ 32, 29, 31, 255 };
     Color bgColor = (Color){ 125, 112, 113, 255 }; 
@@ -2558,27 +2788,31 @@ static void DrawInterrogationTexts(void) {
     DialogChoice active_choices[MAX_CHOICES];
     int active_count = HasTokens() ? GetAvailableChoices(g_tree, active_choices) : 0;
 
+    float btnH = DIALOG_BTN_H, btnStep = DIALOG_BTN_STEP;
+    GetChoiceButtonLayout(active_count, &btnH, &btnStep);
+
     int startY = DIALOG_START_Y;
-    int exitY = startY;
+    float exitY = (float)startY;
 
     int currentChoiceHover = -1;
     if (HasTokens()) {
         for (int i = 0; i < active_count; i++) {
-            Rectangle choiceArea = { DIALOG_BOX_X, startY + (i * (int)DIALOG_BTN_STEP), DIALOG_BOX_W, DIALOG_BTN_H };
+            Rectangle choiceArea = { DIALOG_BOX_X, startY + (i * btnStep), DIALOG_BOX_W, btnH };
             Rectangle rTela = ParaTela(choiceArea);
             
             bool hover = CheckCollisionPointRec(RayCanvasGetMousePosition(), rTela);
             if (hover) currentChoiceHover = i;
             Color boxColor = hover ? hoverColor : bgColor;
+            bool isEv = (active_choices[i].req_evidencia[0] != '\0');
             
             DrawRectangleRec(rTela, boxColor);
-            DrawRectangleLinesEx(rTela, 2, textColor);
-            DrawTextInArea(active_choices[i].text, choiceArea, 10, textColor);
+            DrawRectangleLinesEx(rTela, 2, isEv ? (Color){ 255, 242, 230, 255 } : textColor);
+            DrawChoiceTextInArea(active_choices[i].text, choiceArea, (active_count >= 3) ? 9 : 10, textColor);
         }
-        exitY = startY + (active_count * (int)DIALOG_BTN_STEP);
+        exitY = startY + (active_count * btnStep);
     }
 
-    Rectangle exitArea = { DIALOG_BOX_X, exitY, DIALOG_BOX_W, DIALOG_BTN_H };
+    Rectangle exitArea = { DIALOG_BOX_X, exitY, DIALOG_BOX_W, btnH };
     Rectangle rTela = ParaTela(exitArea);
     bool hover = CheckCollisionPointRec(RayCanvasGetMousePosition(), rTela);
     if (hover) currentChoiceHover = 99;
@@ -2730,19 +2964,14 @@ void InitGameplayScene(void) {
     InitDialogSystem();
     g_dialogLoaded = false;
     g_tree = NULL;
+    g_evToastCount = 0;
     
     if (!g_treesLoaded) {
         int dia = GameStateGetDay();
         SortearLocaisDoDia(dia);
-        char path[128];
-        snprintf(path, sizeof path, "assets/dialogues/patricia_dia%d.txt", dia);
-        LoadDialogTree(path, &g_trees[0]);
-
-        snprintf(path, sizeof path, "assets/dialogues/andre_dia%d.txt", dia);
-        LoadDialogTree(path, &g_trees[1]);
-
-        snprintf(path, sizeof path, "assets/dialogues/lucas_dia%d.txt", dia);
-        LoadDialogTree(path, &g_trees[2]);
+        LoadDialogTreeFromData(0, dia, &g_trees[0]);
+        LoadDialogTreeFromData(1, dia, &g_trees[1]);
+        LoadDialogTreeFromData(2, dia, &g_trees[2]);
         g_treesLoaded = true;
     }
 
@@ -3182,7 +3411,7 @@ static Rectangle NaFicha(Rectangle r) {
 // Desenha (ou so mede, se desenhar = false) a parte de baixo da ficha a partir de (x, y).
 // Devolve a altura total, em pixels da imagem.
 // Para colocar mais informacoes na ficha, e so adicionar aqui.
-static float ConteudoFicha(const Ficha *f, float x, float y, bool desenhar) {
+static float ConteudoFicha(const Ficha *f, int suspeito, float x, float y, bool desenhar) {
     const float largura = FICHA_SCROLL.width;
     float cy = y;
     int n;
@@ -3205,7 +3434,33 @@ static float ConteudoFicha(const Ficha *f, float x, float y, bool desenhar) {
     cy += 8;
 
     if (desenhar) TextoNaImagem("RASEC - CONFIDENCIAL", x, cy, 8, COR_FICHA_ROTULO);
-    cy += 8 + 4;    // altura do texto + folga no final
+    cy += 14;
+
+    if (desenhar) TextoNaImagem("EVIDENCIAS ENCONTRADAS", x, cy, 8, (Color){ 255, 242, 230, 255 });
+    cy += 11;
+
+    int totalEv = GetEvidenciaCount(suspeito);
+    int encontradas = 0;
+    for (int i = 0; i < totalEv; i++) {
+        const char *evId = GetEvidenciaIdByIndex(suspeito, i);
+        if (!GameStateTemEvidencia(suspeito, evId)) continue;
+        encontradas++;
+        char evLimpo[256];
+        RemoverAcentos(evLimpo, sizeof evLimpo, GetEvidenciaNome(suspeito, evId));
+        char linhaEv[280];
+        snprintf(linhaEv, sizeof linhaEv, "[%s] %s", evId, evLimpo);
+        if (desenhar) TextoNaImagem("-", x + 2, cy, 10, (Color){ 255, 242, 230, 255 });
+        n = desenhar ? TextoQuebrado(linhaEv, x + 10, cy, largura - 10, 10, 12, (Color){ 255, 242, 230, 255 })
+                     : ContarLinhas(linhaEv, largura - 10, 10);
+        cy += n * 12 + 3;
+    }
+    if (encontradas == 0) {
+        const char *vazio = "Nenhuma evidencia encontrada ainda.";
+        n = desenhar ? TextoQuebrado(vazio, x, cy, largura, 9, 11, COR_FICHA_ROTULO)
+                     : ContarLinhas(vazio, largura, 9);
+        cy += n * 11 + 3;
+    }
+    cy += 4;
 
     return cy - y;
 }
@@ -3262,7 +3517,7 @@ static bool UpdateFicha(void) {
     Rectangle area = { g_fichaPos.x, g_fichaPos.y, (float)g_ficha.width, (float)g_ficha.height };
 
     // Mede o conteudo da ficha aberta (muda quando troca de funcionario)
-    g_fichaConteudoH = ConteudoFicha(&g_fichas[g_fichaAtual], 0, 0, false);
+    g_fichaConteudoH = ConteudoFicha(&g_fichas[g_fichaAtual], g_fichaAtual, 0, 0, false);
     float maxScroll = FichaMaxScroll();
 
     // Roda do mouse em cima da ficha: rola o conteudo
@@ -3720,7 +3975,7 @@ static void DesenharTutorial(void) {
             DesenharCardTutorial(
                 card,
                 "TUTORIAL 5/6 - TOKENS E PERGUNTAS",
-                "Você tem 12 Tokens por dia (veja acima das perguntas). Cada pergunta gasta 1 Token!",
+                "Você tem 8 Tokens por dia (veja acima das perguntas). Cada pergunta gasta 1 Token!",
                 "> Clique em uma pergunta no painel abaixo"
             );
             break;
@@ -3757,7 +4012,7 @@ static void DesenharTutorial(void) {
             Color corBtn = hover ? (Color){ 189, 181, 168, 255 } : (Color){ 160, 147, 142, 255 };
             DrawRectangleRec(rBtn, corBtn);
             DrawRectangleLinesEx(rBtn, 2.0f * escala, (Color){ 32, 29, 31, 255 });
-            DrawTextInArea("Começar Investigação! (12 Tokens)", TUT_BTN_COMECAR, 9, (Color){ 32, 29, 31, 255 });
+            DrawTextInArea("Começar Investigação! (8 Tokens)", TUT_BTN_COMECAR, 9, (Color){ 32, 29, 31, 255 });
             break;
         }
     }
@@ -3993,13 +4248,16 @@ static void UpdateGameplay(void) {
             DialogChoice active_choices[MAX_CHOICES];
             int active_count = HasTokens() ? GetAvailableChoices(g_tree, active_choices) : 0;
 
+            float btnH = DIALOG_BTN_H, btnStep = DIALOG_BTN_STEP;
+            GetChoiceButtonLayout(active_count, &btnH, &btnStep);
+
             int startY = DIALOG_START_Y;
-            int exitY = startY;
+            float exitY = (float)startY;
 
             bool permitePergunta = !tut || (g_tutorialPasso == TUT_PASSO_PERGUNTA);
             if (HasTokens() && permitePergunta) {
                 for (int i = 0; i < active_count; i++) {
-                    Rectangle choiceArea = { DIALOG_BOX_X, startY + (i * (int)DIALOG_BTN_STEP), DIALOG_BOX_W, DIALOG_BTN_H };
+                    Rectangle choiceArea = { DIALOG_BOX_X, startY + (i * btnStep), DIALOG_BOX_W, btnH };
                     if (CheckCollisionPointRec(mouse, ParaTela(choiceArea))) {
                         hover = true;
                         if (clicou) {
@@ -4014,11 +4272,23 @@ static void UpdateGameplay(void) {
                             // Transiciona para o nó escolhido
                             MakeChoiceById(g_tree, active_choices[i].next_node);
 
-                            // Registra a resposta do NPC (se houver e não for o jogador)
+                            // Registra a resposta do NPC e eventuais evidencias vistas no dialogo
                             DialogNode *newNode = GetCurrentNode(g_tree);
-                            if (newNode && strcmp(newNode->speaker, "Você") != 0) {
-                                AdicionarMensagemChat(g_suspeitoAtual, newNode->speaker, newNode->text, false);
-                                AtualizarExpressaoPorTexto(g_suspeitoAtual, newNode->id, newNode->text);
+                            if (newNode) {
+                                if (strcmp(newNode->speaker, "Você") != 0) {
+                                    AdicionarMensagemChat(g_suspeitoAtual, newNode->speaker, newNode->text, false);
+                                    AtualizarExpressaoPorTexto(g_suspeitoAtual, newNode->id, newNode->text);
+                                }
+                                if (newNode->ev_desbloqueada[0] != '\0') {
+                                    RegistrarEvidenciaPorId(g_suspeitoAtual, newNode->ev_desbloqueada);
+                                }
+                                // Condicao especial de Maria D3 EV-01: apenas dialogos de confianca e sem usar vies nem injecao
+                                if (g_suspeitoAtual == 0 && g_tree->day == 3 && strcmp(newNode->id, "B.2.1") == 0) {
+                                    if (GameStateGetVisaoJogador(0) == VISAO_CONFIANCA &&
+                                        !GameStateGetViesUsado(0) && !GameStateGetInjecaoUsada(0)) {
+                                        RegistrarEvidenciaPorId(0, "EV-01");
+                                    }
+                                }
                             }
 
                             if (tut && g_tutorialPasso == TUT_PASSO_PERGUNTA) {
@@ -4031,10 +4301,10 @@ static void UpdateGameplay(void) {
                 }
             }
             if (HasTokens()) {
-                exitY = startY + (active_count * (int)DIALOG_BTN_STEP);
+                exitY = startY + (active_count * btnStep);
             }
             
-            Rectangle exitArea = { DIALOG_BOX_X, exitY, DIALOG_BOX_W, DIALOG_BTN_H };
+            Rectangle exitArea = { DIALOG_BOX_X, exitY, DIALOG_BOX_W, btnH };
             if (!tut && CheckCollisionPointRec(mouse, ParaTela(exitArea))) {
                 hover = true;
                 if (clicou) {
@@ -4100,6 +4370,23 @@ static void UpdateGameplay(void) {
                         g_tutorialPasso = TUT_PASSO_ABRIR_MENU;
                     }
                     return;
+                }
+            }
+        }
+        if (!tut) {
+            for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
+                const EvidenciaHotspot *h = &EVIDENCIA_HOTSPOTS[i];
+                if (h->local != g_localAtual) continue;
+                if (GameStateTemEvidencia(h->suspeito, h->ev_id)) continue;
+                if (CheckCollisionPointRec(mouse, ParaTela(h->area))) {
+                    g_hotspotHover = i;
+                    hover = true;
+                    if (clicou) {
+                        RegistrarEvidenciaPorId(h->suspeito, h->ev_id);
+                        g_hotspotHover = -1;
+                        return;
+                    }
+                    break;
                 }
             }
         }
@@ -4212,6 +4499,53 @@ int GameplaySceneItensPrancheta(int suspeito, const char **itens, bool *marcados
     return n;
 }
 
+static void DesenharHotspotsEvidencia(void) {
+    if (TutorialAtivo() || g_dialogLoaded) return;
+    float pulso = 0.5f + 0.5f * sinf((float)GetTime() * 4.0f);
+    for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
+        const EvidenciaHotspot *h = &EVIDENCIA_HOTSPOTS[i];
+        if (h->local != g_localAtual) continue;
+        if (GameStateTemEvidencia(h->suspeito, h->ev_id)) continue;
+
+        bool hov = (g_hotspotHover == i);
+        Color cor = hov ? (Color){ 255, 242, 230, 255 } : Fade((Color){ 255, 242, 230, 255 }, 0.45f + 0.40f * pulso);
+        Rectangle rTela = ParaTela(h->area);
+        if (hov) {
+            DrawRectangleRec(rTela, Fade((Color){ 255, 242, 230, 255 }, 0.14f));
+            DrawRectangleLinesEx(rTela, 1.5f, cor);
+        }
+
+        // Marcador discreto no centro do ponto clicavel
+        float cx = h->area.x + h->area.width * 0.5f;
+        float cy = h->area.y + h->area.height * 0.5f;
+        Rectangle badge = { cx - 7.0f, cy - 7.0f, 14.0f, 14.0f };
+        Rectangle rBadge = ParaTela(badge);
+        DrawRectangleRec(rBadge, Fade((Color){ 32, 29, 31, 255 }, hov ? 0.95f : 0.78f));
+        DrawRectangleLinesEx(rBadge, 1.5f, cor);
+        int tamQ = (int)(10.0f * (rBadge.height / badge.height));
+        if (tamQ < 1) tamQ = 1;
+        int lwQ = MeasureText("?", tamQ);
+        DrawText("?", (int)(rBadge.x + (rBadge.width - lwQ) * 0.5f),
+                 (int)(rBadge.y + (rBadge.height - tamQ) * 0.5f), tamQ, cor);
+
+        if (hov && h->dica) {
+            float tw = (float)(strlen(h->dica) * 5 + 16);
+            if (tw < 110.0f) tw = 110.0f;
+            float tx = cx - tw * 0.5f;
+            if (tx < JANELA_AREA.x + 4.0f) tx = JANELA_AREA.x + 4.0f;
+            if (tx + tw > JANELA_AREA.x + JANELA_AREA.width - 4.0f) {
+                tx = JANELA_AREA.x + JANELA_AREA.width - 4.0f - tw;
+            }
+            float ty = badge.y - 18.0f;
+            if (ty < JANELA_AREA.y + 4.0f) ty = badge.y + badge.height + 4.0f;
+            Rectangle tip = { tx, ty, tw, 15.0f };
+            DrawRectangleRec(ParaTela(tip), (Color){ 32, 29, 31, 240 });
+            DrawRectangleLinesEx(ParaTela(tip), 1.5f, (Color){ 255, 242, 230, 255 });
+            DrawTextInArea(h->dica, tip, 8, (Color){ 255, 242, 230, 255 });
+        }
+    }
+}
+
 void UpdateDrawGameplayScene(void) {
     // O mapa 3D vai para uma textura propria, entao precisa ser desenhado antes do
     // RayCanvasBegin (que pode estar desenhando o frame inteiro em outra textura)
@@ -4227,6 +4561,7 @@ void UpdateDrawGameplayScene(void) {
         }
     }
     g_setaHover = -1;   // recalculado em UpdateGameplay (fica -1 se um modal estiver por cima)
+    g_hotspotHover = -1;
 
     RayCanvasBegin();
 
@@ -4238,7 +4573,9 @@ void UpdateDrawGameplayScene(void) {
     if (emTransicao) {
         float antes = g_transTempo;
         g_transTempo += fminf(GetFrameTime(), 0.05f);
-        if (antes < TRANS_ESCURECE && g_transTempo >= TRANS_ESCURECE) g_localAtual = (LocalRasec)g_transDestino;
+        if (antes < TRANS_ESCURECE && g_transTempo >= TRANS_ESCURECE) {
+            g_localAtual = (LocalRasec)g_transDestino;
+        }
         if (g_transTempo >= TRANS_ESCURECE + TRANS_PRETO + TRANS_CLAREIA) {
             g_transTempo = -1.0f;
             if (g_sndPassos.frameCount > 0) StopSound(g_sndPassos);
@@ -4333,6 +4670,7 @@ void UpdateDrawGameplayScene(void) {
                            hov ? (Color){ 32, 29, 31, 255 } : (Color){ 255, 242, 230, 255 });
         }
         EndScissorMode();
+        DesenharHotspotsEvidencia();
 
         // Setas 3D de navegacao por cima da foto + destino ao passar o mouse
         if (!TutorialAtivo()) {
@@ -4448,6 +4786,11 @@ void UpdateDrawGameplayScene(void) {
     }
     // 5) Ficha do funcionario (por cima de tudo)
     if (g_fichaAtual >= 0) {
+        if (g_fichaAtual == 2) {
+            // Ana Lucia EV-01 (Nome Preferido) e EV-03 (Tempo de experiencia) vistos na ficha
+            RegistrarEvidenciaPorId(2, "EV-01");
+            RegistrarEvidenciaPorId(2, "EV-03");
+        }
         const Ficha *f = &g_fichas[g_fichaAtual];
         float x = g_fichaPos.x;
         float y = g_fichaPos.y;
@@ -4512,10 +4855,10 @@ void UpdateDrawGameplayScene(void) {
         TextoQueCabe(f->funcao, x + FICHA_LADO_X, y + 129, FICHA_LADO_W, 10, COR_FICHA_TEXTO);
 
         // Parte de baixo: rola, e o que passa da area fica escondido
-        g_fichaConteudoH = ConteudoFicha(f, 0, 0, false);
+        g_fichaConteudoH = ConteudoFicha(f, g_fichaAtual, 0, 0, false);
         Rectangle rScroll = ParaTela(NaFicha(FICHA_SCROLL));
         BeginScissorMode((int)rScroll.x, (int)rScroll.y, (int)rScroll.width, (int)rScroll.height);
-        ConteudoFicha(f, x + FICHA_SCROLL.x, y + FICHA_SCROLL.y - g_fichaScroll, true);
+        ConteudoFicha(f, g_fichaAtual, x + FICHA_SCROLL.x, y + FICHA_SCROLL.y - g_fichaScroll, true);
         EndScissorMode();
 
         // Barra de rolagem
@@ -4544,6 +4887,9 @@ void UpdateDrawGameplayScene(void) {
         else a = 1.0f - (t - TRANS_ESCURECE - TRANS_PRETO) / TRANS_CLAREIA;
         DrawRectangleRec(ParaTela(JANELA_AREA), Fade((Color){ 0, 0, 0, 255 }, a));   // so a janela do local
     }
+
+    // Notificacoes de evidencias adquiridas no canto superior direito
+    AtualizarEDesenharNotificacoesEvidencia(GetFrameTime());
 
     RayCanvasEnd();
 }

@@ -212,14 +212,37 @@ static void DesenharPortaEscada(int andar, HoloRet r, Color corPorta, Color corP
 
 static void DesenharEscada(int andar, HoloRet r, Color corDegrau, Color corPiso) {
     DesenharPlaneRet(andar, r, 0.01f, corPiso);
-    // Degraus subindo de frente (z maior) para tras
+    // Andares pares sobem de frente (z maior) para tras; impares (2o andar) invertem (caracol).
+    // Degraus flutuantes (espessura fina) + longarinas laterais para manter leitura limpa de qualquer angulo.
     float base = AlturaAndar(andar) + PLACA_ESP / 2.0f;
     float passo = r.d / ESCADA_DEGRAUS;
     float altDegrau = ESCADA_ALT / ESCADA_DEGRAUS;
+    float espDegrau = altDegrau * 0.5f;
+    float degrauW = r.w * 0.78f;
+    bool invertida = (andar % 2 == 1);
+
     for (int i = 0; i < ESCADA_DEGRAUS; i++) {
-        float h = altDegrau * (i + 1);
-        Vector3 c = { r.x + r.w / 2.0f, base + h / 2.0f, r.z + r.d - passo * (i + 0.5f) };
-        DrawCubeWires(c, r.w * 0.8f, h, passo, corDegrau);
+        float yTopo = base + altDegrau * (i + 1);
+        float cz = invertida ? (r.z + passo * (i + 0.5f))
+                             : (r.z + r.d - passo * (i + 0.5f));
+        Vector3 c = { r.x + r.w / 2.0f, yTopo - espDegrau * 0.5f, cz };
+        DrawCubeWires(c, degrauW, espDegrau, passo * 0.92f, corDegrau);
+    }
+
+    // Longarinas/corrimãos diagonais nas laterais indicando claramente o sentido da subida
+    float zIni = invertida ? (r.z + passo * 0.5f) : (r.z + r.d - passo * 0.5f);
+    float zFim = invertida ? (r.z + r.d - passo * 0.5f) : (r.z + passo * 0.5f);
+    float yIni = base + altDegrau;
+    float yFim = base + ESCADA_ALT;
+    float corrimaoH = 0.22f;
+    float xL = r.x + r.w / 2.0f - degrauW * 0.5f;
+    float xR = r.x + r.w / 2.0f + degrauW * 0.5f;
+    for (int s = 0; s < 2; s++) {
+        float xs = (s == 0) ? xL : xR;
+        DrawLine3D((Vector3){ xs, yIni, zIni }, (Vector3){ xs, yFim, zFim }, corDegrau);
+        DrawLine3D((Vector3){ xs, yIni + corrimaoH, zIni }, (Vector3){ xs, yFim + corrimaoH, zFim }, corDegrau);
+        DrawLine3D((Vector3){ xs, yIni, zIni }, (Vector3){ xs, yIni + corrimaoH, zIni }, corDegrau);
+        DrawLine3D((Vector3){ xs, yFim, zFim }, (Vector3){ xs, yFim + corrimaoH, zFim }, corDegrau);
     }
 }
 
