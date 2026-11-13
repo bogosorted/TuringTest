@@ -4,11 +4,14 @@
 #include "../utils/options_ui.h"
 #include "../utils/raycanvas.h"
 #include "../utils/dialog_system.h"
+#include "../utils/game_state.h"
+#include "../utils/ranking.h"
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
 
-#define NUM_BUTTONS 3
+#define NUM_BUTTONS 4
 #define TELA_W 640
 #define TELA_H 360
 
@@ -35,7 +38,7 @@ static int       g_painelTex2Loc = -1;
 static Font      g_fonte;               // fonte pixel do menu (VT323)
 static Sound     g_sndHover;            // som sutil ao passar o mouse nos botoes
 
-static const char *g_textosBotoes[NUM_BUTTONS] = { "Jogar", "Opções", "Sair" };
+static const char *g_textosBotoes[NUM_BUTTONS] = { "Jogar", "Ranking", "Opções", "Sair" };
 static bool  g_hover[NUM_BUTTONS];
 static float g_botaoPosX[NUM_BUTTONS];  // posicao X atual da mola
 static float g_botaoVelX[NUM_BUTTONS];  // velocidade X da mola (damped spring)
@@ -43,26 +46,57 @@ static float g_jiggleTempo[NUM_BUTTONS];// timer de jiggle quando passa o mouse
 
 // Posicoes em pixels da tela 640x360
 #define PAINEL_X        78      // painel encostado na direita (640 - 562)
-#define BOTAO_X_FECHADO 125.0f  // botao retraido (parte do botao/texto fica escondida atras do video em x < 203)
+#define BOTAO_X_FECHADO 175.0f  // botao retraido (deixa o texto legivel sem esconder atras do video)
 #define BOTAO_X         203.0f  // botao totalmente aberto na borda esquerda do painel
-#define BOTAO_Y0        150     // y do primeiro botao
-#define BOTAO_PASSO     70      // distancia entre os botoes
-#define FONTE_BOTAO     38.0f   // tamanho da fonte dos botoes (maior e em destaque)
+#define BOTAO_Y0        124     // y do primeiro botao
+#define BOTAO_PASSO     56      // distancia entre os botoes
+#define BOTAO_ESCALA    0.80f   // escala dos 4 botoes no menu principal
+#define FONTE_BOTAO     30.0f   // tamanho da fonte dos botoes
 #define SPRING_STIFF    210.0f  // rigidez da mola (overshoot elastico)
 #define SPRING_DAMP     16.5f   // amortecimento da mola (deixa um balancinho gostoso)
 #define BOTAO_X_ESCONDIDO (-320.0f) // botao todo atras do video (painel de opcoes aberto)
 
-// Painel de Opcoes (abre no lugar dos botoes)
+// Painel de Opcoes, Ranking e Nome (abrem no lugar dos botoes)
 static bool  g_opcoesAbertas     = false;
 static float g_opcoesAnim        = 0.0f;   // 0 = invisivel, 1 = totalmente aberto
+static bool  g_rankingAberto     = false;
+static float g_rankingAnim       = 0.0f;
+static float g_rankingScroll     = 0.0f;
+static bool  g_nomeAberto        = false;
+static float g_nomeAnim          = 0.0f;
+static char  g_nomeInput[9]      = "";
 static bool  g_voltarHoverAnt    = false;  // mouse estava no botao Voltar no frame anterior
+static bool  g_iniciarHoverAnt   = false;
 static bool  g_esperarSoltarMouse = false; // ignora os botoes do menu ate soltar o clique que abriu/fechou as opcoes
 
 static bool g_shouldStartGame = false;
 // Funcoes de clique de cada botao
 static void OnClickPlay(void) {
     TraceLog(LOG_INFO, "Botao JOGAR clicado!");
-    g_shouldStartGame = true;
+    g_nomeAberto = true;
+    g_nomeInput[0] = '\0';
+    g_voltarHoverAnt = false;
+    g_iniciarHoverAnt = false;
+    g_esperarSoltarMouse = true;
+}
+
+static void OnClickRanking(void) {
+    TraceLog(LOG_INFO, "Botao RANKING clicado!");
+    RankingLoad();
+    g_rankingAberto = true;
+    g_rankingScroll = 0.0f;
+    g_voltarHoverAnt = false;
+    g_esperarSoltarMouse = true;
+}
+
+static void FecharRanking(void) {
+    g_rankingAberto = false;
+    g_esperarSoltarMouse = true;
+}
+
+static void FecharNome(void) {
+    g_nomeAberto = false;
+    g_esperarSoltarMouse = true;
 }
 
 static void OnClickOptions(void) {
@@ -115,15 +149,18 @@ static Rectangle ParaTela(Rectangle r) {
 
 // Retangulo completo do botao i (para desenho), em pixels 640x360
 static Rectangle BotaoRect(int i) {
-    return (Rectangle){ g_botaoPosX[i], (float)(BOTAO_Y0 + i * BOTAO_PASSO), (float)g_botao.width, (float)g_botao.height };
+    return (Rectangle){ g_botaoPosX[i], (float)(BOTAO_Y0 + i * BOTAO_PASSO),
+                        (float)g_botao.width * BOTAO_ESCALA, (float)g_botao.height * BOTAO_ESCALA };
 }
 
 // Area clicavel/visivel do botao i (a partir de x = BOTAO_X, pois a esquerda fica atras do video)
 static Rectangle BotaoHitRect(int i) {
+    float w = (float)g_botao.width * BOTAO_ESCALA;
+    float h = (float)g_botao.height * BOTAO_ESCALA;
     float x = g_botaoPosX[i];
-    float fimX = x + (float)g_botao.width;
+    float fimX = x + w;
     float inicioX = (x < BOTAO_X) ? BOTAO_X : x;
-    return (Rectangle){ inicioX, (float)(BOTAO_Y0 + i * BOTAO_PASSO), fimX - inicioX, (float)g_botao.height };
+    return (Rectangle){ inicioX, (float)(BOTAO_Y0 + i * BOTAO_PASSO), fimX - inicioX, h };
 }
 
 // Desenha um sprite no tamanho original, na posicao (x, y) da tela 640x360
@@ -131,6 +168,11 @@ static void DesenharTextura(Texture2D tex, float x, float y, Color cor) {
     Rectangle origem  = { 0, 0, (float)tex.width, (float)tex.height };
     Rectangle destino = ParaTela((Rectangle){ x, y, (float)tex.width, (float)tex.height });
     DrawTexturePro(tex, origem, destino, (Vector2){ 0, 0 }, 0.0f, cor);
+}
+
+static void DesenharTexturaRect(Texture2D tex, Rectangle dest, Color cor) {
+    Rectangle origem  = { 0, 0, (float)tex.width, (float)tex.height };
+    DrawTexturePro(tex, origem, ParaTela(dest), (Vector2){ 0, 0 }, 0.0f, cor);
 }
 
 // Copia 'txt' trocando as vogais com til pelas vogais sem til (ã -> a, õ -> o).
@@ -277,6 +319,11 @@ void InitMenuScene(void) {
     g_shouldStartGame = false;
     g_opcoesAbertas = false;
     g_opcoesAnim = 0.0f;
+    g_rankingAberto = false;
+    g_rankingAnim = 0.0f;
+    g_nomeAberto = false;
+    g_nomeAnim = 0.0f;
+    g_nomeInput[0] = '\0';
     OptionsUiReset();
     g_voltarHoverAnt = false;
     g_esperarSoltarMouse = false;
@@ -455,7 +502,7 @@ static void TocarSomHover(void) {
 static void UpdateMenuButtons(void) {
     Vector2 mouse = RayCanvasGetMousePosition();
     bool algumHover = false;
-    bool menuAtivo = !g_opcoesAbertas;   // com as opcoes abertas os botoes se escondem
+    bool menuAtivo = !g_opcoesAbertas && !g_rankingAberto && !g_nomeAberto;   // com painel aberto os botoes se escondem
     float dt = GetFrameTime();
     if (dt > 0.05f) dt = 0.05f; // evita pulo brusco se a janela travar num frame
 
@@ -488,8 +535,9 @@ static void UpdateMenuButtons(void) {
         if (!RayCanvasInputBlocked() && !g_esperarSoltarMouse && g_hover[i] &&
             (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonReleased(MOUSE_BUTTON_LEFT))) {
             if (i == 0)      OnClickPlay();
-            else if (i == 1) OnClickOptions();
-            else if (i == 2) OnClickExit();
+            else if (i == 1) OnClickRanking();
+            else if (i == 2) OnClickOptions();
+            else if (i == 3) OnClickExit();
         }
     }
 
@@ -539,19 +587,19 @@ static void DrawMenu(void) {
         Rectangle b = BotaoRect(i);
 
         // Sombra projetada embaixo do botao
-        DesenharTextura(g_botao, b.x + 3.0f, b.y + 4.0f, Fade(BLACK, 0.45f));
+        DesenharTexturaRect(g_botao, (Rectangle){ b.x + 3.0f, b.y + 4.0f, b.width, b.height }, Fade(BLACK, 0.45f));
 
         // Outline branco quente ao redor do botao quando em hover
         if (g_hover[i]) {
             Color corOutBtn = { 255, 242, 230, 235 };
-            DesenharTextura(g_botaoSilhueta, b.x - 1.5f, b.y,        corOutBtn);
-            DesenharTextura(g_botaoSilhueta, b.x + 1.5f, b.y,        corOutBtn);
-            DesenharTextura(g_botaoSilhueta, b.x,        b.y - 1.5f, corOutBtn);
-            DesenharTextura(g_botaoSilhueta, b.x,        b.y + 1.5f, corOutBtn);
+            DesenharTexturaRect(g_botaoSilhueta, (Rectangle){ b.x - 1.5f, b.y,        b.width, b.height }, corOutBtn);
+            DesenharTexturaRect(g_botaoSilhueta, (Rectangle){ b.x + 1.5f, b.y,        b.width, b.height }, corOutBtn);
+            DesenharTexturaRect(g_botaoSilhueta, (Rectangle){ b.x,        b.y - 1.5f, b.width, b.height }, corOutBtn);
+            DesenharTexturaRect(g_botaoSilhueta, (Rectangle){ b.x,        b.y + 1.5f, b.width, b.height }, corOutBtn);
         }
 
         Color tint = g_hover[i] ? (Color){ 215, 208, 200, 255 } : WHITE;
-        DesenharTextura(g_botao, b.x, b.y, tint);
+        DesenharTexturaRect(g_botao, b, tint);
         DesenharTextoBotao(g_textosBotoes[i], b, g_hover[i], g_jiggleTempo[i]);
     }
     EndScissorMode();
@@ -632,8 +680,10 @@ static void UpdateDrawOpcoes(void) {
     bool algumHover = OptionsUiUpdateDraw(&LAYOUT_OPCOES, &est, a, interativo, TocarSomHover);
 
     // Botao Voltar (mesmo sprite dos botoes do menu)
-    Rectangle bVoltar = { BOTAO_X, OPC_Y_VOLTAR, (float)g_botao.width, (float)g_botao.height };
-    Rectangle hitVoltar = { BOTAO_X, OPC_Y_VOLTAR, (float)g_botao.width - 28.0f, (float)g_botao.height };
+    float bw = (float)g_botao.width * BOTAO_ESCALA;
+    float bh = (float)g_botao.height * BOTAO_ESCALA;
+    Rectangle bVoltar = { BOTAO_X, OPC_Y_VOLTAR, bw, bh };
+    Rectangle hitVoltar = { BOTAO_X, OPC_Y_VOLTAR, bw - 22.0f, bh };
     bool hoverVoltar = interativo && !OptionsUiArrastando() && CheckCollisionPointRec(MouseVirtual(), hitVoltar);
     if (hoverVoltar) {
         algumHover = true;
@@ -641,15 +691,15 @@ static void UpdateDrawOpcoes(void) {
     }
     g_voltarHoverAnt = hoverVoltar;
 
-    DesenharTextura(g_botao, bVoltar.x + 3.0f, bVoltar.y + 4.0f, Fade(BLACK, 0.45f * a));
+    DesenharTexturaRect(g_botao, (Rectangle){ bVoltar.x + 3.0f, bVoltar.y + 4.0f, bw, bh }, Fade(BLACK, 0.45f * a));
     if (hoverVoltar) {
         Color corOut = Fade((Color){ 255, 242, 230, 235 }, a);
-        DesenharTextura(g_botaoSilhueta, bVoltar.x - 1.5f, bVoltar.y, corOut);
-        DesenharTextura(g_botaoSilhueta, bVoltar.x + 1.5f, bVoltar.y, corOut);
-        DesenharTextura(g_botaoSilhueta, bVoltar.x, bVoltar.y - 1.5f, corOut);
-        DesenharTextura(g_botaoSilhueta, bVoltar.x, bVoltar.y + 1.5f, corOut);
+        DesenharTexturaRect(g_botaoSilhueta, (Rectangle){ bVoltar.x - 1.5f, bVoltar.y,        bw, bh }, corOut);
+        DesenharTexturaRect(g_botaoSilhueta, (Rectangle){ bVoltar.x + 1.5f, bVoltar.y,        bw, bh }, corOut);
+        DesenharTexturaRect(g_botaoSilhueta, (Rectangle){ bVoltar.x,        bVoltar.y - 1.5f, bw, bh }, corOut);
+        DesenharTexturaRect(g_botaoSilhueta, (Rectangle){ bVoltar.x,        bVoltar.y + 1.5f, bw, bh }, corOut);
     }
-    DesenharTextura(g_botao, bVoltar.x, bVoltar.y, Fade(hoverVoltar ? (Color){ 215, 208, 200, 255 } : WHITE, a));
+    DesenharTexturaRect(g_botao, bVoltar, Fade(hoverVoltar ? (Color){ 215, 208, 200, 255 } : WHITE, a));
     if (a > 0.6f) DesenharTextoBotao("Voltar", bVoltar, hoverVoltar, 0.0f);
 
     if (hoverVoltar && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -658,6 +708,189 @@ static void UpdateDrawOpcoes(void) {
 
     if (g_opcoesAbertas) {
         SetMouseCursor(algumHover ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+    }
+}
+
+static void DesenharBotaoPainel(const char *texto, float x, float y, float a, bool hover) {
+    float bw = (float)g_botao.width * BOTAO_ESCALA;
+    float bh = (float)g_botao.height * BOTAO_ESCALA;
+    Rectangle b = { x, y, bw, bh };
+    DesenharTexturaRect(g_botao, (Rectangle){ b.x + 3.0f, b.y + 4.0f, bw, bh }, Fade(BLACK, 0.45f * a));
+    if (hover) {
+        Color corOut = Fade((Color){ 255, 242, 230, 235 }, a);
+        DesenharTexturaRect(g_botaoSilhueta, (Rectangle){ b.x - 1.5f, b.y,        bw, bh }, corOut);
+        DesenharTexturaRect(g_botaoSilhueta, (Rectangle){ b.x + 1.5f, b.y,        bw, bh }, corOut);
+        DesenharTexturaRect(g_botaoSilhueta, (Rectangle){ b.x,        b.y - 1.5f, bw, bh }, corOut);
+        DesenharTexturaRect(g_botaoSilhueta, (Rectangle){ b.x,        b.y + 1.5f, bw, bh }, corOut);
+    }
+    DesenharTexturaRect(g_botao, b, Fade(hover ? (Color){ 215, 208, 200, 255 } : WHITE, a));
+    if (a > 0.6f) DesenharTextoBotao(texto, b, hover, 0.0f);
+}
+
+static void UpdateDrawRanking(void) {
+    float dt = GetFrameTime();
+    if (dt > 0.05f) dt = 0.05f;
+    float alvo = g_rankingAberto ? 1.0f : 0.0f;
+    g_rankingAnim += (alvo - g_rankingAnim) * fminf(dt * 9.0f, 1.0f);
+    if (!g_rankingAberto && g_rankingAnim < 0.01f) { g_rankingAnim = 0.0f; return; }
+
+    float a = g_rankingAnim;
+    bool interativo = g_rankingAberto && a > 0.5f && !RayCanvasInputBlocked();
+
+    if (g_rankingAberto && IsKeyPressed(KEY_ESCAPE)) {
+        FecharRanking();
+        return;
+    }
+
+    Color bege = Fade((Color){ 189, 181, 168, 255 }, a);
+    Color claro = Fade((Color){ 255, 242, 230, 255 }, a);
+    Color medio = Fade((Color){ 160, 147, 142, 255 }, a);
+
+    TextoOpcoes("RANKING", OPC_LABEL_X, 128.0f, 30.0f, bege);
+
+    int total = RankingGetCount();
+    Rectangle listaArea = { OPC_LABEL_X, 146.0f, 380.0f, 128.0f };
+    const float passoY = 22.0f;
+    float conteudoH = total * passoY;
+    float maxScroll = (conteudoH > listaArea.height) ? (conteudoH - listaArea.height) : 0.0f;
+
+    if (interativo && maxScroll > 0.0f) {
+        float roda = GetMouseWheelMove();
+        if (roda != 0.0f) {
+            g_rankingScroll -= roda * passoY;
+        }
+    }
+    if (g_rankingScroll < 0.0f) g_rankingScroll = 0.0f;
+    if (g_rankingScroll > maxScroll) g_rankingScroll = maxScroll;
+
+    if (total == 0) {
+        TextoOpcoes("Nenhuma partida registrada ainda.", OPC_LABEL_X, 184.0f, 20.0f, medio);
+    } else {
+        Rectangle rClip = ParaTela(listaArea);
+        BeginScissorMode((int)rClip.x, (int)rClip.y, (int)rClip.width, (int)rClip.height);
+        for (int i = 0; i < total; i++) {
+            const RankingEntry *e = RankingGetEntry(i);
+            if (!e) continue;
+            float y = listaArea.y + 12.0f + i * passoY - g_rankingScroll;
+            char linha[64];
+            snprintf(linha, sizeof linha, "#%d  %-8s", i + 1, e->nome);
+            TextoOpcoes(linha, OPC_LABEL_X, y, 20.0f, (i == 0) ? claro : bege);
+
+            char pts[32];
+            snprintf(pts, sizeof pts, "%d pts  [%s]", e->pontos, e->acertou ? "ACERTO" : "ERRO");
+            TextoOpcoes(pts, OPC_LABEL_X + 165.0f, y, 18.0f, e->acertou ? claro : medio);
+        }
+        EndScissorMode();
+
+        if (maxScroll > 0.0f) {
+            Rectangle trilho = { listaArea.x + listaArea.width - 8.0f, listaArea.y + 2.0f, 4.0f, listaArea.height - 4.0f };
+            DrawRectangleRec(ParaTela(trilho), Fade((Color){ 18, 16, 18, 255 }, a));
+            float fracVis = listaArea.height / conteudoH;
+            float thumbH = trilho.height * fracVis;
+            if (thumbH < 18.0f) thumbH = 18.0f;
+            float thumbY = trilho.y + (trilho.height - thumbH) * (g_rankingScroll / maxScroll);
+            DrawRectangleRec(ParaTela((Rectangle){ trilho.x, thumbY, trilho.width, thumbH }), bege);
+        }
+    }
+
+    float bw = (float)g_botao.width * BOTAO_ESCALA;
+    float bh = (float)g_botao.height * BOTAO_ESCALA;
+    Rectangle hitVoltar = { BOTAO_X, OPC_Y_VOLTAR, bw - 22.0f, bh };
+    bool hoverVoltar = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(MouseVirtual(), hitVoltar);
+    if (hoverVoltar && !g_voltarHoverAnt) TocarSomHover();
+    g_voltarHoverAnt = hoverVoltar;
+
+    DesenharBotaoPainel("Voltar", BOTAO_X, OPC_Y_VOLTAR, a, hoverVoltar);
+    if (hoverVoltar && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        FecharRanking();
+    }
+    if (g_rankingAberto) {
+        SetMouseCursor(hoverVoltar ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+    }
+}
+
+static void UpdateDrawNome(void) {
+    float dt = GetFrameTime();
+    if (dt > 0.05f) dt = 0.05f;
+    float alvo = g_nomeAberto ? 1.0f : 0.0f;
+    g_nomeAnim += (alvo - g_nomeAnim) * fminf(dt * 9.0f, 1.0f);
+    if (!g_nomeAberto && g_nomeAnim < 0.01f) { g_nomeAnim = 0.0f; return; }
+
+    float a = g_nomeAnim;
+    bool interativo = g_nomeAberto && a > 0.5f && !RayCanvasInputBlocked();
+
+    if (g_nomeAberto && IsKeyPressed(KEY_ESCAPE)) {
+        FecharNome();
+        return;
+    }
+
+    if (interativo) {
+        int ch = GetCharPressed();
+        while (ch > 0) {
+            int len = (int)strlen(g_nomeInput);
+            if (len < 8 && ch >= 32 && ch < 128 && isalnum((unsigned char)ch)) {
+                g_nomeInput[len] = (char)toupper((unsigned char)ch);
+                g_nomeInput[len + 1] = '\0';
+            }
+            ch = GetCharPressed();
+        }
+        if (IsKeyPressed(KEY_BACKSPACE)) {
+            int len = (int)strlen(g_nomeInput);
+            if (len > 0) g_nomeInput[len - 1] = '\0';
+        }
+        if (IsKeyPressed(KEY_ENTER) && g_nomeInput[0] != '\0') {
+            GameStateSetPlayerName(g_nomeInput);
+            g_shouldStartGame = true;
+            return;
+        }
+    }
+
+    Color bege  = Fade((Color){ 189, 181, 168, 255 }, a);
+    Color claro = Fade((Color){ 255, 242, 230, 255 }, a);
+    Color medio = Fade((Color){ 125, 112, 113, 255 }, a);
+
+    TextoOpcoes("IDENTIFICAÇÃO", OPC_LABEL_X, 128.0f, 28.0f, bege);
+    TextoOpcoes("Digite seu nome (até 8 letras):", OPC_LABEL_X, 156.0f, 18.0f, bege);
+
+    Rectangle caixa = { OPC_LABEL_X, 174.0f, 250.0f, 34.0f };
+    Rectangle rCaixa = ParaTela(caixa);
+    DrawRectangleRec(rCaixa, Fade((Color){ 18, 16, 18, 255 }, a));
+    DrawRectangleLinesEx(rCaixa, 2.0f * (rCaixa.height / caixa.height), medio);
+
+    bool cursorVis = ((int)(GetTime() * 2.2) % 2) == 0;
+    char exib[16];
+    if (g_nomeInput[0] == '\0') {
+        snprintf(exib, sizeof exib, "%s", cursorVis ? "_" : "");
+    } else {
+        snprintf(exib, sizeof exib, "%s%s", g_nomeInput, (cursorVis && strlen(g_nomeInput) < 8) ? "_" : "");
+    }
+    TextoOpcoes(exib, OPC_LABEL_X + 10.0f, 191.0f, 24.0f, claro);
+
+    bool podeIniciar = (g_nomeInput[0] != '\0');
+    float bw = (float)g_botao.width * BOTAO_ESCALA;
+    float bh = (float)g_botao.height * BOTAO_ESCALA;
+    Rectangle hitIniciar = { BOTAO_X, 224.0f, bw - 22.0f, bh };
+    Rectangle hitVoltar  = { BOTAO_X, OPC_Y_VOLTAR, bw - 22.0f, bh };
+    bool hoverIniciar = interativo && podeIniciar && !g_esperarSoltarMouse && CheckCollisionPointRec(MouseVirtual(), hitIniciar);
+    bool hoverVoltar  = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(MouseVirtual(), hitVoltar);
+
+    if (hoverIniciar && !g_iniciarHoverAnt) TocarSomHover();
+    if (hoverVoltar && !g_voltarHoverAnt) TocarSomHover();
+    g_iniciarHoverAnt = hoverIniciar;
+    g_voltarHoverAnt  = hoverVoltar;
+
+    DesenharBotaoPainel("Iniciar", BOTAO_X, 224.0f, podeIniciar ? a : a * 0.45f, hoverIniciar);
+    DesenharBotaoPainel("Voltar", BOTAO_X, OPC_Y_VOLTAR, a, hoverVoltar);
+
+    if (hoverIniciar && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        GameStateSetPlayerName(g_nomeInput);
+        g_shouldStartGame = true;
+    } else if (hoverVoltar && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        FecharNome();
+    }
+
+    if (g_nomeAberto) {
+        SetMouseCursor((hoverIniciar || hoverVoltar) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
     }
 }
 
@@ -673,8 +906,10 @@ void UpdateDrawMenuScene(void) {
     UpdateMenuButtons();
     DrawMenu();
     UpdateDrawOpcoes();
+    UpdateDrawRanking();
+    UpdateDrawNome();
 
-    if (!g_opcoesAbertas) {
+    if (!g_opcoesAbertas && !g_rankingAberto && !g_nomeAberto) {
         UpdateDevCode();
         UpdateDrawDevButton();
     }

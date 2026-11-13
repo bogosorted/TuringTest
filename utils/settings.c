@@ -27,6 +27,7 @@ static float g_volMusica  = 0.8f;
 static float g_volEfeitos = 1.0f;
 static int   g_paleta     = 0;
 static bool  g_telaCheia  = true;
+static bool  g_tutorial   = true;
 
 #define JANELA_W 1280
 #define JANELA_H 720
@@ -144,6 +145,7 @@ void SettingsLoad(void) {
         if (sscanf(linha, "musica=%f", &v) == 1)       g_volMusica  = Limitar01(v);
         else if (sscanf(linha, "telacheia=%d", &n) == 1) g_telaCheia = (n != 0);
         else if (sscanf(linha, "efeitos=%f", &v) == 1) g_volEfeitos = Limitar01(v);
+        else if (sscanf(linha, "tutorial=%d", &n) == 1) g_tutorial = (n != 0);
         // A paleta NAO e lida: o jogo sempre abre na Original (g_paleta = 0).
     }
     fclose(f);
@@ -156,8 +158,8 @@ void SettingsSave(void) {
         return;
     }
     // A paleta nao e salva: vale so enquanto o jogo esta aberto
-    fprintf(f, "musica=%.2f\nefeitos=%.2f\ntelacheia=%d\n",
-            g_volMusica, g_volEfeitos, g_telaCheia ? 1 : 0);
+    fprintf(f, "musica=%.2f\nefeitos=%.2f\ntelacheia=%d\ntutorial=%d\n",
+            g_volMusica, g_volEfeitos, g_telaCheia ? 1 : 0, g_tutorial ? 1 : 0);
     fclose(f);
 }
 
@@ -168,6 +170,9 @@ void  SettingsSetSfxVolume(float v) { g_volEfeitos = Limitar01(v); }
 
 bool SettingsGetFullscreen(void) { return g_telaCheia; }
 void SettingsSetFullscreen(bool ligado) { g_telaCheia = ligado; }
+
+bool SettingsGetTutorial(void) { return g_tutorial; }
+void SettingsSetTutorial(bool ligado) { g_tutorial = ligado; }
 
 // Aplica modo tela cheia ou janela conforme g_telaCheia
 void SettingsApplyWindowMode(void) {

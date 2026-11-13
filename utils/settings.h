@@ -24,6 +24,10 @@ bool SettingsGetFullscreen(void);
 void SettingsSetFullscreen(bool ligado);
 void SettingsApplyWindowMode(void);   // aplica na janela (chamar depois do InitWindow)
 
+// Tutorial no Dia 1 (por padrao ativado)
+bool SettingsGetTutorial(void);
+void SettingsSetTutorial(bool ligado);
+
 // Paletas de cor. A 0 e a original do jogo (sem pos-processamento).
 int          SettingsPaletteCount(void);
 int          SettingsGetPalette(void);

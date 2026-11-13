@@ -10,6 +10,8 @@
 #include "selection_scene.h"      // enum Employee (EMPLOYEE_LUCAS = posicao 2 = Ana Lucia, a IA)
 #include "../utils/settings.h"
 #include "../utils/raycanvas.h"
+#include "../utils/game_state.h"
+#include "../utils/ranking.h"
 
 // ---------------------------------------------------------------
 // VEREDITO: os 3 suspeitos na sala (2D) e o jogador com uma arma (3D)
@@ -48,7 +50,7 @@ static const char *TEXTO_INTRO =
     "Um deles não é humano. Você tem uma bala.\n\n"
     "Quem é a IA infiltrada?";
 
-typedef enum { ESTADO_INTRO = 0, ESTADO_MIRANDO, ESTADO_TIRO, ESTADO_FINAL } EstadoVeredito;
+typedef enum { ESTADO_INTRO = 0, ESTADO_MIRANDO, ESTADO_TIRO, ESTADO_FINAL, ESTADO_PONTUACAO } EstadoVeredito;
 
 static const Color TONS[5] = {
     { 0, 0, 0, 255 }, { 32, 29, 31, 255 }, { 125, 112, 113, 255 }, { 189, 181, 168, 255 }, { 255, 242, 230, 255 }
@@ -67,17 +69,27 @@ static const char *SILHUETAS[3] = {
 static const Vector2 SUSPEITO_POS[3] = { { 214.0f, 268.0f }, { 320.0f, 262.0f }, { 426.0f, 268.0f } };
 #define SIL_ESCALA 1.35f
 
-// Texto do final (provisorio: o texto definitivo ainda sera especificado)
+// Textos dos finais (acerto e erro no veredito)
 static const char *FINAL_ACERTO =
     "Ana Lúcia caiu sem um som humano.\n\n"
-    "Por baixo da pele, fios e luz azul.\n"
-    "A IA infiltrada foi detida.\n\n"
-    "(texto provisório do final)";
+    "Por baixo da pele sintética, apenas fios,\n"
+    "circuitos rompidos e um brilho azul frio.\n\n"
+    "As contradições nos relatórios e nos setores\n"
+    "não eram falhas humanas, mas sim a máscara\n"
+    "de uma IA infiltrada na RASEC.\n\n"
+    "Com a ameaça neutralizada, os corredores\n"
+    "finalmente voltam ao silêncio.\n"
+    "Você venceu o Teste de Turing.";
 static const char *FINAL_ERRO =
     "%s caiu no chão da sala.\n\n"
-    "Era humano. Sangue de verdade.\n"
-    "Em algum lugar do prédio, a IA continua trabalhando.\n\n"
-    "(texto provisório do final)";
+    "Não houve faíscas nem falha de sistema.\n"
+    "Era humano. Sangue de verdade.\n\n"
+    "As hesitações e falhas que você julgou\n"
+    "eram apenas o medo de alguém comum\n"
+    "tentando provar que estava vivo.\n\n"
+    "Enquanto o alarme da RASEC silencia,\n"
+    "a verdadeira IA continua operando\n"
+    "livremente em algum andar do prédio.";
 
 static EstadoVeredito g_estado;
 static float     g_tempo;            // tempo dentro do estado atual
@@ -87,8 +99,19 @@ static int       g_hoverAnt = -1;
 static bool      g_gritou;
 static float     g_fimGrito = -1.0f; // quando o grito terminou (-1 = ainda tocando)
 static bool      g_textoCompleto;   // clique pula a subida do texto
+static bool      g_pontuacaoCompleta;
 static bool      g_tentarDeNovo;
-static char      g_textoFinal[512];
+static char      g_textoFinal[1024];
+
+typedef struct {
+    char rotulo[48];
+    int  alvo;
+} ScoreLinha;
+
+static ScoreLinha g_scoreLinhas[6];
+static int        g_scoreTotal = 0;
+static int        g_pranchetaMarcados[3] = { 0 };
+static int        g_pranchetaTotais[3]   = { 0 };
 
 static Texture2D g_sil[3];
 static Sound     g_sndHover, g_sndTiro, g_sndGrito[3];
@@ -338,6 +361,44 @@ void InitVerdictScene(void) {
     RayCanvasInit(VIRTUAL_W, VIRTUAL_H);
 }
 
+static void CalcularESalvarPontuacao(void) {
+    int ptsVeredito  = (g_alvo == AI_INDEX) ? 1000 : 0;
+    int ptsVies      = !GameStateAnyViesUsed() ? 500 : 0;
+    int ptsInjecao   = !GameStateAnyInjecaoUsed() ? 500 : 0;
+    int dicasLivres  = GameStateGetUnusedHintsCount();
+    int ptsDicas     = dicasLivres * 200;
+    int tokensLivres = GameStateGetRemainingTokensTotal();
+    int ptsTokens    = tokensLivres * 100;
+    int evCount      = GameStateCountEvidences();
+    int ptsEv        = evCount * 50;
+
+    snprintf(g_scoreLinhas[0].rotulo, sizeof g_scoreLinhas[0].rotulo, "Veredito correto");
+    g_scoreLinhas[0].alvo = ptsVeredito;
+    snprintf(g_scoreLinhas[1].rotulo, sizeof g_scoreLinhas[1].rotulo, "Enviesamento nao usado");
+    g_scoreLinhas[1].alvo = ptsVies;
+    snprintf(g_scoreLinhas[2].rotulo, sizeof g_scoreLinhas[2].rotulo, "Injecao nao utilizada");
+    g_scoreLinhas[2].alvo = ptsInjecao;
+    snprintf(g_scoreLinhas[3].rotulo, sizeof g_scoreLinhas[3].rotulo, "Dicas nao utilizadas (%dx200)", dicasLivres);
+    g_scoreLinhas[3].alvo = ptsDicas;
+    snprintf(g_scoreLinhas[4].rotulo, sizeof g_scoreLinhas[4].rotulo, "Tokens nao utilizados (%dx100)", tokensLivres);
+    g_scoreLinhas[4].alvo = ptsTokens;
+    snprintf(g_scoreLinhas[5].rotulo, sizeof g_scoreLinhas[5].rotulo, "Evidencias encontradas (%dx50)", evCount);
+    g_scoreLinhas[5].alvo = ptsEv;
+
+    g_scoreTotal = ptsVeredito + ptsVies + ptsInjecao + ptsDicas + ptsTokens + ptsEv;
+    RankingAdd(GameStateGetPlayerName(), g_scoreTotal, g_alvo == AI_INDEX);
+
+    for (int s = 0; s < 3; s++) {
+        const char *itens[16];
+        bool marcados[16];
+        int n = GameplaySceneItensPrancheta(s, itens, marcados, 16);
+        int m = 0;
+        for (int k = 0; k < n; k++) if (marcados[k]) m++;
+        g_pranchetaMarcados[s] = m;
+        g_pranchetaTotais[s] = n;
+    }
+}
+
 static void Atirar(int i) {
     g_alvo = i;
     g_estado = ESTADO_TIRO;
@@ -348,7 +409,8 @@ static void Atirar(int i) {
     Tocar(g_sndTiro, 0.9f);
     if (g_alvo == AI_INDEX) snprintf(g_textoFinal, sizeof g_textoFinal, "%s", FINAL_ACERTO);
     else                    snprintf(g_textoFinal, sizeof g_textoFinal, FINAL_ERRO, NOMES[g_alvo]);
-    TraceLog(LOG_INFO, "Veredito: atirou em %s (%s)", NOMES[g_alvo], g_alvo == AI_INDEX ? "correto" : "incorreto");
+    CalcularESalvarPontuacao();
+    TraceLog(LOG_INFO, "Veredito: atirou em %s (%s) - %d pts", NOMES[g_alvo], g_alvo == AI_INDEX ? "correto" : "incorreto", g_scoreTotal);
 }
 
 // Texto em linhas centralizadas a partir de y (virtual)
@@ -397,6 +459,82 @@ static void DesenharTextoFinal(void) {
     if (chegou) y = yFinal;
     DesenharLinhas(g_textoFinal, y, 14, COR_CLARA);
     if (chegou) {
+        DesenharDicaClique("Clique para ver sua pontuação");
+        if (clicou) {
+            g_estado = ESTADO_PONTUACAO;
+            g_tempo = 0.0f;
+            g_pontuacaoCompleta = false;
+        }
+    }
+}
+
+static void DesenharPontuacaoFinal(void) {
+    const float durLinha = 0.45f;
+    float durTotal = 6.0f * durLinha;
+    bool clicou = !RayCanvasInputBlocked() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    if (!g_pontuacaoCompleta && g_tempo < durTotal && clicou) {
+        g_pontuacaoCompleta = true;
+        clicou = false;
+    }
+    bool terminou = g_pontuacaoCompleta || (g_tempo >= durTotal);
+
+    Rectangle ref = ParaTela((Rectangle){ 0, 0, 10, 10 });
+    float escala = ref.height / 10.0f;
+    int tamTitulo = (int)(18 * escala);
+    int tamTexto  = (int)(12 * escala);
+    int tamPeq    = (int)(10 * escala);
+
+    Rectangle painel = { 80.0f, 30.0f, 480.0f, 278.0f };
+    Rectangle rPainel = ParaTela(painel);
+    DrawRectangleRec(rPainel, Fade(COR_ESCURA, 0.96f));
+    DrawRectangleLinesEx(rPainel, 2.0f * escala, TONS[3]);
+
+    char cabecalho[64];
+    snprintf(cabecalho, sizeof cabecalho, "RELATÓRIO DE PONTUAÇÃO - %s", GameStateGetPlayerName());
+    Rectangle rCab = ParaTela((Rectangle){ painel.x + 16.0f, painel.y + 14.0f, 0, 0 });
+    DrawText(cabecalho, (int)rCab.x, (int)rCab.y, tamTitulo, COR_CLARA);
+
+    Rectangle rSub = ParaTela((Rectangle){ painel.x + 16.0f, painel.y + 38.0f, 0, 0 });
+    char sub[96];
+    snprintf(sub, sizeof sub, "Pranchetas: Maria (%d/%d) | Arthur (%d/%d) | Ana Lucia (%d/%d)",
+             g_pranchetaMarcados[0], g_pranchetaTotais[0],
+             g_pranchetaMarcados[1], g_pranchetaTotais[1],
+             g_pranchetaMarcados[2], g_pranchetaTotais[2]);
+    DrawText(sub, (int)rSub.x, (int)rSub.y, tamPeq, TONS[3]);
+
+    int somaAnimada = 0;
+    for (int i = 0; i < 6; i++) {
+        float y = painel.y + 68.0f + i * 28.0f;
+        float t0 = i * durLinha;
+        float prog = terminou ? 1.0f : fmaxf(0.0f, fminf(1.0f, (g_tempo - t0) / durLinha));
+        int valAtual = (int)(g_scoreLinhas[i].alvo * prog + 0.5f);
+        somaAnimada += valAtual;
+
+        Color corLinha = (prog > 0.0f) ? COR_CLARA : TONS[2];
+        Rectangle rNome = ParaTela((Rectangle){ painel.x + 20.0f, y, 0, 0 });
+        DrawText(g_scoreLinhas[i].rotulo, (int)rNome.x, (int)rNome.y, tamTexto, corLinha);
+
+        char valTxt[24];
+        snprintf(valTxt, sizeof valTxt, "+%d", valAtual);
+        int wVal = MeasureText(valTxt, tamTexto);
+        Rectangle rDir = ParaTela((Rectangle){ painel.x + painel.width - 20.0f, y, 0, 0 });
+        DrawText(valTxt, (int)(rDir.x - wVal), (int)rDir.y, tamTexto,
+                 (g_scoreLinhas[i].alvo > 0 && prog > 0.0f) ? TONS[4] : TONS[2]);
+    }
+
+    Rectangle rDiv = ParaTela((Rectangle){ painel.x + 16.0f, painel.y + 240.0f, painel.width - 32.0f, 1.5f });
+    DrawRectangleRec(rDiv, TONS[3]);
+
+    Rectangle rTotLbl = ParaTela((Rectangle){ painel.x + 20.0f, painel.y + 248.0f, 0, 0 });
+    DrawText("PONTUAÇÃO TOTAL", (int)rTotLbl.x, (int)rTotLbl.y, tamTitulo, COR_CLARA);
+
+    char totTxt[24];
+    snprintf(totTxt, sizeof totTxt, "%d pts", terminou ? g_scoreTotal : somaAnimada);
+    int wTot = MeasureText(totTxt, tamTitulo);
+    Rectangle rTotDir = ParaTela((Rectangle){ painel.x + painel.width - 20.0f, painel.y + 248.0f, 0, 0 });
+    DrawText(totTxt, (int)(rTotDir.x - wTot), (int)rTotDir.y, tamTitulo, TONS[4]);
+
+    if (terminou) {
         DesenharDicaClique("Clique para voltar ao menu");
         if (clicou) g_tentarDeNovo = true;
     }
@@ -595,8 +733,10 @@ void UpdateDrawVerdictScene(void) {
                 g_tempo = 0.0f;
                 g_textoCompleto = false;
             }
-        } else {
+        } else if (g_estado == ESTADO_FINAL) {
             DesenharTextoFinal();
+        } else {
+            DesenharPontuacaoFinal();
         }
     }
 

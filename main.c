@@ -10,6 +10,7 @@
 #include "utils/transition.h"
 #include "utils/raycanvas.h"
 #include "utils/settings.h"
+#include "utils/ranking.h"
 #include <math.h>
 
 // Lista das telas que o jogo tem
@@ -65,6 +66,7 @@ int main(void) {
         ChangeDirectory("..");
     }
     SettingsLoad();   // volumes e paleta salvos no settings.cfg
+    RankingLoad();    // ranking de pontuacoes salvo em ranking.cfg
 
     // Configuracao inicial da janela
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
