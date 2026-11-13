@@ -31,6 +31,7 @@ bool LoadDialogTree(const char *filepath, DialogTree *tree) {
     if (!f) return false;
 
     memset(tree, 0, sizeof(DialogTree));
+    tree->suspect_index = -1;
     tree->nodes = (DialogNode *)calloc(50, sizeof(DialogNode));
     
     char line[512];
@@ -49,7 +50,7 @@ bool LoadDialogTree(const char *filepath, DialogTree *tree) {
             char *end = strchr(line + 7, ']');
             if (end) *end = '\0';
             strncpy(curr->id, line + 7, MAX_ID_LENGTH - 1);
-            if (strcmp(curr->id, "start") == 0) {
+            if (strcmp(curr->id, "start") == 0 || strcmp(curr->id, "Oi") == 0 || strcmp(curr->id, "Entrada") == 0) {
                 tree->current_node_index = tree->node_count - 1;
             }
         } else if (curr) {
@@ -83,20 +84,23 @@ void FreeDialogTree(DialogTree *tree) {
 }
 
 DialogNode* GetCurrentNode(DialogTree *tree) {
-    if (tree->current_node_index >= 0 && tree->current_node_index < tree->node_count) {
+    if (tree && tree->current_node_index >= 0 && tree->current_node_index < tree->node_count) {
         return &tree->nodes[tree->current_node_index];
     }
     return NULL;
 }
 
 bool MakeChoiceById(DialogTree *tree, const char *next_id) {
-    if (!HasTokens()) return false;
-    bool is_free = (strcmp(next_id, "intro") == 0);
+    if (!tree || !HasTokens()) return false;
+    bool is_free = (strcmp(next_id, "intro") == 0 || strcmp(next_id, "Entrada") == 0);
     for (int i = 0; i < tree->node_count; i++) {
         if (strcmp(tree->nodes[i].id, next_id) == 0) {
             tree->current_node_index = i;
             tree->nodes[i].visited = true;
             if (!global_infinite_tokens && !is_free) global_tokens--;
+            if (tree->nodes[i].is_leaf && tree->suspect_index >= 0) {
+                GameStateSetVisaoJogador(tree->suspect_index, tree->nodes[i].visao_out);
+            }
             return true;
         }
     }
@@ -117,42 +121,35 @@ static bool NodeIdVisited(const DialogTree *tree, const char *id) {
     return false;
 }
 
+static bool ChoiceAllowed(const DialogTree *tree, const DialogChoice *ch) {
+    if (ch->req_evidencia[0] == '\0') return true;
+    return GameStateTemEvidencia(tree->suspect_index, ch->req_evidencia);
+}
+
+static const DialogNode* FindRootNode(const DialogTree *tree) {
+    const char *roots[] = { "intro", "Entrada", "Oi", "start" };
+    for (int r = 0; r < 4; r++) {
+        for (int s = 0; s < tree->node_count; s++) {
+            if (strcmp(tree->nodes[s].id, roots[r]) == 0) {
+                return &tree->nodes[s];
+            }
+        }
+    }
+    return NULL;
+}
+
 int GetAvailableChoices(DialogTree *tree, DialogChoice out[MAX_CHOICES]) {
     int count = 0;
     DialogNode *node = GetCurrentNode(tree);
     if (!node) return 0;
 
-    // 1) Escolhas do no atual que ainda nao foram feitas
+    // Apenas as escolhas explicitas do no atual (nos finais nao retornam ao comeco automaticamente,
+    // a nao ser que haja uma escolha explicita apontando para "Entrada")
     for (int i = 0; i < node->choice_count && count < MAX_CHOICES; i++) {
-        if (!NodeIdVisited(tree, node->choices[i].next_node)) {
+        if (!ChoiceAllowed(tree, &node->choices[i])) continue;
+        bool voltaEntrada = (strcmp(node->choices[i].next_node, "Entrada") == 0);
+        if (voltaEntrada || !NodeIdVisited(tree, node->choices[i].next_node)) {
             out[count++] = node->choices[i];
-        }
-    }
-    if (count > 0) return count;
-
-    // 2) Nada sobrou aqui: oferece as perguntas do "intro" (ou "start") ainda nao feitas
-    const DialogNode *base = NULL;
-    for (int s = 0; s < tree->node_count; s++) {
-        if (strcmp(tree->nodes[s].id, "intro") == 0) {
-            base = &tree->nodes[s];
-            break;
-        }
-    }
-    if (!base) {
-        for (int s = 0; s < tree->node_count; s++) {
-            if (strcmp(tree->nodes[s].id, "start") == 0) {
-                base = &tree->nodes[s];
-                break;
-            }
-        }
-    }
-
-    if (base) {
-        for (int i = 0; i < base->choice_count && count < MAX_CHOICES; i++) {
-            if (NodeIdVisited(tree, base->choices[i].next_node)) continue;
-            snprintf(out[count].text, MAX_TEXT_LENGTH, "%s", base->choices[i].text);
-            snprintf(out[count].next_node, MAX_ID_LENGTH, "%s", base->choices[i].next_node);
-            count++;
         }
     }
     return count;

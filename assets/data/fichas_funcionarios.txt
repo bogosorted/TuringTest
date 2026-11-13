@@ -34,4 +34,4 @@ Personalidade Geral: Exigente
 Comportamentos:
 - Prefere ser chamada de Analu.
 - Cobra relatórios com frequência e devolve os que estão errados.
-- Costuma circular por setores que não são o dela.
+- Trabalha na RASEC há 3 anos e não costuma sair do próprio setor.
