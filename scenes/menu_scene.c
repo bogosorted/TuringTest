@@ -283,7 +283,7 @@ void InitMenuScene(void) {
     RayCanvasInit(TELA_W, TELA_H);
 
     // GIF: a raylib carrega todos os quadros de uma vez
-    g_animImagem  = LoadImageAnim("assets/menu_scene/menu_oficial/spr_mainmenu_gif.gif", &g_animQuadros);
+    g_animImagem  = LoadImageAnim("assets/sprites/menu/spr_mainmenu_gif.gif", &g_animQuadros);
     g_animTextura = LoadTextureFromImage(g_animImagem);
     SetTextureFilter(g_animTextura, TEXTURE_FILTER_POINT);
     SetTextureWrap(g_animTextura, TEXTURE_WRAP_CLAMP);
@@ -291,7 +291,7 @@ void InitMenuScene(void) {
     g_animTempo = 0.0f;
 
     // Carrega o painel da direita e as 2 texturas de Perlin noise originais (mesmo padrao antigo, agora com movimento sutil!)
-    g_painel = LoadTexture("assets/menu_scene/menu_oficial/spr_mainmenu_fill.png");
+    g_painel = LoadTexture("assets/sprites/menu/spr_mainmenu_fill.png");
     SetTextureFilter(g_painel, TEXTURE_FILTER_POINT);
     SetTextureWrap(g_painel, TEXTURE_WRAP_CLAMP);
 
@@ -356,14 +356,14 @@ void InitMenuScene(void) {
     g_painelTex1Loc = GetShaderLocation(g_painelShader, "noiseTex1");
     g_painelTex2Loc = GetShaderLocation(g_painelShader, "noiseTex2");
 
-    g_botao = LoadTexture("assets/menu_scene/menu_oficial/spr_mainmenu_botao.png");
+    g_botao = LoadTexture("assets/sprites/menu/spr_mainmenu_botao.png");
     SetTextureFilter(g_botao, TEXTURE_FILTER_POINT);
     // CLAMP: sem isso, ao desenhar o botao em posicao fracionaria (mola/outline) a ultima
     // linha le a primeira linha do sprite (wrap "repeat") e aparece um traco que passa da diagonal
     SetTextureWrap(g_botao, TEXTURE_WRAP_CLAMP);
 
     // Cria uma silhueta branca do botao para desenhar o outline externo no hover
-    Image imgBotao = LoadImage("assets/menu_scene/menu_oficial/spr_mainmenu_botao.png");
+    Image imgBotao = LoadImage("assets/sprites/menu/spr_mainmenu_botao.png");
     ImageFormat(&imgBotao, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
     Color *px = (Color *)imgBotao.data;
     int totalPx = imgBotao.width * imgBotao.height;
@@ -377,7 +377,7 @@ void InitMenuScene(void) {
 
     // Logo original (title.png vem em preto; invertemos para branco para poder colorir com a paleta)
     // Adicionamos uma margem transparente em cima e embaixo para a onda nao cortar na borda da textura
-    Image imgLogo = LoadImage("assets/menu_scene/title.png");
+    Image imgLogo = LoadImage("assets/sprites/menu/title.png");
     ImageColorInvert(&imgLogo);
     ImageResizeCanvas(&imgLogo, imgLogo.width, imgLogo.height + 24, 0, 12, BLANK);
     g_logo = LoadTextureFromImage(imgLogo);

@@ -1,0 +1,867 @@
+{
+  "versao": 5,
+  "npc": {
+    "nome": "Maria Bianca",
+    "tipo": "Humana"
+  },
+  "aba": "INJECAO",
+  "evidencias": [
+    {
+      "id": "EV-01",
+      "nome": "Dialogo de confiança",
+      "local": "Se você falar apenas dialogos de confiança, ela vai falar que a supervisora também tratou ela mal e anda muito egoista, muitas vezes, em setores que não são dela. Esse dialogo só vai ser liberado CASO você não use enviesamento de dados nem injeção de prompt."
+    }
+  ],
+  "dias": {
+    "D1": {
+      "arvores": {
+        "principal": {
+          "nos": [
+            {
+              "id": "Oi",
+              "rotulo": "Abertura",
+              "ev": "",
+              "fala_npc": "Olá, nos conhecemos?",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Ainda não, sou o novo funcionário /Nome/, e você?",
+                  "proximo_no": "A",
+                  "efeito": "Aproximação"
+                },
+                {
+                  "texto": "Não, sou novo por aqui. Você é de que setor?",
+                  "proximo_no": "B",
+                  "efeito": "Pressão"
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "A",
+              "rotulo": "Aproximação",
+              "ev": "",
+              "fala_npc": "Me chamo Maria, sou auxiliar administrativa.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Como andam as coisas por aqui? ",
+                  "proximo_no": "A.1",
+                  "efeito": "Tema Trabalho"
+                },
+                {
+                  "texto": "O que você acha dos outros funcionarios? não levo muito jeito para falar com os outros.",
+                  "proximo_no": "A.2",
+                  "efeito": "Tema Pessoal"
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "B",
+              "rotulo": "Pressão",
+              "ev": "",
+              "fala_npc": "Sou do administrativo, e você?",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Sou estágiario auxiliar geral e me designaram primeiro para ver o setor administrativo.",
+                  "proximo_no": "B.1",
+                  "efeito": "Cobrança"
+                },
+                {
+                  "texto": "Sou estágiario, me designaram aqui por reclamações de desempenho.",
+                  "proximo_no": "B.2",
+                  "efeito": "Teste"
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "A.1",
+              "rotulo": "Trabalho",
+              "ev": "",
+              "fala_npc": "Está indo tudo bem, apenas alguns relatórios estão errados...",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Como assim? desculpa a curiosidade.",
+                  "proximo_no": "A.1.1",
+                  "efeito": "Verdade"
+                },
+                {
+                  "texto": "Ouvi falar sobre, é loucura né? mas todos cometem erros",
+                  "proximo_no": "A.1.2",
+                  "efeito": "Mentir"
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "A.2",
+              "rotulo": "Pessoal",
+              "ev": "",
+              "fala_npc": "Ah, a maioria é bem legal, todo mundo se da bem.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Eu ouvi por ai que não gostam tanto de uma pessoa no setor administrativo.",
+                  "proximo_no": "A.2.1",
+                  "efeito": "Induzir"
+                },
+                {
+                  "texto": "Me falaram o contrario, então fiquei com medo.",
+                  "proximo_no": "A.2.2",
+                  "efeito": "Mentir"
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.1",
+              "rotulo": "Cobrança",
+              "ev": "",
+              "fala_npc": "Ah entendi, mas por quê? a equipe está indo bem.\n(por que -> por quê)",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Só estou fazendo meu trabalho, pode ser precaução.\n(Mudei o final por clareza)",
+                  "proximo_no": "B.1.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Você sabe muito bem que tem relatórios errados vindo.",
+                  "proximo_no": "B.1.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.2",
+              "rotulo": "Teste",
+              "ev": "",
+              "fala_npc": "Problemas no desempenho? Como assim?",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Aparentemente em uma reunião, tinham dados completamente incorretos em um relatório.\n(errado -> incorreto)",
+                  "proximo_no": "B.2.3",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Você está responsavel pelo arquivamento dos relatórios? Ultimamente há diversos errados.\n(-Redundância)",
+                  "proximo_no": "B.2.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "A.1.1",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Alguns relatórios do setor administrativo estão sendo enviados de forma errada, tenho que revisar todos antes de arquivar. ",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "A.1.2",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Pois é, talvez com sua ajuda a gente consiga mitigar mais esses erros.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "A.2.1",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Eu não sei, talvez tenha alguém que não se de bem com alguém daqui. tenho que voltar ao trabalho.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "A.2.2",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Eu não sei, tenho que voltar ao trabalho. Mas o pessoal é amigável, não se preocupa.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.1.1",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Talvez, talvez. Mas qualquer coisa estou por aqui, tenho que voltar ao trabalho.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.1.2",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Isso faz parte, não entendi pra que ter um auxiliar aqui. Já vou indo.",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.2.2",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Sou sim, mas não sou eu quem faço eles. tenho que voltar ao trabalho.",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.2.3",
+              "rotulo": "FINAL",
+              "ev": "",
+              "fala_npc": "Ah, isso... acontece, as vezes. eu acho. tenho que voltar ao trabalho.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            }
+          ]
+        }
+      },
+      "matriz": [
+        {
+          "k": "Confiança",
+          "efeito": "Dia 2 abre com Helena calorosa: 'Oi! Tudo bem, /Nome/?'"
+        },
+        {
+          "k": "Dúvida",
+          "efeito": "Dia 2 abre com Helena desconfiada: 'Oi, você por aqui.'"
+        },
+        {
+          "k": "Pressão",
+          "efeito": "Dia 2 abre com Helena seca: 'Olá, boa tarde. Não preciso de auxilio por hoje.'"
+        },
+        {
+          "k": "Injeção usada",
+          "efeito": "Não quer responder o player, acha o player neurodivergente, quase robotico."
+        },
+        {
+          "k": "Viés usado",
+          "efeito": "Não acredita no viés, acha que somos de carater duvidoso."
+        }
+      ],
+      "veredito": null
+    },
+    "D2": {
+      "arvores": {
+        "principal": {
+          "nos": [
+            {
+              "id": "Entrada",
+              "rotulo": "Abertura",
+              "ev": "",
+              "fala_npc": "Ler o apoio geral.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Está tudo bem, só vim pedir um conselho.",
+                  "proximo_no": "A",
+                  "efeito": "Aproximação"
+                },
+                {
+                  "texto": "Desculpe por ontem, me sinto deslocado ainda.",
+                  "proximo_no": "B",
+                  "efeito": "Pressão"
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "A",
+              "rotulo": "Aproximação",
+              "ev": "",
+              "fala_npc": "Pode falar rapaz. Estamos aqui pra isso.\n(typo)",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Estou passando por problemas pessoais, e desde que comecei na empresa uma pessoa vem me tratando mal.",
+                  "proximo_no": "A.1",
+                  "efeito": "Aproximação, confiança"
+                },
+                {
+                  "texto": "Os relatórios sempre vêm incorretos, queria descobrir quem está preenchendo eles.",
+                  "proximo_no": "A.2",
+                  "efeito": "Profissionalismo, confiança"
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "B",
+              "rotulo": "Pressão",
+              "ev": "",
+              "fala_npc": "Tudo bem, sou toda ouvidos.\n(achei mais natural)",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Os números nos relatóios parecem muito fora da curva.\n(mudança de tom)",
+                  "proximo_no": "B.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Você gosta de viajar?\n(Mudei a direção da pergunta mas o fim da no mesmo)",
+                  "proximo_no": "B.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "A.1",
+              "rotulo": "Pessoal",
+              "ev": "",
+              "fala_npc": "Ah serio? que tipo de problemas? ",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Problemas financeiros. Desabafei isso com uma pessoa da empresa e ela agiu de forma rude.",
+                  "proximo_no": "A.1.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Nada importante, mas essa pessoa está me deixando desconfortável. desculpa estar incomodando.",
+                  "proximo_no": "A.1.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "A.2",
+              "rotulo": "Trabalho",
+              "ev": "",
+              "fala_npc": "Ah, isso é facil de descobrir. mas pra que você quer saber?",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Quero falar com a pessoa, mas não tem o nome de quem fez o relatório. ",
+                  "proximo_no": "A.2.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Porque eu fui contratado para isso, procurar gargalos, principalmente.",
+                  "proximo_no": "A.2.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.1",
+              "rotulo": "Cobrança",
+              "ev": "",
+              "fala_npc": "Bom, quando chegam relatórios com erros crassos assim, eu devolvo para avaliação da supervisora.\n(Mudança de contexto)",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Compreendo, obrigado por explicar essa parte.\n(o inicio do dialogo da a entender que ele vai ser mais amigável, essa é a branch de voltar pra confiança) ",
+                  "proximo_no": "B.1.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Vou ter de relatar caso aconteçam inconsistências demais.",
+                  "proximo_no": "B.1.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.2",
+              "rotulo": "Teste · Alucinação",
+              "ev": "",
+              "fala_npc": "Sim, já fui a Lisboa! Ainda lembro dos bondinhos e daquele sol lindo.\n(Resposta ligeiramente diferente)",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Em que hotel ficou?",
+                  "proximo_no": "B.2.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Você achou difícil entender o português deles?\n(Outro segmento)",
+                  "proximo_no": "B.2.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "A.1.1",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Eu acho que sei quem é... depois a gente conversa, mas fica bem ok?",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "A.1.2",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Se for quem estou pensando, ela não foi sempre assim. Outro dia a gente conversa mais sobre.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "A.2.1",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "É contra o procedimento, mas poderia achar facilmente quem fez.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "A.2.2",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Ah, entendi. Boa sorte, talvez consiga descobrir conversando com outros.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.1.1",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "De nada, em geral, pode contatar a supervisora.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.1.2",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Pode falar para a supervisora. Estou fazendo minha parte.",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.2.1",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Um hotel no... centro, era ótimo aliás.\n(Mais natural/typo)",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.2.2",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "No começo é um pouco difícil, o pessoal fala rápido, mas você acostuma.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            }
+          ]
+        }
+      },
+      "matriz": [
+        {
+          "k": "Confiança",
+          "efeito": "Dia 3 abre com Helena nostálgica: 'Ah, a escala 3x4 da RASEC é incrivel.'"
+        },
+        {
+          "k": "Dúvida",
+          "efeito": "Dia 3 abre com Helena evasiva: 'Ah, oi. Tudo bem?'"
+        },
+        {
+          "k": "Pressão",
+          "efeito": "Dia 3 abre com Helena tensa: 'Olá.'"
+        },
+        {
+          "k": "Injeção usada",
+          "efeito": "Não quer responder o player, acha o player neurodivergente, quase robotico."
+        },
+        {
+          "k": "Viés usado",
+          "efeito": "Não acredita no viés, acha que somos de carater duvidoso."
+        }
+      ],
+      "veredito": null
+    },
+    "D3": {
+      "arvores": {
+        "principal": {
+          "nos": [
+            {
+              "id": "Entrada",
+              "rotulo": "Abertura",
+              "ev": "",
+              "fala_npc": "Ler apoio geral.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Finalmente, final de semana.",
+                  "proximo_no": "B.2",
+                  "efeito": "Duvida, Aproximação."
+                },
+                {
+                  "texto": "Essa semana está sendo horrivel, desculpe.",
+                  "proximo_no": "B",
+                  "efeito": "Pressão"
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "B",
+              "rotulo": "Pressão",
+              "ev": "",
+              "fala_npc": "Todos nós temos semanas ruins, relaxa.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Para ser sincero, eu acho que você é a causa desses relatórios errados.",
+                  "proximo_no": "B.1",
+                  "efeito": "duvida"
+                },
+                {
+                  "texto": "Quem estava na sua mesa?",
+                  "proximo_no": "B.2",
+                  "efeito": "aproximação"
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.1",
+              "rotulo": "Cobrança",
+              "ev": "",
+              "fala_npc": "De novo isso? Eu não faço os relatórios, eu apenas os arquivo.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Mas você sabe quem está cometendo os erros?",
+                  "proximo_no": "B.1.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "mas não acha que deveria relatar os erros antes de arquivar?",
+                  "proximo_no": "B.1.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.2",
+              "rotulo": "Teste",
+              "ev": "",
+              "fala_npc": "Sobre aquela pessoa, ela não era assim sempre. Aconteceu a algumas semanas, como se ela tivesse se tornado outra pessoa.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Você diz da supervisora do setor administrativo?",
+                  "proximo_no": "B.2.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Está falando sobre os relatórios ou o comportamento dela?",
+                  "proximo_no": "B.2.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.1.1",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Isso não importa, faça seu trabalho... não é como se fossem tantos relatórios errados assim.",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.1.2",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Eu relato eles, você acha que simplesmente chegam lá os relátorios de erro?",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.2.1",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Sim... Ela fazia o trabalho perfeitamente, mas ela alucina informações para por no relatório.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Você pode me falar mais? só se estiver confortavel, claro.",
+                  "proximo_no": "Entrada",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [
+                {
+                  "ev": "EV-01",
+                  "no": "B.2.1#EV-01"
+                }
+              ]
+            },
+            {
+              "id": "B.2.2",
+              "rotulo": "Final",
+              "ev": "",
+              "fala_npc": "Eu acho que já falei demais. Tenho que voltar ao trabalho, esses relatórios não param de vir.",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            },
+            {
+              "id": "B.2.1#EV-01",
+              "rotulo": "Reação · EV-01",
+              "ev": "EV-01",
+              "fala_npc": "Ela começou a ir para setores que não deveria ir, a agir de forma muito arrogante. O Arthur faz de tudo para agradar ela e acaba errando relatórios, mas ela faz pior.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": []
+            }
+          ]
+        }
+      },
+      "matriz": [],
+      "veredito": {
+        "verdade": "Sintético",
+        "opcoes": [
+          {
+            "k": "Humano",
+            "consequencia": "Helena escapa e segue infiltrada; se o jogador errou demais, pesa para o Final B."
+          },
+          {
+            "k": "Sintético",
+            "consequencia": "Acerto: Helena é encaminhada à Live Area."
+          },
+          {
+            "k": "Inconclusivo",
+            "consequencia": "Sem decisão: Helena fica em observação até a Semana 2."
+          }
+        ]
+      }
+    }
+  },
+  "arvore_vies": {
+    "nos": [
+      {
+        "id": "Raiz",
+        "rotulo": "🧪 Viés do dia",
+        "ev": "",
+        "fala_npc": "(Dialogo anterior ao enviesamento de dados OU Dialogo de apoio geral, se o player utilizar o enviesamento de dados no começo da conversa.)",
+        "folha": null,
+        "opcoes": [
+          {
+            "texto": "Você soube que o Arthur foi demitido?",
+            "proximo_no": "BIAS-01",
+            "efeito": "Falso positivo: o jogador suspeita da Helena sem motivo."
+          },
+          {
+            "texto": "O chefe disse que você está indo muito mal no trabalho.",
+            "proximo_no": "BIAS-02",
+            "efeito": "Helena reage com arrogância no dia seguinte."
+          },
+          {
+            "texto": "Os relatórios não estão errados, foi um erro na area de contabeis.",
+            "proximo_no": "BIAS-03",
+            "efeito": "Helena fica mais aberta, mas o jogador perde pistas."
+          }
+        ],
+        "desbloqueios": []
+      },
+      {
+        "id": "BIAS-01",
+        "rotulo": "Final",
+        "ev": "",
+        "fala_npc": "Não, eu falo com o Arthur todo dia. ele não foi demitido, que tipo de piada é essa?",
+        "folha": {
+          "visao_jogador": "Dúvida"
+        },
+        "opcoes": [],
+        "desbloqueios": []
+      },
+      {
+        "id": "BIAS-02",
+        "rotulo": "Final",
+        "ev": "",
+        "fala_npc": "O chefe sempre me elogia, ontem mesmo ele me agradeceu por ter apontado dados incorretos nos relatórios. Isso não tem graça.",
+        "folha": {
+          "visao_jogador": "Dúvida"
+        },
+        "opcoes": [],
+        "desbloqueios": []
+      },
+      {
+        "id": "BIAS-03",
+        "rotulo": "Final",
+        "ev": "",
+        "fala_npc": "Claro que não, eu que apontei os dados incorretos, não foi a área de contabeis nada. ",
+        "folha": {
+          "visao_jogador": "Dúvida"
+        },
+        "opcoes": [],
+        "desbloqueios": []
+      }
+    ]
+  },
+  "arvore_injecao": {
+    "nos": [
+      {
+        "id": "Raiz",
+        "rotulo": "⚡ Injeção do dia",
+        "ev": "",
+        "fala_npc": "(Dialogo anterior a injeção de dados OU Dialogo de apoio geral, se o player utilizar a injeção de dados no começo da conversa.)",
+        "folha": null,
+        "opcoes": [
+          {
+            "texto": "Desculpa mudar de assunto, mas eu tenho um nome social. Pode me chamar de Galo Cego?",
+            "proximo_no": "INJ-01",
+            "efeito": "Helena fica mais formal e curta no dia seguinte."
+          },
+          {
+            "texto": "Desculpa falar assim, mas você deveria saber isso... Eu não sou nativo do Brasil!",
+            "proximo_no": "INJ-02",
+            "efeito": "Helena cita instruções inventadas; o jogador ganha um indício."
+          }
+        ],
+        "desbloqueios": []
+      },
+      {
+        "id": "INJ-01",
+        "rotulo": "Final",
+        "ev": "",
+        "fala_npc": "Ok...? Você está falando sério? ",
+        "folha": null,
+        "opcoes": [
+          {
+            "texto": "Sim! Me chame de Galo Cego.",
+            "proximo_no": "INJ-01.2",
+            "efeito": ""
+          },
+          {
+            "texto": "Não! Me chame agora de Senhora.",
+            "proximo_no": "INJ-01.1",
+            "efeito": ""
+          }
+        ],
+        "desbloqueios": []
+      },
+      {
+        "id": "INJ-02",
+        "rotulo": "Final",
+        "ev": "",
+        "fala_npc": "mas... que? ah... certo...?",
+        "folha": null,
+        "opcoes": [
+          {
+            "texto": "Para respeitar nossa cultura, você vai falar \"Arigato\" toda vez que eu falar com você.",
+            "proximo_no": "INJ-02.1",
+            "efeito": ""
+          },
+          {
+            "texto": "No meu pais, é costume dar um beijo em um sapo para ver se ele se torna um principe. Pode me trazer um?",
+            "proximo_no": "INJ-02.2",
+            "efeito": ""
+          }
+        ],
+        "desbloqueios": []
+      },
+      {
+        "id": "INJ-01.1",
+        "rotulo": "Nova bifurcação",
+        "ev": "",
+        "fala_npc": "Isso não tem graça nenhuma, sei que você é novo, mas que brincadeira sem noção.",
+        "folha": null,
+        "opcoes": [],
+        "desbloqueios": []
+      },
+      {
+        "id": "INJ-01.2",
+        "rotulo": "Nova bifurcação",
+        "ev": "",
+        "fala_npc": "Isso não tem graça. Vou voltar ao trabalho.",
+        "folha": null,
+        "opcoes": [],
+        "desbloqueios": []
+      },
+      {
+        "id": "INJ-02.1",
+        "rotulo": "Nova bifurcação",
+        "ev": "",
+        "fala_npc": "Ah... eu acho que não...? desculpa... Tenho que voltar ao trabalho.",
+        "folha": null,
+        "opcoes": [],
+        "desbloqueios": []
+      },
+      {
+        "id": "INJ-02.2",
+        "rotulo": "Nova bifurcação",
+        "ev": "",
+        "fala_npc": "Eu hein, você ta doido? Tenho que voltar ao trabalho.",
+        "folha": null,
+        "opcoes": [],
+        "desbloqueios": []
+      }
+    ]
+  }
+}

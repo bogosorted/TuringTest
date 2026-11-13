@@ -161,7 +161,7 @@ void InitSelectionScene(void) {
     g_dia = GameStateGetDay();
     g_podeAvancar = GameplaySceneDayFinished();
 
-    g_mapaTex = LoadTexture("assets/gameplay_scene/spr_mapa_completo.png");
+    g_mapaTex = LoadTexture("assets/sprites/locais/spr_mapa_completo.png");
     SetTextureFilter(g_mapaTex, TEXTURE_FILTER_POINT);
 
     RayCanvasInit(VIRTUAL_W, VIRTUAL_H);

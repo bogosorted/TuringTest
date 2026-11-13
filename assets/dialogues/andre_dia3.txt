@@ -2,25 +2,101 @@ NPC: andre
 DIA: 3
 
 [NODE: start]
-SPEAKER: Você
-TEXT: André parece exausto entre ligações e papéis acumulados.
-CHOICE: Oi, como vai? -> intro
+SPEAKER: Arthur
+TEXT: Bom dia, bom trabalho
+CHOICE: Oi Arthur, tudo bem? -> A
+CHOICE: Oi, estava te procurando. -> B
 
-[NODE: intro]
-SPEAKER: André
-TEXT: Cansado. Vai logo, o que você quer?
-CHOICE: Alguém mexeu no recrutamento ou financeiro? -> suspeita
-CHOICE: A Mariana disse que o RH está sob pressão. -> mariana
-CHOICE: Você já teve algum conflito com alguém daqui? -> conflito
+[NODE: A]
+SPEAKER: Arthur
+TEXT: Tudo, vou visitar a família amanhã.
+CHOICE: Que ótimo, sempre legal ficar perto dos pais. -> A.1
+CHOICE: Filho da mamãe né? -> A.2
 
-[NODE: suspeita]
-SPEAKER: André
-TEXT: Não sei e não quero saber. Eu não tenho acesso a isso. Se alguém mexeu, quem tem que apurar é a TI ou o RH, não eu. Terminou?
+[NODE: B]
+SPEAKER: Arthur
+TEXT: Pode dizer, manda ai.
+CHOICE: Revisou muitos relatórios hoje? -> B.1
 
-[NODE: mariana]
-SPEAKER: André
-TEXT: Percebi, todo mundo tá sob pressão. Ela sempre fala muito, e eu nem tenho tempo pra ouvir tudo. Se quiser fofoca, procura outro.
+[NODE: A.1]
+SPEAKER: Arthur
+TEXT: É, passo muito tempo com meu pai. Cresci apenas com ele.
+CHOICE: Revisou muitos relatórios hoje? -> A.1.1
+CHOICE: A Maria está distante ultimamente? Vocês pareciam chegados. -> A.1.2
 
-[NODE: conflito]
-SPEAKER: André
-TEXT: Tive com o pessoal do marketing porque o Lucas atrasou um pedido de campanha. Mas resolvi. Fim de conversa, tenho que ir.
+[NODE: A.2]
+SPEAKER: Arthur
+TEXT: Eu.. Eu cresci sem minha mãe.
+CHOICE: Desculpe Arthur, não quis ser rude. -> A.2.1
+CHOICE: Ah... Perdão, como vão os relatórios? -> A.2.2
+
+[NODE: B.1]
+SPEAKER: Arthur
+TEXT: Revisei alguns hoje sim, por quê a pergunta?
+CHOICE: Sua função é revisar os relatórios? -> B.1.1
+CHOICE: Conseguiu terminar o trabalho de ontem? -> B.1.2
+
+[NODE: B.2]
+SPEAKER: Arthur
+TEXT: 
+
+[NODE: A.1.1]
+SPEAKER: Arthur
+TEXT: É, tive que revisar, mesmo não sendo minha função, se eu não fizesse não ia ter como atender as demandas doidas da Analu.
+
+[NODE: A.1.2]
+SPEAKER: Arthur
+TEXT: Estava, juntou um pouco de burnout com outros problemas, mas tirando a Analu, acho que está tudo normal agora.
+
+[NODE: A.2.1]
+SPEAKER: Arthur
+TEXT: Tudo bem, não tinha como você saber. Vivi com meu pai desde sempre, ele que me ensinou guitarra.
+
+[NODE: A.2.2]
+SPEAKER: Arthur
+TEXT: Revisei os relatórios, tá complicado.
+
+[NODE: B.1.1]
+SPEAKER: Arthur
+TEXT: Não, falei pra cê, eu os preencho, mas tive que revisar por conta de alguns comentários de Analu.
+
+[NODE: B.1.2]
+SPEAKER: Arthur
+TEXT: Parecia que iria conseguir progresso, mas estou estagnado.
+
+[NODE: B.2.1]
+SPEAKER: Arthur
+TEXT: 
+
+[NODE: B.2.2]
+SPEAKER: Arthur
+TEXT: 
+
+[NODE: Entrada#EV-06]
+SPEAKER: Arthur
+TEXT: Falei, ela simplesmente não entende
+CHOICE: Oque aconteceu? -> Entrada#EV-06.1
+
+[NODE: Entrada#EV-06.1]
+SPEAKER: Arthur
+TEXT: Ela parece teimosa até demais, como se estivesse empenhada em me contradizer, isso não é normal.
+CHOICE: Hmm... Entendo -> start
+
+[NODE: Entrada#EV-04]
+SPEAKER: Arthur
+TEXT: Eita! Valeu por devolver. Cê sabe, as vezes sou meio desastrado.
+CHOICE: Sei... -> start
+
+[NODE: B#EV-03]
+SPEAKER: Arthur
+TEXT: Olha, eu vou resolver, tá?
+CHOICE: Certo, tem algum motivo pra isso? -> B#EV-03.1
+CHOICE: Você não pode simplesmente o trabalho se amontoar. -> B#EV-03.2
+
+[NODE: B#EV-03.1]
+SPEAKER: Arthur
+TEXT: Analu tem basicamente inventado exigências que não fazem sentido, no mais é isso.
+
+[NODE: B#EV-03.2]
+SPEAKER: Arthur
+TEXT: Veja só, eu conseguiria lidar com tudo como fazia antes, se Analu não tivesse dando umas justificativas insanas pra mim.
