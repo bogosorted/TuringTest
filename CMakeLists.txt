@@ -1,4 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
+
+find_program(CCACHE_PROGRAM ccache HINTS "$ENV{HOME}/.local/bin")
+if(CCACHE_PROGRAM)
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+endif()
+
 project(TuringTest C)
 
 set(CMAKE_C_STANDARD 99)
@@ -8,11 +14,23 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
+if(UNIX AND NOT APPLE)
+    find_program(MOLD_LINKER mold HINTS "$ENV{HOME}/.local/bin")
+    if(MOLD_LINKER)
+        add_link_options("-fuse-ld=mold")
+    endif()
+endif()
+
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE BOOL "Skip network checks when dependencies are already populated")
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
+
 include(FetchContent)
 FetchContent_Declare(
     raylib
     GIT_REPOSITORY https://github.com/raysan5/raylib.git
     GIT_TAG master
+    GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(raylib)
 

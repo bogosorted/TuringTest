@@ -51,7 +51,7 @@ static const char *TEXTO_INTRO =
     "Um deles não é humano. Você tem uma bala.\n\n"
     "Quem é a IA infiltrada?";
 
-typedef enum { ESTADO_INTRO = 0, ESTADO_MIRANDO, ESTADO_TIRO, ESTADO_FINAL, ESTADO_PONTUACAO } EstadoVeredito;
+typedef enum { ESTADO_INTRO = 0, ESTADO_MIRANDO, ESTADO_TIRO, ESTADO_FINAL, ESTADO_JORNALISTA, ESTADO_PONTUACAO } EstadoVeredito;
 
 static const Color TONS[5] = {
     { 0, 0, 0, 255 }, { 32, 29, 31, 255 }, { 125, 112, 113, 255 }, { 189, 181, 168, 255 }, { 255, 242, 230, 255 }
@@ -116,6 +116,253 @@ static int        g_pranchetaTotais[3]   = { 0 };
 
 static Texture2D g_sil[3];
 static Sound     g_sndHover, g_sndTiro, g_sndGrito[3];
+
+// ---------------------------------------------------------------
+// SISTEMA DE RIGGING FACIAL + DITHERING PARA A JORNALISTA
+// Adaptado do Photobash Rig: 9 pontos RBF + Pálpebras + Dithering Bayer 4x4
+// ---------------------------------------------------------------
+typedef enum {
+    EXPR_JORN_SERIA = 0,
+    EXPR_JORN_URGENTE,
+    EXPR_JORN_PREOCUPADA,
+    EXPR_JORN_SUSPENSE
+} ExpressaoJornalista;
+
+typedef struct {
+    Vector2 browP[4]; // bLo, bLi, bRi, bRo
+    Vector2 lidP[2];  // lidL, lidR
+    Vector2 mouthP[2];// mL, mR
+    Vector2 jawP;     // jaw
+} FaceRigAnchors;
+
+static const FaceRigAnchors ANCHORS_JORNALISTA = {
+    .browP  = { { 0.322f, 0.436f }, { 0.384f, 0.428f }, { 0.434f, 0.423f }, { 0.497f, 0.428f } },
+    .lidP   = { { 0.350f, 0.467f }, { 0.472f, 0.455f } },
+    .mouthP = { { 0.378f, 0.601f }, { 0.441f, 0.596f } },
+    .jawP   = { 0.410f, 0.674f }
+};
+
+typedef struct {
+    Vector2 d[9];
+} FaceRigPose;
+
+static Texture2D g_texJornalista;
+static Shader    g_shaderJornalista;
+static int       g_locBrowP, g_locBrowD, g_locLidP, g_locLidD, g_locMouthP, g_locMouthD, g_locJawP, g_locJawD, g_locBlink, g_locPalpebraCol;
+static FaceRigPose g_poseJornFrom, g_poseJornTarget, g_poseJornCurr;
+static float     g_jornTweenT = 1.0f;
+static float     g_jornTalkTimer = 0.0f;
+static float     g_jornTypewriterTimer = 0.0f;
+static float     g_jornPauseTimer = 0.0f;
+static int       g_jornCharsRevealed = 0;
+static int       g_jornFaseFala = 0; // 0 = fala 1, 1 = pausa, 2 = fala 2, 3 = sinal cortado
+static float     g_jornPausaTimerFase = 0.0f;
+typedef enum {
+    TIPO_FINAL_NEUTRO = 0, // veredito correto + score < 5500
+    TIPO_FINAL_BOM,        // veredito correto + score >= 5500
+    TIPO_FINAL_RUIM        // veredito incorreto
+} TipoFinal;
+static TipoFinal g_tipoFinal = TIPO_FINAL_NEUTRO;
+static Sound     g_sndBlipJornalista;
+
+// Falas do Plantão — Final Bom (veredito correto + score >= 5500)
+static const char *FALA_JORNALISTA_1 = 
+    "Notícia urgente! O número de androides infiltrados começa a crescer no país, enquanto "
+    "protestos sociais tomam as ruas exigindo direitos para os humanoides. Em meio à crise, "
+    "a RASEC passa a ser investigada por suspeita de má conduta com seus funcionários.";
+
+static const char *FALA_JORNALISTA_2 = 
+    "Em outras notícias, um humanoide vai conceder uma entrevista inédita ainda hoje... "
+    "e afirma possuir informações confidenciais.";
+
+// Falas do Plantão — Final Ruim (veredito incorreto)
+static const char *FALA_JORNALISTA_RUIM_1 =
+    "Notícia urgente! A CEO da RASEC foi presa após o protótipo de investigação matar um "
+    "funcionário inocente. Agora, a empresa é investigada sob suspeita de criar os próprios "
+    "androides humanoides apenas para lucrar com a crise.";
+
+static const char *FALA_JORNALISTA_RUIM_2 =
+    "Em outras notícias, humanoides revelam que não escolhem quem vão copiar... "
+    "e que os rostos que assumem já estavam decididos antes mesmo de eles despertarem.";
+
+static const char *JORNALISTA_FS =
+    "#version 330\n"
+    "in vec2 fragTexCoord;\n"
+    "in vec4 fragColor;\n"
+    "uniform sampler2D texture0;\n"
+    "uniform vec2 uBrowP[4];\n"
+    "uniform vec2 uBrowD[4];\n"
+    "uniform vec2 uLidP[2];\n"
+    "uniform vec2 uLidD[2];\n"
+    "uniform vec2 uMouthP[2];\n"
+    "uniform vec2 uMouthD[2];\n"
+    "uniform vec2 uJawP;\n"
+    "uniform vec2 uJawD;\n"
+    "uniform float uBlink;\n"
+    "uniform vec3 uPalpebraCol;\n"
+    "out vec4 finalColor;\n"
+    "\n"
+    "float rbf(vec2 p, vec2 c, float r) {\n"
+    "    vec2 q = (p - c) / max(r, 0.0001);\n"
+    "    return exp(-dot(q, q) * 0.5);\n"
+    "}\n"
+    "\n"
+    "float bayer4(vec2 p) {\n"
+    "    vec2 b = mod(floor(p), 4.0);\n"
+    "    int x = int(b.x);\n"
+    "    int y = int(b.y);\n"
+    "    int idx = y * 4 + x;\n"
+    "    if (idx == 0) return 0.0/16.0;\n"
+    "    if (idx == 1) return 8.0/16.0;\n"
+    "    if (idx == 2) return 2.0/16.0;\n"
+    "    if (idx == 3) return 10.0/16.0;\n"
+    "    if (idx == 4) return 12.0/16.0;\n"
+    "    if (idx == 5) return 4.0/16.0;\n"
+    "    if (idx == 6) return 14.0/16.0;\n"
+    "    if (idx == 7) return 6.0/16.0;\n"
+    "    if (idx == 8) return 3.0/16.0;\n"
+    "    if (idx == 9) return 11.0/16.0;\n"
+    "    if (idx == 10) return 1.0/16.0;\n"
+    "    if (idx == 11) return 9.0/16.0;\n"
+    "    if (idx == 12) return 15.0/16.0;\n"
+    "    if (idx == 13) return 7.0/16.0;\n"
+    "    if (idx == 14) return 13.0/16.0;\n"
+    "    return 5.0/16.0;\n"
+    "}\n"
+    "\n"
+    "void main() {\n"
+    "    vec2 uv = fragTexCoord;\n"
+    "    vec2 d = vec2(0.0);\n"
+    "    float rBrow = 0.088;\n"
+    "    for (int i = 0; i < 4; i++) {\n"
+    "        d += uBrowD[i] * rbf(uv, uBrowP[i], rBrow);\n"
+    "    }\n"
+    "    float lidRx = 0.075;\n"
+    "    float lidRy = 0.052;\n"
+    "    for (int i = 0; i < 2; i++) {\n"
+    "        vec2 diff = uv - uLidP[i];\n"
+    "        vec2 q = diff / vec2(lidRx, lidRy);\n"
+    "        q.y *= (diff.y < 0.0) ? 0.85 : 1.45;\n"
+    "        float w = exp(-dot(q, q) * 0.5);\n"
+    "        float horiz = max(0.0, 1.0 - q.x * q.x * 0.35);\n"
+    "        d.x += uLidD[i].x * w;\n"
+    "        d.y += uLidD[i].y * w * horiz;\n"
+    "        float openPull = max(0.0, -uLidD[i].y);\n"
+    "        vec2 qOpen = diff / vec2(lidRx, lidRy * 1.5);\n"
+    "        d.y -= openPull * 0.40 * exp(-dot(qOpen, qOpen) * 0.5);\n"
+    "    }\n"
+    "    float rMouth = 0.095;\n"
+    "    for (int i = 0; i < 2; i++) {\n"
+    "        d += uMouthD[i] * rbf(uv, uMouthP[i], rMouth);\n"
+    "    }\n"
+    "    vec2 mc = (uMouthP[0] + uMouthP[1]) * 0.5;\n"
+    "    vec2 mcD = vec2(0.0, -(uMouthD[0].y + uMouthD[1].y) * 0.30);\n"
+    "    d += mcD * rbf(uv, mc, rMouth * 0.9);\n"
+    "    d += uJawD * rbf(uv, uJawP, 0.140);\n"
+    "    vec2 sampleUV = clamp(uv - d, vec2(0.001), vec2(0.999));\n"
+    "    vec4 texCol = texture(texture0, sampleUV);\n"
+    "\n"
+    "    // Paleta oficial RASEC / Turing Test\n"
+    "    vec3 c0 = vec3(0.0, 0.0, 0.0);\n"
+    "    vec3 c1 = vec3(32.0, 29.0, 31.0) / 255.0;\n"
+    "    vec3 c2 = vec3(90.0, 83.0, 83.0) / 255.0;\n"
+    "    vec3 c3 = vec3(125.0, 112.0, 113.0) / 255.0;\n"
+    "    vec3 c4 = vec3(160.0, 147.0, 142.0) / 255.0;\n"
+    "    vec3 c5 = vec3(189.0, 181.0, 168.0) / 255.0;\n"
+    "\n"
+    "    // Piscar dos olhos suave\n"
+    "    if (uBlink > 0.10) {\n"
+    "        float bProg = (uBlink - 0.10) / 0.90;\n"
+    "        for (int i = 0; i < 2; i++) {\n"
+    "            vec2 eyeCenter = uLidP[i] + uLidD[i] + vec2(0.0, 0.010);\n"
+    "            vec2 q = (uv - eyeCenter) / vec2(0.065, 0.038);\n"
+    "            float distSq = dot(q, q);\n"
+    "            if (distSq <= 1.0) {\n"
+    "                float arcY = (1.0 - q.x * q.x) * 0.40 * bProg;\n"
+    "                float distArc = abs(q.y - arcY);\n"
+    "                if (distArc < 0.16) {\n"
+    "                    texCol = vec4(c1, 1.0);\n"
+    "                } else if (q.y <= arcY + 0.35) {\n"
+    "                    texCol = vec4(uPalpebraCol, 1.0);\n"
+    "                }\n"
+    "            }\n"
+    "        }\n"
+    "    }\n"
+    "\n"
+    "    // Normalizacao de auto-levels para nao queimar nem escurecer demais a foto da jornalista\n"
+    "    float lum = dot(texCol.rgb, vec3(0.299, 0.587, 0.114));\n"
+    "    float lumNorm = clamp((lum - 0.03) / (0.76 - 0.03), 0.0, 1.0);\n"
+    "    vec2 pGrid = floor(gl_FragCoord.xy / 2.0);\n"
+    "    float dVal = (bayer4(pGrid) - 0.5) * 0.22;\n"
+    "    float val = clamp(lumNorm + dVal, 0.0, 1.0);\n"
+    "\n"
+    "    vec3 outRgb = c0;\n"
+    "    if (val < 0.15) outRgb = c0;\n"
+    "    else if (val < 0.32) outRgb = c1;\n"
+    "    else if (val < 0.52) outRgb = c2;\n"
+    "    else if (val < 0.70) outRgb = c3;\n"
+    "    else if (val < 0.88) outRgb = c4;\n"
+    "    else outRgb = c5;\n"
+    "\n"
+    "    finalColor = vec4(outRgb, 1.0) * fragColor;\n"
+    "}\n";
+
+static int QuebrarLinhas(const char *texto, int tam, float maxW, char linhas[][128], int maxLinhas);
+
+static int GetUtf8CharLength(unsigned char c) {
+    if ((c & 0x80) == 0) return 1;
+    if ((c & 0xE0) == 0xC0) return 2;
+    if ((c & 0xF0) == 0xE0) return 3;
+    if ((c & 0xF8) == 0xF0) return 4;
+    return 1;
+}
+
+static FaceRigPose ObterPoseJornalista(ExpressaoJornalista expr) {
+    FaceRigPose p = { 0 };
+    const float K = 0.11f;
+    float boX = 0, boY = 0, biX = 0, biY = 0, lidX = 0, lidY = 0, moX = 0, moY = 0, jawX = 0, jawY = 0;
+
+    switch (expr) {
+        case EXPR_JORN_URGENTE: // Olhar firme, sobrancelhas levemente arqueadas, boca expressiva
+            boX =  0.00f; boY = -0.10f; biX =  0.00f; biY = -0.10f;
+            lidX = 0.00f; lidY = -0.05f; moX =  0.08f; moY = -0.05f; jawY = 0.05f;
+            break;
+        case EXPR_JORN_PREOCUPADA: // Sobrancelhas franzidas levemente para cima, expressão séria/sensível
+            boX = -0.03f; boY =  0.08f; biX =  0.02f; biY = -0.15f;
+            lidX = 0.00f; lidY =  0.08f; moX = -0.03f; moY =  0.10f; jawY = 0.02f;
+            break;
+        case EXPR_JORN_SUSPENSE: // Tensa, olhos mais abertos, queixo firme
+            boX =  0.04f; boY = -0.12f; biX = -0.04f; biY = -0.14f;
+            lidX = 0.00f; lidY = -0.08f; moX =  0.05f; moY =  0.02f; jawY = 0.04f;
+            break;
+        case EXPR_JORN_SERIA:
+        default:
+            break;
+    }
+
+    p.d[0] = (Vector2){ -boX * K,  boY * K };
+    p.d[1] = (Vector2){ -biX * K,  biY * K };
+    p.d[2] = (Vector2){  biX * K,  biY * K };
+    p.d[3] = (Vector2){  boX * K,  boY * K };
+    p.d[4] = (Vector2){ -lidX * K, lidY * K };
+    p.d[5] = (Vector2){  lidX * K, lidY * K };
+    p.d[6] = (Vector2){ -moX * K,  moY * K };
+    p.d[7] = (Vector2){  moX * K,  moY * K };
+    p.d[8] = (Vector2){  jawX * K, jawY * K };
+    return p;
+}
+
+static void SetExpressaoJornalista(ExpressaoJornalista expr) {
+    g_poseJornFrom   = g_poseJornCurr;
+    g_poseJornTarget = ObterPoseJornalista(expr);
+    g_jornTweenT  = 0.0f;
+}
+
+static float EaseBackJorn(float t) {
+    if (t < 0.0f) t = 0.0f;
+    if (t > 1.0f) t = 1.0f;
+    return t * t * (3.0f - 2.0f * t);
+}
 
 static Texture2D g_sala;             // foto da sala (spr_veredito_sala.png, ja com dithering)
 static RenderTexture2D g_armaRT;     // arma 3D crua
@@ -351,6 +598,39 @@ void InitVerdictScene(void) {
     g_armaFinal = LoadRenderTexture(VIRTUAL_W, VIRTUAL_H);
     SetTextureFilter(g_armaFinal.texture, TEXTURE_FILTER_POINT);
 
+    // Carrega assets da Jornalista para o plantão
+    if (FileExists("assets/sprites/finais/jornalista_final.png")) {
+        g_texJornalista = LoadTexture("assets/sprites/finais/jornalista_final.png");
+        SetTextureFilter(g_texJornalista, TEXTURE_FILTER_POINT);
+    } else if (FileExists("assets/sprites/finais/jornalista_final.jpg")) {
+        g_texJornalista = LoadTexture("assets/sprites/finais/jornalista_final.jpg");
+        SetTextureFilter(g_texJornalista, TEXTURE_FILTER_POINT);
+    }
+    g_shaderJornalista = LoadShaderFromMemory(NULL, JORNALISTA_FS);
+    if (g_shaderJornalista.id > 0) {
+        g_locBrowP  = GetShaderLocation(g_shaderJornalista, "uBrowP");
+        g_locBrowD  = GetShaderLocation(g_shaderJornalista, "uBrowD");
+        g_locLidP   = GetShaderLocation(g_shaderJornalista, "uLidP");
+        g_locLidD   = GetShaderLocation(g_shaderJornalista, "uLidD");
+        g_locMouthP = GetShaderLocation(g_shaderJornalista, "uMouthP");
+        g_locMouthD = GetShaderLocation(g_shaderJornalista, "uMouthD");
+        g_locJawP        = GetShaderLocation(g_shaderJornalista, "uJawP");
+        g_locJawD        = GetShaderLocation(g_shaderJornalista, "uJawD");
+        g_locBlink       = GetShaderLocation(g_shaderJornalista, "uBlink");
+        g_locPalpebraCol = GetShaderLocation(g_shaderJornalista, "uPalpebraCol");
+    }
+    g_sndBlipJornalista = CarregarSomOpcional("assets/audio/blip_patricia.wav");
+
+    g_poseJornCurr   = (FaceRigPose){ 0 };
+    g_poseJornFrom   = (FaceRigPose){ 0 };
+    g_poseJornTarget = (FaceRigPose){ 0 };
+    g_jornTweenT     = 1.0f;
+    g_jornTalkTimer  = 0.0f;
+    g_jornFaseFala   = 0;
+    g_jornCharsRevealed = 0;
+    g_jornPausaTimerFase = 0.0f;
+    g_tipoFinal = TIPO_FINAL_NEUTRO;
+
 
     g_camera = (Camera3D){ 0 };
     g_camera.position = (Vector3){ 0.0f, 0.0f, 0.0f };
@@ -397,6 +677,17 @@ static void CalcularESalvarPontuacao(void) {
         for (int k = 0; k < n; k++) if (marcados[k]) m++;
         g_pranchetaMarcados[s] = m;
         g_pranchetaTotais[s] = n;
+    }
+
+    // Final Bom (Plantão da Jornalista): veredito correto + pontuação >= 5500
+    // Final Neutro: veredito correto + pontuação < 5500 (vai direto para pontuação)
+    // Final Ruim: veredito incorreto (também exibe a jornalista, com texto diferente)
+    if (g_alvo != AI_INDEX) {
+        g_tipoFinal = TIPO_FINAL_RUIM;
+    } else if (g_scoreTotal >= 5500) {
+        g_tipoFinal = TIPO_FINAL_BOM;
+    } else {
+        g_tipoFinal = TIPO_FINAL_NEUTRO;
     }
 }
 
@@ -460,11 +751,297 @@ static void DesenharTextoFinal(void) {
     if (chegou) y = yFinal;
     DesenharLinhas(g_textoFinal, y, 14, COR_CLARA);
     if (chegou) {
-        DesenharDicaClique("Clique para ver sua pontuação");
+        if (g_tipoFinal == TIPO_FINAL_BOM) {
+            DesenharDicaClique("Clique para acompanhar o Plantao de Noticias");
+            if (clicou) {
+                g_estado = ESTADO_JORNALISTA;
+                g_tempo = 0.0f;
+                g_jornFaseFala = 0;
+                g_jornCharsRevealed = 0;
+                g_jornPausaTimerFase = 0.0f;
+                g_jornTypewriterTimer = 0.0f;
+                g_jornPauseTimer = 0.0f;
+                SetExpressaoJornalista(EXPR_JORN_URGENTE);
+            }
+        } else if (g_tipoFinal == TIPO_FINAL_RUIM) {
+            DesenharDicaClique("Clique para acompanhar o Plantao de Noticias");
+            if (clicou) {
+                g_estado = ESTADO_JORNALISTA;
+                g_tempo = 0.0f;
+                g_jornFaseFala = 0;
+                g_jornCharsRevealed = 0;
+                g_jornPausaTimerFase = 0.0f;
+                g_jornTypewriterTimer = 0.0f;
+                g_jornPauseTimer = 0.0f;
+                SetExpressaoJornalista(EXPR_JORN_URGENTE);
+            }
+        } else {
+            DesenharDicaClique("Clique para ver sua pontuação");
+            if (clicou) {
+                g_estado = ESTADO_PONTUACAO;
+                g_tempo = 0.0f;
+                g_pontuacaoCompleta = false;
+            }
+        }
+    }
+}
+
+// Renderiza a cena do Plantão da Jornalista com dithering suave, Rig facial e fala sincronizada
+static void DesenharCenaJornalista(void) {
+    float dt = GetFrameTime();
+    if (dt > 0.05f) dt = 0.05f;
+
+    // Atualiza interpolação do rig da jornalista
+    if (g_jornTweenT < 1.0f) {
+        g_jornTweenT += dt / 0.35f;
+        if (g_jornTweenT > 1.0f) g_jornTweenT = 1.0f;
+    }
+    float e = EaseBackJorn(g_jornTweenT);
+    for (int i = 0; i < 9; i++) {
+        g_poseJornCurr.d[i].x = g_poseJornFrom.d[i].x + (g_poseJornTarget.d[i].x - g_poseJornFrom.d[i].x) * e;
+        g_poseJornCurr.d[i].y = g_poseJornFrom.d[i].y + (g_poseJornTarget.d[i].y - g_poseJornFrom.d[i].y) * e;
+    }
+
+    // Piscar natural a cada ~4.0s
+    float tNow = (float)GetTime();
+    float cicloBlink = fmodf(tNow, 4.0f);
+    float blinkT = 0.0f;
+    if (cicloBlink < 0.18f) {
+        blinkT = sinf((cicloBlink / 0.18f) * 3.14159265f);
+    }
+
+    // Movimento sutil da mandíbula/boca ao falar
+    float talkJawAdd = 0.0f;
+    if (g_jornTalkTimer > 0.0f) {
+        g_jornTalkTimer -= dt;
+        if (g_jornTalkTimer < 0.0f) g_jornTalkTimer = 0.0f;
+        talkJawAdd = (0.5f + 0.5f * sinf(tNow * 22.0f)) * 0.012f;
+    }
+
+    // Gerenciador de diálogo e fases do Plantão
+    // Seleciona as falas corretas de acordo com o tipo de final
+    const char *fala1 = (g_tipoFinal == TIPO_FINAL_RUIM) ? FALA_JORNALISTA_RUIM_1 : FALA_JORNALISTA_1;
+    const char *fala2 = (g_tipoFinal == TIPO_FINAL_RUIM) ? FALA_JORNALISTA_RUIM_2 : FALA_JORNALISTA_2;
+
+    const char *textoAtual = "";
+    if (g_jornFaseFala == 0) {
+        textoAtual = fala1;
+    } else if (g_jornFaseFala == 1) {
+        // Breve pausa dramática entre as duas notícias
+        g_jornPausaTimerFase += dt;
+        g_jornTalkTimer = 0.0f;
+        if (g_jornPausaTimerFase >= 1.6f) {
+            g_jornFaseFala = 2;
+            g_jornCharsRevealed = 0;
+            g_jornTypewriterTimer = 0.0f;
+            g_jornPauseTimer = 0.0f;
+            SetExpressaoJornalista(EXPR_JORN_SUSPENSE);
+        }
+    } else if (g_jornFaseFala == 2) {
+        textoAtual = fala2;
+    } else if (g_jornFaseFala == 3) {
+        // Sinal cortado / Estática
+        g_jornTalkTimer = 0.0f;
+    }
+
+    // Typewriter
+    int totalLen = (int)strlen(textoAtual);
+    bool clicou = !RayCanvasInputBlocked() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+
+    if (g_jornFaseFala == 0 || g_jornFaseFala == 2) {
+        if (g_jornCharsRevealed < totalLen) {
+            if (clicou) {
+                g_jornCharsRevealed = totalLen;
+                g_jornTalkTimer = 0.0f;
+                clicou = false; // Consome clique apenas para completar a linha
+            } else if (g_jornPauseTimer > 0.0f) {
+                g_jornPauseTimer -= dt;
+                g_jornTalkTimer = 0.0f;
+            } else {
+                g_jornTypewriterTimer += dt;
+                const float charSpeed = 0.026f;
+                while (g_jornTypewriterTimer >= charSpeed && g_jornCharsRevealed < totalLen) {
+                    g_jornTypewriterTimer -= charSpeed;
+                    unsigned char c = (unsigned char)textoAtual[g_jornCharsRevealed];
+                    int charLen = GetUtf8CharLength(c);
+                    g_jornCharsRevealed += charLen;
+                    g_jornTalkTimer = 0.14f;
+
+                    // Mudança dinâmica de expressão durante a fala
+                    if (g_jornFaseFala == 0 && g_jornCharsRevealed > 150) {
+                        SetExpressaoJornalista(EXPR_JORN_PREOCUPADA);
+                    }
+
+                    // Pausas por pontuação
+                    if (c == '.' || c == '!' || c == '?') {
+                        if (g_jornCharsRevealed < totalLen && textoAtual[g_jornCharsRevealed] == '.') {
+                            g_jornPauseTimer = 0.12f;
+                        } else {
+                            g_jornPauseTimer = 0.35f;
+                        }
+                        break;
+                    } else if (c == ',' || c == ':' || c == ';') {
+                        g_jornPauseTimer = 0.18f;
+                        break;
+                    } else if (c != ' ' && c != '\n') {
+                        if (g_sndBlipJornalista.frameCount > 0 && (g_jornCharsRevealed % 3 == 0)) {
+                            SetSoundPitch(g_sndBlipJornalista, 1.05f + ((float)GetRandomValue(-8, 8) / 100.0f));
+                            SetSoundVolume(g_sndBlipJornalista, 0.40f * SettingsGetSfxVolume());
+                            PlaySound(g_sndBlipJornalista);
+                        }
+                    }
+                }
+            }
+        } else {
+            g_jornTalkTimer = 0.0f;
+            if (g_jornFaseFala == 0) {
+                DesenharDicaClique("Clique para continuar");
+                if (clicou) {
+                    g_jornFaseFala = 1;
+                    g_jornPausaTimerFase = 0.0f;
+                    SetExpressaoJornalista(EXPR_JORN_SERIA);
+                }
+            } else if (g_jornFaseFala == 2) {
+                DesenharDicaClique("Clique para continuar");
+                if (clicou) {
+                    g_jornFaseFala = 3;
+                    g_tempo = 0.0f;
+                }
+            }
+        }
+    }
+
+    Rectangle ref = ParaTela((Rectangle){ 0, 0, 10, 10 });
+    float escala = ref.height / 10.0f;
+
+    // Fundo preto absoluto (a cena se passa assistindo à TV em um ambiente escuro)
+    Rectangle rTelaCheia = ParaTela((Rectangle){ 0, 0, (float)VIRTUAL_W, (float)VIRTUAL_H });
+    DrawRectangleRec(rTelaCheia, BLACK);
+
+    // Estrutura do aparelho de TV de tubo / monitor CRT centralizado
+    // Gabinete externo: 460 x 330 (deixando bordas pretas ao redor)
+    Rectangle rTvGabineteVirt = { 90.0f, 15.0f, 460.0f, 330.0f };
+    Rectangle rTvGabineteTela = ParaTela(rTvGabineteVirt);
+    DrawRectangleRec(rTvGabineteTela, (Color){ 20, 18, 19, 255 });
+    DrawRectangleLinesEx(rTvGabineteTela, 2.5f * escala, (Color){ 50, 46, 48, 255 });
+
+    // Detalhe de ventilação / botões do gabinete da TV no canto inferior
+    DrawRectangle((int)(rTvGabineteTela.x + rTvGabineteTela.width - 24 * escala),
+                  (int)(rTvGabineteTela.y + rTvGabineteTela.height - 18 * escala),
+                  (int)(10 * escala), (int)(10 * escala), (Color){ 10, 9, 10, 255 });
+    DrawCircle((int)(rTvGabineteTela.x + rTvGabineteTela.width - 40 * escala),
+               (int)(rTvGabineteTela.y + rTvGabineteTela.height - 13 * escala),
+               3.0f * escala, (Color){ 180, 40, 40, 255 }); // LED vermelho da TV ligada
+
+    // Área interna da tela (vidro CRT)
+    Rectangle rTvTelaVirt = { 106.0f, 26.0f, 428.0f, 222.0f };
+    Rectangle rTvTela = ParaTela(rTvTelaVirt);
+
+    // 1) Desenha a imagem da jornalista com o shader de Rig e Dithering na tela da TV
+    if (g_texJornalista.id > 0) {
+        if (g_shaderJornalista.id > 0 && g_jornFaseFala < 3) {
+            BeginShaderMode(g_shaderJornalista);
+
+            const FaceRigAnchors *anc = &ANCHORS_JORNALISTA;
+            Vector2 browD[4]  = { g_poseJornCurr.d[0], g_poseJornCurr.d[1], g_poseJornCurr.d[2], g_poseJornCurr.d[3] };
+            Vector2 lidD[2]   = { g_poseJornCurr.d[4], g_poseJornCurr.d[5] };
+            Vector2 mouthD[2] = {
+                { g_poseJornCurr.d[6].x, g_poseJornCurr.d[6].y + talkJawAdd * 0.45f },
+                { g_poseJornCurr.d[7].x, g_poseJornCurr.d[7].y + talkJawAdd * 0.45f }
+            };
+            Vector2 jawD      = { g_poseJornCurr.d[8].x, g_poseJornCurr.d[8].y + talkJawAdd };
+
+            SetShaderValueV(g_shaderJornalista, g_locBrowP,  anc->browP,  SHADER_UNIFORM_VEC2, 4);
+            SetShaderValueV(g_shaderJornalista, g_locBrowD,  browD,       SHADER_UNIFORM_VEC2, 4);
+            SetShaderValueV(g_shaderJornalista, g_locLidP,   anc->lidP,   SHADER_UNIFORM_VEC2, 2);
+            SetShaderValueV(g_shaderJornalista, g_locLidD,   lidD,        SHADER_UNIFORM_VEC2, 2);
+            SetShaderValueV(g_shaderJornalista, g_locMouthP, anc->mouthP, SHADER_UNIFORM_VEC2, 2);
+            SetShaderValueV(g_shaderJornalista, g_locMouthD, mouthD,      SHADER_UNIFORM_VEC2, 2);
+            SetShaderValue (g_shaderJornalista, g_locJawP,   &anc->jawP,  SHADER_UNIFORM_VEC2);
+            SetShaderValue (g_shaderJornalista, g_locJawD,   &jawD,       SHADER_UNIFORM_VEC2);
+
+            Vector3 palCol = (Vector3){ 90.0f / 255.0f, 83.0f / 255.0f, 83.0f / 255.0f };
+            SetShaderValue(g_shaderJornalista, g_locBlink, &blinkT, SHADER_UNIFORM_FLOAT);
+            SetShaderValue(g_shaderJornalista, g_locPalpebraCol, &palCol, SHADER_UNIFORM_VEC3);
+
+            Rectangle src = { 0, 40, (float)g_texJornalista.width, (float)g_texJornalista.height - 80 };
+            DrawTexturePro(g_texJornalista, src, rTvTela, (Vector2){ 0, 0 }, 0.0f, WHITE);
+
+            EndShaderMode();
+        } else if (g_jornFaseFala >= 3) {
+            // Efeito estática de sinal cortado estilo transmissão de TV analógica
+            DrawRectangleRec(rTvTela, TONS[1]);
+            for (int sy = (int)rTvTela.y; sy < (int)(rTvTela.y + rTvTela.height); sy += 4) {
+                int rnd = GetRandomValue(0, 100);
+                Color cEst = (rnd > 50) ? TONS[4] : ((rnd > 25) ? TONS[2] : TONS[0]);
+                DrawRectangle((int)rTvTela.x, sy, (int)rTvTela.width, 2, Fade(cEst, 0.45f));
+            }
+        } else {
+            Rectangle src = { 0, 0, (float)g_texJornalista.width, (float)g_texJornalista.height };
+            DrawTexturePro(g_texJornalista, src, rTvTela, (Vector2){ 0, 0 }, 0.0f, WHITE);
+        }
+    }
+
+    // Linhas de scanline suaves da tela de TV
+    for (int y = (int)rTvTela.y; y < (int)(rTvTela.y + rTvTela.height); y += 3) {
+        DrawRectangle((int)rTvTela.x, y, (int)rTvTela.width, 1, Fade(BLACK, 0.28f));
+    }
+
+    // Moldura do vidro da tela
+    DrawRectangleLinesEx(rTvTela, 1.5f * escala, (Color){ 30, 28, 30, 255 });
+
+    // 2) Barra superior de telejornal na tela da TV
+    Rectangle rBarraTopVirt = { 106.0f, 26.0f, 428.0f, 20.0f };
+    Rectangle rBarraTop = ParaTela(rBarraTopVirt);
+    DrawRectangleRec(rBarraTop, Fade(TONS[1], 0.90f));
+    DrawRectangleLinesEx(rBarraTop, 1.0f * escala, TONS[3]);
+    DrawText("XX/XX/XXXX — [PLANTAO DO DIA]", (int)(rBarraTop.x + 10 * escala), (int)(rBarraTop.y + 5 * escala), (int)(9 * escala), COR_CLARA);
+
+    // Indicador "AO VIVO" piscando no canto
+    float piscaAoVivo = 0.5f + 0.5f * sinf(tNow * 4.0f);
+    DrawRectangle((int)(rBarraTop.x + rBarraTop.width - 55 * escala), (int)(rBarraTop.y + 6 * escala), (int)(6 * escala), (int)(6 * escala), Fade((Color){ 220, 50, 50, 255 }, piscaAoVivo));
+    DrawText("AO VIVO", (int)(rBarraTop.x + rBarraTop.width - 44 * escala), (int)(rBarraTop.y + 5 * escala), (int)(8 * escala), COR_CLARA);
+
+    // 3) Painel inferior de Noticiário / Legendas na TV
+    Rectangle rPainelInfVirt = { 106.0f, 248.0f, 428.0f, 85.0f };
+    Rectangle rPainelInf = ParaTela(rPainelInfVirt);
+    DrawRectangleRec(rPainelInf, Fade(TONS[1], 0.96f));
+    DrawRectangleLinesEx(rPainelInf, 1.5f * escala, TONS[3]);
+
+    // Tarja de manchete "JORNALISTA:"
+    Rectangle rTarjaVirt = { 116.0f, 253.0f, 80.0f, 14.0f };
+    Rectangle rTarja = ParaTela(rTarjaVirt);
+    DrawRectangleRec(rTarja, TONS[2]);
+    DrawText("JORNALISTA", (int)(rTarja.x + 6 * escala), (int)(rTarja.y + 3 * escala), (int)(9 * escala), COR_CLARA);
+
+    // Texto da fala
+    if (g_jornFaseFala == 1) {
+        Rectangle rPausaVirt = { 204.0f, 254.0f, 0, 0 };
+        Rectangle rPausa = ParaTela(rPausaVirt);
+        DrawText("...", (int)rPausa.x, (int)rPausa.y, (int)(12 * escala), TONS[3]);
+    } else if (g_jornFaseFala == 3) {
+        Rectangle rCortadoVirt = { 204.0f, 253.0f, 0, 0 };
+        Rectangle rCortado = ParaTela(rCortadoVirt);
+        DrawText("[SINAL CORTADO]", (int)rCortado.x, (int)rCortado.y, (int)(11 * escala), (Color){ 240, 80, 80, 255 });
+        DesenharDicaClique("Clique para ver sua pontuacao");
         if (clicou) {
             g_estado = ESTADO_PONTUACAO;
             g_tempo = 0.0f;
             g_pontuacaoCompleta = false;
+        }
+    } else {
+        char bufferVisivel[512];
+        int nCopy = g_jornCharsRevealed;
+        if (nCopy > (int)sizeof(bufferVisivel) - 1) nCopy = (int)sizeof(bufferVisivel) - 1;
+        memcpy(bufferVisivel, textoAtual, nCopy);
+        bufferVisivel[nCopy] = '\0';
+
+        char linhas[8][128];
+        int numLinhas = QuebrarLinhas(bufferVisivel, (int)(10 * escala), rPainelInf.width - 24 * escala, linhas, 8);
+        for (int l = 0; l < numLinhas; l++) {
+            Rectangle rLinhaVirt = { 116.0f, 270.0f + l * 14.0f, 0, 0 };
+            Rectangle rLinha = ParaTela(rLinhaVirt);
+            DrawText(linhas[l], (int)rLinha.x, (int)rLinha.y, (int)(10 * escala), COR_CLARA);
         }
     }
 }
@@ -542,22 +1119,22 @@ static void DesenharPontuacaoFinal(void) {
 }
 
 // Quebra "texto" em linhas que cabem em maxW (pixels de tela); devolve quantas linhas
-static int QuebrarLinhas(const char *texto, int tam, float maxW, char linhas[][96], int maxLinhas) {
+static int QuebrarLinhas(const char *texto, int tam, float maxW, char linhas[][128], int maxLinhas) {
     int n = 0;
-    char atual[96] = "";
-    char buf[256];
+    char atual[128] = "";
+    char buf[1024];
     snprintf(buf, sizeof buf, "%s", texto);
     for (char *p = strtok(buf, " "); p; p = strtok(NULL, " ")) {
-        char teste[96];
+        char teste[128];
         snprintf(teste, sizeof teste, "%s%s%s", atual, atual[0] ? " " : "", p);
         if (atual[0] && MeasureText(teste, tam) > maxW) {
-            if (n < maxLinhas) snprintf(linhas[n++], 96, "%s", atual);
+            if (n < maxLinhas) snprintf(linhas[n++], 128, "%s", atual);
             snprintf(atual, sizeof atual, "%s", p);
         } else {
             snprintf(atual, sizeof atual, "%s", teste);
         }
     }
-    if (atual[0] && n < maxLinhas) snprintf(linhas[n++], 96, "%s", atual);
+    if (atual[0] && n < maxLinhas) snprintf(linhas[n++], 128, "%s", atual);
     return n;
 }
 
@@ -623,7 +1200,7 @@ static void DesenharAnotacoes(int i) {
     const float w = 190.0f, linhaH = 10.0f, recuo = 18.0f;
 
     // Quebra todas as linhas antes, para saber a altura do painel
-    char linhas[16][4][96];
+    char linhas[16][4][128];
     int nl[16], total = 0;
     for (int k = 0; k < n; k++) {
         nl[k] = QuebrarLinhas(itens[k], tam, (w - 12.0f - recuo) * escala, linhas[k], 4);
@@ -787,6 +1364,8 @@ void UpdateDrawVerdictScene(void) {
             }
         } else if (g_estado == ESTADO_FINAL) {
             DesenharTextoFinal();
+        } else if (g_estado == ESTADO_JORNALISTA) {
+            DesenharCenaJornalista();
         } else {
             DesenharPontuacaoFinal();
         }
@@ -807,6 +1386,9 @@ void UnloadVerdictScene(void) {
     }
     g_sndHover = g_sndTiro = (Sound){ 0 };
     UnloadTexture(g_sala);
+    if (g_texJornalista.id > 0) UnloadTexture(g_texJornalista);
+    if (g_shaderJornalista.id > 0) UnloadShader(g_shaderJornalista);
+    if (g_sndBlipJornalista.frameCount > 0) UnloadSound(g_sndBlipJornalista);
     UnloadRenderTexture(g_armaRT);
     UnloadRenderTexture(g_armaFinal);
     UnloadShader(g_dither);
