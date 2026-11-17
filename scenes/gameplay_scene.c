@@ -255,12 +255,72 @@ static const char *NOMES_SUSPEITOS[3] = { "Maria", "Arthur", "Ana Lucia" };
 typedef struct {
     char texto[160];
     float timer;
+    Texture2D texDestaque;
 } EvToast;
 
-static EvToast g_evToasts[MAX_EV_TOASTS] = { 0 };
-static int     g_evToastCount = 0;
+static EvToast   g_evToasts[MAX_EV_TOASTS] = { 0 };
+static int       g_evToastCount = 0;
 
-static void NotificarEvidenciaAdquirida(const char *nomeEvidencia) {
+// Inspecao aproximada (close-up) em 2 passos para as 3 evidencias do Arthur:
+//   1) Geladeira (Copa / Lanchonete) -> GeladeiraAberta + CrachaFuncionario (EV-04: ID perdido)
+//   2) Mesa do Auditorio             -> MesaCaneta + Caneta destacada       (EV-02: Caneta de abutre)
+//   3) Mesa do Setor ADM             -> PilhaRelatorios + Pilha destacada   (EV-03: Pilha de relatorios)
+typedef enum {
+    CLOSEUP_NENHUM = 0,
+    CLOSEUP_GELADEIRA,
+    CLOSEUP_MESA_CANETA,
+    CLOSEUP_PILHA_RELATORIOS,
+    NUM_CLOSEUPS
+} CloseupCena;
+
+static CloseupCena g_closeupAtual         = CLOSEUP_NENHUM;
+static Texture2D   g_texGeladeiraAberta   = { 0 };
+static Texture2D   g_texCrachaDestaque    = { 0 };
+static Texture2D   g_texCrachaMini        = { 0 };
+static Texture2D   g_texMesaCaneta        = { 0 };
+static Texture2D   g_texMaskCaneta        = { 0 };
+static Texture2D   g_texPilhaRelatorios   = { 0 };
+static Texture2D   g_texMaskPilha         = { 0 };
+static bool        g_closeupItemHoverAnt  = false;
+static float       g_closeupItemAnim      = 0.0f;
+static float       g_closeupItemVel       = 0.0f;
+
+static const Rectangle GELADEIRA_CRACHA_AREA = { 3.0f + 162.0f, 3.0f +  92.0f,  24.0f,  44.0f };
+static const Rectangle CLOSEUP_CANETA_AREA   = { 3.0f + 173.0f, 3.0f +  27.0f,  64.0f, 166.0f };
+static const Rectangle CLOSEUP_PILHA_AREA    = { 3.0f +  48.0f, 3.0f + 106.0f, 124.0f,  71.0f };
+static const Rectangle CLOSEUP_BTN_VOLTAR    = { 11.0f, 294.0f, 282.0f, 24.0f };
+
+// Poligono da caneta inclinada (em pixels relativos a JANELA_AREA) para clique preciso apenas na caneta
+static const Vector2 POLY_CANETA_JANELA[4] = {
+    { 170.0f,  28.0f },
+    { 188.0f,  24.0f },
+    { 240.0f, 190.0f },
+    { 221.0f, 195.0f }
+};
+
+static bool PontoNoPoligono(Vector2 p, const Vector2 *verts, int n) {
+    bool dentro = false;
+    for (int i = 0, j = n - 1; i < n; j = i++) {
+        if (((verts[i].y > p.y) != (verts[j].y > p.y)) &&
+            (p.x < (verts[j].x - verts[i].x) * (p.y - verts[i].y) / (verts[j].y - verts[i].y) + verts[i].x)) {
+            dentro = !dentro;
+        }
+    }
+    return dentro;
+}
+
+static Rectangle ParaTela(Rectangle r);
+static void DrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, Color cor);
+
+static Vector2 MouseNaJanela(Vector2 mouseTela) {
+    Rectangle jTela = ParaTela(JANELA_AREA);
+    return (Vector2){
+        (mouseTela.x - jTela.x) * JANELA_AREA.width  / jTela.width,
+        (mouseTela.y - jTela.y) * JANELA_AREA.height / jTela.height
+    };
+}
+
+static void NotificarEvidenciaAdquiridaEx(const char *nomeEvidencia, Texture2D texDestaque) {
     if (!nomeEvidencia || nomeEvidencia[0] == '\0') return;
     if (g_evToastCount >= MAX_EV_TOASTS) {
         for (int i = 0; i < MAX_EV_TOASTS - 1; i++) g_evToasts[i] = g_evToasts[i + 1];
@@ -269,53 +329,162 @@ static void NotificarEvidenciaAdquirida(const char *nomeEvidencia) {
     snprintf(g_evToasts[g_evToastCount].texto, sizeof(g_evToasts[g_evToastCount].texto),
              "%s", nomeEvidencia);
     g_evToasts[g_evToastCount].timer = EV_TOAST_DURACAO;
+    g_evToasts[g_evToastCount].texDestaque = texDestaque;
     g_evToastCount++;
+}
+
+static void NotificarEvidenciaAdquirida(const char *nomeEvidencia) {
+    NotificarEvidenciaAdquiridaEx(nomeEvidencia, (Texture2D){ 0 });
 }
 
 static void RegistrarEvidenciaPorId(int suspeito, const char *ev_id) {
     if (suspeito < 0 || suspeito >= 3 || !ev_id || ev_id[0] == '\0') return;
     if (GameStateRegistrarEvidencia(suspeito, ev_id)) {
         const char *nome = GetEvidenciaNome(suspeito, ev_id);
-        NotificarEvidenciaAdquirida(nome);
+        Texture2D tex = { 0 };
+        if (suspeito == 1 && strcmp(ev_id, "EV-04") == 0) {
+            tex = g_texCrachaDestaque;
+        } else if (suspeito == 1 && strcmp(ev_id, "EV-02") == 0) {
+            tex = g_texMaskCaneta;
+        } else if (suspeito == 1 && strcmp(ev_id, "EV-03") == 0) {
+            tex = g_texMaskPilha;
+        }
+        NotificarEvidenciaAdquiridaEx(nome, tex);
         TraceLog(LOG_INFO, "Evidencia adquirida [suspeito=%d %s]: %s", suspeito, ev_id, nome);
     }
 }
 
 typedef struct {
     LocalRasec  local;
-    Rectangle   area;      // area clicavel dentro da JANELA_AREA (640x360)
-    int         suspeito;  // 0=Maria, 1=Arthur, 2=Ana Lucia
+    Rectangle   bboxJanela;     // retangulo de desenho da mascara dentro da JANELA_AREA (0..298, 0..221)
+    int         numVerts;
+    Vector2     poly[8];        // poligono de colisao no cenario (coordenadas dentro da JANELA_AREA)
+    int         suspeito;       // 0=Maria, 1=Arthur, 2=Ana Lucia
     const char *ev_id;
-    const char *dica;      // texto exibido no hover
+    CloseupCena closeup;
+    const char *dica;           // rotulo discreto ao passar o mouse no objeto
+    const char *maskPath;       // recorte dithered exato do movel/objeto para destacar com profundidade
 } EvidenciaHotspot;
 
 static const EvidenciaHotspot EVIDENCIA_HOTSPOTS[] = {
-    // Arthur EV-01: Ficha de RH consta apenas pai (Arquivo do RH)
-    { LOCAL_RH,           { 3 + 218, 3 + 92,  68, 42 }, 1, "EV-01", "Inspecionar arquivos do RH" },
-    // Arthur EV-02: Sempre entrega uma caneta preta com uma imagem de abutre para os amigos
-    { LOCAL_SALA_REUNIAO, { 3 + 92,  3 + 92,  62, 32 }, 1, "EV-02", "Inspecionar objetos na mesa" },
-    { LOCAL_MESA_MARIA,   { 3 + 170, 3 + 102, 95, 34 }, 1, "EV-02", "Inspecionar contabilidade" },
-    // Arthur EV-03: Pilha de relatorios a fazer (Na mesa dele)
-    { LOCAL_ESCRITORIO,   { 3 + 42,  3 + 118, 86, 38 }, 1, "EV-03", "Inspecionar pilha de relatorios" },
-    // Arthur EV-04: ID perdido (Na geladeira do refeitorio / copa)
-    { LOCAL_CANTINA,      { 3 + 225, 3 + 76,  44, 46 }, 1, "EV-04", "Inspecionar geladeira" },
-    { LOCAL_COPA,         { 3 + 102, 3 + 118, 88, 46 }, 1, "EV-04", "Inspecionar geladeira / copa" },
+    // 0) Auditorio -> Mesa de reuniao (abre MesaCaneta -> EV-02)
+    {
+        LOCAL_SALA_REUNIAO,
+        { 20.0f, 79.0f, 223.0f, 120.0f },
+        8,
+        { { 20, 108 }, { 192, 79 }, { 242, 82 }, { 133, 132 }, { 133, 198 }, { 69, 174 }, { 68, 123 }, { 20, 113 } },
+        1, "EV-02", CLOSEUP_MESA_CANETA,
+        "Examinar mesa de reuniões",
+        "assets/sprites/evidencias/mask_auditorio_mesa.png"
+    },
+    // 1) Setor ADM -> Mesa de trabalho (abre PilhaRelatorios -> EV-03)
+    {
+        LOCAL_ESCRITORIO,
+        { 117.0f, 108.0f, 146.0f, 70.0f },
+        4,
+        { { 117, 137 }, { 192, 108 }, { 262, 114 }, { 154, 177 } },
+        1, "EV-03", CLOSEUP_PILHA_RELATORIOS,
+        "Inspecionar mesa do administrativo",
+        "assets/sprites/evidencias/mask_adm_mesa.png"
+    },
+    // 2) Copa do 2o andar -> Geladeira a esquerda (abre GeladeiraAberta -> EV-04)
+    {
+        LOCAL_COPA,
+        { 15.0f, 2.0f, 77.0f, 218.0f },
+        5,
+        { { 15, 2 }, { 66, 2 }, { 91, 28 }, { 91, 219 }, { 15, 219 } },
+        1, "EV-04", CLOSEUP_GELADEIRA,
+        "Inspecionar geladeira",
+        "assets/sprites/evidencias/mask_copa_geladeira.png"
+    },
 };
-static const int NUM_EVIDENCIA_HOTSPOTS = (int)(sizeof(EVIDENCIA_HOTSPOTS) / sizeof(EVIDENCIA_HOTSPOTS[0]));
-static int g_hotspotHover = -1;
+#define NUM_EVIDENCIA_HOTSPOTS ((int)(sizeof(EVIDENCIA_HOTSPOTS) / sizeof(EVIDENCIA_HOTSPOTS[0])))
+#define MAX_EVIDENCIAS_POR_DIA 2
+static Texture2D g_texHotspotMasks[NUM_EVIDENCIA_HOTSPOTS]      = { 0 };
+static bool      g_hotspotAtivoHoje[NUM_EVIDENCIA_HOTSPOTS]     = { false };
+static bool      g_hotspotJaSorteadoRun[NUM_EVIDENCIA_HOTSPOTS] = { false };
+static int       g_hotspotHover    = -1;
+static int       g_hotspotHoverAnt = -1;
+static float     g_hotspotAnim[NUM_EVIDENCIA_HOTSPOTS] = { 0 };
 
-static Rectangle HotspotBadgeArea(const EvidenciaHotspot *h) {
-    float cx = h->area.x + h->area.width * 0.5f;
-    float cy = h->area.y + h->area.height * 0.5f;
-    return (Rectangle){ cx - 7.0f, cy - 7.0f, 14.0f, 14.0f };
+// Sorteia no maximo MAX_EVIDENCIAS_POR_DIA (2) evidencias de cenario por dia dentre as ainda nao coletadas,
+// priorizando evidencias que ainda nao deram as caras em dias anteriores da mesma run.
+static void SortearEvidenciasDoDia(int dia) {
+    memset(g_hotspotAtivoHoje, 0, sizeof g_hotspotAtivoHoje);
+
+    int ineditos[NUM_EVIDENCIA_HOTSPOTS];
+    int repetidos[NUM_EVIDENCIA_HOTSPOTS];
+    int nIneditos = 0, nRepetidos = 0;
+
+    for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
+        const EvidenciaHotspot *h = &EVIDENCIA_HOTSPOTS[i];
+        if (GameStateTemEvidencia(h->suspeito, h->ev_id)) continue;
+        if (!g_hotspotJaSorteadoRun[i]) ineditos[nIneditos++] = i;
+        else                            repetidos[nRepetidos++] = i;
+    }
+
+    for (int i = nIneditos - 1; i > 0; i--) {
+        int j = GetRandomValue(0, i);
+        int tmp = ineditos[i]; ineditos[i] = ineditos[j]; ineditos[j] = tmp;
+    }
+    for (int i = nRepetidos - 1; i > 0; i--) {
+        int j = GetRandomValue(0, i);
+        int tmp = repetidos[i]; repetidos[i] = repetidos[j]; repetidos[j] = tmp;
+    }
+
+    int ordem[NUM_EVIDENCIA_HOTSPOTS];
+    int nDisp = 0;
+    for (int pass = 0; pass < 2; pass++) {
+        int *lista = (pass == 0) ? ineditos : repetidos;
+        int tam    = (pass == 0) ? nIneditos : nRepetidos;
+        for (int k = 0; k < tam; k++) {
+            int idx = lista[k];
+            const EvidenciaHotspot *cand = &EVIDENCIA_HOTSPOTS[idx];
+            bool dup = false;
+            for (int m = 0; m < nDisp; m++) {
+                const EvidenciaHotspot *ja = &EVIDENCIA_HOTSPOTS[ordem[m]];
+                if (ja->suspeito == cand->suspeito && strcmp(ja->ev_id, cand->ev_id) == 0) {
+                    dup = true;
+                    break;
+                }
+            }
+            if (!dup) ordem[nDisp++] = idx;
+        }
+    }
+
+    if (nDisp <= 0) return;
+
+    int diasRestantes = GAME_NUM_DAYS - dia;
+    if (diasRestantes < 0) diasRestantes = 0;
+
+    int maxHoje = (nDisp < MAX_EVIDENCIAS_POR_DIA) ? nDisp : MAX_EVIDENCIAS_POR_DIA;
+    int minHoje = nDisp - diasRestantes * MAX_EVIDENCIAS_POR_DIA;
+    if (minHoje < 1) minHoje = 1;
+    if (minHoje > maxHoje) minHoje = maxHoje;
+
+    int qtdHoje = GetRandomValue(minHoje, maxHoje);
+    for (int k = 0; k < qtdHoje; k++) {
+        int idx = ordem[k];
+        g_hotspotAtivoHoje[idx] = true;
+        g_hotspotJaSorteadoRun[idx] = true;
+        TraceLog(LOG_INFO, "Evidencia ativa no Dia %d: [%s] em %s",
+                 dia, EVIDENCIA_HOTSPOTS[idx].ev_id, LOCAIS[EVIDENCIA_HOTSPOTS[idx].local].nome);
+    }
 }
 
 static Rectangle ParaTela(Rectangle r);
 static void DrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, Color cor);
 
-static const Rectangle EV_MODAL_PAINEL = { 190.0f, 136.0f, 260.0f, 88.0f };
-static const Rectangle EV_MODAL_FECHAR = { 434.0f, 139.0f,  13.0f, 13.0f };
-static const Rectangle EV_MODAL_BTN_OK = { 275.0f, 198.0f,  90.0f, 18.0f };
+static const Rectangle EV_MODAL_PAINEL     = { 190.0f, 136.0f, 260.0f,  88.0f };
+static const Rectangle EV_MODAL_IMG_PAINEL = { 180.0f,  46.0f, 280.0f, 268.0f };
+
+static void ObterLayoutPopupEvidencia(Rectangle *outPainel, Rectangle *outFechar, Rectangle *outBtnOk) {
+    bool comImagem = (g_evToastCount > 0 && g_evToasts[0].texDestaque.id > 0);
+    Rectangle p = comImagem ? EV_MODAL_IMG_PAINEL : EV_MODAL_PAINEL;
+    *outPainel = p;
+    *outFechar = (Rectangle){ p.x + p.width - 16.0f, p.y + 2.5f, 13.0f, 13.0f };
+    *outBtnOk  = (Rectangle){ p.x + (p.width - 110.0f) * 0.5f, p.y + p.height - 24.0f, 110.0f, 18.0f };
+}
 
 static void FecharPopupEvidenciaAtual(void) {
     if (g_evToastCount <= 0) return;
@@ -326,10 +495,14 @@ static void FecharPopupEvidenciaAtual(void) {
 static bool UpdatePopupEvidencia(void) {
     if (g_evToastCount <= 0) return false;
 
+    Rectangle painel, rFechar, rBtnOk;
+    ObterLayoutPopupEvidencia(&painel, &rFechar, &rBtnOk);
+    (void)painel;
+
     Vector2 mouse = RayCanvasGetMousePosition();
     bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-    bool hover = CheckCollisionPointRec(mouse, ParaTela(EV_MODAL_FECHAR)) ||
-                 CheckCollisionPointRec(mouse, ParaTela(EV_MODAL_BTN_OK));
+    bool hover = CheckCollisionPointRec(mouse, ParaTela(rFechar)) ||
+                 CheckCollisionPointRec(mouse, ParaTela(rBtnOk));
 
     if ((hover && clicou) || IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
         FecharPopupEvidenciaAtual();
@@ -347,6 +520,11 @@ static void DrawTextWrappedLeftAligned(const char *text, Vector2 pos, float maxW
 static void DesenharPopupEvidencia(void) {
     if (g_evToastCount <= 0) return;
 
+    Rectangle painel, rFechar, rBtnOk;
+    ObterLayoutPopupEvidencia(&painel, &rFechar, &rBtnOk);
+    Texture2D texDestaque = g_evToasts[0].texDestaque;
+    bool comImagem = (texDestaque.id > 0);
+
     Vector2 mouse = RayCanvasGetMousePosition();
     Color corEscura   = {  32,  29,  31, 255 };
     Color corFundo    = { 125, 112, 113, 254 };
@@ -354,19 +532,57 @@ static void DesenharPopupEvidencia(void) {
     Color corDestaque = { 189, 181, 168, 255 };
     Color corBranco   = { 255, 242, 230, 255 };
 
-    Rectangle sombra = { EV_MODAL_PAINEL.x + 3, EV_MODAL_PAINEL.y + 3, EV_MODAL_PAINEL.width, EV_MODAL_PAINEL.height };
-    DrawRectangleRec(ParaTela(sombra), Fade(BLACK, 0.55f));
+    if (comImagem) {
+        DrawRectangleRec(GetTelaRect(), Fade(BLACK, 0.50f));
+    }
 
-    Rectangle rPainel = ParaTela(EV_MODAL_PAINEL);
+    Rectangle sombra = { painel.x + 3, painel.y + 3, painel.width, painel.height };
+    DrawRectangleRec(ParaTela(sombra), Fade(BLACK, 0.60f));
+
+    Rectangle rPainel = ParaTela(painel);
     DrawRectangleRec(rPainel, corFundo);
     DrawRectangleLinesEx(rPainel, 2.0f, corBranco);
 
-    Rectangle rCab = { EV_MODAL_PAINEL.x, EV_MODAL_PAINEL.y, EV_MODAL_PAINEL.width, 18.0f };
+    Rectangle rCab = { painel.x, painel.y, painel.width, 18.0f };
     DrawRectangleRec(ParaTela(rCab), corEscura);
     DrawTextInArea("NOVA EVIDÊNCIA!", rCab, 9, corBranco);
-    DesenharBotaoFecharPadrao(EV_MODAL_FECHAR);
+    DesenharBotaoFecharPadrao(rFechar);
 
-    Rectangle rTexto = { EV_MODAL_PAINEL.x + 10.0f, EV_MODAL_PAINEL.y + 24.0f, EV_MODAL_PAINEL.width - 20.0f, 28.0f };
+    float textoY = painel.y + 24.0f;
+    if (comImagem) {
+        // Moldura escura de destaque para o sprite dithered da evidencia (ex.: CrachaFuncionario)
+        Rectangle rVitrine = { painel.x + 14.0f, painel.y + 24.0f, painel.width - 28.0f, 166.0f };
+        DrawRectangleRec(ParaTela(rVitrine), Fade(corEscura, 0.92f));
+        DrawRectangleLinesEx(ParaTela(rVitrine), 1.5f, corDestaque);
+
+        float pulso = 0.5f + 0.5f * sinf((float)GetTime() * 3.5f);
+        float maxH = rVitrine.height - 14.0f;
+        float maxW = rVitrine.width  - 20.0f;
+        float esc = fminf(maxW / (float)texDestaque.width, maxH / (float)texDestaque.height);
+        float dw = (float)texDestaque.width  * esc;
+        float dh = (float)texDestaque.height * esc;
+        Rectangle destVirt = {
+            rVitrine.x + (rVitrine.width  - dw) * 0.5f,
+            rVitrine.y + (rVitrine.height - dh) * 0.5f - 1.2f * pulso,
+            dw, dh
+        };
+        Rectangle src = { 0, 0, (float)texDestaque.width, (float)texDestaque.height };
+
+        // Sombra + contorno luminoso de destaque em volta do cracha
+        Rectangle rSombraSpr = { destVirt.x + 2.5f, destVirt.y + 2.5f, destVirt.width, destVirt.height };
+        DrawTexturePro(texDestaque, src, ParaTela(rSombraSpr), (Vector2){ 0, 0 }, 0.0f, Fade(BLACK, 0.65f));
+        Color corHalo = Fade(corBranco, 0.55f + 0.35f * pulso);
+        const Vector2 offs[4] = { { -1.3f, 0 }, { 1.3f, 0 }, { 0, -1.3f }, { 0, 1.3f } };
+        for (int d = 0; d < 4; d++) {
+            Rectangle rOut = { destVirt.x + offs[d].x, destVirt.y + offs[d].y, destVirt.width, destVirt.height };
+            DrawTexturePro(texDestaque, src, ParaTela(rOut), (Vector2){ 0, 0 }, 0.0f, corHalo);
+        }
+        DrawTexturePro(texDestaque, src, ParaTela(destVirt), (Vector2){ 0, 0 }, 0.0f, WHITE);
+
+        textoY = rVitrine.y + rVitrine.height + 6.0f;
+    }
+
+    Rectangle rTexto = { painel.x + 10.0f, textoY, painel.width - 20.0f, 28.0f };
     DrawRectangleRec(ParaTela(rTexto), Fade(corEscura, 0.85f));
     DrawRectangleLinesEx(ParaTela(rTexto), 1.0f, corDestaque);
     const float off = 0.8f;
@@ -379,15 +595,15 @@ static void DesenharPopupEvidencia(void) {
     if (g_evToastCount > 1) {
         char fila[32];
         snprintf(fila, sizeof fila, "(+%d na fila)", g_evToastCount - 1);
-        Rectangle rFila = { EV_MODAL_PAINEL.x, EV_MODAL_PAINEL.y + 50.0f, EV_MODAL_PAINEL.width, 10.0f };
+        Rectangle rFila = { painel.x, textoY + 30.0f, painel.width, 10.0f };
         DrawTextInArea(fila, rFila, 8, corDestaque);
     }
 
-    Rectangle rBtn = ParaTela(EV_MODAL_BTN_OK);
+    Rectangle rBtn = ParaTela(rBtnOk);
     bool hovBtn = CheckCollisionPointRec(mouse, rBtn);
     DrawRectangleRec(rBtn, hovBtn ? corDestaque : corClaro);
     DrawRectangleLinesEx(rBtn, 1.5f, corEscura);
-    DrawTextInArea("Fechar", EV_MODAL_BTN_OK, 10, corEscura);
+    DrawTextInArea(comImagem ? "Guardar pista" : "Fechar", rBtnOk, 10, corEscura);
 }
 
 // Onde cada um pode estar em cada dia, de acordo com os dialogos e as evidencias:
@@ -650,7 +866,7 @@ static const Rectangle TABLET_CONTEUDO  = {  37 * TABLET_SCALE,  30 * TABLET_SCA
 static const Rectangle TABLET_BARRA     = { 277 * TABLET_SCALE,  35 * TABLET_SCALE,  10 * TABLET_SCALE, 157 * TABLET_SCALE };  // barra de rolagem desenhada no sprite (area de clique)
 static const Rectangle TABLET_FECHAR    = { 276 * TABLET_SCALE,   8 * TABLET_SCALE,  14 * TABLET_SCALE,  14 * TABLET_SCALE };  // botao [X] padronizado no canto superior direito do tablet
 static const Rectangle TABLET_MINIMIZAR = { 258 * TABLET_SCALE,   8 * TABLET_SCALE,  14 * TABLET_SCALE,  14 * TABLET_SCALE };  // botao [_] de minimizar ao lado do [X]
-static const Rectangle TABLET_ABA_MIN   = { 528, 10, 104, 18 }; // aba quando minimizado (canto superior direito)
+static const Rectangle TABLET_ABA_MIN   = { 314, 10, 314, 24 }; // aba quando minimizado (barra de topo do painel direito)
 #define TABLET_POLEGAR_X  (279 * TABLET_SCALE)     // a barrinha desenhada no sprite comeca na coluna 279...
 #define TABLET_POLEGAR_W  (  6 * TABLET_SCALE)     // ...tem 6 de largura...
 #define TABLET_POLEGAR_Y  ( 38 * TABLET_SCALE)     // ...comeca na linha 38...
@@ -762,14 +978,23 @@ static void SetExpressaoSuspeito(int suspeito, ExpressaoFacial expr, bool inicia
 static void OnClickPrancheta(void) {
     bool abrir = (!g_pranchetaAberta || g_pranchetaMinimizada);
     FecharJanelasFerramentas();
-    g_pranchetaAberta = abrir;
-    g_pranchetaMinimizada = false;
-    TraceLog(LOG_INFO, "Prancheta %s", g_pranchetaAberta ? "aberta" : "fechada");
+    if (abrir) {
+        g_pranchetaAberta = true;
+        g_pranchetaMinimizada = false;
+    } else if (g_dialogLoaded) {
+        g_pranchetaAberta = true;
+        g_pranchetaMinimizada = true;
+    }
+    TraceLog(LOG_INFO, "Prancheta %s", (g_pranchetaAberta && !g_pranchetaMinimizada) ? "aberta" : "minimizada/fechada");
 }
 static void OnClickPasta(void) {
     if (g_numFichas <= 0) return;               // arquivo nao carregou
     bool abrir = (g_fichaAtual < 0);
     FecharJanelasFerramentas();
+    if (g_dialogLoaded) {
+        g_pranchetaAberta = true;
+        g_pranchetaMinimizada = true;
+    }
     if (abrir) {
         int alvo = g_dialogLoaded ? g_funcionario : SUSPECT_FICHA_INDEX[g_suspeitoAtual];
         if (alvo < 0 || alvo >= g_numFichas) alvo = 0;
@@ -868,6 +1093,10 @@ static void OnClickDeepfake(void) {
         SetExpressaoSuspeito(g_suspeitoAtual, (g_suspeitoAtual == 2) ? EXPR_MEDO : EXPR_SURPRESA, false);
     }
     FecharJanelasFerramentas();
+    if (g_dialogLoaded) {
+        g_pranchetaAberta = true;
+        g_pranchetaMinimizada = true;
+    }
     g_deepfakeAberto = true;
     TraceLog(LOG_INFO, "Scanner Deepfake aberto");
 }
@@ -1587,6 +1816,37 @@ static void DrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, 
     int minTam = (int)(5.0f * escala);
     if (minTam < 1) minTam = 1;
 
+    if (strchr(texto, '\n') != NULL) {
+        char linhas[4][256];
+        int numLinhas = 0;
+        const char *p = texto;
+        while (*p != '\0' && numLinhas < 4) {
+            int i = 0;
+            while (*p != '\0' && *p != '\n' && i < 255) {
+                linhas[numLinhas][i++] = *p++;
+            }
+            linhas[numLinhas][i] = '\0';
+            numLinhas++;
+            if (*p == '\n') p++;
+        }
+        for (int l = 0; l < numLinhas; l++) {
+            while (tam > minTam && MeasureText(linhas[l], tam) > maxLargura) {
+                tam--;
+            }
+        }
+        float linhaEspaco = 4.0f * escala;
+        float alturaTotal = (float)numLinhas * (float)tam + (float)(numLinhas - 1) * linhaEspaco;
+        float yBase = destino.y + (destino.height - alturaTotal) / 2.0f;
+        for (int l = 0; l < numLinhas; l++) {
+            int lw = MeasureText(linhas[l], tam);
+            float lx = destino.x + (destino.width - lw) / 2.0f;
+            if (lx < destino.x + margem) lx = destino.x + margem;
+            float ly = yBase + (float)l * ((float)tam + linhaEspaco);
+            DrawText(linhas[l], (int)lx, (int)ly, tam, cor);
+        }
+        return;
+    }
+
     while (tam > minTam && MeasureText(texto, tam) > maxLargura) {
         tam--;
     }
@@ -2082,13 +2342,31 @@ static const Rectangle SUSPECT_SIL_AREA_BASE[3] = {
     { 108.0f,  96.0f, 88.0f, 122.0f }   // 2: Lucas    (Lanchonete/Cantina - centro)
 };
 
-// Posicao da silhueta na foto: sozinho fica no centro; dividindo a sala, um a esquerda e outro a direita
+// Posicao da silhueta na foto:
+// - No Auditorio e no Setor ADM, quem esta sozinho fica mais para a esquerda para liberar a mesa interagivel;
+// - Na Copa, a geladeira fica na esquerda (x=15..92), entao as silhuetas ficam mais para o centro/direita.
 static Rectangle SuspeitoSilArea(int i) {
     int antes = 0, total = 0;
     for (int j = 0; j < 3; j++) {
         if (g_suspeitoLocal[j] != g_suspeitoLocal[i]) continue;
         if (j < i) antes++;
         total++;
+    }
+    LocalRasec loc = g_suspeitoLocal[i];
+    if (loc == LOCAL_SALA_REUNIAO) {
+        if (total == 1) return (Rectangle){ 18.0f, 96.0f, 88.0f, 122.0f };
+        return (antes == 0) ? (Rectangle){ 12.0f, 98.0f, 86.0f, 120.0f }
+                            : (Rectangle){ 198.0f, 96.0f, 88.0f, 122.0f };
+    }
+    if (loc == LOCAL_ESCRITORIO) {
+        if (total == 1) return (Rectangle){ 22.0f, 96.0f, 88.0f, 122.0f };
+        return (antes == 0) ? (Rectangle){ 16.0f, 98.0f, 86.0f, 120.0f }
+                            : (Rectangle){ 196.0f, 96.0f, 88.0f, 122.0f };
+    }
+    if (loc == LOCAL_COPA) {
+        if (total == 1) return (Rectangle){ 136.0f, 96.0f, 88.0f, 122.0f };
+        return (antes == 0) ? (Rectangle){ 102.0f, 98.0f, 86.0f, 120.0f }
+                            : (Rectangle){ 198.0f, 96.0f, 86.0f, 122.0f };
     }
     if (total == 1) return SUSPECT_SIL_AREA_BASE[2];
     return SUSPECT_SIL_AREA_BASE[antes == 0 ? 0 : 1];
@@ -2604,21 +2882,19 @@ static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
     Color hoverColor = (Color){ 160, 147, 142, 255 };
     Color borderColor = (Color){ 160, 147, 142, 255 };
 
-    // Barra de título da conversa (largura toda: a dica agora fica no menu de ferramentas)
+    // Barra de título no topo do painel da direita (mostra o mapa fora do interrogatório;
+    // durante o interrogatório, quando o checklist não está minimizado ocupando essa barra, mostra o título do histórico)
     float headerW = area.width;
     Rectangle rTitulo = { area.x, area.y, headerW, CHAT_HEADER_H };
-    DrawRectangleRec(ParaTela(rTitulo), Fade((Color){ 36, 32, 34, 255 }, 0.85f));
-    DrawRectangleLinesEx(ParaTela(rTitulo), 2, borderColor);
+    if (!(g_pranchetaAberta && g_pranchetaMinimizada)) {
+        DrawRectangleRec(ParaTela(rTitulo), Fade((Color){ 36, 32, 34, 255 }, 0.85f));
+        DrawRectangleLinesEx(ParaTela(rTitulo), 2, borderColor);
 
-    const char *nomesSuspeitos[] = {
-        "INTERROGATÓRIO - MARIA",
-        "INTERROGATÓRIO - ARTHUR",
-        "INTERROGATÓRIO - ANA LUCIA"
-    };
-    const char *tituloChat = (g_dialogLoaded && suspectIndex >= 0 && suspectIndex < 3)
-                             ? nomesSuspeitos[suspectIndex]
-                             : TextFormat("MAPA DA RASEC - %s", NOMES_ANDARES[HOLO_SALAS[g_localAtual].andar]);
-    DrawTextInArea(tituloChat, rTitulo, 10, (Color){ 255, 242, 230, 255 });
+        const char *tituloChat = (g_dialogLoaded && suspectIndex >= 0 && suspectIndex < 3)
+                                 ? "HISTÓRICO DA CONVERSA"
+                                 : TextFormat("MAPA DA RASEC - %s", NOMES_ANDARES[HOLO_SALAS[g_localAtual].andar]);
+        DrawTextInArea(tituloChat, rTitulo, 10, (Color){ 255, 242, 230, 255 });
+    }
 
     // Área do corpo do chat no retângulo da direita (fundo sólido escuro com sutil textura de fundo)
     Rectangle rCorpo = { area.x, area.y + CHAT_HEADER_H + 4.0f, area.width, area.height - CHAT_HEADER_H - 4.0f };
@@ -2895,26 +3171,75 @@ static void DrawInterrogationTexts(void) {
     }
 
     if (!g_dialogLoaded) {
+        if (g_closeupAtual != CLOSEUP_NENHUM) {
+            const char *tituloCloseup = "";
+            const char *txtCloseup = "";
+            const char *btnVoltarTxt = "<< Voltar à sala";
+            if (g_closeupAtual == CLOSEUP_GELADEIRA) {
+                tituloCloseup = "INSPECIONANDO GELADEIRA";
+                txtCloseup = GameStateTemEvidencia(1, "EV-04")
+                    ? "A geladeira já foi inspecionada. Você recolheu o crachá."
+                    : "Há um crachá de funcionário esquecido na prateleira!\nClique nele para examiná-lo.";
+                btnVoltarTxt = "<< Afastar-se da geladeira (voltar à sala)";
+            } else if (g_closeupAtual == CLOSEUP_MESA_CANETA) {
+                tituloCloseup = "MESA DO AUDITÓRIO";
+                txtCloseup = GameStateTemEvidencia(1, "EV-02")
+                    ? "Você já examinou a caneta deixada sobre a mesa."
+                    : "Há uma caneta peculiar sobre a folha na mesa.\nClique na caneta para examiná-la.";
+                btnVoltarTxt = "<< Afastar-se da mesa (voltar ao auditório)";
+            } else if (g_closeupAtual == CLOSEUP_PILHA_RELATORIOS) {
+                tituloCloseup = "MESA DO SETOR ADM.";
+                txtCloseup = GameStateTemEvidencia(1, "EV-03")
+                    ? "Você já registrou a pilha de relatórios pendentes."
+                    : "Uma pilha enorme de arquivos aguarda preenchimento.\nClique nos arquivos para inspecioná-los.";
+                btnVoltarTxt = "<< Afastar-se da mesa (voltar ao setor)";
+            }
+            DrawTextLeftAligned(tituloCloseup, (Vector2){ 12, 235 }, 9, lightTextColor);
+
+            Rectangle infoBox = { DIALOG_BOX_X, DIALOG_START_Y + 4, DIALOG_BOX_W, 34 };
+            DrawRectangleRec(ParaTela(infoBox), Fade((Color){ 36, 32, 34, 255 }, 0.85f));
+            DrawRectangleLinesEx(ParaTela(infoBox), 1.5f, hoverColor);
+            DrawTextInArea(txtCloseup, infoBox, 9, (Color){ 255, 242, 230, 255 });
+
+            Rectangle rVoltarTela = ParaTela(CLOSEUP_BTN_VOLTAR);
+            bool hovVoltar = !bloqueadoPorOverlay && CheckCollisionPointRec(mouseTela, rVoltarTela);
+            DrawRectangleRec(rVoltarTela, hovVoltar ? hoverColor : bgColor);
+            DrawRectangleLinesEx(rVoltarTela, hovVoltar ? 2.0f : 1.5f, hovVoltar ? (Color){ 255, 242, 230, 255 } : textColor);
+            DrawTextInArea(btnVoltarTxt, CLOSEUP_BTN_VOLTAR, 9, textColor);
+            return;
+        }
+
         int tamTitulo = (g_localAtual == LOCAL_ESCRITORIO || g_localAtual == LOCAL_MESA_MARIA) ? 9 : 10;
         DrawTextLeftAligned(LOCAIS[g_localAtual].titulo, (Vector2){ 12, 235 }, tamTitulo, lightTextColor);
 
         Rectangle infoBox = { DIALOG_BOX_X, DIALOG_START_Y + 4, DIALOG_BOX_W, 60 };
         DrawRectangleRec(ParaTela(infoBox), Fade((Color){ 36, 32, 34, 255 }, 0.85f));
         DrawRectangleLinesEx(ParaTela(infoBox), 1.5f, hoverColor);
-        char aqui[64] = "";
+        int presentes[3];
         int nAqui = 0;
         for (int k = 0; k < 3; k++) {
             if (g_suspeitoLocal[k] != g_localAtual) continue;
-            if (nAqui++) strncat(aqui, " ou ", sizeof aqui - strlen(aqui) - 1);
-            strncat(aqui, NOMES_SUSPEITOS[k], sizeof aqui - strlen(aqui) - 1);
+            presentes[nAqui++] = k;
         }
         const char *info;
-        if (HOLO_SALAS[g_localAtual].escada)
+        if (HOLO_SALAS[g_localAtual].escada) {
             info = "Você está na escadaria.\n(Use as setas na imagem para mudar de andar)";
-        else if (nAqui > 0)
-            info = TextFormat("Clique em %s para interrogar.\n(Use as setas na imagem para procurar os outros)", aqui);
-        else
-            info = "Não há ninguém aqui agora.\n(Use as setas na imagem para procurar os funcionários)";
+        } else if (nAqui == 1) {
+            int s = presentes[0];
+            const char *naNo = (s == 1) ? "no" : "na";
+            const char *pron = (s == 1) ? "ele" : "ela";
+            info = TextFormat("Aperte %s %s para conversar com %s.", naNo, NOMES_SUSPEITOS[s], pron);
+        } else if (nAqui > 1) {
+            // Na regra de sorteio, apenas Maria (0) e Ana Lucia (2) podem dividir a mesma sala
+            const char *naNo0 = (presentes[0] == 1) ? "no" : "na";
+            const char *naNo1 = (presentes[1] == 1) ? "no" : "na";
+            const char *pronPlural = (presentes[0] == 1 || presentes[1] == 1) ? "eles" : "elas";
+            info = TextFormat("Aperte %s %s ou %s %s para conversar com %s.",
+                              naNo0, NOMES_SUSPEITOS[presentes[0]],
+                              naNo1, NOMES_SUSPEITOS[presentes[1]], pronPlural);
+        } else {
+            info = "Os suspeitos não estão aqui...\n(Use as setas para andar pelo prédio)";
+        }
         DrawTextInArea(info, infoBox, 10, (Color){ 255, 242, 230, 255 });
         return;
     }
@@ -3015,17 +3340,22 @@ void GameplaySceneResetDialogues(void) {
     g_tree = NULL;
     memset(g_chatHistories, 0, sizeof(g_chatHistories));
 
-    // Jogo novo (dia 1): limpa os checklists de todos os funcionarios
+    // Jogo novo (dia 1): limpa os checklists de todos os funcionarios e o historico de sorteio das evidencias
     if (GameStateGetDay() == 1) {
         memset(g_marcado, 0, sizeof g_marcado);
         memset(g_testeEspecialPessoa, 0, sizeof g_testeEspecialPessoa);
+        memset(g_hotspotJaSorteadoRun, 0, sizeof g_hotspotJaSorteadoRun);
         g_tutorialPasso = TUT_PASSO_MISSAO;
     }
+    memset(g_hotspotAtivoHoje, 0, sizeof g_hotspotAtivoHoje);
     // Dia novo: a dica e as ferramentas de teste voltam a ficar disponiveis
     g_dicaUsadaHoje = false;
     g_testeEspecialHoje = false;
     g_dicaAberta = false;
     g_deepfakeAberto = false;
+    g_pranchetaAberta = false;
+    g_pranchetaMinimizada = false;
+    g_closeupAtual = CLOSEUP_NENHUM;
     g_avisoCantina = false;
     g_avancarDia = false;
     g_irParaVeredito = false;
@@ -3104,6 +3434,13 @@ void InitGameplayScene(void) {
     g_confirmarAbandonarRun = false;
     g_voltarParaMenu = false;
     g_localAtual = LOCAL_ESCRITORIO;
+    g_closeupAtual = CLOSEUP_NENHUM;
+    g_closeupItemHoverAnt = false;
+    g_closeupItemAnim = 0.0f;
+    g_closeupItemVel = 0.0f;
+    g_hotspotHover = -1;
+    g_hotspotHoverAnt = -1;
+    memset(g_hotspotAnim, 0, sizeof g_hotspotAnim);
     g_avisoCantina = false;
     g_menuAberto = false;
     g_pranchetaAberta = false;
@@ -3121,6 +3458,7 @@ void InitGameplayScene(void) {
     if (!g_treesLoaded) {
         int dia = GameStateGetDay();
         SortearLocaisDoDia(dia);
+        SortearEvidenciasDoDia(dia);
         LoadDialogTreeFromData(0, dia, &g_trees[0]);
         LoadDialogTreeFromData(1, dia, &g_trees[1]);
         LoadDialogTreeFromData(2, dia, &g_trees[2]);
@@ -3213,6 +3551,24 @@ void InitGameplayScene(void) {
     for (int i = 0; i < NUM_LOCAIS; i++) {
         g_fundos[i] = LoadTexture(LOCAIS[i].fundo);
         SetTextureFilter(g_fundos[i], TEXTURE_FILTER_POINT);
+    }
+    g_texGeladeiraAberta = LoadTexture("assets/sprites/evidencias/spr_geladeira_aberta.png");
+    SetTextureFilter(g_texGeladeiraAberta, TEXTURE_FILTER_POINT);
+    g_texCrachaDestaque = LoadTexture("assets/sprites/evidencias/spr_cracha_funcionario.png");
+    SetTextureFilter(g_texCrachaDestaque, TEXTURE_FILTER_POINT);
+    g_texCrachaMini = LoadTexture("assets/sprites/evidencias/spr_cracha_mini.png");
+    SetTextureFilter(g_texCrachaMini, TEXTURE_FILTER_POINT);
+    g_texMesaCaneta = LoadTexture("assets/sprites/evidencias/spr_mesa_caneta.png");
+    SetTextureFilter(g_texMesaCaneta, TEXTURE_FILTER_POINT);
+    g_texMaskCaneta = LoadTexture("assets/sprites/evidencias/mask_closeup_caneta.png");
+    SetTextureFilter(g_texMaskCaneta, TEXTURE_FILTER_POINT);
+    g_texPilhaRelatorios = LoadTexture("assets/sprites/evidencias/spr_pilha_relatorios.png");
+    SetTextureFilter(g_texPilhaRelatorios, TEXTURE_FILTER_POINT);
+    g_texMaskPilha = LoadTexture("assets/sprites/evidencias/mask_closeup_pilha.png");
+    SetTextureFilter(g_texMaskPilha, TEXTURE_FILTER_POINT);
+    for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
+        g_texHotspotMasks[i] = LoadTexture(EVIDENCIA_HOTSPOTS[i].maskPath);
+        SetTextureFilter(g_texHotspotMasks[i], TEXTURE_FILTER_POINT);
     }
     MapaHoloInit(HOLO_SALAS, NUM_LOCAIS, HOLO_CORREDORES, NUM_HOLO_CORREDORES);
     Setas3DInit((int)JANELA_AREA.width, (int)JANELA_AREA.height, SETAS_POS);
@@ -3763,6 +4119,8 @@ static bool UpdatePrancheta(void) {
     if (g_pranchetaAberta && g_pranchetaMinimizada) {
         if (CheckCollisionPointRec(mouse, TABLET_ABA_MIN)) {
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                FecharJanelasFerramentas();
+                g_pranchetaAberta = true;
                 g_pranchetaMinimizada = false;
                 return true;
             }
@@ -3788,10 +4146,10 @@ static bool UpdatePrancheta(void) {
     }
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        // Botao [X] padronizado do tablet: fecha o Guia da Investigacao
+        // Botao [X] padronizado do tablet: fecha o Guia da Investigacao (durante interrogatorio volta para a aba no topo)
         if (CheckCollisionPointRec(mouse, NoTablet(TABLET_FECHAR))) {
-            g_pranchetaAberta = false;
-            g_pranchetaMinimizada = false;
+            g_pranchetaAberta = g_dialogLoaded;
+            g_pranchetaMinimizada = g_dialogLoaded;
             g_arrastando = false;
             g_arrastandoBarraTablet = false;
             return true;
@@ -4050,7 +4408,7 @@ static void DesenharCardTutorial(Rectangle card, const char *titulo, const char 
 
 static bool TutorialOcultoPorJanela(void) {
     return (g_evToastCount > 0) || g_confirmarAbandonarRun || g_confirmarAvancarDia ||
-           g_dicaAberta || g_deepfakeAberto || g_pranchetaAberta || (g_fichaAtual >= 0);
+           g_dicaAberta || g_deepfakeAberto || (g_pranchetaAberta && !g_pranchetaMinimizada) || (g_fichaAtual >= 0);
 }
 
 static bool BotaoTutorialInterativo(Vector2 mouse, Rectangle areaVirtual, bool clicou, bool *hoverOut) {
@@ -4519,20 +4877,61 @@ static void UpdateGameplay(void) {
                 if (clicou) {
                     g_dialogLoaded = false;
                     g_tree = NULL;
-                    g_fichaAtual = -1;
+                    FecharJanelasFerramentas();
                     EncerrarEntrevistaLiberada();
                     return;
                 }
             }
         }
+    } else if (g_closeupAtual != CLOSEUP_NENHUM) {
+        // Visão aproximada (geladeira / mesa do auditório / mesa do ADM): item destacado clicável + botão de voltar
+        Vector2 pJanela = MouseNaJanela(mouse);
+        bool sobreItem = false;
+        const char *evAlvo = NULL;
+        if (g_closeupAtual == CLOSEUP_GELADEIRA && !GameStateTemEvidencia(1, "EV-04")) {
+            Rectangle rCrachaClick = {
+                GELADEIRA_CRACHA_AREA.x - 4.0f,
+                GELADEIRA_CRACHA_AREA.y - 4.0f,
+                GELADEIRA_CRACHA_AREA.width + 8.0f,
+                GELADEIRA_CRACHA_AREA.height + 8.0f
+            };
+            sobreItem = CheckCollisionPointRec(mouse, ParaTela(rCrachaClick));
+            evAlvo = "EV-04";
+        } else if (g_closeupAtual == CLOSEUP_MESA_CANETA && !GameStateTemEvidencia(1, "EV-02")) {
+            // Na foto MesaCaneta, APENAS a caneta é interagível (polígono exato da caneta inclinada)
+            sobreItem = CheckCollisionPointRec(mouse, ParaTela(JANELA_AREA)) &&
+                        PontoNoPoligono(pJanela, POLY_CANETA_JANELA, 4);
+            evAlvo = "EV-02";
+        } else if (g_closeupAtual == CLOSEUP_PILHA_RELATORIOS && !GameStateTemEvidencia(1, "EV-03")) {
+            static const Vector2 polyPilha[6] = {
+                { 48, 121 }, { 118, 106 }, { 168, 114 }, { 171, 156 }, { 128, 176 }, { 52, 156 }
+            };
+            sobreItem = CheckCollisionPointRec(mouse, ParaTela(JANELA_AREA)) &&
+                        PontoNoPoligono(pJanela, polyPilha, 6);
+            evAlvo = "EV-03";
+        }
+
+        if (sobreItem && evAlvo) {
+            hover = true;
+            if (clicou) {
+                RegistrarEvidenciaPorId(1, evAlvo);
+                return;
+            }
+        }
+        if (CheckCollisionPointRec(mouse, ParaTela(CLOSEUP_BTN_VOLTAR))) {
+            hover = true;
+            if (clicou) {
+                g_closeupAtual = CLOSEUP_NENHUM;
+                g_closeupItemHoverAnt = false;
+                return;
+            }
+        }
     } else {
-        // Setas de navegacao na foto do local (por cima dos suspeitos)
+        // Setas de navegacao na foto do local (por cima dos suspeitos e dos objetos)
         {
             bool visiveis[NUM_SETAS];
             for (int d = 0; d < NUM_SETAS; d++) visiveis[d] = DestinoSeta(g_localAtual, d) >= 0;
-            Rectangle janelaTela = ParaTela(JANELA_AREA);
-            Vector2 pJanela = { (mouse.x - janelaTela.x) * JANELA_AREA.width / janelaTela.width,
-                                (mouse.y - janelaTela.y) * JANELA_AREA.height / janelaTela.height };
+            Vector2 pJanela = MouseNaJanela(mouse);
             g_setaHover = Setas3DEm(pJanela, visiveis);
             if (g_setaHover >= 0 && g_setaHover != g_setaHoverAnt) TocarSomHover();
             g_setaHoverAnt = g_setaHover;
@@ -4540,6 +4939,7 @@ static void UpdateGameplay(void) {
                 hover = true;
                 if (clicou) {
                     FecharJanelasFerramentas();
+                    g_closeupAtual = CLOSEUP_NENHUM;
                     g_transDestino = DestinoSeta(g_localAtual, g_setaHover);
                     g_transTempo = 0.0f;   // o local muda no meio da tela preta
                     if (g_sndPassos.frameCount > 0) {
@@ -4552,10 +4952,12 @@ static void UpdateGameplay(void) {
                 }
             }
         }
+        bool sobreSuspeito = false;
         for (int i = 0; i < 3; i++) {
             if (g_suspeitoLocal[i] != g_localAtual) continue;   // so quem esta nesta sala
             Rectangle choiceArea = SuspeitoSilArea(i);
             if (CheckCollisionPointRec(mouse, ParaTela(choiceArea))) {
+                sobreSuspeito = true;
                 hover = true;
                 if (clicou) {
                     g_tree = &g_trees[i];
@@ -4563,9 +4965,11 @@ static void UpdateGameplay(void) {
                     g_suspeitoAtual = i;
                     g_funcionario = SUSPECT_FICHA_INDEX[i]; // a silhueta clicada define qual ficha a pasta abre
                     g_fichaAtual = -1;     // fecha a ficha do funcionario anterior, se estiver aberta
-                    // Abre automaticamente o checklist (tablet) ao iniciar conversa com o funcionario
+                    g_closeupAtual = CLOSEUP_NENHUM;
+                    // Inicia a aba do checklist já minimizada no topo do painel direito
                     FecharJanelasFerramentas();
                     g_pranchetaAberta = true;
+                    g_pranchetaMinimizada = true;
                     g_tabletScroll = 0.0f;
                     // Expressao inicial ao abrir a conversa (Arthur sempre animado)
                     memset(&g_poseCurr, 0, sizeof g_poseCurr);
@@ -4585,21 +4989,32 @@ static void UpdateGameplay(void) {
                 }
             }
         }
-        for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
-            const EvidenciaHotspot *h = &EVIDENCIA_HOTSPOTS[i];
-            if (h->local != g_localAtual) continue;
-            if (GameStateTemEvidencia(h->suspeito, h->ev_id)) continue;
-            if (CheckCollisionPointRec(mouse, ParaTela(HotspotBadgeArea(h)))) {
-                g_hotspotHover = i;
-                hover = true;
-                if (clicou) {
-                    RegistrarEvidenciaPorId(h->suspeito, h->ev_id);
-                    g_hotspotHover = -1;
-                    return;
+        if (!sobreSuspeito && g_setaHover < 0 && CheckCollisionPointRec(mouse, ParaTela(JANELA_AREA))) {
+            Vector2 pJanela = MouseNaJanela(mouse);
+            for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
+                const EvidenciaHotspot *h = &EVIDENCIA_HOTSPOTS[i];
+                if (!g_hotspotAtivoHoje[i]) continue;
+                if (h->local != g_localAtual) continue;
+                if (GameStateTemEvidencia(h->suspeito, h->ev_id)) continue;
+                if (PontoNoPoligono(pJanela, h->poly, h->numVerts)) {
+                    g_hotspotHover = i;
+                    if (g_hotspotHover != g_hotspotHoverAnt) TocarSomHover();
+                    hover = true;
+                    if (clicou) {
+                        g_hotspotHover = -1;
+                        g_hotspotHoverAnt = -1;
+                        FecharJanelasFerramentas();
+                        g_closeupAtual = h->closeup;
+                        g_closeupItemHoverAnt = false;
+                        g_closeupItemAnim = 0.0f;
+                        g_closeupItemVel = 0.0f;
+                        return;
+                    }
+                    break;
                 }
-                break;
             }
         }
+        g_hotspotHoverAnt = g_hotspotHover;
     }
     // Ajuda para calibrar: mostra no console onde voce clicou (coordenadas da imagem)
     if (clicou) {
@@ -4646,17 +5061,28 @@ static void UpdateGameplay(void) {
 static void ProcessarTeclaEsc(void) {
     if (!IsKeyPressed(KEY_ESCAPE)) return;
 
+    if (g_evToastCount > 0)      { FecharPopupEvidenciaAtual();      return; }
     if (g_confirmarAbandonarRun) { FecharPausa(); return; }
     if (g_confirmarAvancarDia)   { g_confirmarAvancarDia = false;   return; }
     if (g_dicaAberta)            { g_dicaAberta = false;            return; }
-    if (g_fichaAtual >= 0 || g_pranchetaAberta || g_deepfakeAberto) {
+    if (g_fichaAtual >= 0 || (g_pranchetaAberta && !g_pranchetaMinimizada) || g_deepfakeAberto) {
         FecharJanelasFerramentas();
+        if (g_dialogLoaded) {
+            g_pranchetaAberta = true;
+            g_pranchetaMinimizada = true;
+        }
         return;
     }
     if (g_menuAberto) { g_menuAberto = false; return; }
+    if (g_closeupAtual != CLOSEUP_NENHUM) {
+        g_closeupAtual = CLOSEUP_NENHUM;
+        g_closeupItemHoverAnt = false;
+        return;
+    }
     if (g_dialogLoaded) {
         g_dialogLoaded = false;
         g_tree = NULL;
+        FecharJanelasFerramentas();
         EncerrarEntrevistaLiberada();
         return;
     }
@@ -4696,45 +5122,83 @@ int GameplaySceneItensPrancheta(int suspeito, const char **itens, bool *marcados
     return n;
 }
 
-static void DesenharHotspotsEvidencia(void) {
-    if (g_dialogLoaded) return;
-    float pulso = 0.5f + 0.5f * sinf((float)GetTime() * 4.0f);
+// Desenha um recorte de objeto interativo com profundidade (sombra projetada, contorno pulsante e leve relevo no hover)
+static void DesenharSpriteDestacadoProfundidade(Texture2D tex, Rectangle destBaseVirt, bool hov, float anim, float pulso) {
+    if (tex.id == 0) return;
+    Rectangle src = { 0, 0, (float)tex.width, (float)tex.height };
+    Rectangle destVirt = destBaseVirt;
+    destVirt.y -= 1.8f * anim;
+
+    // 1) Sombra projetada atras do movel/item para criar profundidade no mapa
+    Rectangle sombraVirt = {
+        destBaseVirt.x + 1.8f + 1.0f * anim,
+        destBaseVirt.y + 1.8f + 0.8f * anim,
+        destBaseVirt.width,
+        destBaseVirt.height
+    };
+    DrawTexturePro(tex, src, ParaTela(sombraVirt), (Vector2){ 0, 0 }, 0.0f, Fade(BLACK, 0.45f + 0.25f * anim));
+
+    // 2) Contorno luminoso na silhueta exata do objeto (sutil quando em repouso, aceso no hover)
+    float alphaOut = hov ? 0.96f : (0.32f + 0.32f * pulso);
+    Color corOut = Fade((Color){ 255, 242, 230, 255 }, alphaOut);
+    float offDist = hov ? 1.3f : 1.0f;
+    const Vector2 offs[4] = { { -offDist, 0 }, { offDist, 0 }, { 0, -offDist }, { 0, offDist } };
+    for (int d = 0; d < 4; d++) {
+        Rectangle rOut = { destVirt.x + offs[d].x, destVirt.y + offs[d].y, destVirt.width, destVirt.height };
+        DrawTexturePro(tex, src, ParaTela(rOut), (Vector2){ 0, 0 }, 0.0f, corOut);
+    }
+
+    // 3) Proprio objeto na frente + leve clareamento no hover
+    DrawTexturePro(tex, src, ParaTela(destVirt), (Vector2){ 0, 0 }, 0.0f, WHITE);
+    if (anim > 0.05f) {
+        DrawTexturePro(tex, src, ParaTela(destVirt), (Vector2){ 0, 0 }, 0.0f,
+                       Fade((Color){ 255, 242, 230, 255 }, 0.16f * fminf(anim, 1.0f)));
+    }
+}
+
+static void DesenharObjetosInterativosSala(float dt) {
+    if (g_dialogLoaded || g_closeupAtual != CLOSEUP_NENHUM) return;
+    float pulso = 0.5f + 0.5f * sinf((float)GetTime() * 3.6f);
     for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
         const EvidenciaHotspot *h = &EVIDENCIA_HOTSPOTS[i];
+        if (!g_hotspotAtivoHoje[i]) continue;
         if (h->local != g_localAtual) continue;
         if (GameStateTemEvidencia(h->suspeito, h->ev_id)) continue;
 
         bool hov = (g_hotspotHover == i);
-        Color cor = hov ? (Color){ 255, 242, 230, 255 } : Fade((Color){ 255, 242, 230, 255 }, 0.45f + 0.40f * pulso);
+        float alvo = hov ? 1.0f : 0.0f;
+        g_hotspotAnim[i] += (alvo - g_hotspotAnim[i]) * fminf(1.0f, 14.0f * dt);
 
-        // Marcador e area clicavel exatamente no tamanho do quadradinho [?]
-        Rectangle badge = HotspotBadgeArea(h);
-        float cx = badge.x + badge.width * 0.5f;
-        Rectangle rBadge = ParaTela(badge);
-        DrawRectangleRec(rBadge, Fade((Color){ 32, 29, 31, 255 }, hov ? 0.95f : 0.78f));
-        DrawRectangleLinesEx(rBadge, 1.5f, cor);
-        int tamQ = (int)(10.0f * (rBadge.height / badge.height));
-        if (tamQ < 1) tamQ = 1;
-        int lwQ = MeasureText("?", tamQ);
-        DrawText("?", (int)(rBadge.x + (rBadge.width - lwQ) * 0.5f),
-                 (int)(rBadge.y + (rBadge.height - tamQ) * 0.5f), tamQ, cor);
-
-        if (hov && h->dica) {
-            float tw = (float)(strlen(h->dica) * 5 + 16);
-            if (tw < 110.0f) tw = 110.0f;
-            float tx = cx - tw * 0.5f;
-            if (tx < JANELA_AREA.x + 4.0f) tx = JANELA_AREA.x + 4.0f;
-            if (tx + tw > JANELA_AREA.x + JANELA_AREA.width - 4.0f) {
-                tx = JANELA_AREA.x + JANELA_AREA.width - 4.0f - tw;
-            }
-            float ty = badge.y - 18.0f;
-            if (ty < JANELA_AREA.y + 4.0f) ty = badge.y + badge.height + 4.0f;
-            Rectangle tip = { tx, ty, tw, 15.0f };
-            DrawRectangleRec(ParaTela(tip), (Color){ 32, 29, 31, 240 });
-            DrawRectangleLinesEx(ParaTela(tip), 1.5f, (Color){ 255, 242, 230, 255 });
-            DrawTextInArea(h->dica, tip, 8, (Color){ 255, 242, 230, 255 });
-        }
+        Rectangle destVirt = {
+            JANELA_AREA.x + h->bboxJanela.x,
+            JANELA_AREA.y + h->bboxJanela.y,
+            h->bboxJanela.width,
+            h->bboxJanela.height
+        };
+        DesenharSpriteDestacadoProfundidade(g_texHotspotMasks[i], destVirt, hov, g_hotspotAnim[i], pulso);
     }
+}
+
+static void DesenharRotuloObjetoInterativoSala(void) {
+    if (g_dialogLoaded || g_closeupAtual != CLOSEUP_NENHUM || g_hotspotHover < 0) return;
+    const EvidenciaHotspot *h = &EVIDENCIA_HOTSPOTS[g_hotspotHover];
+    if (!h->dica) return;
+
+    Vector2 mVirt = MouseNaImagem();
+    float tw = (float)(strlen(h->dica) * 5 + 16);
+    if (tw < 120.0f) tw = 120.0f;
+    float tx = mVirt.x - tw * 0.5f;
+    if (tx < JANELA_AREA.x + 4.0f) tx = JANELA_AREA.x + 4.0f;
+    if (tx + tw > JANELA_AREA.x + JANELA_AREA.width - 4.0f) {
+        tx = JANELA_AREA.x + JANELA_AREA.width - 4.0f - tw;
+    }
+    float ty = mVirt.y - 20.0f;
+    if (ty < JANELA_AREA.y + 4.0f) ty = mVirt.y + 14.0f;
+    Rectangle tip = { tx, ty, tw, 15.0f };
+    DrawRectangleRec(ParaTela((Rectangle){ tip.x + 1.5f, tip.y + 1.5f, tip.width, tip.height }), Fade(BLACK, 0.55f));
+    DrawRectangleRec(ParaTela(tip), (Color){ 32, 29, 31, 242 });
+    DrawRectangleLinesEx(ParaTela(tip), 1.5f, (Color){ 255, 242, 230, 255 });
+    DrawTextInArea(h->dica, tip, 8, (Color){ 255, 242, 230, 255 });
 }
 
 void UpdateDrawGameplayScene(void) {
@@ -4778,12 +5242,21 @@ void UpdateDrawGameplayScene(void) {
         UpdateGameplay();
     }
 
-    // 1) Fundo na janela de cima (preenche sem distorcer) - foto do local atual
-    DrawTextureCover(g_fundos[g_localAtual].id > 0 ? g_fundos[g_localAtual] : g_fundos[LOCAL_ESCRITORIO],
-                     JANELA_AREA);
+    // 1) Fundo na janela de cima (preenche sem distorcer) - foto do local atual ou close-up inspecionado
+    if (!g_dialogLoaded && g_closeupAtual == CLOSEUP_GELADEIRA && g_texGeladeiraAberta.id > 0) {
+        DrawTextureCover(g_texGeladeiraAberta, JANELA_AREA);
+    } else if (!g_dialogLoaded && g_closeupAtual == CLOSEUP_MESA_CANETA && g_texMesaCaneta.id > 0) {
+        DrawTextureCover(g_texMesaCaneta, JANELA_AREA);
+    } else if (!g_dialogLoaded && g_closeupAtual == CLOSEUP_PILHA_RELATORIOS && g_texPilhaRelatorios.id > 0) {
+        DrawTextureCover(g_texPilhaRelatorios, JANELA_AREA);
+    } else {
+        DrawTextureCover(g_fundos[g_localAtual].id > 0 ? g_fundos[g_localAtual] : g_fundos[LOCAL_ESCRITORIO],
+                         JANELA_AREA);
+    }
 
     // 2) Se estiver em interrogatorio, mostra o suspeito de perto (com rig facial);
-    //    caso contrario, mostra as silhuetas de quem esta nesta sala
+    //    se estiver inspecionando de perto (geladeira / mesa caneta / pilha de relatorios), destaca o item clicavel;
+    //    caso contrario, desenha os objetos interativos com profundidade atras das silhuetas da sala
     if (g_dialogLoaded && g_suspeitoAtual >= 0 && g_suspeitoAtual < 3) {
         Texture2D tex = g_charTextures[g_suspeitoAtual];
         if (tex.id > 0) {
@@ -4794,6 +5267,80 @@ void UpdateDrawGameplayScene(void) {
             };
             DesenharRetratoComRig(tex, g_suspeitoAtual, charDest);
         }
+    } else if (g_closeupAtual != CLOSEUP_NENHUM) {
+        Vector2 mouseTela = RayCanvasGetMousePosition();
+        Vector2 pJanela = MouseNaJanela(mouseTela);
+        bool bloqueado = (g_evToastCount > 0) || MouseSobreFicha() || g_dicaAberta || g_confirmarAvancarDia || g_confirmarAbandonarRun;
+        float dtCr = GetFrameTime();
+        if (dtCr > 0.05f) dtCr = 0.05f;
+        float pulso = 0.5f + 0.5f * sinf((float)GetTime() * 4.2f);
+
+        Texture2D texItem = { 0 };
+        Rectangle itemBaseVirt = { 0 };
+        bool jaColetou = true;
+        bool hov = false;
+        const char *dicaItem = NULL;
+
+        if (g_closeupAtual == CLOSEUP_GELADEIRA) {
+            jaColetou = GameStateTemEvidencia(1, "EV-04");
+            texItem = g_texCrachaMini;
+            itemBaseVirt = GELADEIRA_CRACHA_AREA;
+            Rectangle rClick = { itemBaseVirt.x - 4.0f, itemBaseVirt.y - 4.0f, itemBaseVirt.width + 8.0f, itemBaseVirt.height + 8.0f };
+            hov = !jaColetou && !bloqueado && CheckCollisionPointRec(mouseTela, ParaTela(rClick));
+            dicaItem = "Examinar crachá perdido";
+        } else if (g_closeupAtual == CLOSEUP_MESA_CANETA) {
+            jaColetou = GameStateTemEvidencia(1, "EV-02");
+            texItem = g_texMaskCaneta;
+            itemBaseVirt = CLOSEUP_CANETA_AREA;
+            hov = !jaColetou && !bloqueado && CheckCollisionPointRec(mouseTela, ParaTela(JANELA_AREA)) &&
+                  PontoNoPoligono(pJanela, POLY_CANETA_JANELA, 4);
+            dicaItem = "Examinar caneta";
+        } else if (g_closeupAtual == CLOSEUP_PILHA_RELATORIOS) {
+            static const Vector2 polyPilha[6] = {
+                { 48, 121 }, { 118, 106 }, { 168, 114 }, { 171, 156 }, { 128, 176 }, { 52, 156 }
+            };
+            jaColetou = GameStateTemEvidencia(1, "EV-03");
+            texItem = g_texMaskPilha;
+            itemBaseVirt = CLOSEUP_PILHA_AREA;
+            hov = !jaColetou && !bloqueado && CheckCollisionPointRec(mouseTela, ParaTela(JANELA_AREA)) &&
+                  PontoNoPoligono(pJanela, polyPilha, 6);
+            dicaItem = "Inspecionar pilha de relatórios";
+        }
+
+        if (!jaColetou && texItem.id > 0) {
+            if (hov && !g_closeupItemHoverAnt) {
+                g_closeupItemVel += 9.0f;
+                TocarSomHover();
+            }
+            g_closeupItemHoverAnt = hov;
+            float alvoCr = hov ? 1.0f : 0.0f;
+            g_closeupItemVel  += (alvoCr - g_closeupItemAnim) * 210.0f * dtCr;
+            g_closeupItemVel  *= expf(-15.0f * dtCr);
+            g_closeupItemAnim += g_closeupItemVel * dtCr;
+
+            Rectangle rClipJanela = ParaTela(JANELA_AREA);
+            BeginScissorMode((int)rClipJanela.x, (int)rClipJanela.y, (int)rClipJanela.width, (int)rClipJanela.height);
+            DesenharSpriteDestacadoProfundidade(texItem, itemBaseVirt, hov, g_closeupItemAnim, pulso);
+            EndScissorMode();
+
+            if (hov && dicaItem) {
+                Vector2 mVirt = MouseNaImagem();
+                float tw = (float)(strlen(dicaItem) * 5 + 18);
+                if (tw < 120.0f) tw = 120.0f;
+                float tx = mVirt.x - tw * 0.5f;
+                if (tx < JANELA_AREA.x + 4.0f) tx = JANELA_AREA.x + 4.0f;
+                if (tx + tw > JANELA_AREA.x + JANELA_AREA.width - 4.0f) {
+                    tx = JANELA_AREA.x + JANELA_AREA.width - 4.0f - tw;
+                }
+                float ty = mVirt.y - 20.0f;
+                if (ty < JANELA_AREA.y + 4.0f) ty = mVirt.y + 14.0f;
+                Rectangle tip = { tx, ty, tw, 14.0f };
+                DrawRectangleRec(ParaTela((Rectangle){ tip.x + 1.5f, tip.y + 1.5f, tip.width, tip.height }), Fade(BLACK, 0.55f));
+                DrawRectangleRec(ParaTela(tip), (Color){ 32, 29, 31, 242 });
+                DrawRectangleLinesEx(ParaTela(tip), 1.5f, (Color){ 255, 242, 230, 255 });
+                DrawTextInArea(dicaItem, tip, 8, (Color){ 255, 242, 230, 255 });
+            }
+        }
     } else {
         const char **nomesCurto = NOMES_SUSPEITOS;
         Vector2 mouseTela = RayCanvasGetMousePosition();
@@ -4803,6 +5350,10 @@ void UpdateDrawGameplayScene(void) {
 
         Rectangle rClipJanela = ParaTela(JANELA_AREA);
         BeginScissorMode((int)rClipJanela.x, (int)rClipJanela.y, (int)rClipJanela.width, (int)rClipJanela.height);
+
+        // Objetos do cenario destacados com profundidade (mesa do auditorio, mesa do ADM, geladeira) atras dos NPCs
+        DesenharObjetosInterativosSala(dtSil);
+
         for (int i = 0; i < 3; i++) {
             if (g_suspeitoLocal[i] != g_localAtual) continue;   // so mostra quem esta nesta sala
             Texture2D sil = g_silTextures[i];
@@ -4872,7 +5423,7 @@ void UpdateDrawGameplayScene(void) {
                            ParaTela(JANELA_AREA), (Vector2){ 0, 0 }, 0.0f, WHITE);
             if (g_setaHover >= 0) DesenharRotuloSeta(g_setaHover);
         }
-        DesenharHotspotsEvidencia();
+        DesenharRotuloObjetoInterativoSala();
     }
 
     // Fundo animado procedural bem sutil nos quadrantes de demarcação (proeminentemente cor sólida original)
@@ -4932,15 +5483,16 @@ void UpdateDrawGameplayScene(void) {
     // 5) Tablet por cima de tudo
     if (g_pranchetaAberta) {
         if (g_pranchetaMinimizada) {
-            // Desenha a aba recolhida para reabrir
+            // Desenha a aba recolhida no lugar da antiga barra de título do chat para abrir o checklist
             Rectangle rAbaTela = ParaTela(TABLET_ABA_MIN);
-            bool hovAba = CheckCollisionPointRec(MouseNaImagem(), TABLET_ABA_MIN);
-            Color corFundoAba = hovAba ? (Color){ 64, 58, 62, 240 } : (Color){ 36, 32, 34, 230 };
-            Color corBordaAba = hovAba ? (Color){ 255, 242, 230, 255 } : (Color){ 125, 112, 113, 255 };
+            bool hovAba = !g_confirmarAvancarDia && !g_confirmarAbandonarRun && !g_dicaAberta && (g_evToastCount <= 0) &&
+                          CheckCollisionPointRec(MouseNaImagem(), TABLET_ABA_MIN);
+            Color corFundoAba = hovAba ? (Color){ 64, 58, 62, 248 } : Fade((Color){ 36, 32, 34, 255 }, 0.90f);
+            Color corBordaAba = hovAba ? (Color){ 255, 242, 230, 255 } : (Color){ 160, 147, 142, 255 };
 
             DrawRectangleRec(rAbaTela, corFundoAba);
-            DrawRectangleLinesEx(rAbaTela, 1.2f, corBordaAba);
-            DrawTextInArea("CHECKLIST [^]", TABLET_ABA_MIN, 9, (Color){ 255, 242, 230, 255 });
+            DrawRectangleLinesEx(rAbaTela, 2.0f, corBordaAba);
+            DrawTextInArea("CHECKLIST [v]", TABLET_ABA_MIN, 10, (Color){ 255, 242, 230, 255 });
         } else {
             Rectangle area   = { g_pranchetaPos.x, g_pranchetaPos.y,
                                  (float)g_prancheta.width * TABLET_SCALE, (float)g_prancheta.height * TABLET_SCALE };
@@ -5100,6 +5652,25 @@ void UnloadGameplayScene(void) {
     
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
     for (int i = 0; i < NUM_LOCAIS; i++) UnloadTexture(g_fundos[i]);
+    if (g_texGeladeiraAberta.id > 0) UnloadTexture(g_texGeladeiraAberta);
+    if (g_texCrachaDestaque.id > 0)  UnloadTexture(g_texCrachaDestaque);
+    if (g_texCrachaMini.id > 0)      UnloadTexture(g_texCrachaMini);
+    if (g_texMesaCaneta.id > 0)      UnloadTexture(g_texMesaCaneta);
+    if (g_texMaskCaneta.id > 0)      UnloadTexture(g_texMaskCaneta);
+    if (g_texPilhaRelatorios.id > 0) UnloadTexture(g_texPilhaRelatorios);
+    if (g_texMaskPilha.id > 0)       UnloadTexture(g_texMaskPilha);
+    for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
+        if (g_texHotspotMasks[i].id > 0) UnloadTexture(g_texHotspotMasks[i]);
+        g_texHotspotMasks[i] = (Texture2D){ 0 };
+    }
+    g_texGeladeiraAberta = (Texture2D){ 0 };
+    g_texCrachaDestaque  = (Texture2D){ 0 };
+    g_texCrachaMini      = (Texture2D){ 0 };
+    g_texMesaCaneta      = (Texture2D){ 0 };
+    g_texMaskCaneta      = (Texture2D){ 0 };
+    g_texPilhaRelatorios = (Texture2D){ 0 };
+    g_texMaskPilha       = (Texture2D){ 0 };
+    g_closeupAtual       = CLOSEUP_NENHUM;
     MapaHoloUnload();
     Setas3DUnload();
     g_transTempo = -1.0f;
