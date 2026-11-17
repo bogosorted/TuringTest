@@ -3919,11 +3919,11 @@ static void DesenharDeepfake(void) {
 
 // ---------- Tutorial Interativo (Dia 1) ----------
 
-static const Rectangle TUT_CARD_RECT    = { 324.0f, 44.0f, 294.0f, 134.0f };
-static const Rectangle TUT_BTN_FECHAR   = { 600.0f, 46.0f, 14.0f, 14.0f };
-static const Rectangle TUT_BTN_PULAR    = { 332.0f, 156.0f, 52.0f, 16.0f };
-static const Rectangle TUT_BTN_VOLTAR   = { 510.0f, 156.0f, 24.0f, 16.0f };
-static const Rectangle TUT_BTN_AVANCAR  = { 538.0f, 156.0f, 72.0f, 16.0f };
+static const Rectangle TUT_CARD_RECT    = { 318.0f, 32.0f, 306.0f, 154.0f };
+static const Rectangle TUT_BTN_FECHAR   = { 606.0f, 34.0f, 14.0f, 14.0f };
+static const Rectangle TUT_BTN_PULAR    = { 326.0f, 166.0f, 52.0f, 16.0f };
+static const Rectangle TUT_BTN_VOLTAR   = { 522.0f, 166.0f, 24.0f, 16.0f };
+static const Rectangle TUT_BTN_AVANCAR  = { 550.0f, 166.0f, 68.0f, 16.0f };
 
 static float PulsoTutorial(void) {
     float t = (float)GetTime() * 1.5f;
@@ -3964,7 +3964,7 @@ static void DesenharCardTutorial(Rectangle card, const char *titulo, const char 
     DrawRectangleRec(ParaTela(rCabecalho), corEscura);
     DrawTextInArea(titulo, rCabecalho, 9, corDestaque);
 
-    char buf[512];
+    char buf[1024];
     snprintf(buf, sizeof buf, "%s", corpo);
     float currY = card.y + 23.0f;
     char *p = buf;
@@ -4056,10 +4056,11 @@ static void DesenharTutorial(void) {
 
     switch (g_tutorialPasso) {
         case TUT_PASSO_MISSAO: {
-            titulo = "GUIA 1/5 - INVESTIGAÇÃO";
-            corpo = "Há 1 IA infiltrada entre os 3 funcionários da RASEC.\n"
-                    "Explore os setores pelas setas na cena e clique em quem quiser para conversar.\n"
-                    "Você pode seguir jogando livremente ou pular este guia.";
+            titulo = "GUIA 1/5 - OBJETIVO E NAVEGAÇÃO";
+            corpo = "• Missão: Há 1 IA infiltrada entre os 3 funcionários da RASEC.\n"
+                    "• Exploração: Use as setas 3D na tela para andar pelas salas.\n"
+                    "• Interrogatório: Clique na silhueta de um funcionário para conversar.\n"
+                    "• Dica: Procure também pistas e itens com brilho nos cenários!";
             break;
         }
         case TUT_PASSO_INTERROGATORIO: {
@@ -4069,9 +4070,11 @@ static void DesenharTutorial(void) {
                 Rectangle alvoPerguntas = { DIALOG_BOX_X - 2, DIALOG_START_Y - 2, DIALOG_BOX_W + 4, 62 };
                 DesenharDestaqueTutorial(alvoPerguntas, "<<", 1);
             }
-            titulo = "GUIA 2/5 - TOKENS E PERGUNTAS";
-            corpo = "Você tem 8 Tokens por dia. Cada pergunta normal custa 1 Token; encerrar a conversa é grátis.\n"
-                    "Observe a postura do suspeito: Dúvida, Confiança ou Pressão mudam como ele reage.";
+            titulo = "GUIA 2/5 - TOKENS E INTERROGATÓRIO";
+            corpo = "• Tokens (8/dia): Cada pergunta formulada consome 1 Token de atenção.\n"
+                    "• Encerrar conversa não consome Tokens.\n"
+                    "• Postura & Reações: Repare nas expressões do rosto e tom de voz.\n"
+                    "  Humanos demonstram estresse real; IAs podem soar polidas demais ou paradoxais.";
             break;
         }
         case TUT_PASSO_FERRAMENTAS: {
@@ -4080,11 +4083,11 @@ static void DesenharTutorial(void) {
             } else {
                 DesenharDestaqueTutorial(SETA_FECHADA, ">>", 0);
             }
-            titulo = "GUIA 3/5 - FERRAMENTAS";
-            corpo = "Abra a aba Ferramentas no rodapé direito:\n"
-                    "- Tablet: anote suspeitas e veja evidências.\n"
-                    "- Pasta: consulte a ficha pessoal de cada um.\n"
-                    "- Dica Lógica: 1 puzzle/dia para perguntas grátis.";
+            titulo = "GUIA 3/5 - FERRAMENTAS BÁSICAS";
+            corpo = "Abra a aba Ferramentas no canto inferior direito:\n"
+                    "• Pasta Cadastral: Consulte histórico, cargo e setor oficial de cada um.\n"
+                    "• Tablet de Anotações: Registre suspeitas e veja evidências já catalogadas.\n"
+                    "• Dica Lógica: Resolva 1 puzzle por dia para ganhar perguntas sem gastar Tokens!";
             break;
         }
         case TUT_PASSO_TESTES_ESPECIAIS: {
@@ -4093,18 +4096,19 @@ static void DesenharTutorial(void) {
             } else {
                 DesenharDestaqueTutorial(SETA_FECHADA, ">>", 0);
             }
-            titulo = "GUIA 4/5 - TESTES (-2 TOKENS)";
-            corpo = "Regra: máximo 1 teste por dia e 1 por pessoa (3 na run).\n"
-                    "- Enviesar Dados: pressiona a lógica da resposta.\n"
-                    "- Scanner Deepfake / Injeção: expõem anomalias de IA.";
+            titulo = "GUIA 4/5 - TESTES AVANÇADOS (-2 TOKENS)";
+            corpo = "• Regra de Ouro: Máximo de 1 teste por dia e 1 por pessoa (3 no total da run).\n"
+                    "• Enviesar Dados: Força argumentos ilógicos para ver se o alvo alucina.\n"
+                    "• Scanner Deepfake: Examina microexpressões e artefatos de retina/mãos.\n"
+                    "• Injeção de Prompt: Tenta quebrar diretrizes de segurança da IA.";
             break;
         }
         case TUT_PASSO_AVANCAR_VEREDITO: {
             DesenharDestaqueTutorial(BOTAO_AVANCAR_TOPO, "^", 2);
-            titulo = "GUIA 5/5 - AVANÇAR E VEREDITO";
-            corpo = "Você tem 3 dias para reunir provas na cena e nos diálogos.\n"
-                    "Quando terminar um dia, clique em Avançar Dia no topo.\n"
-                    "No fim do Dia 3, dê o Veredito final!";
+            titulo = "GUIA 5/5 - AVANÇAR DIA E VEREDITO";
+            corpo = "• Duração da Run: Você tem 3 dias para coletar dados e contradições.\n"
+                    "• Quando esgotar estratégias no dia atual, clique em 'Avançar Dia' no topo.\n"
+                    "• No final do Dia 3, tome a decisão final: quem manter na empresa e quem enviar para a Live Area (descarte)!";
             break;
         }
     }
