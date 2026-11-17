@@ -3172,8 +3172,8 @@ void InitGameplayScene(void) {
     for (int y = 0; y < 16; y++) {
         for (int x = 0; x < 16; x++) {
             float b = (float)bayerMatrix[y % 4][x % 4] / 16.0f;
-            if (b < 0.25f) {
-                ImageDrawPixel(&tileImg, x, y, (Color){ 32, 29, 31, 150 });
+            if (b < 0.125f) {
+                ImageDrawPixel(&tileImg, x, y, (Color){ 32, 29, 31, 75 });
             }
         }
     }
