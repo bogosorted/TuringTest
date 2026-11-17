@@ -12,6 +12,7 @@
 #include "../utils/raycanvas.h"
 #include "../utils/game_state.h"
 #include "../utils/ranking.h"
+#include "../utils/dialog_data.h"
 
 // ---------------------------------------------------------------
 // VEREDITO: os 3 suspeitos na sala (2D) e o jogador com uma arma (3D)
@@ -560,6 +561,57 @@ static int QuebrarLinhas(const char *texto, int tam, float maxW, char linhas[][9
     return n;
 }
 
+// Painel neutro com todas as evidencias coletadas durante a investigacao (sem vincular a NPC)
+static void DesenharEvidenciasColetadas(void) {
+    Rectangle ref = ParaTela((Rectangle){ 0, 0, 10, 10 });
+    float escala = ref.height / 10.0f;
+    int tam = (int)(9 * escala);
+    const float painelW = 200.0f;
+    const float linhaH  = 11.0f;
+    const float padX    = 8.0f;
+    const float padY    = 6.0f;
+
+    // Coleta todas as evidencias de todos os suspeitos sem expor o dono
+    char nomes[32][64];
+    int total = 0;
+    for (int s = 0; s < GAME_NUM_SUSPECTS && total < 32; s++) {
+        int cnt = GetEvidenciaCount(s);
+        for (int e = 0; e < cnt && total < 32; e++) {
+            const char *id = GetEvidenciaIdByIndex(s, e);
+            if (GameStateTemEvidencia(s, id)) {
+                const char *nome = GetEvidenciaNome(s, id);
+                snprintf(nomes[total], 64, "%s", nome ? nome : id);
+                total++;
+            }
+        }
+    }
+
+    float painelH = padY * 2 + 14.0f + total * linhaH + (total > 0 ? 2.0f : 0.0f);
+    float px = 8.0f;
+    float py = 20.0f;
+    Rectangle painel = { px, py, painelW, painelH };
+
+    // Sombra + fundo
+    DrawRectangleRec(ParaTela((Rectangle){ painel.x + 2, painel.y + 2, painelW, painelH }), Fade(BLACK, 0.6f));
+    DrawRectangleRec(ParaTela(painel), Fade(COR_ESCURA, 0.95f));
+    DrawRectangleLinesEx(ParaTela(painel), 1.5f * escala, TONS[3]);
+
+    // Titulo neutro
+    Rectangle t = ParaTela((Rectangle){ px + padX, py + padY, painelW, 10 });
+    DrawText("EVIDENCIAS COLETADAS", (int)t.x, (int)t.y, tam, TONS[3]);
+
+    if (total == 0) {
+        Rectangle r = ParaTela((Rectangle){ px + padX, py + padY + 14.0f, 0, 0 });
+        DrawText("Nenhuma evidencia.", (int)r.x, (int)r.y, tam, TONS[2]);
+    } else {
+        for (int k = 0; k < total; k++) {
+            float cy = py + padY + 14.0f + k * linhaH;
+            Rectangle r = ParaTela((Rectangle){ px + padX, cy, 0, 0 });
+            DrawText(nomes[k], (int)r.x, (int)r.y, tam, COR_CLARA);
+        }
+    }
+}
+
 // Painel com todos os itens da prancheta do suspeito, destacando os marcados
 static void DesenharAnotacoes(int i) {
     const char *itens[16];
@@ -677,8 +729,8 @@ void UpdateDrawVerdictScene(void) {
             DrawText(NOMES[g_hover], (int)(pt.x + 6 * escala), (int)(pt.y + (pt.height - tn) / 2.0f), tn, COR_CLARA);
         }
 
-        // Anotacoes da prancheta de quem esta na mira
-        if (mirando && g_hover >= 0) DesenharAnotacoes(g_hover);
+        // Lista neutra de evidencias coletadas (sempre visivel, sem vincular a NPC)
+        if (mirando) DesenharEvidenciasColetadas();
 
         // Lampada falhando (escurece a sala; a arma fica por cima, perto do jogador)
         float brilho = BrilhoLampada((float)GetTime());
