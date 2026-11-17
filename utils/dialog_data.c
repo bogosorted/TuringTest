@@ -188,8 +188,8 @@ static const StaticNode NODES_S2_D3[] = {
 
 static const StaticEvidencia EV_TAB_0[] = { { "EV-01", "Dialogo de confiança" } };
 static const int EV_CNT_0 = 1;
-static const StaticEvidencia EV_TAB_1[] = { { "EV-01", "Ficha de RH consta apenas pai" }, { "EV-02", "Sempre entrega uma caneta preta com uma imagem de abutre para os amigos" }, { "EV-03", "Pilha de relatórios à fazer" }, { "EV-04", "ID perdido" }, { "EV-05", "Metal Wyrms" }, { "EV-06", "Ana Lúcia" }, { "EV-07", "Acúmulo de desconfiança" }, { "EV-08", "Guitarrista" } };
-static const int EV_CNT_1 = 8;
+static const StaticEvidencia EV_TAB_1[] = { { "EV-02", "Sempre entrega uma caneta preta com uma imagem de abutre para os amigos" }, { "EV-03", "Pilha de relatórios à fazer" }, { "EV-04", "ID perdido" }, { "EV-05", "Metal Wyrms" }, { "EV-06", "Ana Lúcia" }, { "EV-07", "Acúmulo de desconfiança" }, { "EV-08", "Guitarrista" } };
+static const int EV_CNT_1 = 7;
 static const StaticEvidencia EV_TAB_2[] = { { "EV-01", "Nome Preferido" }, { "EV-02", "Relatórios Errados" }, { "EV-03", "Tempo de experiência" }, { "EV-04", "Indo a setores incorretos" } };
 static const int EV_CNT_2 = 4;
 
