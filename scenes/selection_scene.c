@@ -194,7 +194,7 @@ void UpdateDrawSelectionScene(void) {
              (int)(rTitulo.y + (rTitulo.height - tamTit) / 2.0f),
              tamTit, (Color){ 189, 181, 168, 255 });
 
-    // 2) Area do Escritorio (30, 89, 103, 88)
+    // 2) Area do Setor Administrativo (30, 89, 103, 88)
     Rectangle rEscrVirt = { MAPA_X + 30, MAPA_Y + 89, 103, 88 };
     Rectangle rEscr = ParaTela(rEscrVirt);
     bool hovEscr = CheckCollisionPointRec(mouse, rEscr);
@@ -202,12 +202,12 @@ void UpdateDrawSelectionScene(void) {
         g_algumHover = true;
         DrawRectangleRec(rEscr, Fade(hoverColor, 0.35f));
         if (clicou) {
-            TraceLog(LOG_INFO, "Cenario ESCRITORIO escolhido!");
+            TraceLog(LOG_INFO, "Cenario SETOR ADMINISTRATIVO escolhido!");
             g_shouldStartInterrogation = true;
         }
     }
-    int tamEscr = (int)(12 * escala);
-    const char *lblEscr = "Escritório";
+    int tamEscr = (int)(9 * escala);
+    const char *lblEscr = "Setor Administrativo";
     DrawText(lblEscr,
              (int)(rEscr.x + (rEscr.width - MeasureText(lblEscr, tamEscr)) / 2.0f),
              (int)(rEscr.y + (rEscr.height - tamEscr) / 2.0f - 6 * escala),
@@ -249,7 +249,7 @@ void UpdateDrawSelectionScene(void) {
     }
 
     if (g_avisoCantina) {
-        const char *msgCant = "A cantina está vazia no momento. Interrogue os funcionários no Escritório.";
+        const char *msgCant = "A cantina está vazia no momento. Interrogue os funcionários no Setor Administrativo.";
         int tamMsg = (int)(10 * escala);
         Rectangle tela = GetTelaRect();
         DrawText(msgCant,
@@ -268,7 +268,7 @@ void UpdateDrawSelectionScene(void) {
     if (GameStateIsTutorialActive()) {
         DrawRectangleLinesEx(rEscr, (2.0f + 1.5f * pulso) * Escala(), corDestaque);
 
-        const char *dicaInicio = "Clique em 'Escritório' no mapa para começar a investigação";
+        const char *dicaInicio = "Clique em 'Setor Administrativo' no mapa para começar a investigação";
         Rectangle tela = GetTelaRect();
         int tamDica = (int)(12 * escala);
         int largDica = MeasureText(dicaInicio, tamDica);

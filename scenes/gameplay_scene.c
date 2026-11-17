@@ -145,11 +145,11 @@ typedef struct {
 
 #define FUNDO_ESCADA "assets/sprites/locais/spr_background_escadaria.png"
 static const InfoLocal LOCAIS[NUM_LOCAIS] = {
-    { "ESCRITÓRIO",      "ESCRITÓRIO DA RASEC",   "",                "assets/sprites/locais/terreo/spr_background_teste.png" },
+    { "SETOR ADM.",      "SETOR ADMINISTRATIVO",  "",                "assets/sprites/locais/terreo/spr_background_teste.png" },
     { "LANCHONETE",      "LANCHONETE DA RASEC",   "",                "assets/sprites/locais/terreo/spr_background_cantina.png" },
     { "RH",              "RH DA RASEC",           "Vazio",           "assets/sprites/locais/1_andar/spr_background_rh.png" },
-    { "MESA DA MARIA",   "MESA DA MARIA",         "Vazio",           "assets/sprites/locais/1_andar/spr_background_mesa_maria.png" },
-    { "SALA DE REUNIÃO", "SALA DE REUNIÃO",       "Vazio",           "assets/sprites/locais/2_andar/spr_background_sala_reuniao.png" },
+    { "CONTABILIDADE",   "SETOR DE CONTABILIDADE", "Vazio",           "assets/sprites/locais/1_andar/spr_background_mesa_maria.png" },
+    { "AUDITÓRIO",       "AUDITÓRIO",             "Vazio",           "assets/sprites/locais/2_andar/spr_background_sala_reuniao.png" },
     { "COPA",            "COPA DO 2º ANDAR",      "Vazio",           "assets/sprites/locais/2_andar/spr_background_geladeira_coffe.png" },
     { "ESCADA",          "ESCADARIA - TÉRREO",    "Escadas",         FUNDO_ESCADA },
     { "ESCADA",          "ESCADARIA - 1º ANDAR",  "Escadas",         FUNDO_ESCADA },
@@ -294,7 +294,7 @@ static const EvidenciaHotspot EVIDENCIA_HOTSPOTS[] = {
     { LOCAL_RH,           { 3 + 218, 3 + 92,  68, 42 }, 1, "EV-01", "Inspecionar arquivos do RH" },
     // Arthur EV-02: Sempre entrega uma caneta preta com uma imagem de abutre para os amigos
     { LOCAL_SALA_REUNIAO, { 3 + 92,  3 + 92,  62, 32 }, 1, "EV-02", "Inspecionar objetos na mesa" },
-    { LOCAL_MESA_MARIA,   { 3 + 170, 3 + 102, 95, 34 }, 1, "EV-02", "Inspecionar mesa da Maria" },
+    { LOCAL_MESA_MARIA,   { 3 + 170, 3 + 102, 95, 34 }, 1, "EV-02", "Inspecionar contabilidade" },
     // Arthur EV-03: Pilha de relatorios a fazer (Na mesa dele)
     { LOCAL_ESCRITORIO,   { 3 + 42,  3 + 118, 86, 38 }, 1, "EV-03", "Inspecionar pilha de relatorios" },
     // Arthur EV-04: ID perdido (Na geladeira do refeitorio / copa)
@@ -556,10 +556,11 @@ static bool      g_irParaVeredito     = false;
 
 // Prancheta arrastavel
 static Texture2D g_prancheta;                       // sprite da prancheta aberta (299x343)
-static bool      g_pranchetaAberta = false;
-static bool      g_arrastando      = false;
-static Vector2   g_pranchetaPos    = { 163, 65 };   // posicao inicial (centralizado na tela)
-static Vector2   g_offsetArraste   = { 0, 0 };      // onde o mouse "pegou" o tablet
+static bool      g_pranchetaAberta    = false;
+static bool      g_pranchetaMinimizada = false;
+static bool      g_arrastando         = false;
+static Vector2   g_pranchetaPos       = { 360, 20 };   // posicao inicial (mais pra direita, perto dos dialogos)
+static Vector2   g_offsetArraste      = { 0, 0 };      // onde o mouse "pegou" o tablet
 
 // Scroll do checklist dentro do tablet
 static float     g_tabletScroll          = 0.0f;   // quanto o checklist ja rolou (pixels da imagem)
@@ -640,22 +641,27 @@ static const char *GUIA[NUM_CAIXAS] = {
     "Segue muito a risca a personalidade descrita.",
 };
 
-// Areas DENTRO do sprite do tablet (313x230)
-static const Rectangle TABLET_CONTEUDO = {  37,  30, 234, 171 };  // parte da tela onde o checklist aparece (e rola)
-static const Rectangle TABLET_BARRA    = { 277,  35,  10, 157 };  // barra de rolagem desenhada no sprite (area de clique)
-static const Rectangle TABLET_FECHAR   = { 276,   8,  14,  14 };  // botao [X] padronizado no canto superior direito do tablet
-#define TABLET_POLEGAR_X  279     // a barrinha desenhada no sprite comeca na coluna 279...
-#define TABLET_POLEGAR_W    6     // ...tem 6 de largura...
-#define TABLET_POLEGAR_Y   38     // ...comeca na linha 38...
-#define TABLET_POLEGAR_H   21     // ...e tem 21 de altura
-#define TABLET_CANAL_FIM  189     // o canal por onde ela corre acaba na linha 189
+// Tablet arrastavel (escala e dimensoes)
+#define TABLET_SCALE 0.85f
+
+// Areas DENTRO do sprite do tablet (313x230 escalado por TABLET_SCALE)
+static const Rectangle TABLET_CONTEUDO  = {  37 * TABLET_SCALE,  30 * TABLET_SCALE, 234 * TABLET_SCALE, 171 * TABLET_SCALE };  // parte da tela onde o checklist aparece (e rola)
+static const Rectangle TABLET_BARRA     = { 277 * TABLET_SCALE,  35 * TABLET_SCALE,  10 * TABLET_SCALE, 157 * TABLET_SCALE };  // barra de rolagem desenhada no sprite (area de clique)
+static const Rectangle TABLET_FECHAR    = { 276 * TABLET_SCALE,   8 * TABLET_SCALE,  14 * TABLET_SCALE,  14 * TABLET_SCALE };  // botao [X] padronizado no canto superior direito do tablet
+static const Rectangle TABLET_MINIMIZAR = { 258 * TABLET_SCALE,   8 * TABLET_SCALE,  14 * TABLET_SCALE,  14 * TABLET_SCALE };  // botao [_] de minimizar ao lado do [X]
+static const Rectangle TABLET_ABA_MIN   = { 528, 10, 104, 18 }; // aba quando minimizado (canto superior direito)
+#define TABLET_POLEGAR_X  (279 * TABLET_SCALE)     // a barrinha desenhada no sprite comeca na coluna 279...
+#define TABLET_POLEGAR_W  (  6 * TABLET_SCALE)     // ...tem 6 de largura...
+#define TABLET_POLEGAR_Y  ( 38 * TABLET_SCALE)     // ...comeca na linha 38...
+#define TABLET_POLEGAR_H  ( 21 * TABLET_SCALE)     // ...e tem 21 de altura
+#define TABLET_CANAL_FIM  (189 * TABLET_SCALE)     // o canal por onde ela corre acaba na linha 189
 #define TABLET_PASSO_RODA 20.0f   // quanto cada "clique" da roda do mouse rola
 
 // Checklist dentro do tablet (pixels, contando do canto da area de conteudo)
-#define CAIXA_TAM       25    // os quadradinhos tem 25x25
-#define CAIXA_TEXTO_X   32    // o texto comeca 32 px depois do inicio do quadradinho
-#define CAIXA_ESPACO     6    // espaco entre um item e o proximo
-#define CHECKLIST_Y0    34    // y do primeiro item (antes vem o titulo e o nome)
+#define CAIXA_TAM       (21 * TABLET_SCALE)    // os quadradinhos proporcionalmente menores
+#define CAIXA_TEXTO_X   (28 * TABLET_SCALE)    // o texto comeca depois do inicio do quadradinho
+#define CAIXA_ESPACO    ( 5 * TABLET_SCALE)    // espaco entre um item e o proximo
+#define CHECKLIST_Y0    (30 * TABLET_SCALE)    // y do primeiro item (antes vem o titulo e o nome)
 
 // Cores do tablet (tela preta)
 static const Color COR_TABLET_TEXTO  = { 189, 181, 168, 255 };
@@ -738,6 +744,7 @@ static const Rectangle FERRAMENTAS[NUM_TOOLS] = {
 // Fecha todas as janelas de ferramentas abertas (exclusao mutua ao abrir outra ferramenta)
 static void FecharJanelasFerramentas(void) {
     g_pranchetaAberta       = false;
+    g_pranchetaMinimizada   = false;
     g_arrastando            = false;
     g_arrastandoBarraTablet = false;
     g_fichaAtual            = -1;
@@ -752,9 +759,10 @@ static void SetExpressaoSuspeito(int suspeito, ExpressaoFacial expr, bool inicia
 
 // Funcoes de clique de cada ferramenta (com exclusao mutua: abrir uma fecha a outra)
 static void OnClickPrancheta(void) {
-    bool abrir = !g_pranchetaAberta;
+    bool abrir = (!g_pranchetaAberta || g_pranchetaMinimizada);
     FecharJanelasFerramentas();
     g_pranchetaAberta = abrir;
+    g_pranchetaMinimizada = false;
     TraceLog(LOG_INFO, "Prancheta %s", g_pranchetaAberta ? "aberta" : "fechada");
 }
 static void OnClickPasta(void) {
@@ -1019,8 +1027,12 @@ static bool MouseSobreFicha(void) {
         if (CheckCollisionPointRec(m, area)) return true;
     }
     if (g_pranchetaAberta) {
-        Rectangle area = { g_pranchetaPos.x, g_pranchetaPos.y, (float)g_prancheta.width, (float)g_prancheta.height };
-        if (CheckCollisionPointRec(m, area)) return true;
+        if (g_pranchetaMinimizada) {
+            if (CheckCollisionPointRec(m, TABLET_ABA_MIN)) return true;
+        } else {
+            Rectangle area = { g_pranchetaPos.x, g_pranchetaPos.y, (float)g_prancheta.width * TABLET_SCALE, (float)g_prancheta.height * TABLET_SCALE };
+            if (CheckCollisionPointRec(m, area)) return true;
+        }
     }
     if (g_confirmarAvancarDia || g_confirmarAbandonarRun) return true;
     return false;
@@ -1047,6 +1059,26 @@ static void DesenharBotaoFecharPadrao(Rectangle rectVirtual) {
 
     DrawLineEx((Vector2){ cx - braco, cy - braco }, (Vector2){ cx + braco, cy + braco }, espessura, corX);
     DrawLineEx((Vector2){ cx + braco, cy - braco }, (Vector2){ cx - braco, cy + braco }, espessura, corX);
+}
+
+// Desenha o botao de minimizar [_] padronizado
+static void DesenharBotaoMinimizarPadrao(Rectangle rectVirtual) {
+    Rectangle r = ParaTela(rectVirtual);
+    bool hov = CheckCollisionPointRec(RayCanvasGetMousePosition(), r);
+    Color corFundo = hov ? (Color){ 64, 58, 62, 255 } : (Color){ 36, 32, 34, 255 };
+    Color corBorda = hov ? (Color){ 255, 242, 230, 255 } : (Color){ 125, 112, 113, 255 };
+    Color corLinha = (Color){ 255, 242, 230, 255 };
+
+    DrawRectangleRec(r, corFundo);
+    DrawRectangleLinesEx(r, hov ? 1.5f : 1.0f, corBorda);
+
+    float cx = r.x + r.width  * 0.5f;
+    float cy = r.y + r.height * 0.75f;
+    float braco = r.width * 0.28f;
+    float espessura = r.height * 0.14f;
+    if (espessura < 1.8f) espessura = 1.8f;
+
+    DrawLineEx((Vector2){ cx - braco, cy }, (Vector2){ cx + braco, cy }, espessura, corLinha);
 }
 
 // ---------------------------------------------------------------
@@ -2867,7 +2899,8 @@ static void DrawInterrogationTexts(void) {
     }
 
     if (!g_dialogLoaded) {
-        DrawTextLeftAligned(LOCAIS[g_localAtual].titulo, (Vector2){ 12, 235 }, 10, lightTextColor);
+        int tamTitulo = (g_localAtual == LOCAL_ESCRITORIO || g_localAtual == LOCAL_MESA_MARIA) ? 9 : 10;
+        DrawTextLeftAligned(LOCAIS[g_localAtual].titulo, (Vector2){ 12, 235 }, tamTitulo, lightTextColor);
 
         Rectangle infoBox = { DIALOG_BOX_X, DIALOG_START_Y + 4, DIALOG_BOX_W, 60 };
         DrawRectangleRec(ParaTela(infoBox), Fade((Color){ 36, 32, 34, 255 }, 0.85f));
@@ -3073,8 +3106,9 @@ void InitGameplayScene(void) {
     g_avisoCantina = false;
     g_menuAberto = false;
     g_pranchetaAberta = false;
+    g_pranchetaMinimizada = false;
     g_arrastando = false;
-    g_pranchetaPos = (Vector2){ 163, 65 };
+    g_pranchetaPos = (Vector2){ 360, 20 };
     g_tabletScroll = 0.0f;
     g_arrastandoBarraTablet = false;
 
@@ -3476,13 +3510,13 @@ static Rectangle NoTablet(Rectangle r) {
 // e devolve a altura total do checklist
 static float TabletLayout(void) {
     if (!g_dialogLoaded) {
-        return 14 + ContarLinhas(AVISO_TABLET, TABLET_CONTEUDO.width, 10) * 12;
+        return (14 * TABLET_SCALE) + ContarLinhas(AVISO_TABLET, TABLET_CONTEUDO.width, 9) * 11;
     }
 
     float larguraTexto = TABLET_CONTEUDO.width - CAIXA_TEXTO_X;
     float y = CHECKLIST_Y0;
     for (int i = 0; i < NUM_CAIXAS; i++) {
-        float textoH = ContarLinhas(GUIA[i], larguraTexto, 10) * 11.0f - 1.0f;
+        float textoH = ContarLinhas(GUIA[i], larguraTexto, 9) * 10.0f - 1.0f;
         float h = (textoH > CAIXA_TAM) ? textoH : CAIXA_TAM;   // o item tem a altura do maior dos dois
 
         g_caixaY[i] = y + (h - CAIXA_TAM) / 2.0f;   // centraliza o quadradinho...
@@ -3722,11 +3756,26 @@ static bool UpdateFicha(void) {
 // Devolve true se a prancheta "pegou" o mouse neste frame
 // (assim o clique nao atravessa para o que esta embaixo dela).
 static bool UpdatePrancheta(void) {
+    Vector2 mouse = MouseNaImagem();
+
+    // Se estiver minimizado, gerencia o clique na abinha para restaurar
+    if (g_pranchetaAberta && g_pranchetaMinimizada) {
+        if (CheckCollisionPointRec(mouse, TABLET_ABA_MIN)) {
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                g_pranchetaMinimizada = false;
+                return true;
+            }
+            SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+            return true;
+        }
+        return false;
+    }
+
     if (!g_pranchetaAberta) return false;
 
-    Vector2 mouse = MouseNaImagem();
-    Rectangle area = { g_pranchetaPos.x, g_pranchetaPos.y,
-                       (float)g_prancheta.width, (float)g_prancheta.height };
+    float tabletW = (float)g_prancheta.width  * TABLET_SCALE;
+    float tabletH = (float)g_prancheta.height * TABLET_SCALE;
+    Rectangle area = { g_pranchetaPos.x, g_pranchetaPos.y, tabletW, tabletH };
 
     g_tabletConteudoH = TabletLayout();
     float maxScroll = TabletMaxScroll();
@@ -3741,6 +3790,14 @@ static bool UpdatePrancheta(void) {
         // Botao [X] padronizado do tablet: fecha o Guia da Investigacao
         if (CheckCollisionPointRec(mouse, NoTablet(TABLET_FECHAR))) {
             g_pranchetaAberta = false;
+            g_pranchetaMinimizada = false;
+            g_arrastando = false;
+            g_arrastandoBarraTablet = false;
+            return true;
+        }
+        // Botao [_] de minimizar o tablet
+        if (CheckCollisionPointRec(mouse, NoTablet(TABLET_MINIMIZAR))) {
+            g_pranchetaMinimizada = true;
             g_arrastando = false;
             g_arrastandoBarraTablet = false;
             return true;
@@ -3800,8 +3857,8 @@ static bool UpdatePrancheta(void) {
     g_pranchetaPos.y = mouse.y - g_offsetArraste.y;
 
     // Nao deixa sair da tela
-    float maxX = (float)(g_interface.width  - g_prancheta.width);
-    float maxY = (float)(g_interface.height - g_prancheta.height);
+    float maxX = (float)g_interface.width  - tabletW;
+    float maxY = (float)g_interface.height - tabletH;
     if (g_pranchetaPos.x < 0)    g_pranchetaPos.x = 0;
     if (g_pranchetaPos.y < 0)    g_pranchetaPos.y = 0;
     if (g_pranchetaPos.x > maxX) g_pranchetaPos.x = maxX;
@@ -4502,6 +4559,10 @@ static void UpdateGameplay(void) {
                     g_suspeitoAtual = i;
                     g_funcionario = SUSPECT_FICHA_INDEX[i]; // a silhueta clicada define qual ficha a pasta abre
                     g_fichaAtual = -1;     // fecha a ficha do funcionario anterior, se estiver aberta
+                    // Abre automaticamente o checklist (tablet) ao iniciar conversa com o funcionario
+                    FecharJanelasFerramentas();
+                    g_pranchetaAberta = true;
+                    g_tabletScroll = 0.0f;
                     // Expressao inicial ao abrir a conversa (Arthur sempre animado)
                     memset(&g_poseCurr, 0, sizeof g_poseCurr);
                     SetExpressaoSuspeito(i, (i == 1) ? EXPR_FELIZ : EXPR_NEUTRO, false);   // Arthur ja chega animado
@@ -4864,54 +4925,67 @@ void UpdateDrawGameplayScene(void) {
         DrawTexturePro(g_seta, abaOrigem, abaTela, (Vector2){ 0, 0 }, 0.0f, corAba);
     }
 
-         // 5) Tablet por cima de tudo
+    // 5) Tablet por cima de tudo
     if (g_pranchetaAberta) {
-        Rectangle area   = { g_pranchetaPos.x, g_pranchetaPos.y,
-                             (float)g_prancheta.width, (float)g_prancheta.height };
-        Rectangle origem = { 0, 0, (float)g_prancheta.width, (float)g_prancheta.height };
-        DrawTexturePro(g_prancheta, origem, ParaTela(area), (Vector2){ 0, 0 }, 0.0f, WHITE);
+        if (g_pranchetaMinimizada) {
+            // Desenha a aba recolhida para reabrir
+            Rectangle rAbaTela = ParaTela(TABLET_ABA_MIN);
+            bool hovAba = CheckCollisionPointRec(MouseNaImagem(), TABLET_ABA_MIN);
+            Color corFundoAba = hovAba ? (Color){ 64, 58, 62, 240 } : (Color){ 36, 32, 34, 230 };
+            Color corBordaAba = hovAba ? (Color){ 255, 242, 230, 255 } : (Color){ 125, 112, 113, 255 };
 
-        // Checklist: desenhado subindo g_tabletScroll e cortado na tela do tablet
-        g_tabletConteudoH = TabletLayout();
-        Rectangle conteudo = NoTablet(TABLET_CONTEUDO);
-        float cx = conteudo.x;
-        float cy = conteudo.y - g_tabletScroll;
-
-        Rectangle rConteudo = ParaTela(conteudo);
-        BeginScissorMode((int)rConteudo.x, (int)rConteudo.y, (int)rConteudo.width, (int)rConteudo.height);
-
-        TextoNaImagem("GUIA DA INVESTIGACAO", cx, cy + 2, 8, COR_TABLET_ROTULO);
-
-        if (!g_dialogLoaded) {
-            // Ninguem sendo entrevistado: so um aviso
-            TextoQuebrado(AVISO_TABLET, cx, cy + 14, conteudo.width, 10, 12, COR_TABLET_TEXTO);
+            DrawRectangleRec(rAbaTela, corFundoAba);
+            DrawRectangleLinesEx(rAbaTela, 1.2f, corBordaAba);
+            DrawTextInArea("CHECKLIST [^]", TABLET_ABA_MIN, 9, (Color){ 255, 242, 230, 255 });
         } else {
-            // Nome do funcionario dono deste checklist
-            const char *nome = (g_funcionario < g_numFichas) ? g_fichas[g_funcionario].nome : "";
-            TextoQueCabe(nome, cx, cy + 14, conteudo.width, 10, COR_TABLET_TEXTO);
+            Rectangle area   = { g_pranchetaPos.x, g_pranchetaPos.y,
+                                 (float)g_prancheta.width * TABLET_SCALE, (float)g_prancheta.height * TABLET_SCALE };
+            Rectangle origem = { 0, 0, (float)g_prancheta.width, (float)g_prancheta.height };
+            DrawTexturePro(g_prancheta, origem, ParaTela(area), (Vector2){ 0, 0 }, 0.0f, WHITE);
 
-            // Quadradinhos (escurecem no hover) e textos ao lado
-            for (int i = 0; i < NUM_CAIXAS; i++) {
-                Texture2D tex = g_marcado[g_funcionario][i] ? g_caixaComX : g_caixaVazia;
-                Rectangle caixa = { cx, cy + g_caixaY[i], CAIXA_TAM, CAIXA_TAM };   // os dois sprites no mesmo tamanho
-                DrawWithHover(tex, caixa);
-                TextoQuebrado(GUIA[i], cx + CAIXA_TEXTO_X, cy + g_textoY[i],
-                              conteudo.width - CAIXA_TEXTO_X, 10, 11, COR_TABLET_TEXTO);
+            // Checklist: desenhado subindo g_tabletScroll e cortado na tela do tablet
+            g_tabletConteudoH = TabletLayout();
+            Rectangle conteudo = NoTablet(TABLET_CONTEUDO);
+            float cx = conteudo.x;
+            float cy = conteudo.y - g_tabletScroll;
+
+            Rectangle rConteudo = ParaTela(conteudo);
+            BeginScissorMode((int)rConteudo.x, (int)rConteudo.y, (int)rConteudo.width, (int)rConteudo.height);
+
+            TextoNaImagem("GUIA DA INVESTIGACAO", cx, cy + 2 * TABLET_SCALE, 7.5f, COR_TABLET_ROTULO);
+
+            if (!g_dialogLoaded) {
+                // Ninguem sendo entrevistado: so um aviso
+                TextoQuebrado(AVISO_TABLET, cx, cy + 14 * TABLET_SCALE, conteudo.width, 9, 11, COR_TABLET_TEXTO);
+            } else {
+                // Nome do funcionario dono deste checklist
+                const char *nome = (g_funcionario < g_numFichas) ? g_fichas[g_funcionario].nome : "";
+                TextoQueCabe(nome, cx, cy + 14 * TABLET_SCALE, conteudo.width, 9, COR_TABLET_TEXTO);
+
+                // Quadradinhos (escurecem no hover) e textos ao lado
+                for (int i = 0; i < NUM_CAIXAS; i++) {
+                    Texture2D tex = g_marcado[g_funcionario][i] ? g_caixaComX : g_caixaVazia;
+                    Rectangle caixa = { cx, cy + g_caixaY[i], CAIXA_TAM, CAIXA_TAM };
+                    DrawWithHover(tex, caixa);
+                    TextoQuebrado(GUIA[i], cx + CAIXA_TEXTO_X, cy + g_textoY[i],
+                                  conteudo.width - CAIXA_TEXTO_X, 8.5f, 10, COR_TABLET_TEXTO);
+                }
             }
+            EndScissorMode();
+
+            // Barra de rolagem: apaga a barrinha que vem desenhada no topo do sprite
+            // (o canal e preto) e desenha ela de novo na posicao do scroll
+            Rectangle polegarOrigem = { TABLET_POLEGAR_X, TABLET_POLEGAR_Y, TABLET_POLEGAR_W, TABLET_POLEGAR_H };
+            DrawRectangleRec(ParaTela(NoTablet(polegarOrigem)), BLACK);
+            bool hoverBarra = g_arrastandoBarraTablet ||
+                              (TabletMaxScroll() > 0.0f && CheckCollisionPointRec(MouseNaImagem(), NoTablet(TABLET_BARRA)));
+            Color corBarra = hoverBarra ? (Color){ 180, 180, 180, 255 } : WHITE;
+            DrawTexturePro(g_prancheta, polegarOrigem, ParaTela(TabletPolegar()), (Vector2){ 0, 0 }, 0.0f, corBarra);
+
+            // Botoes no canto superior direito do tablet: minimizar [_] e fechar [X]
+            DesenharBotaoMinimizarPadrao(NoTablet(TABLET_MINIMIZAR));
+            DesenharBotaoFecharPadrao(NoTablet(TABLET_FECHAR));
         }
-        EndScissorMode();
-
-        // Barra de rolagem: apaga a barrinha que vem desenhada no topo do sprite
-        // (o canal e preto) e desenha ela de novo na posicao do scroll
-        Rectangle polegarOrigem = { TABLET_POLEGAR_X, TABLET_POLEGAR_Y, TABLET_POLEGAR_W, TABLET_POLEGAR_H };
-        DrawRectangleRec(ParaTela(NoTablet(polegarOrigem)), BLACK);
-        bool hoverBarra = g_arrastandoBarraTablet ||
-                          (TabletMaxScroll() > 0.0f && CheckCollisionPointRec(MouseNaImagem(), NoTablet(TABLET_BARRA)));
-        Color corBarra = hoverBarra ? (Color){ 180, 180, 180, 255 } : WHITE;
-        DrawTexturePro(g_prancheta, polegarOrigem, ParaTela(TabletPolegar()), (Vector2){ 0, 0 }, 0.0f, corBarra);
-
-        // Botao [X] padronizado no canto superior direito do tablet
-        DesenharBotaoFecharPadrao(NoTablet(TABLET_FECHAR));
     }
     // 5) Ficha do funcionario (por cima de tudo)
     if (g_fichaAtual >= 0) {
