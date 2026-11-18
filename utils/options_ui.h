@@ -57,4 +57,8 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
 // true enquanto um slider esta sendo arrastado
 bool OptionsUiArrastando(void);
 
+// true enquanto o modal de senha do Dev Tools estiver aberto nas configuracoes
+bool OptionsUiModalAberto(void);
+void OptionsUiFecharModal(void);
+
 #endif

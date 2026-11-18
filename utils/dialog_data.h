@@ -9,6 +9,7 @@ bool LoadDialogTreeFromData(int suspeito, int day, DialogTree *tree);
 
 // Retorna o nome legivel de uma evidencia (ex: "EV-01" -> "Ficha de RH consta apenas pai")
 const char* GetEvidenciaNome(int suspeito, const char *ev_id);
+const char* GetEvidenciaDescricaoVeredito(int suspeito, const char *ev_id);
 
 // Lista as evidencias definidas para um suspeito (0=Maria, 1=Arthur, 2=Ana Lucia)
 int         GetEvidenciaCount(int suspeito);

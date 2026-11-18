@@ -1,4 +1,5 @@
 #include "dialog_system.h"
+#include "settings.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,7 +8,7 @@ int global_tokens = TOKENS_PER_DAY;
 bool global_infinite_tokens = false;
 
 bool HasTokens(void) {
-    return global_infinite_tokens || global_tokens > 0;
+    return global_infinite_tokens || SettingsGetDevMode() || global_tokens > 0;
 }
 
 void ResetTokens(void) {
@@ -97,7 +98,7 @@ bool MakeChoiceById(DialogTree *tree, const char *next_id) {
         if (strcmp(tree->nodes[i].id, next_id) == 0) {
             tree->current_node_index = i;
             tree->nodes[i].visited = true;
-            if (!global_infinite_tokens && !is_free) global_tokens--;
+            if (!global_infinite_tokens && !SettingsGetDevMode() && !is_free) global_tokens--;
             if (tree->nodes[i].is_leaf && tree->suspect_index >= 0) {
                 GameStateSetVisaoJogador(tree->suspect_index, tree->nodes[i].visao_out);
             }
