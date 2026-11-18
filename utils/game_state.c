@@ -11,8 +11,10 @@ static bool         g_evidencias[GAME_NUM_SUSPECTS][GAME_MAX_EVIDENCIAS] = { { f
 static bool         g_viesUsado[GAME_NUM_SUSPECTS] = { false };
 static bool         g_deepfakeUsado[GAME_NUM_SUSPECTS] = { false };
 static bool         g_injecaoUsada[GAME_NUM_SUSPECTS] = { false };
-static char         g_playerName[9] = "AGENTE";
-static int          g_tokensRestantesTotal = 0;
+static char           g_playerName[9] = "AGENTE";
+static int            g_playerAvatar = 0;
+static PronomeJogador g_playerPronoun = PRONOME_ELA;
+static int            g_tokensRestantesTotal = 0;
 static int          g_dicasUsadasTotal = 0;
 
 static int ParseEvIndex(const char *ev_id) {
@@ -174,6 +176,24 @@ void GameStateSetPlayerName(const char *name) {
 
 const char *GameStateGetPlayerName(void) {
     return g_playerName;
+}
+
+void GameStateSetPlayerAvatar(int avatarIdx) {
+    if (avatarIdx < 0) avatarIdx = 0;
+    if (avatarIdx >= GAME_NUM_PLAYERS) avatarIdx = GAME_NUM_PLAYERS - 1;
+    g_playerAvatar = avatarIdx;
+}
+
+int GameStateGetPlayerAvatar(void) {
+    return g_playerAvatar;
+}
+
+void GameStateSetPlayerPronoun(PronomeJogador pronome) {
+    g_playerPronoun = (pronome == PRONOME_ELA) ? PRONOME_ELA : PRONOME_ELE;
+}
+
+PronomeJogador GameStateGetPlayerPronoun(void) {
+    return g_playerPronoun;
 }
 
 void GameStateAddRemainingTokens(int tokens) {
