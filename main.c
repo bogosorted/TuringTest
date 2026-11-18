@@ -52,7 +52,7 @@ static bool SwitchScene(Scene *current, Scene next) {
         UnloadScene(next);
         if (!InitScene(SCENE_MENU)) return false;
         *current = SCENE_MENU;
-        return false;
+        return true;
     }
     *current = next;
     return true;
