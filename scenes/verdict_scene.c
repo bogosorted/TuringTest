@@ -12,6 +12,7 @@
 #include "../utils/raycanvas.h"
 #include "../utils/game_state.h"
 #include "../utils/ranking.h"
+#include "../utils/mural_ui.h"
 #include "../utils/dialog_data.h"
 
 // ---------------------------------------------------------------
@@ -51,7 +52,7 @@ static const char *TEXTO_INTRO =
     "Um deles não é humano. Você tem uma bala.\n\n"
     "Quem é a IA infiltrada?";
 
-typedef enum { ESTADO_INTRO = 0, ESTADO_MIRANDO, ESTADO_TIRO, ESTADO_FINAL, ESTADO_JORNALISTA, ESTADO_PONTUACAO } EstadoVeredito;
+typedef enum { ESTADO_INTRO = 0, ESTADO_MIRANDO, ESTADO_TIRO, ESTADO_FINAL, ESTADO_JORNALISTA, ESTADO_PONTUACAO, ESTADO_FOTO, ESTADO_MURAL } EstadoVeredito;
 
 static const Color TONS[5] = {
     { 0, 0, 0, 255 }, { 32, 29, 31, 255 }, { 125, 112, 113, 255 }, { 189, 181, 168, 255 }, { 255, 242, 230, 255 }
@@ -61,14 +62,14 @@ static const Color COR_ESCURA = { 32, 29, 31, 255 };
 
 static const char *NOMES[3] = { "Maria Bianca", "Arthur", "Ana Lúcia" };
 static const char *SILHUETAS[3] = {
-    "assets/sprites/personagens/sil_maria_bianca.png",
-    "assets/sprites/personagens/sil_arthur_gadelho.png",
-    "assets/sprites/personagens/sil_ana_lucia.png",
+    "assets/sprites/veredito/sil_full_maria_bianca.png",
+    "assets/sprites/veredito/sil_full_arthur_gadelho.png",
+    "assets/sprites/veredito/sil_full_ana_lucia.png",
 };
 
 // Posicao dos suspeitos na sala (centro x e linha dos pes, em pixels virtuais)
-static const Vector2 SUSPEITO_POS[3] = { { 214.0f, 268.0f }, { 320.0f, 262.0f }, { 426.0f, 268.0f } };
-#define SIL_ESCALA 1.35f
+static const Vector2 SUSPEITO_POS[3] = { { 214.0f, 270.0f }, { 320.0f, 266.0f }, { 426.0f, 270.0f } };
+#define SIL_ESCALA 0.72f
 
 // Textos dos finais (acerto e erro no veredito)
 static const char *FINAL_ACERTO =
@@ -95,6 +96,7 @@ static const char *FINAL_ERRO =
 static EstadoVeredito g_estado;
 static float     g_tempo;            // tempo dentro do estado atual
 static int       g_alvo = -1;        // em quem atirou
+static int       g_rankPosObtida = -1;
 static int       g_hover = -1;
 static int       g_hoverAnt = -1;
 static bool      g_gritou;
@@ -115,6 +117,7 @@ static int        g_pranchetaMarcados[3] = { 0 };
 static int        g_pranchetaTotais[3]   = { 0 };
 
 static Texture2D g_sil[3];
+static Texture2D g_silBranca[3];
 static Sound     g_sndHover, g_sndTiro, g_sndGrito[3];
 
 // ---------------------------------------------------------------
@@ -136,10 +139,10 @@ typedef struct {
 } FaceRigAnchors;
 
 static const FaceRigAnchors ANCHORS_JORNALISTA = {
-    .browP  = { { 0.322f, 0.436f }, { 0.384f, 0.428f }, { 0.434f, 0.423f }, { 0.497f, 0.428f } },
-    .lidP   = { { 0.350f, 0.467f }, { 0.472f, 0.455f } },
-    .mouthP = { { 0.378f, 0.601f }, { 0.441f, 0.596f } },
-    .jawP   = { 0.410f, 0.674f }
+    .browP  = { { 0.262f, 0.412f }, { 0.354f, 0.425f }, { 0.438f, 0.424f }, { 0.532f, 0.410f } },
+    .lidP   = { { 0.314f, 0.456f }, { 0.485f, 0.455f } },
+    .mouthP = { { 0.334f, 0.674f }, { 0.470f, 0.673f } },
+    .jawP   = { 0.404f, 0.748f }
 };
 
 typedef struct {
@@ -157,28 +160,37 @@ static float     g_jornPauseTimer = 0.0f;
 static int       g_jornCharsRevealed = 0;
 static int       g_jornFaseFala = 0; // 0 = fala 1, 1 = pausa, 2 = fala 2, 3 = sinal cortado
 static float     g_jornPausaTimerFase = 0.0f;
+static bool      g_jornMudouExprMeio = false;
 typedef enum {
-    TIPO_FINAL_NEUTRO = 0, // veredito correto + score < 5500
-    TIPO_FINAL_BOM,        // veredito correto + score >= 5500
+    TIPO_FINAL_NEUTRO = 0, // veredito correto, mas investigacao incompleta / pontuacao nao alta
+    TIPO_FINAL_BOM,        // veredito correto + checklist + evitar ferramentas + evidencias coletadas
     TIPO_FINAL_RUIM        // veredito incorreto
 } TipoFinal;
 static TipoFinal g_tipoFinal = TIPO_FINAL_NEUTRO;
 static Sound     g_sndBlipJornalista;
 
-// Falas do Plantão — Final Bom (veredito correto + score >= 5500)
-static const char *FALA_JORNALISTA_1 = 
+// Falas do Plantão — Final Bom (veredito correto + checklist + evitar ferramentas + evidencias)
+static const char *FALA_JORNALISTA_BOM_1 =
     "Notícia urgente! O número de androides infiltrados começa a crescer no país, enquanto "
     "protestos sociais tomam as ruas exigindo direitos para os humanoides. Em meio à crise, "
     "a RASEC passa a ser investigada por suspeita de má conduta com seus funcionários.";
 
-static const char *FALA_JORNALISTA_2 = 
+static const char *FALA_JORNALISTA_BOM_2 =
     "Em outras notícias, um humanoide vai conceder uma entrevista inédita ainda hoje... "
     "e afirma possuir informações confidenciais.";
 
+// Falas do Plantão — Final Neutro (veredito correto, mas sem pontuacao alta)
+static const char *FALA_JORNALISTA_NEUTRO_1 =
+    "Notícia urgente! IAs infiltradas continuam aparecendo pelo país, enquanto a RASEC "
+    "passa a ser investigada por conduta imprópria com seus funcionários...";
+
+static const char *FALA_JORNALISTA_NEUTRO_2 =
+    "A seguir, humanoides revelam que têm um segredo importante a comunicar...";
+
 // Falas do Plantão — Final Ruim (veredito incorreto)
 static const char *FALA_JORNALISTA_RUIM_1 =
-    "Notícia urgente! A CEO da RASEC foi presa após o protótipo de investigação matar um "
-    "funcionário inocente. Agora, a empresa é investigada sob suspeita de criar os próprios "
+    "Notícia urgente! A CEO da RASEC foi presa após o protocolo de investigação matar um "
+    "funcionário humano inocente. Agora, a empresa é investigada sob suspeita de criar os próprios "
     "androides humanoides apenas para lucrar com a crise.";
 
 static const char *FALA_JORNALISTA_RUIM_2 =
@@ -233,12 +245,12 @@ static const char *JORNALISTA_FS =
     "void main() {\n"
     "    vec2 uv = fragTexCoord;\n"
     "    vec2 d = vec2(0.0);\n"
-    "    float rBrow = 0.088;\n"
+    "    float rBrow = 0.052;\n"
     "    for (int i = 0; i < 4; i++) {\n"
     "        d += uBrowD[i] * rbf(uv, uBrowP[i], rBrow);\n"
     "    }\n"
-    "    float lidRx = 0.075;\n"
-    "    float lidRy = 0.052;\n"
+    "    float lidRx = 0.048;\n"
+    "    float lidRy = 0.030;\n"
     "    for (int i = 0; i < 2; i++) {\n"
     "        vec2 diff = uv - uLidP[i];\n"
     "        vec2 q = diff / vec2(lidRx, lidRy);\n"
@@ -249,16 +261,16 @@ static const char *JORNALISTA_FS =
     "        d.y += uLidD[i].y * w * horiz;\n"
     "        float openPull = max(0.0, -uLidD[i].y);\n"
     "        vec2 qOpen = diff / vec2(lidRx, lidRy * 1.5);\n"
-    "        d.y -= openPull * 0.40 * exp(-dot(qOpen, qOpen) * 0.5);\n"
+    "        d.y -= openPull * 0.35 * exp(-dot(qOpen, qOpen) * 0.5);\n"
     "    }\n"
-    "    float rMouth = 0.095;\n"
+    "    float rMouth = 0.056;\n"
     "    for (int i = 0; i < 2; i++) {\n"
     "        d += uMouthD[i] * rbf(uv, uMouthP[i], rMouth);\n"
     "    }\n"
     "    vec2 mc = (uMouthP[0] + uMouthP[1]) * 0.5;\n"
-    "    vec2 mcD = vec2(0.0, -(uMouthD[0].y + uMouthD[1].y) * 0.30);\n"
-    "    d += mcD * rbf(uv, mc, rMouth * 0.9);\n"
-    "    d += uJawD * rbf(uv, uJawP, 0.140);\n"
+    "    vec2 mcD = vec2(0.0, -(uMouthD[0].y + uMouthD[1].y) * 0.25);\n"
+    "    d += mcD * rbf(uv, mc, rMouth * 0.85);\n"
+    "    d += uJawD * rbf(uv, uJawP, 0.088);\n"
     "    vec2 sampleUV = clamp(uv - d, vec2(0.001), vec2(0.999));\n"
     "    vec4 texCol = texture(texture0, sampleUV);\n"
     "\n"
@@ -270,20 +282,34 @@ static const char *JORNALISTA_FS =
     "    vec3 c4 = vec3(160.0, 147.0, 142.0) / 255.0;\n"
     "    vec3 c5 = vec3(189.0, 181.0, 168.0) / 255.0;\n"
     "\n"
-    "    // Piscar dos olhos suave\n"
-    "    if (uBlink > 0.10) {\n"
-    "        float bProg = (uBlink - 0.10) / 0.90;\n"
+    "    // Leve abertura escura entre os labios quando a mandibula desce durante a fala\n"
+    "    if (uJawD.y > 0.0015) {\n"
+    "        float openAmt = clamp((uJawD.y - 0.0015) / 0.0085, 0.0, 1.0);\n"
+    "        vec2 lipCenter = mc + vec2(0.0, 0.003 + uJawD.y * 0.35);\n"
+    "        vec2 qLip = (uv - lipCenter) / vec2(0.046, 0.004 + 0.008 * openAmt);\n"
+    "        float mLip = 1.0 - smoothstep(0.45, 1.0, dot(qLip, qLip));\n"
+    "        texCol.rgb = mix(texCol.rgb, c1, mLip * openAmt * 0.82);\n"
+    "    }\n"
+    "\n"
+    "    // Piscada anatomica natural: a propria pele da palpebra superior desce cobrindo a iris + linha dos cilios\n"
+    "    if (uBlink > 0.03) {\n"
+    "        float bProg = smoothstep(0.03, 0.96, uBlink);\n"
     "        for (int i = 0; i < 2; i++) {\n"
-    "            vec2 eyeCenter = uLidP[i] + uLidD[i] + vec2(0.0, 0.010);\n"
-    "            vec2 q = (uv - eyeCenter) / vec2(0.065, 0.038);\n"
-    "            float distSq = dot(q, q);\n"
-    "            if (distSq <= 1.0) {\n"
-    "                float arcY = (1.0 - q.x * q.x) * 0.40 * bProg;\n"
-    "                float distArc = abs(q.y - arcY);\n"
-    "                if (distArc < 0.16) {\n"
-    "                    texCol = vec4(c1, 1.0);\n"
-    "                } else if (q.y <= arcY + 0.35) {\n"
-    "                    texCol = vec4(uPalpebraCol, 1.0);\n"
+    "            vec2 eyeCenter = uLidP[i] + uLidD[i] * 0.5 + vec2(0.0, 0.011);\n"
+    "            vec2 q = (uv - eyeCenter) / vec2(0.048, 0.026);\n"
+    "            if (abs(q.x) < 1.02 && abs(q.y) < 1.15) {\n"
+    "                float topArch = -0.82 * (1.0 - 0.50 * q.x * q.x);\n"
+    "                float botArch =  0.38 * (1.0 - 0.42 * q.x * q.x);\n"
+    "                float lidEdge = mix(topArch, botArch, bProg);\n"
+    "                float cornerFade = smoothstep(1.02, 0.72, abs(q.x));\n"
+    "                if (q.y >= topArch - 0.15 && q.y <= lidEdge + 0.18) {\n"
+    "                    vec2 skinUV = clamp(vec2(sampleUV.x, eyeCenter.y - 0.034 + (q.y - topArch) * 0.005),\n"
+    "                                        vec2(0.001), vec2(0.999));\n"
+    "                    vec3 skinRgb = texture(texture0, skinUV).rgb * (0.94 - 0.06 * bProg);\n"
+    "                    float skinMask = smoothstep(lidEdge + 0.05, lidEdge - 0.10, q.y) * cornerFade * smoothstep(0.03, 0.22, uBlink);\n"
+    "                    texCol.rgb = mix(texCol.rgb, skinRgb, skinMask);\n"
+    "                    float lashMask = (1.0 - smoothstep(0.0, 0.18, abs(q.y - lidEdge))) * cornerFade * smoothstep(0.06, 0.28, uBlink);\n"
+    "                    texCol.rgb = mix(texCol.rgb, c1 * 0.65, lashMask * 0.92);\n"
     "                }\n"
     "            }\n"
     "        }\n"
@@ -319,21 +345,21 @@ static int GetUtf8CharLength(unsigned char c) {
 
 static FaceRigPose ObterPoseJornalista(ExpressaoJornalista expr) {
     FaceRigPose p = { 0 };
-    const float K = 0.11f;
+    const float K = 0.068f;
     float boX = 0, boY = 0, biX = 0, biY = 0, lidX = 0, lidY = 0, moX = 0, moY = 0, jawX = 0, jawY = 0;
 
     switch (expr) {
-        case EXPR_JORN_URGENTE: // Olhar firme, sobrancelhas levemente arqueadas, boca expressiva
-            boX =  0.00f; boY = -0.10f; biX =  0.00f; biY = -0.10f;
-            lidX = 0.00f; lidY = -0.05f; moX =  0.08f; moY = -0.05f; jawY = 0.05f;
+        case EXPR_JORN_URGENTE: // Olhar firme, sobrancelhas arqueadas, postura de manchete urgente
+            boX =  0.02f; boY = -0.10f; biX =  0.00f; biY = -0.13f;
+            lidX = 0.00f; lidY = -0.05f; moX =  0.05f; moY = -0.03f; jawY = 0.03f;
             break;
-        case EXPR_JORN_PREOCUPADA: // Sobrancelhas franzidas levemente para cima, expressão séria/sensível
-            boX = -0.03f; boY =  0.08f; biX =  0.02f; biY = -0.15f;
-            lidX = 0.00f; lidY =  0.08f; moX = -0.03f; moY =  0.10f; jawY = 0.02f;
+        case EXPR_JORN_PREOCUPADA: // Sobrancelhas internas erguidas/franzidas, expressao grave
+            boX = -0.03f; boY =  0.07f; biX =  0.05f; biY = -0.16f;
+            lidX = 0.00f; lidY =  0.05f; moX = -0.04f; moY =  0.11f; jawY = 0.01f;
             break;
-        case EXPR_JORN_SUSPENSE: // Tensa, olhos mais abertos, queixo firme
-            boX =  0.04f; boY = -0.12f; biX = -0.04f; biY = -0.14f;
-            lidX = 0.00f; lidY = -0.08f; moX =  0.05f; moY =  0.02f; jawY = 0.04f;
+        case EXPR_JORN_SUSPENSE: // Tensa, sobrancelhas firmes, olhos atentos
+            boX =  0.03f; boY = -0.08f; biX = -0.05f; biY =  0.09f;
+            lidX = 0.00f; lidY = -0.06f; moX =  0.03f; moY =  0.04f; jawY = 0.02f;
             break;
         case EXPR_JORN_SERIA:
         default:
@@ -577,6 +603,7 @@ void InitVerdictScene(void) {
     g_estado = ESTADO_INTRO;
     g_tempo = 0.0f;
     g_alvo = -1;
+    g_rankPosObtida = -1;
     g_hover = g_hoverAnt = -1;
     g_gritou = false;
     g_tentarDeNovo = false;
@@ -586,6 +613,19 @@ void InitVerdictScene(void) {
     for (int i = 0; i < 3; i++) {
         g_sil[i] = LoadTexture(SILHUETAS[i]);
         SetTextureFilter(g_sil[i], TEXTURE_FILTER_POINT);
+        Image imgB = LoadImage(SILHUETAS[i]);
+        if (imgB.data != NULL) {
+            ImageFormat(&imgB, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+            Color *px = (Color *)imgB.data;
+            int tot = imgB.width * imgB.height;
+            for (int p = 0; p < tot; p++) {
+                if (px[p].a > 20) px[p] = (Color){ 255, 255, 255, px[p].a };
+                else px[p].a = 0;
+            }
+            g_silBranca[i] = LoadTextureFromImage(imgB);
+            SetTextureFilter(g_silBranca[i], TEXTURE_FILTER_POINT);
+            UnloadImage(imgB);
+        }
     }
     g_sndHover = LoadSound("assets/audio/sfx_hover.wav");
     g_sndTiro  = CarregarSomOpcional(SOM_TIRO);
@@ -629,6 +669,7 @@ void InitVerdictScene(void) {
     g_jornFaseFala   = 0;
     g_jornCharsRevealed = 0;
     g_jornPausaTimerFase = 0.0f;
+    g_jornMudouExprMeio = false;
     g_tipoFinal = TIPO_FINAL_NEUTRO;
 
 
@@ -640,35 +681,12 @@ void InitVerdictScene(void) {
     g_camera.projection = CAMERA_PERSPECTIVE;
 
     RayCanvasInit(VIRTUAL_W, VIRTUAL_H);
+    MuralInit();
 }
 
+#define SCORE_LIMIAR_FINAL_BOM 4400
+
 static void CalcularESalvarPontuacao(void) {
-    int ptsVeredito  = (g_alvo == AI_INDEX) ? 1000 : 0;
-    int ptsVies      = !GameStateAnyViesUsed() ? 500 : 0;
-    int ptsInjecao   = !GameStateAnyInjecaoUsed() ? 500 : 0;
-    int dicasLivres  = GameStateGetUnusedHintsCount();
-    int ptsDicas     = dicasLivres * 200;
-    int tokensLivres = GameStateGetRemainingTokensTotal();
-    int ptsTokens    = tokensLivres * 100;
-    int evCount      = GameStateCountEvidences();
-    int ptsEv        = evCount * 50;
-
-    snprintf(g_scoreLinhas[0].rotulo, sizeof g_scoreLinhas[0].rotulo, "Veredito correto");
-    g_scoreLinhas[0].alvo = ptsVeredito;
-    snprintf(g_scoreLinhas[1].rotulo, sizeof g_scoreLinhas[1].rotulo, "Enviesamento nao usado");
-    g_scoreLinhas[1].alvo = ptsVies;
-    snprintf(g_scoreLinhas[2].rotulo, sizeof g_scoreLinhas[2].rotulo, "Injecao nao utilizada");
-    g_scoreLinhas[2].alvo = ptsInjecao;
-    snprintf(g_scoreLinhas[3].rotulo, sizeof g_scoreLinhas[3].rotulo, "Dicas nao utilizadas (%dx200)", dicasLivres);
-    g_scoreLinhas[3].alvo = ptsDicas;
-    snprintf(g_scoreLinhas[4].rotulo, sizeof g_scoreLinhas[4].rotulo, "Tokens nao utilizados (%dx100)", tokensLivres);
-    g_scoreLinhas[4].alvo = ptsTokens;
-    snprintf(g_scoreLinhas[5].rotulo, sizeof g_scoreLinhas[5].rotulo, "Evidencias encontradas (%dx50)", evCount);
-    g_scoreLinhas[5].alvo = ptsEv;
-
-    g_scoreTotal = ptsVeredito + ptsVies + ptsInjecao + ptsDicas + ptsTokens + ptsEv;
-    RankingAdd(GameStateGetPlayerName(), g_scoreTotal, g_alvo == AI_INDEX);
-
     for (int s = 0; s < 3; s++) {
         const char *itens[16];
         bool marcados[16];
@@ -679,12 +697,73 @@ static void CalcularESalvarPontuacao(void) {
         g_pranchetaTotais[s] = n;
     }
 
-    // Final Bom (Plantão da Jornalista): veredito correto + pontuação >= 5500
-    // Final Neutro: veredito correto + pontuação < 5500 (vai direto para pontuação)
-    // Final Ruim: veredito incorreto (também exibe a jornalista, com texto diferente)
-    if (g_alvo != AI_INDEX) {
+    // 1) Veredito correto
+    bool acertouVeredito = (g_alvo == AI_INDEX);
+    int ptsVeredito = acertouVeredito ? 1500 : 0;
+
+    // 2) Checklist marcado na IA (ate 4 anomalias = 1200 pts), penalizando chute em massa nos inocentes
+    int marksIA = g_pranchetaMarcados[AI_INDEX];
+    int marksHumanos = g_pranchetaMarcados[0] + g_pranchetaMarcados[1];
+    int excessoHumanos = (marksHumanos > 3) ? (marksHumanos - 3) : 0;
+    int marksUteis = (marksIA > 4) ? 4 : marksIA;
+    int ptsChecklist = marksUteis * 300 - excessoHumanos * 200;
+    if (ptsChecklist < 0) ptsChecklist = 0;
+
+    // 3) Evidencias coletadas (somente evidencias listadas nas tabelas, ignorando flags internas de dialogo)
+    int evCount = 0;
+    for (int s = 0; s < GAME_NUM_SUSPECTS; s++) {
+        int cnt = GetEvidenciaCount(s);
+        for (int e = 0; e < cnt; e++) {
+            const char *id = GetEvidenciaIdByIndex(s, e);
+            if (GameStateTemEvidencia(s, id)) evCount++;
+        }
+    }
+    int ptsEv   = evCount * 300;
+    if (ptsEv > 1800) ptsEv = 1800;
+
+    // 4) Evitar uso de ferramentas invasivas (Enviesamento, Deepfake, Injecao: max 3 na run)
+    int toolsUsed = GameStateCountSpecialToolsUsed();
+    if (toolsUsed > 3) toolsUsed = 3;
+    int toolsLivres = 3 - toolsUsed;
+    int ptsFerramentas = toolsLivres * 400;
+
+    // 5) Dicas nao utilizadas (max 3 na run)
+    int dicasLivres = GameStateGetUnusedHintsCount();
+    int ptsDicas    = dicasLivres * 200;
+
+    // 6) Eficiencia de tokens (bonus limitado para que pular conversas nunca dê Final Bom sozinho!)
+    int tokensLivres = GameStateGetRemainingTokensTotal();
+    int ptsTokens    = tokensLivres * 25;
+    if (ptsTokens > 300) ptsTokens = 300;
+
+    snprintf(g_scoreLinhas[0].rotulo, sizeof g_scoreLinhas[0].rotulo, "Veredito correto");
+    g_scoreLinhas[0].alvo = ptsVeredito;
+    snprintf(g_scoreLinhas[1].rotulo, sizeof g_scoreLinhas[1].rotulo, "Checklist marcado (%d anomalias)", marksIA);
+    g_scoreLinhas[1].alvo = ptsChecklist;
+    snprintf(g_scoreLinhas[2].rotulo, sizeof g_scoreLinhas[2].rotulo, "Evidencias coletadas (%d)", evCount);
+    g_scoreLinhas[2].alvo = ptsEv;
+    snprintf(g_scoreLinhas[3].rotulo, sizeof g_scoreLinhas[3].rotulo, "Ferramentas evitadas (%d/3)", toolsLivres);
+    g_scoreLinhas[3].alvo = ptsFerramentas;
+    snprintf(g_scoreLinhas[4].rotulo, sizeof g_scoreLinhas[4].rotulo, "Dicas nao utilizadas (%d/3)", dicasLivres);
+    g_scoreLinhas[4].alvo = ptsDicas;
+    snprintf(g_scoreLinhas[5].rotulo, sizeof g_scoreLinhas[5].rotulo, "Eficiencia de tokens");
+    g_scoreLinhas[5].alvo = ptsTokens;
+
+    g_scoreTotal = ptsVeredito + ptsChecklist + ptsEv + ptsFerramentas + ptsDicas + ptsTokens;
+    // O salvamento no Ranking ocorre na tela seguinte (ESTADO_FOTO), junto com a escolha da foto do jogador!
+
+    // Regras garantidas dos 3 finais:
+    // - Final Ruim:   Veredito incorreto.
+    // - Final Bom:    Veredito correto + marcou checklist na IA (>=2, sem spam cego) + evitou abuso de ferramentas (<=1 usada)
+    //                 + coletou evidencias (>=2) + atingiu pontuacao alta (>= SCORE_LIMIAR_FINAL_BOM).
+    // - Final Neutro: Veredito correto, mas faltou pontuacao alta / checklist / evidencias / abusou de ferramentas.
+    bool checklistValido = (marksIA >= 2) && (excessoHumanos <= 2);
+    bool evitouFerramentas = (toolsUsed <= 1);
+    bool temEvidencias = (evCount >= 2);
+
+    if (!acertouVeredito) {
         g_tipoFinal = TIPO_FINAL_RUIM;
-    } else if (g_scoreTotal >= 5500) {
+    } else if (checklistValido && evitouFerramentas && temEvidencias && g_scoreTotal >= SCORE_LIMIAR_FINAL_BOM) {
         g_tipoFinal = TIPO_FINAL_BOM;
     } else {
         g_tipoFinal = TIPO_FINAL_NEUTRO;
@@ -751,37 +830,17 @@ static void DesenharTextoFinal(void) {
     if (chegou) y = yFinal;
     DesenharLinhas(g_textoFinal, y, 14, COR_CLARA);
     if (chegou) {
-        if (g_tipoFinal == TIPO_FINAL_BOM) {
-            DesenharDicaClique("Clique para acompanhar o Plantao de Noticias");
-            if (clicou) {
-                g_estado = ESTADO_JORNALISTA;
-                g_tempo = 0.0f;
-                g_jornFaseFala = 0;
-                g_jornCharsRevealed = 0;
-                g_jornPausaTimerFase = 0.0f;
-                g_jornTypewriterTimer = 0.0f;
-                g_jornPauseTimer = 0.0f;
-                SetExpressaoJornalista(EXPR_JORN_URGENTE);
-            }
-        } else if (g_tipoFinal == TIPO_FINAL_RUIM) {
-            DesenharDicaClique("Clique para acompanhar o Plantao de Noticias");
-            if (clicou) {
-                g_estado = ESTADO_JORNALISTA;
-                g_tempo = 0.0f;
-                g_jornFaseFala = 0;
-                g_jornCharsRevealed = 0;
-                g_jornPausaTimerFase = 0.0f;
-                g_jornTypewriterTimer = 0.0f;
-                g_jornPauseTimer = 0.0f;
-                SetExpressaoJornalista(EXPR_JORN_URGENTE);
-            }
-        } else {
-            DesenharDicaClique("Clique para ver sua pontuação");
-            if (clicou) {
-                g_estado = ESTADO_PONTUACAO;
-                g_tempo = 0.0f;
-                g_pontuacaoCompleta = false;
-            }
+        DesenharDicaClique("Clique para acompanhar o Plantao de Noticias");
+        if (clicou) {
+            g_estado = ESTADO_JORNALISTA;
+            g_tempo = 0.0f;
+            g_jornFaseFala = 0;
+            g_jornCharsRevealed = 0;
+            g_jornPausaTimerFase = 0.0f;
+            g_jornTypewriterTimer = 0.0f;
+            g_jornPauseTimer = 0.0f;
+            g_jornMudouExprMeio = false;
+            SetExpressaoJornalista((g_tipoFinal == TIPO_FINAL_NEUTRO) ? EXPR_JORN_SERIA : EXPR_JORN_URGENTE);
         }
     }
 }
@@ -802,26 +861,34 @@ static void DesenharCenaJornalista(void) {
         g_poseJornCurr.d[i].y = g_poseJornFrom.d[i].y + (g_poseJornTarget.d[i].y - g_poseJornFrom.d[i].y) * e;
     }
 
-    // Piscar natural a cada ~4.0s
+    // Piscar natural a cada ~3.6s (com duplo-piscar ocasional realista)
     float tNow = (float)GetTime();
-    float cicloBlink = fmodf(tNow, 4.0f);
+    float cicloBlink = fmodf(tNow, 3.6f);
     float blinkT = 0.0f;
-    if (cicloBlink < 0.18f) {
-        blinkT = sinf((cicloBlink / 0.18f) * 3.14159265f);
+    if (cicloBlink < 0.19f) {
+        blinkT = sinf((cicloBlink / 0.19f) * 3.14159265f);
+    } else if (fmodf(tNow, 10.8f) >= 3.6f && cicloBlink > 0.28f && cicloBlink < 0.45f) {
+        blinkT = sinf(((cicloBlink - 0.28f) / 0.17f) * 3.14159265f);
     }
 
-    // Movimento sutil da mandíbula/boca ao falar
+    // Movimento sutil da mandíbula/lábios ao falar
     float talkJawAdd = 0.0f;
     if (g_jornTalkTimer > 0.0f) {
         g_jornTalkTimer -= dt;
         if (g_jornTalkTimer < 0.0f) g_jornTalkTimer = 0.0f;
-        talkJawAdd = (0.5f + 0.5f * sinf(tNow * 22.0f)) * 0.012f;
+        talkJawAdd = (0.45f + 0.55f * sinf(tNow * 24.0f)) * 0.0085f;
     }
 
-    // Gerenciador de diálogo e fases do Plantão
-    // Seleciona as falas corretas de acordo com o tipo de final
-    const char *fala1 = (g_tipoFinal == TIPO_FINAL_RUIM) ? FALA_JORNALISTA_RUIM_1 : FALA_JORNALISTA_1;
-    const char *fala2 = (g_tipoFinal == TIPO_FINAL_RUIM) ? FALA_JORNALISTA_RUIM_2 : FALA_JORNALISTA_2;
+    // Gerenciador de diálogo e fases do Plantão para os 3 Finais (Bom, Neutro e Ruim)
+    const char *fala1 = FALA_JORNALISTA_NEUTRO_1;
+    const char *fala2 = FALA_JORNALISTA_NEUTRO_2;
+    if (g_tipoFinal == TIPO_FINAL_BOM) {
+        fala1 = FALA_JORNALISTA_BOM_1;
+        fala2 = FALA_JORNALISTA_BOM_2;
+    } else if (g_tipoFinal == TIPO_FINAL_RUIM) {
+        fala1 = FALA_JORNALISTA_RUIM_1;
+        fala2 = FALA_JORNALISTA_RUIM_2;
+    }
 
     const char *textoAtual = "";
     if (g_jornFaseFala == 0) {
@@ -835,6 +902,7 @@ static void DesenharCenaJornalista(void) {
             g_jornCharsRevealed = 0;
             g_jornTypewriterTimer = 0.0f;
             g_jornPauseTimer = 0.0f;
+            g_jornMudouExprMeio = false;
             SetExpressaoJornalista(EXPR_JORN_SUSPENSE);
         }
     } else if (g_jornFaseFala == 2) {
@@ -867,8 +935,9 @@ static void DesenharCenaJornalista(void) {
                     g_jornCharsRevealed += charLen;
                     g_jornTalkTimer = 0.14f;
 
-                    // Mudança dinâmica de expressão durante a fala
-                    if (g_jornFaseFala == 0 && g_jornCharsRevealed > 150) {
+                    // Mudança única e suave de expressão no meio da primeira notícia
+                    if (g_jornFaseFala == 0 && !g_jornMudouExprMeio && g_jornCharsRevealed > 95) {
+                        g_jornMudouExprMeio = true;
                         SetExpressaoJornalista(EXPR_JORN_PREOCUPADA);
                     }
 
@@ -960,11 +1029,17 @@ static void DesenharCenaJornalista(void) {
             SetShaderValue (g_shaderJornalista, g_locJawP,   &anc->jawP,  SHADER_UNIFORM_VEC2);
             SetShaderValue (g_shaderJornalista, g_locJawD,   &jawD,       SHADER_UNIFORM_VEC2);
 
-            Vector3 palCol = (Vector3){ 90.0f / 255.0f, 83.0f / 255.0f, 83.0f / 255.0f };
+            Vector3 palCol = (Vector3){ 160.0f / 255.0f, 147.0f / 255.0f, 142.0f / 255.0f };
             SetShaderValue(g_shaderJornalista, g_locBlink, &blinkT, SHADER_UNIFORM_FLOAT);
             SetShaderValue(g_shaderJornalista, g_locPalpebraCol, &palCol, SHADER_UNIFORM_VEC3);
 
-            Rectangle src = { 0, 40, (float)g_texJornalista.width, (float)g_texJornalista.height - 80 };
+            // Recorta apenas o quadro interno do tubo da imagem (sem duplicar a moldura de TV externa da foto)
+            Rectangle src = {
+                g_texJornalista.width  * 0.072f,
+                g_texJornalista.height * 0.152f,
+                g_texJornalista.width  * 0.665f,
+                g_texJornalista.height * 0.678f
+            };
             DrawTexturePro(g_texJornalista, src, rTvTela, (Vector2){ 0, 0 }, 0.0f, WHITE);
 
             EndShaderMode();
@@ -1068,13 +1143,21 @@ static void DesenharPontuacaoFinal(void) {
     DrawRectangleLinesEx(rPainel, 2.0f * escala, TONS[3]);
 
     char cabecalho[64];
-    snprintf(cabecalho, sizeof cabecalho, "RELATÓRIO DE PONTUAÇÃO - %s", GameStateGetPlayerName());
+    snprintf(cabecalho, sizeof cabecalho, "RELATÓRIO - %s", GameStateGetPlayerName());
     Rectangle rCab = ParaTela((Rectangle){ painel.x + 16.0f, painel.y + 14.0f, 0, 0 });
     DrawText(cabecalho, (int)rCab.x, (int)rCab.y, tamTitulo, COR_CLARA);
 
+    const char *rotFinal = (g_tipoFinal == TIPO_FINAL_BOM) ? "FINAL BOM"
+                         : (g_tipoFinal == TIPO_FINAL_RUIM) ? "FINAL RUIM" : "FINAL NEUTRO";
+    Color corBadgeFinal = (g_tipoFinal == TIPO_FINAL_BOM) ? TONS[4]
+                        : (g_tipoFinal == TIPO_FINAL_RUIM) ? (Color){ 210, 76, 76, 255 } : TONS[3];
+    int wBadge = MeasureText(rotFinal, tamTexto);
+    Rectangle rEndLbl = ParaTela((Rectangle){ painel.x + painel.width - 20.0f, painel.y + 17.0f, 0, 0 });
+    DrawText(rotFinal, (int)(rEndLbl.x - wBadge), (int)rEndLbl.y, tamTexto, corBadgeFinal);
+
     Rectangle rSub = ParaTela((Rectangle){ painel.x + 16.0f, painel.y + 38.0f, 0, 0 });
-    char sub[96];
-    snprintf(sub, sizeof sub, "Pranchetas: Maria (%d/%d) | Arthur (%d/%d) | Ana Lucia (%d/%d)",
+    char sub[112];
+    snprintf(sub, sizeof sub, "Checklists: Maria (%d/%d) | Arthur (%d/%d) | Ana Lucia (%d/%d)",
              g_pranchetaMarcados[0], g_pranchetaTotais[0],
              g_pranchetaMarcados[1], g_pranchetaTotais[1],
              g_pranchetaMarcados[2], g_pranchetaTotais[2]);
@@ -1113,8 +1196,12 @@ static void DesenharPontuacaoFinal(void) {
     DrawText(totTxt, (int)(rTotDir.x - wTot), (int)rTotDir.y, tamTitulo, TONS[4]);
 
     if (terminou) {
-        DesenharDicaClique("Clique para voltar ao menu");
-        if (clicou) g_tentarDeNovo = true;
+        DesenharDicaClique("Clique para registrar no Mural da RASEC");
+        if (clicou) {
+            g_estado = ESTADO_FOTO;
+            g_tempo = 0.0f;
+            MuralFotoOpen();
+        }
     }
 }
 
@@ -1143,28 +1230,38 @@ static void DesenharEvidenciasColetadas(void) {
     Rectangle ref = ParaTela((Rectangle){ 0, 0, 10, 10 });
     float escala = ref.height / 10.0f;
     int tam = (int)(9 * escala);
-    const float painelW = 200.0f;
-    const float linhaH  = 11.0f;
-    const float padX    = 8.0f;
+    if (tam < 1) tam = 1;
+    const float painelW = 194.0f;
+    const float linhaH  = 10.5f;
+    const float padX    = 7.0f;
     const float padY    = 6.0f;
+    const float recuo   = 9.0f;
 
     // Coleta todas as evidencias de todos os suspeitos sem expor o dono
-    char nomes[32][64];
-    int total = 0;
+    char nomes[32][160];
+    char linhas[32][5][128];
+    int  nl[32];
+    int  total = 0;
+    int  totalLinhas = 0;
+    float maxTextoW = (painelW - padX * 2.0f - recuo) * escala;
+
     for (int s = 0; s < GAME_NUM_SUSPECTS && total < 32; s++) {
         int cnt = GetEvidenciaCount(s);
         for (int e = 0; e < cnt && total < 32; e++) {
             const char *id = GetEvidenciaIdByIndex(s, e);
             if (GameStateTemEvidencia(s, id)) {
-                const char *nome = GetEvidenciaNome(s, id);
-                snprintf(nomes[total], 64, "%s", nome ? nome : id);
+                const char *desc = GetEvidenciaDescricaoVeredito(s, id);
+                snprintf(nomes[total], sizeof(nomes[total]), "%s", desc ? desc : id);
+                nl[total] = QuebrarLinhas(nomes[total], tam, maxTextoW, linhas[total], 5);
+                totalLinhas += nl[total];
                 total++;
             }
         }
     }
 
-    float painelH = padY * 2 + 14.0f + total * linhaH + (total > 0 ? 2.0f : 0.0f);
-    float px = 8.0f;
+    float conteudoH = (total == 0) ? linhaH : (totalLinhas * linhaH + (total - 1) * 3.5f);
+    float painelH = padY * 2.0f + 14.0f + conteudoH + 2.0f;
+    float px = 6.0f;
     float py = 20.0f;
     Rectangle painel = { px, py, painelW, painelH };
 
@@ -1181,15 +1278,20 @@ static void DesenharEvidenciasColetadas(void) {
         Rectangle r = ParaTela((Rectangle){ px + padX, py + padY + 14.0f, 0, 0 });
         DrawText("Nenhuma evidencia.", (int)r.x, (int)r.y, tam, TONS[2]);
     } else {
+        float cy = py + padY + 14.0f;
         for (int k = 0; k < total; k++) {
-            float cy = py + padY + 14.0f + k * linhaH;
-            Rectangle r = ParaTela((Rectangle){ px + padX, cy, 0, 0 });
-            DrawText(nomes[k], (int)r.x, (int)r.y, tam, COR_CLARA);
+            Rectangle rb = ParaTela((Rectangle){ px + padX, cy, 0, 0 });
+            DrawText("-", (int)rb.x, (int)rb.y, tam, TONS[3]);
+            for (int l = 0; l < nl[k]; l++) {
+                Rectangle r = ParaTela((Rectangle){ px + padX + recuo, cy + l * linhaH, 0, 0 });
+                DrawText(linhas[k][l], (int)r.x, (int)r.y, tam, COR_CLARA);
+            }
+            cy += nl[k] * linhaH + 3.5f;
         }
     }
 }
 
-// Painel com todos os itens da prancheta do suspeito, destacando os marcados
+// Painel com o checklist do suspeito bem ao lado do NPC na mira
 static void DesenharAnotacoes(int i) {
     const char *itens[16];
     bool marcados[16];
@@ -1197,7 +1299,8 @@ static void DesenharAnotacoes(int i) {
     Rectangle ref = ParaTela((Rectangle){ 0, 0, 10, 10 });
     float escala = ref.height / 10.0f;
     int tam = (int)(9 * escala);
-    const float w = 190.0f, linhaH = 10.0f, recuo = 18.0f;
+    if (tam < 1) tam = 1;
+    const float w = 168.0f, linhaH = 10.0f, recuo = 18.0f;
 
     // Quebra todas as linhas antes, para saber a altura do painel
     char linhas[16][4][128];
@@ -1208,15 +1311,18 @@ static void DesenharAnotacoes(int i) {
     }
     float h = 20.0f + total * linhaH + n * 3.0f + 4.0f;
     Rectangle a = AreaSuspeito(i);
-    float x = (i == 2) ? a.x - w - 6.0f : a.x + a.width + 6.0f;   // a direita (ou a esquerda, no ultimo)
-    float y = fminf(a.y + 10.0f, VIRTUAL_H - h - 4.0f);
+    float x = a.x + a.width + 6.0f;
+    if (x + w > VIRTUAL_W - 4.0f) {
+        x = a.x - w - 6.0f;
+    }
+    float y = fmaxf(20.0f, fminf(a.y + 4.0f, VIRTUAL_H - h - 4.0f));
     Rectangle painel = { x, y, w, h };
 
     DrawRectangleRec(ParaTela((Rectangle){ painel.x + 2, painel.y + 2, w, h }), Fade(BLACK, 0.6f));
     DrawRectangleRec(ParaTela(painel), Fade(COR_ESCURA, 0.95f));
     DrawRectangleLinesEx(ParaTela(painel), 1.5f * escala, TONS[3]);
     Rectangle t = ParaTela((Rectangle){ painel.x + 6, painel.y + 5, w, 10 });
-    DrawText("PRANCHETA", (int)t.x, (int)t.y, tam, TONS[3]);
+    DrawText("CHECKLIST", (int)t.x, (int)t.y, tam, TONS[3]);
 
     float cy = painel.y + 19.0f;
     for (int k = 0; k < n; k++) {
@@ -1279,11 +1385,20 @@ void UpdateDrawVerdictScene(void) {
             DrawEllipse((int)ParaTela((Rectangle){ SUSPEITO_POS[i].x, SUSPEITO_POS[i].y, 0, 0 }).x,
                         (int)ParaTela((Rectangle){ SUSPEITO_POS[i].x, SUSPEITO_POS[i].y, 0, 0 }).y,
                         40.0f * tela.width / VIRTUAL_W, 7.0f * tela.height / VIRTUAL_H, Fade(BLACK, 0.5f));
-            if (i == g_hover) {   // contorno claro de quem esta na mira
-                const Vector2 offs[4] = { { -1.5f, 0 }, { 1.5f, 0 }, { 0, -1.5f }, { 0, 1.5f } };
-                for (int d = 0; d < 4; d++) {
+            // Destaque claro ao redor do suspeito (sutil em repouso, aceso quando esta na mira)
+            {
+                Texture2D sb = (g_silBranca[i].id != 0) ? g_silBranca[i] : g_sil[i];
+                bool focado = (i == g_hover);
+                float off = focado ? 1.5f : 0.9f;
+                Color corOut = focado ? COR_CLARA : Fade(COR_CLARA, 0.36f);
+                const Vector2 offs[8] = {
+                    { -off, 0 }, { off, 0 }, { 0, -off }, { 0, off },
+                    { -off * 0.7f, -off * 0.7f }, { off * 0.7f, -off * 0.7f },
+                    { -off * 0.7f,  off * 0.7f }, { off * 0.7f,  off * 0.7f }
+                };
+                for (int d = 0; d < 8; d++) {
                     Rectangle o = { a.x + offs[d].x, a.y + offs[d].y, a.width, a.height };
-                    DrawTexturePro(g_sil[i], src, ParaTela(o), (Vector2){ 0, 0 }, 0.0f, COR_CLARA);
+                    DrawTexturePro(sb, src, ParaTela(o), (Vector2){ 0, 0 }, 0.0f, corOut);
                 }
             }
             DrawTexturePro(g_sil[i], src, ParaTela(a), (Vector2){ 0, 0 }, 0.0f, WHITE);
@@ -1306,8 +1421,11 @@ void UpdateDrawVerdictScene(void) {
             DrawText(NOMES[g_hover], (int)(pt.x + 6 * escala), (int)(pt.y + (pt.height - tn) / 2.0f), tn, COR_CLARA);
         }
 
-        // Lista neutra de evidencias coletadas (sempre visivel, sem vincular a NPC)
-        if (mirando) DesenharEvidenciasColetadas();
+        // Lista neutra de evidencias coletadas + checklist ao lado do suspeito na mira
+        if (mirando) {
+            DesenharEvidenciasColetadas();
+            if (g_hover >= 0) DesenharAnotacoes(g_hover);
+        }
 
         // Lampada falhando (escurece a sala; a arma fica por cima, perto do jogador)
         float brilho = BrilhoLampada((float)GetTime());
@@ -1366,8 +1484,17 @@ void UpdateDrawVerdictScene(void) {
             DesenharTextoFinal();
         } else if (g_estado == ESTADO_JORNALISTA) {
             DesenharCenaJornalista();
-        } else {
+        } else if (g_estado == ESTADO_PONTUACAO) {
             DesenharPontuacaoFinal();
+        } else if (g_estado == ESTADO_FOTO) {
+            if (MuralFotoUpdateDraw(GameStateGetPlayerName(), g_scoreTotal, g_alvo == AI_INDEX, g_sndHover, &g_rankPosObtida)) {
+                g_estado = ESTADO_MURAL;
+                g_tempo = 0.0f;
+            }
+        } else if (g_estado == ESTADO_MURAL) {
+            if (MuralUpdateDraw(1.0f, g_sndHover)) {
+                g_tentarDeNovo = true;
+            }
         }
     }
 
@@ -1377,7 +1504,11 @@ void UpdateDrawVerdictScene(void) {
 void UnloadVerdictScene(void) {
     ShowCursor();
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-    for (int i = 0; i < 3; i++) UnloadTexture(g_sil[i]);
+    for (int i = 0; i < 3; i++) {
+        UnloadTexture(g_sil[i]);
+        if (g_silBranca[i].id != 0) UnloadTexture(g_silBranca[i]);
+        g_silBranca[i] = (Texture2D){ 0 };
+    }
     if (g_sndHover.frameCount > 0) UnloadSound(g_sndHover);
     if (g_sndTiro.frameCount > 0)  UnloadSound(g_sndTiro);
     for (int i = 0; i < 3; i++) {
@@ -1392,5 +1523,6 @@ void UnloadVerdictScene(void) {
     UnloadRenderTexture(g_armaRT);
     UnloadRenderTexture(g_armaFinal);
     UnloadShader(g_dither);
+    MuralUnload();
     RayCanvasClose();
 }

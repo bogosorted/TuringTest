@@ -76,7 +76,7 @@ static const StaticNode NODES_S1_D1[] = {
     { "Oi", "Arthur", "Oi brother! Prazer, meu nome é Arthur. Como vai?", false, VISAO_DUVIDA, "", 2, { { "Prazer, meu nome é Inspetor. Fala sobre você.", "A", "" }, { "Não te conheço.", "B", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
     { "A", "Arthur", "Tudo ótimo, sou assistente do administrativo.", false, VISAO_DUVIDA, "", 2, { { "Qual sua vibe, no pessoal?", "A.1", "" }, { "Como funciona seu setor?", "A.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
     { "B", "Arthur", "Ah... Tudo bem, se precisar de algo, pode falar comigo", false, VISAO_DUVIDA, "", 2, { { "Onde você trabalha?", "B.1", "" }, { "Seu serviço é difícil?", "B.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1", "Arthur", "Ah, sou músico por hobby, guitarrista.", false, VISAO_DUVIDA, "EV-08", 2, { { "Show! Qual tua banda favorita?", "A.1.1", "" }, { "Qual seu gênero musical favorito?", "A.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
+    { "A.1", "Arthur", "Ah, sou músico por hobby, guitarrista.", false, VISAO_DUVIDA, "", 2, { { "Show! Qual tua banda favorita?", "A.1.1", "" }, { "Qual seu gênero musical favorito?", "A.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
     { "A.2", "Arthur", "Eu preencho os relatórios e faço projeções com os números do pessoal, mas gosto de ajudar no que posso.", false, VISAO_DUVIDA, "", 2, { { "Tem muita demanda hoje?", "A.2.1", "" }, { "Você gosta da função?", "A.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
     { "B.1", "Arthur", "Eu sou assistente do administrativo, preencho os relatórios. Nada demais.", false, VISAO_DUVIDA, "", 2, { { "Você revisa os relatórios?", "B.1.1", "" }, { "Você preferia trabalhar em outra coisa?", "B.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
     { "B.2", "Arthur", "Eu preencho os relatórios, as vezes acumula trabalho de um dia para o outro, mas da pra lidar", false, VISAO_DUVIDA, "", 2, { { "Você não consegue terminar no dia?", "B.2.3", "" }, { "Por que você não fala com seu chefe?", "B.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
@@ -188,8 +188,8 @@ static const StaticNode NODES_S2_D3[] = {
 
 static const StaticEvidencia EV_TAB_0[] = { { "EV-01", "Dialogo de confiança" } };
 static const int EV_CNT_0 = 1;
-static const StaticEvidencia EV_TAB_1[] = { { "EV-02", "Sempre entrega uma caneta preta com uma imagem de abutre para os amigos" }, { "EV-03", "Pilha de relatórios à fazer" }, { "EV-04", "ID perdido" }, { "EV-05", "Metal Wyrms" }, { "EV-06", "Ana Lúcia" }, { "EV-07", "Acúmulo de desconfiança" }, { "EV-08", "Guitarrista" } };
-static const int EV_CNT_1 = 7;
+static const StaticEvidencia EV_TAB_1[] = { { "EV-02", "Uma caneta estranha, parece uma ave. Algum funcionario deve saber de quem é." }, { "EV-03", "Pilha de relatórios a fazer" }, { "EV-04", "ID perdido" }, { "EV-06", "Ana Lúcia" }, { "EV-07", "Acúmulo de desconfiança" } };
+static const int EV_CNT_1 = 5;
 static const StaticEvidencia EV_TAB_2[] = { { "EV-01", "Nome Preferido" }, { "EV-02", "Relatórios Errados" }, { "EV-03", "Tempo de experiência" }, { "EV-04", "Indo a setores incorretos" } };
 static const int EV_CNT_2 = 4;
 
@@ -202,7 +202,17 @@ const char* GetEvidenciaNome(int suspeito, const char *ev_id) {
     for (int i = 0; i < cnt; i++) {
         if (strcmp(tab[i].id, ev_id) == 0) return tab[i].nome;
     }
-    return ev_id;
+    return "";
+}
+
+const char* GetEvidenciaDescricaoVeredito(int suspeito, const char *ev_id) {
+    if (!ev_id) return "";
+    if (suspeito == 1) {
+        if (strcmp(ev_id, "EV-03") == 0) return "Pilha de relatórios para fazer, mas não estão incorretos.";
+        if (strcmp(ev_id, "EV-04") == 0) return "ID Perdido, aparentemente é do Lucas.";
+        if (strcmp(ev_id, "EV-02") == 0) return "Essa caneta... de quem é ela?";
+    }
+    return GetEvidenciaNome(suspeito, ev_id);
 }
 
 int GetEvidenciaCount(int suspeito) {

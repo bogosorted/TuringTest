@@ -28,6 +28,10 @@ void SettingsApplyWindowMode(void);   // aplica na janela (chamar depois do Init
 bool SettingsGetTutorial(void);
 void SettingsSetTutorial(bool ligado);
 
+// Modo Desenvolvedor / Dev Tools (persiste ate ser desativado manualmente)
+bool SettingsGetDevMode(void);
+void SettingsSetDevMode(bool ligado);
+
 // Paletas de cor. A 0 e a original do jogo (sem pos-processamento).
 int          SettingsPaletteCount(void);
 int          SettingsGetPalette(void);

@@ -2,24 +2,45 @@
 #include "settings.h"
 #include "game_state.h"
 #include "raycanvas.h"
+#include <ctype.h>
 #include <math.h>
 #include <stddef.h>
+#include <string.h>
 
 #define TELA_W 640
 #define TELA_H 360
 
-enum { HOVER_NENHUM = -1, HOVER_ANT = 0, HOVER_PROX = 1, HOVER_TELA_CHEIA = 2, HOVER_TUTORIAL = 3 };
+enum { HOVER_NENHUM = -1, HOVER_ANT = 0, HOVER_PROX = 1, HOVER_TELA_CHEIA = 2, HOVER_TUTORIAL = 3, HOVER_DEV_BTN = 4 };
 
-static int g_sliderArrastando = -1;   // -1 = nenhum, 0 = musica, 1 = efeitos
-static int g_hoverAnt = HOVER_NENHUM; // botao que estava com o mouse em cima no frame anterior
+static int   g_sliderArrastando = -1;   // -1 = nenhum, 0 = musica, 1 = efeitos
+static int   g_hoverAnt = HOVER_NENHUM; // botao que estava com o mouse em cima no frame anterior
+static int   g_devClicks = 0;           // cliques consecutivos no botaozinho escondido (3 abre a senha)
+static bool  g_devModalAberto = false;  // modal pedindo a senha "RED"
+static char  g_devSenhaInput[12] = "";
+static float g_devErroTimer = 0.0f;
 
 void OptionsUiReset(void) {
     g_sliderArrastando = -1;
     g_hoverAnt = HOVER_NENHUM;
+    g_devClicks = 0;
+    g_devModalAberto = false;
+    g_devSenhaInput[0] = '\0';
+    g_devErroTimer = 0.0f;
 }
 
 bool OptionsUiArrastando(void) {
     return g_sliderArrastando >= 0;
+}
+
+bool OptionsUiModalAberto(void) {
+    return g_devModalAberto;
+}
+
+void OptionsUiFecharModal(void) {
+    g_devModalAberto = false;
+    g_devClicks = 0;
+    g_devSenhaInput[0] = '\0';
+    g_devErroTimer = 0.0f;
 }
 
 // Mesma conversao das cenas: tela virtual 640x360 -> pixels reais da janela
@@ -182,9 +203,10 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
     float yTelaCheia = yEfeitos + lay->passoY;
     float yPaleta    = yTelaCheia + lay->passoY;
 
+    bool interativoControles = interativo && !g_devModalAberto;
     bool algumHover = false;
-    if (Slider(0, nomes[0], yMusica,  trilhoX, trilhoW, lay, est, a, interativo, tocarHover)) algumHover = true;
-    if (Slider(1, nomes[1], yEfeitos, trilhoX, trilhoW, lay, est, a, interativo, tocarHover)) algumHover = true;
+    if (Slider(0, nomes[0], yMusica,  trilhoX, trilhoW, lay, est, a, interativoControles, tocarHover)) algumHover = true;
+    if (Slider(1, nomes[1], yEfeitos, trilhoX, trilhoW, lay, est, a, interativoControles, tocarHover)) algumHover = true;
 
     bool hoverSeta = false;
 
@@ -194,7 +216,7 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
     float larguraTelaCheia = MeasureTextEx(est->fonte, nomes[2], est->tamFonte, est->espacamento).x;
     float caixaX = roundf(lay->x + larguraTelaCheia + lay->gapNome);
     if (caixaX < trilhoX) caixaX = trilhoX;
-    if (Caixinha(telaCheia, caixaX, yTelaCheia, larguraTelaCheia, HOVER_TELA_CHEIA, lay, est, a, interativo, &hoverSeta, tocarHover)) {
+    if (Caixinha(telaCheia, caixaX, yTelaCheia, larguraTelaCheia, HOVER_TELA_CHEIA, lay, est, a, interativoControles, &hoverSeta, tocarHover)) {
         SettingsSetFullscreen(!telaCheia);
         SettingsApplyWindowMode();
         SettingsSave();
@@ -210,7 +232,7 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
         float tutAreaX = tutCaixaX - 8.0f - wTut;
         Rectangle tutCaixa = { tutCaixaX, yTelaCheia - 8.0f, 16.0f, 16.0f };
         Rectangle tutArea  = { tutAreaX, yTelaCheia - 10.0f, lay->direita - tutAreaX, 20.0f };
-        bool tutHov = interativo && CheckCollisionPointRec(MouseVirtual(), tutArea);
+        bool tutHov = interativoControles && CheckCollisionPointRec(MouseVirtual(), tutArea);
         if (tutHov) {
             hoverSeta = true;
             if (g_hoverAnt != HOVER_TUTORIAL && tocarHover) tocarHover();
@@ -234,16 +256,14 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
 
     // Paleta: [<]  Nome  [>]  3/8
     Texto(est, nomes[3], lay->x, yPaleta, est->nome, a, 0);
-    if (Seta(true, trilhoX, yPaleta, HOVER_ANT, est, a, interativo, &hoverSeta, tocarHover)) {
+    if (Seta(true, trilhoX, yPaleta, HOVER_ANT, est, a, interativoControles, &hoverSeta, tocarHover)) {
         SettingsSetPalette(SettingsGetPalette() - 1);
         SettingsSave();
     }
-    if (Seta(false, trilhoX + trilhoW - 18.0f, yPaleta, HOVER_PROX, est, a, interativo, &hoverSeta, tocarHover)) {
+    if (Seta(false, trilhoX + trilhoW - 18.0f, yPaleta, HOVER_PROX, est, a, interativoControles, &hoverSeta, tocarHover)) {
         SettingsSetPalette(SettingsGetPalette() + 1);
         SettingsSave();
     }
-    if (hoverSeta) algumHover = true;
-    else g_hoverAnt = HOVER_NENHUM;
 
     Texto(est, SettingsPaletteName(SettingsGetPalette()), trilhoX + trilhoW / 2.0f, yPaleta, est->nomePaleta, a, 1);
     Texto(est, TextFormat("%d/%d", SettingsGetPalette() + 1, SettingsPaletteCount()), lay->direita, yPaleta, est->valor, a, 2);
@@ -262,5 +282,165 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
         DrawRectangleRec(ParaTela(q), ComAlpha(tons[i], a));
     }
 
-    return algumHover || g_sliderArrastando >= 0;
+    // Botaozinho escondido de Dev Tools no canto inferior direito das configuracoes:
+    // - Quando desligado: um pequeno botao discreto que ao ser clicado 3 vezes pede a senha "RED".
+    // - Quando ligado: mostra "[DEV: ON]" para desativar em 1 clique.
+    {
+        bool devLigado = SettingsGetDevMode();
+        Rectangle rDevBtn = devLigado
+            ? (Rectangle){ lay->direita - 56.0f, yAmostra - 2.0f, 56.0f, 13.0f }
+            : (Rectangle){ lay->direita - 13.0f, yAmostra - 1.0f, 13.0f, 11.0f };
+        bool hovDev = interativoControles && CheckCollisionPointRec(MouseVirtual(), rDevBtn);
+        if (hovDev) {
+            hoverSeta = true;
+            if (g_hoverAnt != HOVER_DEV_BTN && tocarHover) tocarHover();
+            g_hoverAnt = HOVER_DEV_BTN;
+        }
+
+        Rectangle rDevTela = ParaTela(rDevBtn);
+        float esc = rDevTela.height / rDevBtn.height;
+        if (devLigado) {
+            Color cFundo = hovDev ? (Color){ 196, 72, 72, 255 } : (Color){ 138, 48, 50, 255 };
+            DrawRectangleRec(rDevTela, ComAlpha(cFundo, a));
+            DrawRectangleLinesEx(rDevTela, 1.2f * esc, ComAlpha((Color){ 255, 242, 230, 255 }, a));
+            int fz = (int)(8.0f * esc);
+            if (fz < 1) fz = 1;
+            const char *lbl = "DEV: ON";
+            int tw = MeasureText(lbl, fz);
+            DrawText(lbl, (int)(rDevTela.x + (rDevTela.width - tw) * 0.5f),
+                     (int)(rDevTela.y + (rDevTela.height - fz) * 0.5f), fz, ComAlpha((Color){ 255, 242, 230, 255 }, a));
+            if (hovDev && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                SettingsSetDevMode(false);
+                SettingsSave();
+                g_devClicks = 0;
+            }
+        } else {
+            // Discreto nas configuracoes (parece um pequeno parafuso/terminal de manutencao)
+            Color cBorda = hovDev ? est->setaBordaHover : Fade(est->trilhoBorda, 0.55f);
+            Color cMiolo = (g_devClicks > 0) ? Fade((Color){ 196, 72, 72, 255 }, 0.35f + 0.25f * g_devClicks)
+                                             : Fade(est->setaFundo, 0.55f);
+            DrawRectangleRec(rDevTela, ComAlpha(cMiolo, a));
+            DrawRectangleLinesEx(rDevTela, 1.0f * esc, ComAlpha(cBorda, a));
+            Rectangle rPonto = ParaTela((Rectangle){ rDevBtn.x + 5.0f, rDevBtn.y + 4.0f, 3.0f, 3.0f });
+            DrawRectangleRec(rPonto, ComAlpha(cBorda, a));
+
+            if (interativoControles && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                if (hovDev) {
+                    g_devClicks++;
+                    if (g_devClicks >= 3) {
+                        g_devClicks = 0;
+                        g_devModalAberto = true;
+                        g_devSenhaInput[0] = '\0';
+                        g_devErroTimer = 0.0f;
+                        while (GetCharPressed() != 0) { } // limpa buffer de teclado
+                    }
+                } else {
+                    g_devClicks = 0; // exige 3 cliques especificos nele
+                }
+            }
+        }
+    }
+
+    if (hoverSeta) algumHover = true;
+    else g_hoverAnt = HOVER_NENHUM;
+
+    // Modal de senha "RED" para ativar Dev Tools
+    if (g_devModalAberto) {
+        if (g_devErroTimer > 0.0f) {
+            g_devErroTimer -= GetFrameTime();
+            if (g_devErroTimer < 0.0f) g_devErroTimer = 0.0f;
+        }
+
+        int ch;
+        while ((ch = GetCharPressed()) != 0) {
+            size_t len = strlen(g_devSenhaInput);
+            if (ch >= 33 && ch <= 126 && len < 8) {
+                g_devSenhaInput[len] = (char)toupper((unsigned char)ch);
+                g_devSenhaInput[len + 1] = '\0';
+            }
+        }
+        if (IsKeyPressed(KEY_BACKSPACE)) {
+            size_t len = strlen(g_devSenhaInput);
+            if (len > 0) g_devSenhaInput[len - 1] = '\0';
+        }
+
+        float mw = 216.0f, mh = 96.0f;
+        float mx = lay->x + ((lay->direita - lay->x) - mw) * 0.5f;
+        float my = yMusica + 8.0f;
+        Rectangle box = { mx, my, mw, mh };
+        Rectangle btnCancelar = { mx + 12.0f, my + mh - 24.0f, 90.0f, 18.0f };
+        Rectangle btnOk       = { mx + mw - 102.0f, my + mh - 24.0f, 90.0f, 18.0f };
+
+        Vector2 mv = MouseVirtual();
+        bool hovCanc = interativo && CheckCollisionPointRec(mv, btnCancelar);
+        bool hovOk   = interativo && CheckCollisionPointRec(mv, btnOk);
+        if (hovCanc || hovOk) algumHover = true;
+
+        bool confirmar = IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER) ||
+                         (hovOk && IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
+        bool cancelar  = IsKeyPressed(KEY_ESCAPE) ||
+                         (hovCanc && IsMouseButtonPressed(MOUSE_BUTTON_LEFT));
+
+        if (cancelar) {
+            OptionsUiFecharModal();
+        } else if (confirmar) {
+            if (strcmp(g_devSenhaInput, "RED") == 0) {
+                SettingsSetDevMode(true);
+                SettingsSave();
+                OptionsUiFecharModal();
+            } else {
+                g_devErroTimer = 1.4f;
+                g_devSenhaInput[0] = '\0';
+            }
+        }
+
+        if (g_devModalAberto) {
+            Rectangle rSombra = ParaTela((Rectangle){ box.x + 3.0f, box.y + 3.0f, box.width, box.height });
+            Rectangle rBox    = ParaTela(box);
+            float esc = rBox.height / box.height;
+            DrawRectangleRec(rSombra, Fade(BLACK, 0.65f));
+            DrawRectangleRec(rBox, (Color){ 32, 29, 31, 252 });
+            DrawRectangleLinesEx(rBox, 2.0f * esc, (Color){ 255, 242, 230, 255 });
+
+            Rectangle rHeader = ParaTela((Rectangle){ box.x, box.y, box.width, 18.0f });
+            DrawRectangleRec(rHeader, (Color){ 138, 48, 50, 255 });
+            int fTitle = (int)(9.0f * esc);
+            if (fTitle < 1) fTitle = 1;
+            const char *tit = "DEV TOOLS - SENHA";
+            DrawText(tit, (int)(rBox.x + (rBox.width - MeasureText(tit, fTitle)) * 0.5f),
+                     (int)(rHeader.y + (rHeader.height - fTitle) * 0.5f), fTitle, (Color){ 255, 242, 230, 255 });
+
+            int fSub = (int)(8.0f * esc);
+            if (fSub < 1) fSub = 1;
+            const char *msg = (g_devErroTimer > 0.0f) ? "Senha incorreta!" : "Digite a senha de acesso:";
+            Color corMsg = (g_devErroTimer > 0.0f) ? (Color){ 224, 108, 104, 255 } : (Color){ 189, 181, 168, 255 };
+            DrawText(msg, (int)(rBox.x + (rBox.width - MeasureText(msg, fSub)) * 0.5f),
+                     (int)(rBox.y + 23.0f * esc), fSub, corMsg);
+
+            Rectangle campo = { box.x + 38.0f, box.y + 38.0f, box.width - 76.0f, 22.0f };
+            Rectangle rCampo = ParaTela(campo);
+            DrawRectangleRec(rCampo, (Color){ 18, 16, 18, 255 });
+            DrawRectangleLinesEx(rCampo, 1.5f * esc, (g_devErroTimer > 0.0f) ? (Color){ 224, 108, 104, 255 } : (Color){ 189, 181, 168, 255 });
+            const char *cursor = (((int)(GetTime() * 2.5f) % 2) == 0) ? "_" : "";
+            const char *mostra = TextFormat("%s%s", g_devSenhaInput, cursor);
+            int fInp = (int)(11.0f * esc);
+            if (fInp < 1) fInp = 1;
+            DrawText(mostra, (int)(rCampo.x + (rCampo.width - MeasureText(mostra, fInp)) * 0.5f),
+                     (int)(rCampo.y + (rCampo.height - fInp) * 0.5f), fInp, (Color){ 255, 242, 230, 255 });
+
+            Rectangle rCanc = ParaTela(btnCancelar);
+            Rectangle rOk   = ParaTela(btnOk);
+            DrawRectangleRec(rCanc, hovCanc ? (Color){ 160, 147, 142, 255 } : (Color){ 125, 112, 113, 255 });
+            DrawRectangleLinesEx(rCanc, 1.2f * esc, (Color){ 255, 242, 230, 255 });
+            DrawText("Cancelar", (int)(rCanc.x + (rCanc.width - MeasureText("Cancelar", fSub)) * 0.5f),
+                     (int)(rCanc.y + (rCanc.height - fSub) * 0.5f), fSub, (Color){ 32, 29, 31, 255 });
+
+            DrawRectangleRec(rOk, hovOk ? (Color){ 196, 72, 72, 255 } : (Color){ 138, 48, 50, 255 });
+            DrawRectangleLinesEx(rOk, 1.2f * esc, (Color){ 255, 242, 230, 255 });
+            DrawText("Ativar", (int)(rOk.x + (rOk.width - MeasureText("Ativar", fSub)) * 0.5f),
+                     (int)(rOk.y + (rOk.height - fSub) * 0.5f), fSub, (Color){ 255, 242, 230, 255 });
+        }
+    }
+
+    return algumHover || g_sliderArrastando >= 0 || g_devModalAberto;
 }

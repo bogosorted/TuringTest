@@ -1,4 +1,5 @@
 #include "settings.h"
+#include "dialog_system.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,6 +29,7 @@ static float g_volEfeitos = 1.0f;
 static int   g_paleta     = 0;
 static bool  g_telaCheia  = true;
 static bool  g_tutorial   = true;
+static bool  g_devMode    = false;
 
 #define JANELA_W 1280
 #define JANELA_H 720
@@ -146,9 +148,11 @@ void SettingsLoad(void) {
         else if (sscanf(linha, "telacheia=%d", &n) == 1) g_telaCheia = (n != 0);
         else if (sscanf(linha, "efeitos=%f", &v) == 1) g_volEfeitos = Limitar01(v);
         else if (sscanf(linha, "tutorial=%d", &n) == 1) g_tutorial = (n != 0);
+        else if (sscanf(linha, "dev=%d", &n) == 1) g_devMode = (n != 0);
         // A paleta NAO e lida: o jogo sempre abre na Original (g_paleta = 0).
     }
     fclose(f);
+    global_infinite_tokens = g_devMode;
 }
 
 void SettingsSave(void) {
@@ -158,8 +162,8 @@ void SettingsSave(void) {
         return;
     }
     // A paleta nao e salva: vale so enquanto o jogo esta aberto
-    fprintf(f, "musica=%.2f\nefeitos=%.2f\ntelacheia=%d\ntutorial=%d\n",
-            g_volMusica, g_volEfeitos, g_telaCheia ? 1 : 0, g_tutorial ? 1 : 0);
+    fprintf(f, "musica=%.2f\nefeitos=%.2f\ntelacheia=%d\ntutorial=%d\ndev=%d\n",
+            g_volMusica, g_volEfeitos, g_telaCheia ? 1 : 0, g_tutorial ? 1 : 0, g_devMode ? 1 : 0);
     fclose(f);
 }
 
@@ -173,6 +177,12 @@ void SettingsSetFullscreen(bool ligado) { g_telaCheia = ligado; }
 
 bool SettingsGetTutorial(void) { return g_tutorial; }
 void SettingsSetTutorial(bool ligado) { g_tutorial = ligado; }
+
+bool SettingsGetDevMode(void) { return g_devMode; }
+void SettingsSetDevMode(bool ligado) {
+    g_devMode = ligado;
+    global_infinite_tokens = ligado;
+}
 
 // Aplica modo tela cheia ou janela conforme g_telaCheia
 void SettingsApplyWindowMode(void) {

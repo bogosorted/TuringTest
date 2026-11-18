@@ -36,11 +36,14 @@ VisaoJogador GameStateGetVisaoJogador(int suspeito);
 bool GameStateRegistrarEvidencia(int suspeito, const char *ev_id);
 bool GameStateTemEvidencia(int suspeito, const char *ev_id);
 
-// Rastreia se o jogador usou Enviesamento ou Injecao contra cada suspeito na run
+// Rastreia se o jogador usou Enviesamento, Deepfake ou Injecao contra cada suspeito na run
 void GameStateSetViesUsado(int suspeito, bool usado);
 bool GameStateGetViesUsado(int suspeito);
+void GameStateSetDeepfakeUsado(int suspeito, bool usado);
+bool GameStateGetDeepfakeUsado(int suspeito);
 void GameStateSetInjecaoUsada(int suspeito, bool usada);
 bool GameStateGetInjecaoUsada(int suspeito);
+int  GameStateCountSpecialToolsUsed(void);
 
 // Nome do jogador (ate 8 letras) e estatisticas de pontuacao da run
 void        GameStateSetPlayerName(const char *name);

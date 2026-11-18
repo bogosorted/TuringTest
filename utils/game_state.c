@@ -9,6 +9,7 @@ static bool         g_tutorialActive = true;
 static VisaoJogador g_visaoJogador[GAME_NUM_SUSPECTS] = { VISAO_DUVIDA, VISAO_DUVIDA, VISAO_DUVIDA };
 static bool         g_evidencias[GAME_NUM_SUSPECTS][GAME_MAX_EVIDENCIAS] = { { false } };
 static bool         g_viesUsado[GAME_NUM_SUSPECTS] = { false };
+static bool         g_deepfakeUsado[GAME_NUM_SUSPECTS] = { false };
 static bool         g_injecaoUsada[GAME_NUM_SUSPECTS] = { false };
 static char         g_playerName[9] = "AGENTE";
 static int          g_tokensRestantesTotal = 0;
@@ -27,14 +28,15 @@ static int ParseEvIndex(const char *ev_id) {
 }
 
 void GameStateNewRun(void) {
-    g_day = 1;
     g_tutorialConfig = SettingsGetTutorial();
     g_tutorialActive = g_tutorialConfig;
+    g_day = g_tutorialConfig ? 0 : 1; // Dia 0 = Treinamento rapido; se desligado nas opcoes, vai direto pro Dia 1
     g_tokensRestantesTotal = 0;
     g_dicasUsadasTotal = 0;
     for (int i = 0; i < GAME_NUM_SUSPECTS; i++) {
         g_visaoJogador[i] = VISAO_DUVIDA;
         g_viesUsado[i] = false;
+        g_deepfakeUsado[i] = false;
         g_injecaoUsada[i] = false;
         for (int e = 0; e < GAME_MAX_EVIDENCIAS; e++) {
             g_evidencias[i][e] = false;
@@ -43,6 +45,23 @@ void GameStateNewRun(void) {
 }
 
 void GameStateNextDay(void) {
+    if (g_day == 0) {
+        // Saindo do Dia 0 (Treinamento): zera todos os dados do treino para iniciar o Dia 1 limpo
+        g_day = 1;
+        g_tutorialActive = false;
+        g_tokensRestantesTotal = 0;
+        g_dicasUsadasTotal = 0;
+        for (int i = 0; i < GAME_NUM_SUSPECTS; i++) {
+            g_visaoJogador[i] = VISAO_DUVIDA;
+            g_viesUsado[i] = false;
+            g_deepfakeUsado[i] = false;
+            g_injecaoUsada[i] = false;
+            for (int e = 0; e < GAME_MAX_EVIDENCIAS; e++) {
+                g_evidencias[i][e] = false;
+            }
+        }
+        return;
+    }
     if (g_day < GAME_NUM_DAYS) g_day++;
     g_tutorialActive = false;
 }
@@ -52,7 +71,7 @@ int GameStateGetDay(void) {
 }
 
 bool GameStateIsTutorialActive(void) {
-    return (g_day == 1) && g_tutorialConfig && g_tutorialActive;
+    return (g_day == 0) && g_tutorialActive;
 }
 
 void GameStateCompleteTutorial(void) {
@@ -65,7 +84,7 @@ bool GameStateGetTutorialConfig(void) {
 
 void GameStateSetTutorialConfig(bool enabled) {
     g_tutorialConfig = enabled;
-    if (g_day == 1) {
+    if (g_day == 0) {
         g_tutorialActive = enabled;
     }
 }
@@ -106,6 +125,16 @@ bool GameStateGetViesUsado(int suspeito) {
     return g_viesUsado[suspeito];
 }
 
+void GameStateSetDeepfakeUsado(int suspeito, bool usado) {
+    if (suspeito < 0 || suspeito >= GAME_NUM_SUSPECTS) return;
+    g_deepfakeUsado[suspeito] = usado;
+}
+
+bool GameStateGetDeepfakeUsado(int suspeito) {
+    if (suspeito < 0 || suspeito >= GAME_NUM_SUSPECTS) return false;
+    return g_deepfakeUsado[suspeito];
+}
+
 void GameStateSetInjecaoUsada(int suspeito, bool usada) {
     if (suspeito < 0 || suspeito >= GAME_NUM_SUSPECTS) return;
     g_injecaoUsada[suspeito] = usada;
@@ -114,6 +143,16 @@ void GameStateSetInjecaoUsada(int suspeito, bool usada) {
 bool GameStateGetInjecaoUsada(int suspeito) {
     if (suspeito < 0 || suspeito >= GAME_NUM_SUSPECTS) return false;
     return g_injecaoUsada[suspeito];
+}
+
+int GameStateCountSpecialToolsUsed(void) {
+    int count = 0;
+    for (int i = 0; i < GAME_NUM_SUSPECTS; i++) {
+        if (g_viesUsado[i]) count++;
+        if (g_deepfakeUsado[i]) count++;
+        if (g_injecaoUsada[i]) count++;
+    }
+    return count;
 }
 
 void GameStateSetPlayerName(const char *name) {

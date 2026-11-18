@@ -6,6 +6,7 @@
 #include "../utils/dialog_system.h"
 #include "../utils/game_state.h"
 #include "../utils/ranking.h"
+#include "../utils/mural_ui.h"
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -61,7 +62,6 @@ static bool  g_opcoesAbertas     = false;
 static float g_opcoesAnim        = 0.0f;   // 0 = invisivel, 1 = totalmente aberto
 static bool  g_rankingAberto     = false;
 static float g_rankingAnim       = 0.0f;
-static float g_rankingScroll     = 0.0f;
 static bool  g_nomeAberto        = false;
 static float g_nomeAnim          = 0.0f;
 static char  g_nomeInput[9]      = "";
@@ -82,9 +82,8 @@ static void OnClickPlay(void) {
 
 static void OnClickRanking(void) {
     TraceLog(LOG_INFO, "Botao RANKING clicado!");
-    RankingLoad();
+    MuralReload(-1);
     g_rankingAberto = true;
-    g_rankingScroll = 0.0f;
     g_voltarHoverAnt = false;
     g_esperarSoltarMouse = true;
 }
@@ -245,75 +244,6 @@ static void DesenharTextoBotao(const char *txt, Rectangle botao, bool hover, flo
     DrawTextEx(g_fonte, txt,    (Vector2){ tx,                   ty },                   fontSize, spacing, corTexto);
 }
 
-// ---------------------------------------------------------------
-// MODO DESENVOLVEDOR (testes)
-// Digitar "treloso" no menu revela o botao "Tokens Infinitos",
-// que liga/desliga global_infinite_tokens. Antes disso o botao nem
-// e desenhado nem recebe clique.
-// ---------------------------------------------------------------
-#define DEV_CODE      "treloso"
-#define DEV_CODE_LEN  7
-
-static bool g_devUnlocked = false;                 // fica liberado ate fechar o jogo
-static char g_devTyped[DEV_CODE_LEN + 1] = { 0 };  // ultimas letras digitadas
-
-static void UpdateDevCode(void) {
-    int c;
-    while ((c = GetCharPressed()) != 0) {
-        // Empurra o buffer uma casa e coloca a nova letra no final
-        memmove(g_devTyped, g_devTyped + 1, DEV_CODE_LEN - 1);
-        g_devTyped[DEV_CODE_LEN - 1] = (c < 128) ? (char)tolower(c) : '?';
-
-        if (strncmp(g_devTyped, DEV_CODE, DEV_CODE_LEN) == 0) {
-            g_devUnlocked = true;
-            TraceLog(LOG_INFO, "Modo desenvolvedor liberado");
-        }
-    }
-}
-
-static void UpdateDrawDevButton(void) {
-    if (!g_devUnlocked) return;
-
-    float scale = RayCanvasGetUIScale();
-
-    // Meio da direita da tela
-    Rectangle area = RayCanvasGetRect(
-        (Vector2){ 1.0f, 0.5f },
-        (Vector2){ 1.0f, 0.5f },
-        (Vector2){ -10.0f, 0.0f },
-        (Vector2){ 120.0f, 22.0f }
-    );
-
-    bool hover = CheckCollisionPointRec(RayCanvasGetMousePosition(), area);
-
-    // So "Pressed": com Pressed || Released ele ligaria e desligaria no mesmo clique
-    if (hover && !RayCanvasInputBlocked() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        global_infinite_tokens = !global_infinite_tokens;
-        TraceLog(LOG_INFO, "Tokens infinitos: %s", global_infinite_tokens ? "LIGADO" : "DESLIGADO");
-    }
-
-    DrawRectangleRec(area, hover ? (Color){ 220, 220, 220, 255 } : WHITE);
-
-    int fonte = (int)(10 * scale);
-    if (fonte < 1) fonte = 1;
-    const char *label = "Tokens Infinitos";
-    int larguraLabel = MeasureText(label, fonte);
-    DrawText(label,
-             (int)(area.x + (area.width - larguraLabel) / 2.0f),
-             (int)(area.y + (area.height - fonte) / 2.0f),
-             fonte, BLACK);
-
-    // Estado atual, pequeno, logo abaixo do botao
-    const char *estado = global_infinite_tokens ? "ligado" : "desligado";
-    int fonteEstado = (int)(8 * scale);
-    if (fonteEstado < 1) fonteEstado = 1;
-    int larguraEstado = MeasureText(estado, fonteEstado);
-    DrawText(estado,
-             (int)(area.x + (area.width - larguraEstado) / 2.0f),
-             (int)(area.y + area.height + 4.0f * scale),
-             fonteEstado, WHITE);
-}
-
 void InitMenuScene(void) {
     g_shouldClose = false;
     g_shouldStartGame = false;
@@ -470,6 +400,8 @@ void InitMenuScene(void) {
         g_botaoVelX[i] = 0.0f;
         g_jiggleTempo[i] = 0.0f;
     }
+
+    MuralInit();
 }
 
 // Troca o quadro do GIF a cada 70 ms
@@ -650,7 +582,7 @@ static void UpdateDrawOpcoes(void) {
     float a = g_opcoesAnim;
     bool interativo = g_opcoesAbertas && a > 0.5f && !RayCanvasInputBlocked();
 
-    if (g_opcoesAbertas && IsKeyPressed(KEY_ESCAPE)) {
+    if (g_opcoesAbertas && !OptionsUiModalAberto() && IsKeyPressed(KEY_ESCAPE)) {
         FecharOpcoes();
         return;
     }
@@ -684,7 +616,7 @@ static void UpdateDrawOpcoes(void) {
     float bh = (float)g_botao.height * BOTAO_ESCALA;
     Rectangle bVoltar = { BOTAO_X, OPC_Y_VOLTAR, bw, bh };
     Rectangle hitVoltar = { BOTAO_X, OPC_Y_VOLTAR, bw - 22.0f, bh };
-    bool hoverVoltar = interativo && !OptionsUiArrastando() && CheckCollisionPointRec(MouseVirtual(), hitVoltar);
+    bool hoverVoltar = interativo && !OptionsUiArrastando() && !OptionsUiModalAberto() && CheckCollisionPointRec(MouseVirtual(), hitVoltar);
     if (hoverVoltar) {
         algumHover = true;
         if (!g_voltarHoverAnt) TocarSomHover();
@@ -735,77 +667,9 @@ static void UpdateDrawRanking(void) {
     if (!g_rankingAberto && g_rankingAnim < 0.01f) { g_rankingAnim = 0.0f; return; }
 
     float a = g_rankingAnim;
-    bool interativo = g_rankingAberto && a > 0.5f && !RayCanvasInputBlocked();
-
-    if (g_rankingAberto && IsKeyPressed(KEY_ESCAPE)) {
+    bool pediuVoltar = MuralUpdateDraw(a, g_sndHover);
+    if (pediuVoltar && g_rankingAberto && !g_esperarSoltarMouse) {
         FecharRanking();
-        return;
-    }
-
-    Color bege = Fade((Color){ 189, 181, 168, 255 }, a);
-    Color claro = Fade((Color){ 255, 242, 230, 255 }, a);
-    Color medio = Fade((Color){ 160, 147, 142, 255 }, a);
-
-    TextoOpcoes("RANKING", OPC_LABEL_X, 128.0f, 30.0f, bege);
-
-    int total = RankingGetCount();
-    Rectangle listaArea = { OPC_LABEL_X, 146.0f, 380.0f, 128.0f };
-    const float passoY = 22.0f;
-    float conteudoH = total * passoY;
-    float maxScroll = (conteudoH > listaArea.height) ? (conteudoH - listaArea.height) : 0.0f;
-
-    if (interativo && maxScroll > 0.0f) {
-        float roda = GetMouseWheelMove();
-        if (roda != 0.0f) {
-            g_rankingScroll -= roda * passoY;
-        }
-    }
-    if (g_rankingScroll < 0.0f) g_rankingScroll = 0.0f;
-    if (g_rankingScroll > maxScroll) g_rankingScroll = maxScroll;
-
-    if (total == 0) {
-        TextoOpcoes("Nenhuma partida registrada ainda.", OPC_LABEL_X, 184.0f, 20.0f, medio);
-    } else {
-        Rectangle rClip = ParaTela(listaArea);
-        BeginScissorMode((int)rClip.x, (int)rClip.y, (int)rClip.width, (int)rClip.height);
-        for (int i = 0; i < total; i++) {
-            const RankingEntry *e = RankingGetEntry(i);
-            if (!e) continue;
-            float y = listaArea.y + 12.0f + i * passoY - g_rankingScroll;
-            char linha[64];
-            snprintf(linha, sizeof linha, "#%d  %-8s", i + 1, e->nome);
-            TextoOpcoes(linha, OPC_LABEL_X, y, 20.0f, (i == 0) ? claro : bege);
-
-            char pts[32];
-            snprintf(pts, sizeof pts, "%d pts  [%s]", e->pontos, e->acertou ? "ACERTO" : "ERRO");
-            TextoOpcoes(pts, OPC_LABEL_X + 165.0f, y, 18.0f, e->acertou ? claro : medio);
-        }
-        EndScissorMode();
-
-        if (maxScroll > 0.0f) {
-            Rectangle trilho = { listaArea.x + listaArea.width - 8.0f, listaArea.y + 2.0f, 4.0f, listaArea.height - 4.0f };
-            DrawRectangleRec(ParaTela(trilho), Fade((Color){ 18, 16, 18, 255 }, a));
-            float fracVis = listaArea.height / conteudoH;
-            float thumbH = trilho.height * fracVis;
-            if (thumbH < 18.0f) thumbH = 18.0f;
-            float thumbY = trilho.y + (trilho.height - thumbH) * (g_rankingScroll / maxScroll);
-            DrawRectangleRec(ParaTela((Rectangle){ trilho.x, thumbY, trilho.width, thumbH }), bege);
-        }
-    }
-
-    float bw = (float)g_botao.width * BOTAO_ESCALA;
-    float bh = (float)g_botao.height * BOTAO_ESCALA;
-    Rectangle hitVoltar = { BOTAO_X, OPC_Y_VOLTAR, bw - 22.0f, bh };
-    bool hoverVoltar = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(MouseVirtual(), hitVoltar);
-    if (hoverVoltar && !g_voltarHoverAnt) TocarSomHover();
-    g_voltarHoverAnt = hoverVoltar;
-
-    DesenharBotaoPainel("Voltar", BOTAO_X, OPC_Y_VOLTAR, a, hoverVoltar);
-    if (hoverVoltar && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        FecharRanking();
-    }
-    if (g_rankingAberto) {
-        SetMouseCursor(hoverVoltar ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
     }
 }
 
@@ -909,11 +773,6 @@ void UpdateDrawMenuScene(void) {
     UpdateDrawRanking();
     UpdateDrawNome();
 
-    if (!g_opcoesAbertas && !g_rankingAberto && !g_nomeAberto) {
-        UpdateDevCode();
-        UpdateDrawDevButton();
-    }
-
     RayCanvasEnd();
 }
 
@@ -934,5 +793,6 @@ void UnloadMenuScene(void) {
         UnloadSound(g_sndHover);
         g_sndHover = (Sound){ 0 };
     }
+    MuralUnload();
     RayCanvasClose();
 }

@@ -157,8 +157,10 @@ int main(void) {
                 UpdateDrawIntroScene();
 
                 if (IntroSceneShouldContinue() && !TransitionActive()) {
-                    GoToWithTransition(SCENE_GAMEPLAY,
-                                       TextFormat("Dia %d", GameStateGetDay()));
+                    const char *txtDia = (GameStateGetDay() == 0)
+                                         ? "Dia 0 - Treinamento"
+                                         : TextFormat("Dia %d", GameStateGetDay());
+                    GoToWithTransition(SCENE_GAMEPLAY, txtDia);
                 }
                 break;
 
