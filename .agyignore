@@ -1,0 +1,46 @@
+# Version control
+.git/
+
+# Build directories and CMake artifacts
+build/
+build-windows/
+cmake-build-debug/
+bin/
+obj/
+.cache/
+
+# Compiled binaries, objects, and libraries
+*.o
+*.obj
+*.d
+*.exe
+*.out
+*.app
+*.dll
+*.so
+*.so.*
+*.dylib
+*.a
+*.lib
+*.pdb
+
+# Images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.ico
+*.webp
+
+# Audio
+*.wav
+*.mp3
+*.ogg
+*.flac
+
+# Fonts
+*.ttf
+*.otf
+*.woff
+*.woff2
