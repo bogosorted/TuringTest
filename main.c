@@ -71,6 +71,13 @@ int main(void) {
     // Configuracao inicial da janela
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
     InitWindow(1280, 720, "Turing Test");
+    if (FileExists("assets/sprites/icones/app_icon.png")) {
+        Image winIcon = LoadImage("assets/sprites/icones/app_icon.png");
+        if (winIcon.data != NULL) {
+            SetWindowIcon(winIcon);
+            UnloadImage(winIcon);
+        }
+    }
     InitAudioDevice(); // Inicializa dispositivo de som da raylib
     SetExitKey(0); // desabilita ESC fechar a janela direto; tratamos saida de segurança no loop
     SettingsApplyWindowMode();   // tela cheia ou janela, conforme o settings.cfg

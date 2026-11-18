@@ -755,40 +755,12 @@ static void UpdateDrawNome(void) {
     }
     TextoOpcoes(exib, OPC_LABEL_X + 8.0f, 170.0f, 22.0f, claro);
 
-    // Selecao de Pronomes / Voz (Ele/Dele = voz grave; Ela/Dela = voz suave/feminina)
-    TextoOpcoes("Pronomes / Voz:", OPC_LABEL_X, 198.0f, 16.0f, bege);
-    const char *lblPron[2] = { "Ele / Dele", "Ela / Dela" };
-    int hovPronAtual = -1;
-    for (int p = 0; p < 2; p++) {
-        Rectangle rPr = { OPC_LABEL_X + p * 104.0f, 209.0f, 96.0f, 22.0f };
-        bool selPr = ((int)g_playerPronomeSel == p);
-        bool hovPr = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, rPr);
-        if (hovPr) hovPronAtual = p;
-        Rectangle rPrTela = ParaTela(rPr);
-        Color fundoPr = selPr ? Fade((Color){ 189, 181, 168, 255 }, a)
-                      : hovPr ? Fade((Color){ 90, 83, 83, 255 }, a)
-                              : Fade((Color){ 28, 25, 27, 255 }, a);
-        Color bordaPr = (selPr || hovPr) ? claro : medio;
-        Color txtPr   = selPr ? Fade((Color){ 24, 21, 23, 255 }, a) : claro;
-        DrawRectangleRec(rPrTela, fundoPr);
-        DrawRectangleLinesEx(rPrTela, (selPr ? 2.0f : 1.4f) * esc, bordaPr);
-        TextoOpcoes(lblPron[p], rPr.x + 12.0f, rPr.y + rPr.height * 0.5f, 16.0f, txtPr);
-
-        if (hovPr && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            g_playerPronomeSel = (p == 1) ? PRONOME_ELA : PRONOME_ELE;
-            g_pronomeManual = true;
-            TocarSomHover();
-        }
-    }
-    if (hovPronAtual >= 0 && hovPronAtual != g_hoverPronomeAnt) TocarSomHover();
-    g_hoverPronomeAnt = hovPronAtual;
-
     // Grade 3x2 a direita com os 6 retratos do Player
     TextoOpcoes("Retrato do Inspetor:", 456.0f, 144.0f, 16.0f, bege);
     const float cardS = 52.0f;
     const float gapS  = 6.0f;
     int hovAvatarAtual = -1;
-    // Sugestao padrao caso nao tenha clicado manualmente no pronome: Players 1,3,4 -> Ela; 2,5,6 -> Ele
+    // Sugestao padrao de pronome por retrato: Players 1,3,4 -> Ela; 2,5,6 -> Ele
     static const PronomeJogador PRON_SUGERIDO[GAME_NUM_PLAYERS] = {
         PRONOME_ELA, PRONOME_ELE, PRONOME_ELA, PRONOME_ELA, PRONOME_ELE, PRONOME_ELE
     };
@@ -813,23 +785,18 @@ static void UpdateDrawNome(void) {
 
         if (hovAv && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             g_playerAvatarSel = k;
-            if (!g_pronomeManual) {
-                g_playerPronomeSel = PRON_SUGERIDO[k];
-            }
+            g_playerPronomeSel = PRON_SUGERIDO[k];
             TocarSomHover();
         }
     }
     if (hovAvatarAtual >= 0 && hovAvatarAtual != g_hoverAvatarAnt) TocarSomHover();
     g_hoverAvatarAnt = hovAvatarAtual;
 
-    TextoOpcoes((g_playerPronomeSel == PRONOME_ELA) ? "Voz: Suave (Ela/Dela)" : "Voz: Grave (Ele/Dele)",
-                456.0f, 282.0f, 15.0f, bege);
-
     bool podeIniciar = (g_nomeInput[0] != '\0');
     float bw = (float)g_botao.width * BOTAO_ESCALA;
     float bh = (float)g_botao.height * BOTAO_ESCALA;
-    const float yIniciar = 240.0f;
-    const float yVoltar  = 292.0f;
+    const float yIniciar = 202.0f;
+    const float yVoltar  = 254.0f;
     Rectangle hitIniciar = { BOTAO_X, yIniciar, bw - 22.0f, bh };
     Rectangle hitVoltar  = { BOTAO_X, yVoltar,  bw - 22.0f, bh };
     bool hoverIniciar = interativo && podeIniciar && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, hitIniciar);
@@ -853,7 +820,7 @@ static void UpdateDrawNome(void) {
     }
 
     if (g_nomeAberto) {
-        bool algumHov = hoverIniciar || hoverVoltar || (hovPronAtual >= 0) || (hovAvatarAtual >= 0);
+        bool algumHov = hoverIniciar || hoverVoltar || (hovAvatarAtual >= 0);
         SetMouseCursor(algumHov ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
     }
 }
