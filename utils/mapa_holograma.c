@@ -1,4 +1,5 @@
 #include "mapa_holograma.h"
+#include "settings.h"
 #include "raymath.h"
 #include <math.h>
 #include <stddef.h>
@@ -122,7 +123,10 @@ void MapaHoloUnload(void) {
 
 // Camera de frente e de cima, balancando devagar (o holograma "flutua")
 static void PosicionarCamera(float ang, float flutua) {
-    Vector3 alvo = { HOLO_PLANTA_W / 2.0f, ANDAR_ALT * (HOLO_NUM_ANDARES - 1) / 2.0f + 0.15f, HOLO_PLANTA_D / 2.0f };
+    float centroY = SettingsGetDevMode()
+        ? ANDAR_ALT * 0.5f + 0.15f
+        : ANDAR_ALT * (HOLO_NUM_ANDARES - 1) / 2.0f + 0.15f;
+    Vector3 alvo = { HOLO_PLANTA_W / 2.0f, centroY, HOLO_PLANTA_D / 2.0f };
     float dist = 13.0f;
     g_camera.target = alvo;
     g_camera.position = (Vector3){ alvo.x + sinf(ang) * dist, alvo.y + 7.0f + flutua, alvo.z + cosf(ang) * dist };
@@ -132,9 +136,10 @@ static void PosicionarCamera(float ang, float flutua) {
 static void AjustarZoom(void) {
     PosicionarCamera(0.0f, 0.0f);
     float topo = AlturaAndar(HOLO_NUM_ANDARES - 1) + ESCADA_ALT;
+    float base = SettingsGetDevMode() ? AlturaAndar(-1) - PLACA_ESP : -PLACA_ESP;
     Vector3 cantos[8];
     for (int i = 0; i < 8; i++) {
-        cantos[i] = (Vector3){ (i & 1) ? HOLO_PLANTA_W : 0.0f, (i & 2) ? topo : -PLACA_ESP, (i & 4) ? HOLO_PLANTA_D : 0.0f };
+        cantos[i] = (Vector3){ (i & 1) ? HOLO_PLANTA_W : 0.0f, (i & 2) ? topo : base, (i & 4) ? HOLO_PLANTA_D : 0.0f };
     }
     float margemX = g_largura * 0.08f, margemY = g_altura * 0.08f;
     for (float fovy = 8.0f; fovy <= 80.0f; fovy += 0.5f) {
@@ -292,9 +297,14 @@ void MapaHoloRender(int largura, int altura, int salaAtual, int salaHover, unsig
     ClearBackground(BLANK);
     BeginMode3D(g_camera);
     DesenharPocoEscada();
-    for (int a = 0; a < HOLO_NUM_ANDARES; a++) DesenharAndar(a, a == andarAtual);
-    for (int k = 0; k < g_numCorredores; k++) DesenharCorredor(&g_corredores[k], g_corredores[k].andar == andarAtual);
+    int minAndar = SettingsGetDevMode() ? -1 : 0;
+    for (int a = minAndar; a < HOLO_NUM_ANDARES; a++) DesenharAndar(a, a == andarAtual);
+    for (int k = 0; k < g_numCorredores; k++) {
+        if (!SettingsGetDevMode() && g_corredores[k].andar < 0) continue;
+        DesenharCorredor(&g_corredores[k], g_corredores[k].andar == andarAtual);
+    }
     for (int i = 0; i < g_numSalas; i++) {
+        if (!SettingsGetDevMode() && g_salas[i].andar < 0) continue;
         bool acessivel = (acessiveis >> i) & 1u;
         DesenharSala(i, i == salaAtual, i == salaHover && acessivel, acessivel || i == salaAtual);
     }
@@ -331,7 +341,8 @@ Texture2D MapaHoloTextura(void) {
 int MapaHoloSalaEm(Vector2 ponto) {
     if (!g_pronto || !g_texPronta) return -1;
     // De cima para baixo: o andar de cima e desenhado por ultimo e fica na frente
-    for (int andar = HOLO_NUM_ANDARES - 1; andar >= 0; andar--) {
+    int minAndar = SettingsGetDevMode() ? -1 : 0;
+    for (int andar = HOLO_NUM_ANDARES - 1; andar >= minAndar; andar--) {
         for (int i = 0; i < g_numSalas; i++) {
             const HoloSala *s = &g_salas[i];
             if (s->andar != andar) continue;

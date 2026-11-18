@@ -25,7 +25,7 @@ void GameStateNewRun(void);   // comeca uma partida nova (volta para o dia 1)
 void GameStateNextDay(void);  // avanca um dia
 int  GameStateGetDay(void);   // dia atual (1..GAME_NUM_DAYS)
 
-// Tutorial forcado do Dia 1
+// Tutorial contextual (ativo durante a partida quando habilitado nas opcoes)
 bool GameStateIsTutorialActive(void);
 void GameStateCompleteTutorial(void);
 

@@ -32,7 +32,7 @@ static int ParseEvIndex(const char *ev_id) {
 void GameStateNewRun(void) {
     g_tutorialConfig = SettingsGetTutorial();
     g_tutorialActive = g_tutorialConfig;
-    g_day = g_tutorialConfig ? 0 : 1; // Dia 0 = Treinamento rapido; se desligado nas opcoes, vai direto pro Dia 1
+    g_day = 1; // Inicia direto no Dia 1; tutorial aparece de forma contextual durante a partida
     g_tokensRestantesTotal = 0;
     g_dicasUsadasTotal = 0;
     for (int i = 0; i < GAME_NUM_SUSPECTS; i++) {
@@ -47,25 +47,7 @@ void GameStateNewRun(void) {
 }
 
 void GameStateNextDay(void) {
-    if (g_day == 0) {
-        // Saindo do Dia 0 (Treinamento): zera todos os dados do treino para iniciar o Dia 1 limpo
-        g_day = 1;
-        g_tutorialActive = false;
-        g_tokensRestantesTotal = 0;
-        g_dicasUsadasTotal = 0;
-        for (int i = 0; i < GAME_NUM_SUSPECTS; i++) {
-            g_visaoJogador[i] = VISAO_DUVIDA;
-            g_viesUsado[i] = false;
-            g_deepfakeUsado[i] = false;
-            g_injecaoUsada[i] = false;
-            for (int e = 0; e < GAME_MAX_EVIDENCIAS; e++) {
-                g_evidencias[i][e] = false;
-            }
-        }
-        return;
-    }
     if (g_day < GAME_NUM_DAYS) g_day++;
-    g_tutorialActive = false;
 }
 
 int GameStateGetDay(void) {
@@ -73,7 +55,7 @@ int GameStateGetDay(void) {
 }
 
 bool GameStateIsTutorialActive(void) {
-    return (g_day == 0) && g_tutorialActive;
+    return g_tutorialConfig && g_tutorialActive;
 }
 
 void GameStateCompleteTutorial(void) {
@@ -86,9 +68,7 @@ bool GameStateGetTutorialConfig(void) {
 
 void GameStateSetTutorialConfig(bool enabled) {
     g_tutorialConfig = enabled;
-    if (g_day == 0) {
-        g_tutorialActive = enabled;
-    }
+    g_tutorialActive = enabled;
 }
 
 void GameStateSetVisaoJogador(int suspeito, VisaoJogador visao) {
