@@ -118,7 +118,7 @@ bool IntroSceneShouldContinue(void) {
     return g_prosseguir;
 }
 
-void InitIntroScene(void) {
+bool InitIntroScene(void) {
     g_tempo = 0.0f;
     g_prosseguir = false;
 
@@ -197,6 +197,12 @@ void InitIntroScene(void) {
     }
 
     RayCanvasInit(VIRTUAL_W, VIRTUAL_H);
+    if (g_noise1.id == 0 || g_noise2.id == 0 || g_fundoBranco.id == 0 || g_shaderFundo.id == 0) {
+        TraceLog(LOG_ERROR, "Falha ao carregar recursos essenciais da introducao");
+        UnloadIntroScene();
+        return false;
+    }
+    return true;
 }
 
 void UpdateDrawIntroScene(void) {

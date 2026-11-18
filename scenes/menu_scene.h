@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-void InitMenuScene(void);
+bool InitMenuScene(void);
 void UpdateDrawMenuScene(void);
 void UnloadMenuScene(void);
 bool MenuSceneShouldClose(void);

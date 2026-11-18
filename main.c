@@ -22,14 +22,15 @@ typedef enum {
     SCENE_VERDICT      // "qual deles e a IA?" (depois do ultimo dia)
 } Scene;
 
-static void InitScene(Scene scene) {
+static bool InitScene(Scene scene) {
     switch (scene) {
-        case SCENE_MENU:      InitMenuScene();      break;
-        case SCENE_INTRO:     InitIntroScene();     break;
-        case SCENE_SELECTION: InitSelectionScene(); break;
-        case SCENE_GAMEPLAY:  InitGameplayScene();  break;
-        case SCENE_VERDICT:   InitVerdictScene();   break;
+        case SCENE_MENU:      return InitMenuScene();
+        case SCENE_INTRO:     return InitIntroScene();
+        case SCENE_SELECTION: return InitSelectionScene();
+        case SCENE_GAMEPLAY:  return InitGameplayScene();
+        case SCENE_VERDICT:   return InitVerdictScene();
     }
+    return false;
 }
 
 static void UnloadScene(Scene scene) {
@@ -43,10 +44,18 @@ static void UnloadScene(Scene scene) {
 }
 
 // Troca de tela na hora (sem fade): descarrega a atual e carrega a proxima
-static void SwitchScene(Scene *current, Scene next) {
+static bool SwitchScene(Scene *current, Scene next) {
+    if (!current) return false;
     UnloadScene(*current);
-    InitScene(next);
+    if (!InitScene(next)) {
+        TraceLog(LOG_ERROR, "Falha ao inicializar cena %d", (int)next);
+        UnloadScene(next);
+        if (!InitScene(SCENE_MENU)) return false;
+        *current = SCENE_MENU;
+        return true;
+    }
     *current = next;
+    return true;
 }
 
 // Para onde vamos quando o fade-out da transicao terminar
@@ -96,10 +105,12 @@ int main(void) {
     float volumeBgmAtual = 0.0f;
 
     Scene currentScene = SCENE_MENU; // o jogo comeca no menu
-    InitScene(currentScene);
-    TransitionStartFadeIn();         // fade-in suave ao abrir o jogo
-
     bool running = true;
+    if (!InitScene(currentScene)) {
+        TraceLog(LOG_ERROR, "Falha ao inicializar a cena inicial");
+        running = false;
+    }
+    TransitionStartFadeIn();         // fade-in suave ao abrir o jogo
 
     while (running && !WindowShouldClose()) {
         float dt = GetFrameTime();
