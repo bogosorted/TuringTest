@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-void InitIntroScene(void);
+bool InitIntroScene(void);
 void UpdateDrawIntroScene(void);
 void UnloadIntroScene(void);
 

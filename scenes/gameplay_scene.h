@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-void InitGameplayScene(void);
+bool InitGameplayScene(void);
 void UpdateDrawGameplayScene(void);
 void UnloadGameplayScene(void);
 bool GameplaySceneShouldClose(void);

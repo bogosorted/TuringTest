@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <math.h>
 #include "gameplay_scene.h"
 #include "selection_scene.h"
@@ -1301,7 +1302,7 @@ static const Color COR_NEGACAO_FUNDO    = { 138,  48,  50, 255 }; // vermelho es
 static const Color COR_NEGACAO_CLARO    = { 224, 108, 104, 255 }; // vermelho claro para texto sob fundo escuro
 
 // Declarada aqui porque o InitGameplayScene usa ela antes de ela aparecer no arquivo
-static void CarregarFichas(const char *caminho);
+static bool CarregarFichas(const char *caminho);
 
 
 
@@ -4131,9 +4132,7 @@ bool GameplaySceneShouldReturnToMenu(void) {
 // Faz o proximo InitGameplayScene recarregar as arvores (zera os "visited").
 // O LoadDialogTree aloca memoria, entao libera as arvores antigas antes.
 void GameplaySceneResetDialogues(void) {
-    if (g_treesLoaded) {
-        for (int i = 0; i < 3; i++) FreeDialogTree(&g_trees[i]);
-    }
+    for (int i = 0; i < 3; i++) FreeDialogTree(&g_trees[i]);
     g_treesLoaded = false;
     g_dialogLoaded = false;
     g_tree = NULL;
@@ -4330,7 +4329,7 @@ static Texture2D CriarSilhuetaBranca(const char *caminho) {
     return tex;
 }
 
-void InitGameplayScene(void) {
+bool InitGameplayScene(void) {
     g_shouldClose = false;
     g_irParaSelecao = false;
     g_avancarDia = false;
@@ -4398,15 +4397,28 @@ void InitGameplayScene(void) {
                 snprintf(n1->speaker, sizeof n1->speaker, "André");
                 snprintf(n1->text, sizeof n1->text, "Com certeza absoluta: coordeno o setor de RH há 10 anos! Nunca atuei com Suporte de TI.");
                 n1->is_leaf = true;
+            } else {
+                g_treesLoaded = false;
+                TraceLog(LOG_ERROR, "Falha ao alocar dialogo de treino");
+                return false;
             }
         } else {
             SortearLocaisDoDia(dia);
             SortearEvidenciasDoDia(dia);
-            LoadDialogTreeFromData(0, dia, &g_trees[0]);
-            LoadDialogTreeFromData(1, dia, &g_trees[1]);
-            LoadDialogTreeFromData(2, dia, &g_trees[2]);
+            bool ok0 = LoadDialogTreeFromData(0, dia, &g_trees[0]);
+            bool ok1 = LoadDialogTreeFromData(1, dia, &g_trees[1]);
+            bool ok2 = LoadDialogTreeFromData(2, dia, &g_trees[2]);
+            if (!ok0 || !ok1 || !ok2) {
+                for (int i = 0; i < 3; i++) FreeDialogTree(&g_trees[i]);
+                g_treesLoaded = false;
+                g_dialogLoaded = false;
+                g_tree = NULL;
+                TraceLog(LOG_ERROR, "Falha ao carregar arvores de dialogo do dia %d", dia);
+                return false;
+            }
         }
-        g_treesLoaded = true;
+        if (dia == 0) g_treesLoaded = (g_trees[1].nodes != NULL);
+        else g_treesLoaded = true;
     }
 
     const char *pathChar1 = g_cenaEhDia0
@@ -4673,7 +4685,10 @@ void InitGameplayScene(void) {
     SetTextureFilter(g_dicaApagado, TEXTURE_FILTER_POINT);
     g_dicaAberta = false;
 
-    CarregarFichas("assets/data/fichas_funcionarios.txt");
+    if (!CarregarFichas("assets/data/fichas_funcionarios.txt")) {
+        TraceLog(LOG_ERROR, "Falha ao carregar as fichas dos funcionarios");
+        return false;
+    }
     if (g_cenaEhDia0 && g_numFichas > 1) {
         Ficha *fa = &g_fichas[1];
         memset(fa, 0, sizeof *fa);
@@ -4704,96 +4719,196 @@ void InitGameplayScene(void) {
 
     // As marcacoes NAO sao zeradas aqui: sao as anotacoes da investigacao
     RayCanvasInit(g_interface.width, g_interface.height);
+    if (g_interface.id == 0 || g_ficha.id == 0) {
+        TraceLog(LOG_ERROR, "Falha ao carregar recursos essenciais do gameplay");
+        UnloadGameplayScene();
+        return false;
+    }
+    if (g_numFichas == 0) {
+        TraceLog(LOG_WARNING, "Nenhuma ficha valida foi carregada");
+    }
+    return true;
 }
 
 // ---------- Leitura do arquivo de fichas ----------
 
-// Troca letras acentuadas (UTF-8) pela versao sem acento: "Funcao"
-static void RemoverAcentos(char *dest, int tam, const char *src) {
-    static const char *TABELA = "AAAAAAACEEEEIIIIDNOOOOOxOUUUUYTsaaaaaaaceeeeiiiidnooooo/ouuuuyty";
+// Troca letras acentuadas (UTF-8) pela versao sem acento. Preserva Unicode valido nao mapeado.
+static bool RemoverAcentos(char *dest, int tam, const char *src) {
+    if (!dest || !src || tam <= 0) return false;
+    static const char TABELA[] = "AAAAAAACEEEEIIIIDNOOOOOxOUUUUYTsaaaaaaaceeeeiiiidnooooo/ouuuuyty";
+    dest[0] = '\0';
     int j = 0;
-    for (int i = 0; src[i] && j < tam - 1; i++) {
-        unsigned char c  = (unsigned char)src[i];
-        unsigned char c2 = (unsigned char)src[i + 1];
+    bool utf8Valido = true;
+    for (int i = 0; src[i] != '\0'; i++) {
+        unsigned char c = (unsigned char)src[i];
+        if (j >= tam - 1) break;
         if (c < 0x80) {
-            dest[j++] = (char)c;                      // letra normal
-        } else if (c == 0xC3 && c2 >= 0x80 && c2 <= 0xBF) {
-            dest[j++] = TABELA[c2 - 0x80];            // letra acentuada
-            i++;
+            dest[j++] = (char)c;
+        } else if (c == 0xC3 && (unsigned char)src[i + 1] >= 0x80 && (unsigned char)src[i + 1] <= 0xBF) {
+            unsigned char c2 = (unsigned char)src[++i];
+            dest[j++] = TABELA[c2 - 0x80];
+        } else if (c >= 0xC2 && c <= 0xDF) {
+            unsigned char c2 = (unsigned char)src[i + 1];
+            if (c2 >= 0x80 && c2 <= 0xBF && j <= tam - 3) {
+                dest[j++] = (char)c; dest[j++] = (char)c2; i++;
+            } else utf8Valido = false;
+        } else if (c >= 0xE0 && c <= 0xEF) {
+            unsigned char c2 = (unsigned char)src[i + 1], c3 = (unsigned char)src[i + 2];
+            if (c2 >= 0x80 && c2 <= 0xBF && c3 >= 0x80 && c3 <= 0xBF && j <= tam - 4) {
+                dest[j++] = (char)c; dest[j++] = (char)c2; dest[j++] = (char)c3; i += 2;
+            } else utf8Valido = false;
+        } else if (c >= 0xF0 && c <= 0xF4) {
+            unsigned char c2 = (unsigned char)src[i + 1], c3 = (unsigned char)src[i + 2], c4 = (unsigned char)src[i + 3];
+            if (c2 >= 0x80 && c2 <= 0xBF && c3 >= 0x80 && c3 <= 0xBF && c4 >= 0x80 && c4 <= 0xBF && j <= tam - 5) {
+                dest[j++] = (char)c; dest[j++] = (char)c2; dest[j++] = (char)c3; dest[j++] = (char)c4; i += 3;
+            } else utf8Valido = false;
+        } else {
+            utf8Valido = false;
         }
-        // outros caracteres especiais sao ignorados
     }
     dest[j] = '\0';
+    return utf8Valido;
 }
 
 // Copia tirando espacos do comeco e a quebra de linha do fim
-static void CopiarTexto(char *dest, int tam, const char *src) {
-    while (*src == ' ') src++;
-    snprintf(dest, tam, "%s", src);
-    int n = (int)strlen(dest);
-    while (n > 0 && (dest[n - 1] == '\n' || dest[n - 1] == '\r' || dest[n - 1] == ' ')) {
-        dest[--n] = '\0';
+static bool CopiarTexto(char *dest, int tam, const char *src) {
+    if (!dest || !src || tam <= 0) return false;
+    dest[0] = '\0';
+    while (*src == ' ' || *src == '\t') src++;
+    int n = snprintf(dest, (size_t)tam, "%s", src);
+    if (n < 0 || n >= tam) {
+        dest[tam - 1] = '\0';
     }
+    n = (int)strlen(dest);
+    while (n > 0 && (dest[n - 1] == '\n' || dest[n - 1] == '\r' || dest[n - 1] == ' ' || dest[n - 1] == '\t')) dest[--n] = '\0';
+    return true;
 }
 
 // Devolve o que vem depois do ':' ("Nome: Caio" -> " Caio")
-static const char *DepoisDosDoisPontos(const char *linha) {
+static bool DepoisDosDoisPontos(const char *linha, const char **valor) {
+    if (!linha || !valor) return false;
     const char *p = strchr(linha, ':');
-    return p ? p + 1 : linha;
+    *valor = p ? p + 1 : linha;
+    return p != NULL;
 }
 
 // Le o arquivo de fichas e preenche g_fichas
-static void CarregarFichas(const char *caminho) {
+static bool CarregarFichas(const char *caminho) {
     g_numFichas = 0;
-
+    memset(g_fichas, 0, sizeof g_fichas);
+    if (!caminho || caminho[0] == '\0') {
+        TraceLog(LOG_WARNING, "Caminho do arquivo de fichas invalido");
+        return false;
+    }
     FILE *arq = fopen(caminho, "r");
     if (!arq) {
         TraceLog(LOG_WARNING, "Nao foi possivel abrir %s", caminho);
-        return;
+        return false;
     }
 
     char bruta[256], linha[256];
     Ficha *f = NULL;
-    int nComp = 0;
+    int nComp = 0, linhaArquivo = 0, descartadas = 0;
+    bool sawNome = false, sawSetor = false, sawFuncao = false, sawPersonalidade = false, sawIA = false;
+    bool fichaInvalida = false;
 
     while (fgets(bruta, sizeof bruta, arq)) {
-        RemoverAcentos(linha, sizeof linha, bruta);
+        linhaArquivo++;
+        if (strlen(bruta) == sizeof bruta - 1 && bruta[sizeof bruta - 2] != '\n' &&
+            !feof(arq)) {
+            TraceLog(LOG_WARNING, "%s:%d linha longa descartada", caminho, linhaArquivo);
+            int ch;
+            while ((ch = fgetc(arq)) != '\n' && ch != EOF) {}
+            continue;
+        }
+
+        if (!RemoverAcentos(linha, sizeof linha, bruta)) {
+            TraceLog(LOG_WARNING, "%s:%d UTF-8 invalido", caminho, linhaArquivo);
+        }
 
         if (strncmp(linha, "Funcionario", 11) == 0) {
-            // Comeca uma ficha nova
-            if (g_numFichas >= MAX_FICHAS) break;
+            if (f != NULL) {
+                if (fichaInvalida || !sawNome || !sawSetor || !sawFuncao || !sawPersonalidade) {
+                    TraceLog(LOG_WARNING, "%s ficha incompleta perto da linha %d", caminho, linhaArquivo);
+                    g_numFichas--;
+                }
+            }
+            if (g_numFichas >= MAX_FICHAS) {
+                TraceLog(LOG_WARNING, "%s limite MAX_FICHAS=%d excedido na linha %d", caminho, MAX_FICHAS, linhaArquivo);
+                descartadas++;
+                f = NULL;
+                break;
+            }
             f = &g_fichas[g_numFichas++];
             memset(f, 0, sizeof *f);
             nComp = 0;
-        }
-        else if (f == NULL) {
-            continue;   // ignora o que vier antes do primeiro funcionario
-        }
-        else if (strncmp(linha, "Nome:", 5) == 0) {
-            CopiarTexto(f->nome, sizeof f->nome, DepoisDosDoisPontos(linha));
-        }
-        else if (strncmp(linha, "Setor:", 6) == 0) {
-            CopiarTexto(f->setor, sizeof f->setor, DepoisDosDoisPontos(linha));
-        }
-        else if (strncmp(linha, "Funcao:", 7) == 0) {
-            CopiarTexto(f->funcao, sizeof f->funcao, DepoisDosDoisPontos(linha));
-        }
-        else if (strncmp(linha, "Personalidade", 13) == 0) {
-            CopiarTexto(f->personalidade, sizeof f->personalidade, DepoisDosDoisPontos(linha));
-        }
-        else if (strncmp(linha, "IA:", 3) == 0) {
-            const char *v = DepoisDosDoisPontos(linha);
-            while (*v == ' ') v++;
-            f->ehIA = (*v == 'S' || *v == 's');
-        }
-        else if (linha[0] == '-' && nComp < MAX_COMPORTAMENTOS) {
-            CopiarTexto(f->comportamentos[nComp], sizeof f->comportamentos[0], linha + 1);
-            nComp++;
+            sawNome = sawSetor = sawFuncao = sawPersonalidade = sawIA = false;
+            fichaInvalida = false;
+        } else if (f == NULL) {
+            continue;
+        } else {
+            const char *valor = NULL;
+            bool duplicada = false;
+            if (strncmp(linha, "Nome:", 5) == 0) {
+                if (sawNome) duplicada = true; else sawNome = true;
+                DepoisDosDoisPontos(linha, &valor);
+                if (valor && !duplicada) CopiarTexto(f->nome, sizeof f->nome, valor);
+            } else if (strncmp(linha, "Setor:", 6) == 0) {
+                if (sawSetor) duplicada = true; else sawSetor = true;
+                DepoisDosDoisPontos(linha, &valor);
+                if (valor && !duplicada) CopiarTexto(f->setor, sizeof f->setor, valor);
+            } else if (strncmp(linha, "Funcao:", 7) == 0) {
+                if (sawFuncao) duplicada = true; else sawFuncao = true;
+                DepoisDosDoisPontos(linha, &valor);
+                if (valor && !duplicada) CopiarTexto(f->funcao, sizeof f->funcao, valor);
+            } else if (strncmp(linha, "Personalidade", 13) == 0) {
+                if (sawPersonalidade) duplicada = true; else sawPersonalidade = true;
+                DepoisDosDoisPontos(linha, &valor);
+                if (valor && !duplicada) CopiarTexto(f->personalidade, sizeof f->personalidade, valor);
+            } else if (strncmp(linha, "IA:", 3) == 0) {
+                if (sawIA) duplicada = true; else sawIA = true;
+                DepoisDosDoisPontos(linha, &valor);
+                if (valor) {
+                    while (*valor == ' ' || *valor == '\t') valor++;
+                    char normalized[16] = { 0 };
+                    CopiarTexto(normalized, sizeof normalized, valor);
+                    for (char *p = normalized; *p; p++) *p = (char)tolower((unsigned char)*p);
+                    if (!strcmp(normalized, "s") || !strcmp(normalized, "sim")) f->ehIA = true;
+                    else if (!strcmp(normalized, "n") || !strcmp(normalized, "nao") || !strcmp(normalized, "não")) f->ehIA = false;
+                    else {
+                        TraceLog(LOG_WARNING, "%s:%d valor IA invalido: %s", caminho, linhaArquivo, normalized);
+                        sawIA = false;
+                    }
+                }
+            } else if (linha[0] == '-' && nComp < MAX_COMPORTAMENTOS) {
+                CopiarTexto(f->comportamentos[nComp], sizeof f->comportamentos[0], linha + 1);
+                nComp++;
+            }
+            if (duplicada) {
+                TraceLog(LOG_WARNING, "%s:%d campo duplicado na ficha atual", caminho, linhaArquivo);
+                fichaInvalida = true;
+            }
+            if (strncmp(linha, "IA:", 3) == 0 && valor) {
+                char normalizedCheck[16] = { 0 };
+                while (*valor == ' ' || *valor == '\t') valor++;
+                CopiarTexto(normalizedCheck, sizeof normalizedCheck, valor);
+                for (char *p = normalizedCheck; *p; p++) *p = (char)tolower((unsigned char)*p);
+                if (strcmp(normalizedCheck, "s") && strcmp(normalizedCheck, "sim") &&
+                    strcmp(normalizedCheck, "n") && strcmp(normalizedCheck, "nao") && strcmp(normalizedCheck, "não")) {
+                    fichaInvalida = true;
+                }
+            }
         }
     }
 
+    if (f != NULL && (fichaInvalida || !sawNome || !sawSetor || !sawFuncao || !sawPersonalidade)) {
+        TraceLog(LOG_WARNING, "%s ficha incompleta no final do arquivo", caminho);
+        g_numFichas--;
+    }
     fclose(arq);
+    if (descartadas > 0) TraceLog(LOG_WARNING, "%s: %d registros descartados por MAX_FICHAS", caminho, descartadas);
     TraceLog(LOG_INFO, "Fichas carregadas: %d", g_numFichas);
+    return g_numFichas > 0;
 }
 
 // ---------- Texto ----------
@@ -7074,6 +7189,10 @@ void UpdateDrawGameplayScene(void) {
 void UnloadGameplayScene(void) {
     
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+    for (int i = 0; i < 3; i++) FreeDialogTree(&g_trees[i]);
+    g_treesLoaded = false;
+    g_dialogLoaded = false;
+    g_tree = NULL;
     for (int i = 0; i < NUM_LOCAIS; i++) UnloadTexture(g_fundos[i]);
     if (g_texGeladeiraAberta.id > 0) UnloadTexture(g_texGeladeiraAberta);
     if (g_texCrachaDestaque.id > 0)  UnloadTexture(g_texCrachaDestaque);
