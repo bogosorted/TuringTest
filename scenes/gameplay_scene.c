@@ -146,9 +146,9 @@ typedef struct {
     const char *fundo;     // foto do local (dithering na rampa original)
 } InfoLocal;
 
-#define FUNDO_ESCADA_TERREO "assets/sprites/locais/spr_background_escadaria_subsolo.png"
-#define FUNDO_ESCADA_MEIO   "assets/sprites/locais/spr_background_escadaria.png"
-#define FUNDO_ESCADA_ULTIMO "assets/sprites/locais/spr_background_escadaria_ultimo.png"
+#define FUNDO_ESCADA_SUBSOLO "assets/sprites/locais/spr_background_escadaria_subsolo.png" // reservado p/ final secreto no subsolo
+#define FUNDO_ESCADA_MEIO    "assets/sprites/locais/spr_background_escadaria.png"
+#define FUNDO_ESCADA_ULTIMO  "assets/sprites/locais/spr_background_escadaria_ultimo.png"
 static const InfoLocal LOCAIS[NUM_LOCAIS] = {
     { "SETOR ADM.",      "SETOR ADMINISTRATIVO",  "",                "assets/sprites/locais/terreo/spr_background_teste.png" },
     { "LANCHONETE",      "LANCHONETE DA RASEC",   "",                "assets/sprites/locais/terreo/spr_background_cantina.png" },
@@ -156,7 +156,7 @@ static const InfoLocal LOCAIS[NUM_LOCAIS] = {
     { "CONTABILIDADE",   "SETOR DE CONTABILIDADE", "Vazio",           "assets/sprites/locais/1_andar/spr_background_mesa_maria.png" },
     { "AUDITÓRIO",       "AUDITÓRIO",             "Vazio",           "assets/sprites/locais/2_andar/spr_background_sala_reuniao.png" },
     { "COPA",            "COPA DO 2º ANDAR",      "Vazio",           "assets/sprites/locais/2_andar/spr_background_geladeira_coffe.png" },
-    { "ESCADA",          "ESCADARIA - TÉRREO",    "Escadas",         FUNDO_ESCADA_TERREO },
+    { "ESCADA",          "ESCADARIA - TÉRREO",    "Escadas",         FUNDO_ESCADA_MEIO   },   // terreo: sobe p/ 1o andar; descer tenta ir ao subsolo
     { "ESCADA",          "ESCADARIA - 1º ANDAR",  "Escadas",         FUNDO_ESCADA_MEIO   },
     { "ESCADA",          "ESCADARIA - 2º ANDAR",  "Último andar",    FUNDO_ESCADA_ULTIMO },   // ultimo andar: so a escada para descer
 };
@@ -545,14 +545,6 @@ static const Vector2 POLY_ULTIMO_DESCER[6] = {
 static bool ObterLanceSubir(int local, Texture2D *outTex, Texture2D *outBranca,
                             Rectangle *outBbox, const Vector2 **outPoly, int *outVerts) {
     if (DestinoEscadaSubir(local) < 0) return false;
-    if (local == LOCAL_ESCADA_TERREO) {
-        if (outTex)    *outTex    = g_texTerreoSubir;
-        if (outBranca) *outBranca = g_texTerreoSubirBranca;
-        if (outBbox)   *outBbox   = TERREO_SUBIR_BBOX;
-        if (outPoly)   *outPoly   = POLY_TERREO_SUBIR;
-        if (outVerts)  *outVerts  = 5;
-        return true;
-    }
     if (outTex)    *outTex    = g_texEscadaSubir;
     if (outBranca) *outBranca = g_texEscadaSubirBranca;
     if (outBbox)   *outBbox   = ESCADA_SUBIR_BBOX;
@@ -565,11 +557,11 @@ static bool ObterLanceDescer(int local, Texture2D *outTex, Texture2D *outBranca,
                              Rectangle *outBbox, const Vector2 **outPoly, int *outVerts,
                              bool *outEhSubsoloBloqueado) {
     if (local == LOCAL_ESCADA_TERREO) {
-        if (outTex)                *outTex                = g_texTerreoSubsolo;
-        if (outBranca)             *outBranca             = g_texTerreoSubsoloBranca;
-        if (outBbox)               *outBbox               = TERREO_SUBSOLO_BBOX;
-        if (outPoly)               *outPoly               = POLY_TERREO_SUBSOLO;
-        if (outVerts)              *outVerts              = 4;
+        if (outTex)                *outTex                = g_texEscadaDescer;
+        if (outBranca)             *outBranca             = g_texEscadaDescerBranca;
+        if (outBbox)               *outBbox               = ESCADA_DESCER_BBOX;
+        if (outPoly)               *outPoly               = POLY_ESCADA_DESCER;
+        if (outVerts)              *outVerts              = 6;
         if (outEhSubsoloBloqueado) *outEhSubsoloBloqueado = true;
         return true;
     }
@@ -1111,6 +1103,82 @@ static FaceRigPose     g_poseTarget         = { 0 };
 static FaceRigPose     g_poseCurr           = { 0 };
 static float           g_rigTweenT          = 1.0f;
 static float           g_rigTalkTimer       = 0.0f;
+
+// Sistema de Retrato, Reacoes e Voz do Player (6 opcoes de aparencia + pronomes Ele/Dele ou Ela/Dela)
+static const FaceRigAnchors PLAYER_ANCHORS[GAME_NUM_PLAYERS] = {
+    // 0: Player 1
+    {
+        .browP  = { { 0.290f, 0.420f }, { 0.430f, 0.420f }, { 0.560f, 0.415f }, { 0.710f, 0.410f } },
+        .lidP   = { { 0.375f, 0.468f }, { 0.628f, 0.462f } },
+        .mouthP = { { 0.380f, 0.750f }, { 0.610f, 0.725f } },
+        .jawP   = { 0.490f, 0.900f }
+    },
+    // 1: Player 2
+    {
+        .browP  = { { 0.300f, 0.400f }, { 0.440f, 0.405f }, { 0.560f, 0.405f }, { 0.700f, 0.400f } },
+        .lidP   = { { 0.375f, 0.475f }, { 0.625f, 0.475f } },
+        .mouthP = { { 0.400f, 0.765f }, { 0.600f, 0.765f } },
+        .jawP   = { 0.500f, 0.920f }
+    },
+    // 2: Player 3
+    {
+        .browP  = { { 0.280f, 0.415f }, { 0.440f, 0.420f }, { 0.560f, 0.420f }, { 0.710f, 0.415f } },
+        .lidP   = { { 0.372f, 0.476f }, { 0.628f, 0.476f } },
+        .mouthP = { { 0.380f, 0.760f }, { 0.615f, 0.755f } },
+        .jawP   = { 0.500f, 0.910f }
+    },
+    // 3: Player 4
+    {
+        .browP  = { { 0.270f, 0.410f }, { 0.430f, 0.415f }, { 0.565f, 0.415f }, { 0.710f, 0.410f } },
+        .lidP   = { { 0.365f, 0.468f }, { 0.628f, 0.468f } },
+        .mouthP = { { 0.370f, 0.750f }, { 0.615f, 0.750f } },
+        .jawP   = { 0.495f, 0.910f }
+    },
+    // 4: Player 5
+    {
+        .browP  = { { 0.275f, 0.425f }, { 0.435f, 0.430f }, { 0.565f, 0.430f }, { 0.720f, 0.425f } },
+        .lidP   = { { 0.372f, 0.472f }, { 0.628f, 0.472f } },
+        .mouthP = { { 0.385f, 0.755f }, { 0.615f, 0.755f } },
+        .jawP   = { 0.500f, 0.915f }
+    },
+    // 5: Player 6
+    {
+        .browP  = { { 0.275f, 0.430f }, { 0.435f, 0.440f }, { 0.565f, 0.440f }, { 0.720f, 0.430f } },
+        .lidP   = { { 0.372f, 0.476f }, { 0.628f, 0.476f } },
+        .mouthP = { { 0.390f, 0.755f }, { 0.605f, 0.752f } },
+        .jawP   = { 0.500f, 0.910f }
+    }
+};
+static Texture2D       g_playerTextures[GAME_NUM_PLAYERS] = { 0 };
+static Sound           g_blipPlayerEle      = { 0 }; // Ele/Dele: voz grave
+static Sound           g_blipPlayerEla      = { 0 }; // Ela/Dela: voz suave e feminina
+static ExpressaoFacial g_exprPlayerAtual    = EXPR_NEUTRO;
+static FaceRigPose     g_posePlayerFrom     = { 0 };
+static FaceRigPose     g_posePlayerTarget   = { 0 };
+static FaceRigPose     g_posePlayerCurr     = { 0 };
+static float           g_playerTweenT       = 1.0f;
+static float           g_playerTalkTimer    = 0.0f;
+static float           g_playerPopAnim      = 0.0f;
+static const char     *g_rotuloTomPlayer    = NULL;
+static bool            g_falaPlayerPendente = false;
+static char            g_nextNodePendente[MAX_ID_LENGTH] = "";
+static char            g_textoFalaPlayerAtual[MAX_TEXT_LENGTH] = "";
+static float           g_pausaPosFalaPlayer = 0.0f;
+
+static void TocarBlipVozJogador(void) {
+    bool ehEla = (GameStateGetPlayerPronoun() == PRONOME_ELA);
+    Sound snd = ehEla ? g_blipPlayerEla : g_blipPlayerEle;
+    if (snd.frameCount == 0) snd = ehEla ? g_blipSounds[0] : g_blipSounds[1];
+    if (snd.frameCount > 0) {
+        float pitch = ehEla
+            ? (1.03f + ((float)GetRandomValue(-4, 5) / 100.0f))
+            : (0.84f + ((float)GetRandomValue(-3, 3) / 100.0f));
+        float vol = ehEla ? 0.44f : 0.56f;
+        SetSoundPitch(snd, pitch);
+        SetSoundVolume(snd, vol * SettingsGetSfxVolume());
+        PlaySound(snd);
+    }
+}
 static float           g_setaMenuAnim       = 0.0f;
 static float           g_setaMenuVel        = 0.0f;
 static bool            g_setaMenuHoverAnt   = false;
@@ -2205,6 +2273,186 @@ static void DesenharRetratoComRig(Texture2D tex, int suspeito, Rectangle charDes
     EndShaderMode();
 }
 
+static void SetExpressaoPlayer(ExpressaoFacial expr, const char *rotuloTom) {
+    if (expr < 0 || expr >= NUM_EXPRESSOES) expr = EXPR_NEUTRO;
+    g_rotuloTomPlayer = rotuloTom;
+    if (expr == g_exprPlayerAtual) return;
+    g_exprPlayerAtual  = expr;
+    g_posePlayerFrom   = g_posePlayerCurr;
+    g_posePlayerTarget = ObterPoseExpressao(expr);
+    g_playerTweenT     = 0.0f;
+}
+
+static bool TextoContemCi(const char *hay, const char *needle) {
+    if (!hay || !needle || !*needle) return false;
+    size_t nLen = strlen(needle);
+    for (const char *p = hay; *p; p++) {
+        size_t k = 0;
+        while (k < nLen && p[k]) {
+            unsigned char c1 = (unsigned char)p[k];
+            unsigned char c2 = (unsigned char)needle[k];
+            if (c1 >= 'A' && c1 <= 'Z') c1 = (unsigned char)(c1 + 32);
+            if (c2 >= 'A' && c2 <= 'Z') c2 = (unsigned char)(c2 + 32);
+            if (c1 != c2) break;
+            k++;
+        }
+        if (k == nLen) return true;
+    }
+    return false;
+}
+
+static ExpressaoFacial InferirExpressaoEscolhaJogador(const DialogTree *tree, const DialogChoice *ch, const char **outRotulo) {
+    const char *rot = "Neutro";
+    ExpressaoFacial expr = EXPR_NEUTRO;
+    if (!ch) {
+        if (outRotulo) *outRotulo = rot;
+        return expr;
+    }
+
+    VisaoJogador visao = VISAO_DUVIDA;
+    if (tree && tree->nodes && ch->next_node[0] != '\0') {
+        for (int n = 0; n < tree->node_count; n++) {
+            if (strcmp(tree->nodes[n].id, ch->next_node) == 0) {
+                visao = tree->nodes[n].visao_out;
+                break;
+            }
+        }
+    }
+
+    const char *t = ch->text;
+    if (ch->req_evidencia[0] != '\0') {
+        expr = EXPR_RAIVA;
+        rot  = "Confrontar";
+    } else if (visao == VISAO_CONFIANCA ||
+               TextoContemCi(t, "entendo") || TextoContemCi(t, "ajudar") || TextoContemCi(t, "tranquil") ||
+               TextoContemCi(t, "tudo bem") || TextoContemCi(t, "calma") || TextoContemCi(t, "obrigad") ||
+               TextoContemCi(t, "parab") || TextoContemCi(t, "bom dia") || TextoContemCi(t, "legal")) {
+        expr = EXPR_FELIZ;
+        rot  = "Amigavel";
+    } else if (visao == VISAO_PRESSAO ||
+               TextoContemCi(t, "ment") || TextoContemCi(t, "contrad") || TextoContemCi(t, "suspeit") ||
+               TextoContemCi(t, "estranh") || TextoContemCi(t, "errad") || TextoContemCi(t, "imposs") ||
+               TextoContemCi(t, "acus") || TextoContemCi(t, "escond") || TextoContemCi(t, "falso")) {
+        if (strchr(t, '!') != NULL || TextoContemCi(t, "ment") || TextoContemCi(t, "contrad")) {
+            expr = EXPR_RAIVA;
+            rot  = "Pressao";
+        } else {
+            expr = EXPR_DESPREZO;
+            rot  = "Desconfiado";
+        }
+    } else if (TextoContemCi(t, "sinto muito") || TextoContemCi(t, "dificil") || TextoContemCi(t, "difícil") ||
+               TextoContemCi(t, "cansad") || TextoContemCi(t, "pesado") || TextoContemCi(t, "pena")) {
+        expr = EXPR_TRISTE;
+        rot  = "Empatico";
+    } else if (strstr(t, "?!") != NULL || TextoContemCi(t, "como assim") || TextoContemCi(t, "serio?") ||
+               TextoContemCi(t, "sério?")) {
+        expr = EXPR_SURPRESA;
+        rot  = "Surpreso";
+    } else if (strchr(t, '?') != NULL) {
+        expr = EXPR_NEUTRO;
+        rot  = "Investigando";
+    }
+
+    if (outRotulo) *outRotulo = rot;
+    return expr;
+}
+
+static void DesenharMiniRetratoPlayer(void) {
+    int av = GameStateGetPlayerAvatar();
+    if (av < 0 || av >= GAME_NUM_PLAYERS) av = 0;
+    Texture2D tex = g_playerTextures[av];
+    if (tex.id == 0) return;
+
+    float dt = GetFrameTime();
+    if (dt > 0.05f) dt = 0.05f;
+
+    float alvoPop = g_falaPlayerPendente ? 1.0f : 0.0f;
+    g_playerPopAnim += (alvoPop - g_playerPopAnim) * fminf(1.0f, dt * 12.0f);
+
+    if (g_playerTweenT < 1.0f) {
+        g_playerTweenT += dt / 0.24f;
+        if (g_playerTweenT > 1.0f) g_playerTweenT = 1.0f;
+    }
+    float e = EaseBackRig(g_playerTweenT);
+    for (int i = 0; i < 9; i++) {
+        g_posePlayerCurr.d[i].x = g_posePlayerFrom.d[i].x + (g_posePlayerTarget.d[i].x - g_posePlayerFrom.d[i].x) * e;
+        g_posePlayerCurr.d[i].y = g_posePlayerFrom.d[i].y + (g_posePlayerTarget.d[i].y - g_posePlayerFrom.d[i].y) * e;
+    }
+
+    float tNow = (float)GetTime();
+    float cicloBlink = fmodf(tNow + 2.3f, 4.1f);
+    float blinkT = (cicloBlink < 0.17f) ? sinf((cicloBlink / 0.17f) * 3.14159265f) : 0.0f;
+
+    float talkJawAdd = 0.0f;
+    if (g_playerTalkTimer > 0.0f) {
+        g_playerTalkTimer -= dt;
+        if (g_playerTalkTimer < 0.0f) g_playerTalkTimer = 0.0f;
+        talkJawAdd = (0.5f + 0.5f * sinf(tNow * 24.0f)) * 0.013f;
+    }
+
+    // Mini-retrato compacto no canto inferior esquerdo da janela (54x62 base, expande levemente ao falar)
+    float wCard = 54.0f + 5.0f * g_playerPopAnim;
+    float hCard = 62.0f + 5.0f * g_playerPopAnim;
+    Rectangle cardVirt = {
+        JANELA_AREA.x + 5.0f,
+        JANELA_AREA.y + JANELA_AREA.height - hCard - 4.0f,
+        wCard,
+        hCard
+    };
+    Rectangle fotoVirt = { cardVirt.x + 2.0f, cardVirt.y + 2.0f, cardVirt.width - 4.0f, cardVirt.height - 14.0f };
+    Rectangle rCardTela = ParaTela(cardVirt);
+    Rectangle rFotoTela = ParaTela(fotoVirt);
+    float esc = rCardTela.height / cardVirt.height;
+
+    DrawRectangleRec(ParaTela((Rectangle){ cardVirt.x + 2.0f, cardVirt.y + 2.0f, cardVirt.width, cardVirt.height }), Fade(BLACK, 0.62f));
+    DrawRectangleRec(rCardTela, g_falaPlayerPendente ? (Color){ 44, 39, 41, 248 } : (Color){ 28, 25, 27, 236 });
+    DrawRectangleRec(rFotoTela, (Color){ 18, 16, 18, 255 });
+
+    Rectangle src = { 0, 0, (float)tex.width, (float)tex.height };
+    if (g_faceRigShader.id > 0) {
+        const FaceRigAnchors *anc = &PLAYER_ANCHORS[av];
+        Vector2 browD[4]  = { g_posePlayerCurr.d[0], g_posePlayerCurr.d[1], g_posePlayerCurr.d[2], g_posePlayerCurr.d[3] };
+        Vector2 lidD[2]   = { g_posePlayerCurr.d[4], g_posePlayerCurr.d[5] };
+        Vector2 mouthD[2] = {
+            { g_posePlayerCurr.d[6].x, g_posePlayerCurr.d[6].y + talkJawAdd * 0.42f },
+            { g_posePlayerCurr.d[7].x, g_posePlayerCurr.d[7].y + talkJawAdd * 0.42f }
+        };
+        Vector2 jawD      = { g_posePlayerCurr.d[8].x, g_posePlayerCurr.d[8].y + talkJawAdd };
+        Vector3 palCol    = (Vector3){ 125.0f / 255.0f, 112.0f / 255.0f, 113.0f / 255.0f };
+
+        BeginShaderMode(g_faceRigShader);
+        SetShaderValueV(g_faceRigShader, g_locBrowP,  anc->browP,  SHADER_UNIFORM_VEC2, 4);
+        SetShaderValueV(g_faceRigShader, g_locBrowD,  browD,       SHADER_UNIFORM_VEC2, 4);
+        SetShaderValueV(g_faceRigShader, g_locLidP,   anc->lidP,   SHADER_UNIFORM_VEC2, 2);
+        SetShaderValueV(g_faceRigShader, g_locLidD,   lidD,        SHADER_UNIFORM_VEC2, 2);
+        SetShaderValueV(g_faceRigShader, g_locMouthP, anc->mouthP, SHADER_UNIFORM_VEC2, 2);
+        SetShaderValueV(g_faceRigShader, g_locMouthD, mouthD,      SHADER_UNIFORM_VEC2, 2);
+        SetShaderValue (g_faceRigShader, g_locJawP,   &anc->jawP,  SHADER_UNIFORM_VEC2);
+        SetShaderValue (g_faceRigShader, g_locJawD,   &jawD,       SHADER_UNIFORM_VEC2);
+        SetShaderValue (g_faceRigShader, g_locBlink,  &blinkT,     SHADER_UNIFORM_FLOAT);
+        SetShaderValue (g_faceRigShader, g_locPalpebraCol, &palCol, SHADER_UNIFORM_VEC3);
+        DrawTexturePro(tex, src, rFotoTela, (Vector2){ 0, 0 }, 0.0f, WHITE);
+        EndShaderMode();
+    } else {
+        DrawTexturePro(tex, src, rFotoTela, (Vector2){ 0, 0 }, 0.0f, WHITE);
+    }
+
+    Color corBorda = g_falaPlayerPendente
+        ? (Color){ 255, 242, 230, 255 }
+        : (g_rotuloTomPlayer ? (Color){ 189, 181, 168, 255 } : (Color){ 125, 112, 113, 240 });
+    DrawRectangleLinesEx(rCardTela, (g_falaPlayerPendente ? 1.8f : 1.2f) * esc, corBorda);
+
+    const char *legenda = g_rotuloTomPlayer ? g_rotuloTomPlayer : GameStateGetPlayerName();
+    int tam = (int)(6.5f * esc);
+    if (tam < 1) tam = 1;
+    int tw = MeasureText(legenda, tam);
+    DrawText(legenda,
+             (int)(rCardTela.x + (rCardTela.width - tw) * 0.5f),
+             (int)(rFotoTela.y + rFotoTela.height + 1.5f * esc),
+             tam,
+             g_falaPlayerPendente ? (Color){ 255, 242, 230, 255 } : (Color){ 189, 181, 168, 245 });
+}
+
 // Desenha um texto centralizado dentro de uma area da imagem 640x360.
 // O tamanho da fonte acompanha o zoom da tela e encolhe se o texto nao couber.
 static void DrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, Color cor) {
@@ -3109,20 +3357,61 @@ static void AdicionarMensagemChat(int suspeito, const char *speaker, const char 
     snprintf(e->text, sizeof(e->text), "%s", text);
     e->is_player = is_player;
 
+    e->charsRevealed = 0;
+    e->isComplete = false;
+    g_typewriterCharTimer = 0.0f;
+    g_typewriterPauseTimer = is_player ? 0.02f : 0.06f;
+    g_typewriterLetterCount = 0;
     if (is_player) {
-        e->charsRevealed = (int)strlen(e->text);
-        e->isComplete = true;
+        g_playerTalkTimer = 0.16f;
     } else {
-        e->charsRevealed = 0;
-        e->isComplete = false;
-        g_typewriterCharTimer = 0.0f;
-        g_typewriterPauseTimer = 0.06f; // breve respiro inicial antes de falar
-        g_typewriterLetterCount = 0;
         g_rigTalkTimer = 0.15f;
     }
 
     hist->count++;
     hist->scrollOffset = 99999.0f; // auto-scroll para a mais recente
+}
+
+static void FinalizarTurnoFalaPlayer(void) {
+    if (!g_falaPlayerPendente) return;
+    g_falaPlayerPendente = false;
+    g_playerTalkTimer = 0.0f;
+
+    if (g_suspeitoAtual >= 0 && g_suspeitoAtual < 3) {
+        ChatHistory *hist = &g_chatHistories[g_suspeitoAtual];
+        if (hist->count > 0) {
+            ChatEntry *last = &hist->entries[hist->count - 1];
+            last->charsRevealed = (int)strlen(last->text);
+            last->isComplete = true;
+        }
+    }
+
+    if (!g_dialogLoaded || !g_tree || g_nextNodePendente[0] == '\0') {
+        g_nextNodePendente[0] = '\0';
+        return;
+    }
+
+    char alvoId[MAX_ID_LENGTH];
+    snprintf(alvoId, sizeof alvoId, "%s", g_nextNodePendente);
+    g_nextNodePendente[0] = '\0';
+
+    MakeChoiceById(g_tree, alvoId);
+    DialogNode *newNode = GetCurrentNode(g_tree);
+    if (newNode) {
+        if (strcmp(newNode->speaker, "Você") != 0) {
+            AdicionarMensagemChat(g_suspeitoAtual, newNode->speaker, newNode->text, false);
+            AtualizarExpressaoPorTexto(g_suspeitoAtual, newNode->id, newNode->text);
+        }
+        if (newNode->ev_desbloqueada[0] != '\0') {
+            RegistrarEvidenciaPorId(g_suspeitoAtual, newNode->ev_desbloqueada);
+        }
+        if (g_suspeitoAtual == 0 && g_tree->day == 3 && strcmp(newNode->id, "B.2.1") == 0) {
+            if (GameStateGetVisaoJogador(0) == VISAO_CONFIANCA &&
+                !GameStateGetViesUsado(0) && !GameStateGetInjecaoUsada(0)) {
+                RegistrarEvidenciaPorId(0, "EV-01");
+            }
+        }
+    }
 }
 
 static void AtualizarMonologoInterno(float dt) {
@@ -3139,10 +3428,8 @@ static void AtualizarMonologoInterno(float dt) {
             g_monologoChars += charLen;
             if (c != ' ' && c != '\n' && c != '"' && c != '.' && c != ',') {
                 g_monologoBlipCount++;
-                if ((g_monologoBlipCount % 2) == 0 && g_blipSounds[1].frameCount > 0) {
-                    SetSoundPitch(g_blipSounds[1], 0.78f + ((float)GetRandomValue(-2, 2) / 100.0f));
-                    SetSoundVolume(g_blipSounds[1], 0.28f * SettingsGetSfxVolume());
-                    PlaySound(g_blipSounds[1]);
+                if ((g_monologoBlipCount % 2) == 0) {
+                    TocarBlipVozJogador();
                 }
             }
         }
@@ -3159,28 +3446,47 @@ static void AtualizarTypewriter(float dt) {
     AtualizarMonologoInterno(dt);
     if (g_suspeitoAtual < 0 || g_suspeitoAtual >= 3) return;
     ChatHistory *hist = &g_chatHistories[g_suspeitoAtual];
-    if (hist->count == 0) return;
+    if (hist->count == 0) {
+        if (g_falaPlayerPendente) FinalizarTurnoFalaPlayer();
+        return;
+    }
 
     ChatEntry *entry = &hist->entries[hist->count - 1];
-    if (entry->isComplete) return;
+    if (entry->isComplete) {
+        if (g_falaPlayerPendente) {
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
+                FinalizarTurnoFalaPlayer();
+                return;
+            }
+            g_pausaPosFalaPlayer -= dt;
+            if (g_pausaPosFalaPlayer <= 0.0f) {
+                FinalizarTurnoFalaPlayer();
+            }
+        }
+        return;
+    }
 
     int totalLen = (int)strlen(entry->text);
+    bool ehPlayer = entry->is_player;
 
-    // Se o jogador clicar com o mouse ou apertar espaço/enter: conclui a digitação de imediato
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
         entry->charsRevealed = totalLen;
         entry->isComplete = true;
         g_rigTalkTimer = 0.0f;
+        g_playerTalkTimer = 0.0f;
+        if (ehPlayer && g_falaPlayerPendente) {
+            FinalizarTurnoFalaPlayer();
+        }
         return;
     }
 
     if (g_typewriterPauseTimer > 0.0f) {
         g_typewriterPauseTimer -= dt;
-        // Durante pausas (vírgula, ponto), o personagem não mexe a boca
-        g_rigTalkTimer = 0.0f;
+        if (ehPlayer) g_playerTalkTimer = 0.0f;
+        else          g_rigTalkTimer = 0.0f;
     } else {
         g_typewriterCharTimer += dt;
-        const float charSpeed = 0.026f; // ~38 caracteres por segundo (leitura ágil e natural)
+        const float charSpeed = ehPlayer ? 0.020f : 0.026f;
 
         while (g_typewriterCharTimer >= charSpeed && entry->charsRevealed < totalLen) {
             g_typewriterCharTimer -= charSpeed;
@@ -3189,51 +3495,49 @@ static void AtualizarTypewriter(float dt) {
             int charLen = GetUtf8CharLength(c);
             entry->charsRevealed += charLen;
 
-            // Animação suave da mandíbula enquanto fala
-            g_rigTalkTimer = 0.14f;
+            if (ehPlayer) g_playerTalkTimer = 0.14f;
+            else          g_rigTalkTimer    = 0.14f;
 
-            // Pausas de pontuação realistas estilo Undertale
             if (c == '.' || c == '!' || c == '?') {
                 if (entry->charsRevealed < totalLen && entry->text[entry->charsRevealed] == '.') {
-                    g_typewriterPauseTimer = 0.09f; // reticências (...)
+                    g_typewriterPauseTimer = ehPlayer ? 0.05f : 0.09f;
                 } else {
-                    g_typewriterPauseTimer = 0.32f; // pausa de fim de frase
+                    g_typewriterPauseTimer = ehPlayer ? 0.14f : 0.32f;
                 }
                 break;
             } else if (c == ',' || c == ';' || c == ':') {
-                g_typewriterPauseTimer = 0.16f; // vírgula / respiração
+                g_typewriterPauseTimer = ehPlayer ? 0.08f : 0.16f;
                 break;
             } else if (c == ' ' || c == '\n' || c == '\t' || c == '-' || c == '"' || c == '\'') {
                 // Espaços e caracteres mudos
             } else {
                 g_typewriterLetterCount++;
-                // Blip estilo Undertale com timbre e pitch proprios de cada NPC:
-                // 0 = Maria (delicada/suave), 1 = Arthur (grave/encorpado), 2 = Ana Lucia (rispida/seca)
                 if ((g_typewriterLetterCount % 2) == 0) {
-                    int s = g_suspeitoAtual;
-                    if (s >= 0 && s < 3 && g_blipSounds[s].frameCount > 0) {
-                        float basePitch = 1.0f;
-                        float rnd = 0.0f;
-                        float vol = 0.48f;
-                        if (s == 0) {
-                            // Maria: mais aguda, leve e delicada
-                            basePitch = 1.04f;
-                            rnd = ((float)GetRandomValue(-5, 6) / 100.0f);
-                            vol = 0.42f;
-                        } else if (s == 1) {
-                            // Arthur: voz masculina mais grossa e grave
-                            basePitch = 0.86f;
-                            rnd = ((float)GetRandomValue(-4, 4) / 100.0f);
-                            vol = 0.60f;
-                        } else {
-                            // Ana Lucia: tom firme, seco e rispido
-                            basePitch = 0.98f;
-                            rnd = ((float)GetRandomValue(-3, 4) / 100.0f);
-                            vol = 0.52f;
+                    if (ehPlayer) {
+                        TocarBlipVozJogador();
+                    } else {
+                        int s = g_suspeitoAtual;
+                        if (s >= 0 && s < 3 && g_blipSounds[s].frameCount > 0) {
+                            float basePitch = 1.0f;
+                            float rnd = 0.0f;
+                            float vol = 0.48f;
+                            if (s == 0) {
+                                basePitch = 1.04f;
+                                rnd = ((float)GetRandomValue(-5, 6) / 100.0f);
+                                vol = 0.42f;
+                            } else if (s == 1) {
+                                basePitch = 0.86f;
+                                rnd = ((float)GetRandomValue(-4, 4) / 100.0f);
+                                vol = 0.60f;
+                            } else {
+                                basePitch = 0.98f;
+                                rnd = ((float)GetRandomValue(-3, 4) / 100.0f);
+                                vol = 0.52f;
+                            }
+                            SetSoundPitch(g_blipSounds[s], basePitch + rnd);
+                            SetSoundVolume(g_blipSounds[s], vol * SettingsGetSfxVolume());
+                            PlaySound(g_blipSounds[s]);
                         }
-                        SetSoundPitch(g_blipSounds[s], basePitch + rnd);
-                        SetSoundVolume(g_blipSounds[s], vol * SettingsGetSfxVolume());
-                        PlaySound(g_blipSounds[s]);
                     }
                 }
             }
@@ -3243,6 +3547,7 @@ static void AtualizarTypewriter(float dt) {
             entry->charsRevealed = totalLen;
             entry->isComplete = true;
             g_rigTalkTimer = 0.0f;
+            g_playerTalkTimer = 0.0f;
         }
     }
 
@@ -3705,8 +4010,38 @@ static void DrawInterrogationTexts(void) {
     char headerEsq[64];
     const char **nomesSuspeitos = NOMES_SUSPEITOS;
     const char *nomeSuspeito = (g_suspeitoAtual >= 0 && g_suspeitoAtual < 3) ? nomesSuspeitos[g_suspeitoAtual] : node->speaker;
-    snprintf(headerEsq, sizeof(headerEsq), "INTERROGANDO: %s", nomeSuspeito);
-    DrawTextLeftAligned(headerEsq, (Vector2){ 12, 235 }, 10, lightTextColor);
+    if (g_falaPlayerPendente) {
+        snprintf(headerEsq, sizeof(headerEsq), "%s FALANDO (%s)",
+                 GameStateGetPlayerName(), g_rotuloTomPlayer ? g_rotuloTomPlayer : "Inspetor");
+    } else {
+        snprintf(headerEsq, sizeof(headerEsq), "INTERROGANDO: %s", nomeSuspeito);
+    }
+    DrawTextLeftAligned(headerEsq, (Vector2){ 12, 235 }, 10,
+                        g_falaPlayerPendente ? (Color){ 255, 242, 230, 255 } : lightTextColor);
+
+    if (g_falaPlayerPendente) {
+        Rectangle falaBox = { DIALOG_BOX_X, DIALOG_START_Y + 2, DIALOG_BOX_W, 74 };
+        DrawRectangleRec(ParaTela(falaBox), Fade((Color){ 36, 32, 34, 255 }, 0.94f));
+        DrawRectangleLinesEx(ParaTela(falaBox), 2.0f, (Color){ 255, 242, 230, 255 });
+
+        const char *txtVis = g_textoFalaPlayerAtual;
+        char parcial[MAX_TEXT_LENGTH];
+        if (g_suspeitoAtual >= 0 && g_suspeitoAtual < 3) {
+            ChatHistory *hist = &g_chatHistories[g_suspeitoAtual];
+            if (hist->count > 0 && hist->entries[hist->count - 1].is_player) {
+                ChatEntry *last = &hist->entries[hist->count - 1];
+                int nRev = last->isComplete ? (int)strlen(last->text) : last->charsRevealed;
+                if (nRev < 0) nRev = 0;
+                if (nRev > MAX_TEXT_LENGTH - 1) nRev = MAX_TEXT_LENGTH - 1;
+                memcpy(parcial, last->text, (size_t)nRev);
+                parcial[nRev] = '\0';
+                txtVis = parcial;
+            }
+        }
+        DrawChoiceTextInArea(txtVis, (Rectangle){ falaBox.x, falaBox.y + 4.0f, falaBox.width, 52.0f }, 10, (Color){ 255, 242, 230, 255 });
+        DrawTextInArea("(Clique para avançar)", (Rectangle){ falaBox.x, falaBox.y + 56.0f, falaBox.width, 14.0f }, 8, lightTextColor);
+        return;
+    }
 
     // 3) Botões de respostas do jogador no Quadrante 2 (Inferior Esquerdo - OPCOES_AREA)
     bool chatBloq = (g_suspeitoAtual >= 0 && g_suspeitoAtual < 3 && g_chatBloqueado[g_suspeitoAtual]);
@@ -3735,6 +4070,15 @@ static void DrawInterrogationTexts(void) {
             DrawChoiceTextInArea(active_choices[i].text, choiceArea, (active_count >= 3) ? 9 : 10, textColor);
         }
         exitY = startY + (active_count * btnStep);
+    }
+
+    // Preview da reacao facial do Player ao passar o mouse nas opcoes de dialogo!
+    if (currentChoiceHover >= 0 && currentChoiceHover < active_count) {
+        const char *rotHov = NULL;
+        ExpressaoFacial exHov = InferirExpressaoEscolhaJogador(g_tree, &active_choices[currentChoiceHover], &rotHov);
+        SetExpressaoPlayer(exHov, rotHov);
+    } else if (!g_falaPlayerPendente) {
+        SetExpressaoPlayer(EXPR_NEUTRO, NULL);
     }
 
     Rectangle exitArea = { DIALOG_BOX_X, exitY, DIALOG_BOX_W, btnH };
@@ -3833,6 +4177,7 @@ void GameplaySceneResetDialogues(void) {
 // "funcao", so da para ver UM entre "descanso" e "eficiente"), entao "nao ha
 // mais escolhas" e o que significa "ver todos os dialogos" na pratica.
 bool GameplaySceneDayFinished(void) {
+    if (g_falaPlayerPendente) return false;
     if (!HasTokens()) return true;
 
     if (!g_treesLoaded) return false;
@@ -3917,6 +4262,52 @@ static Sound CriarBlipVozSuspeito(int suspeito) {
     Sound snd = LoadSoundFromWave(w);
     UnloadWave(w);
     return snd;
+}
+
+// Sintetiza as 2 vozes dedicadas do Player: Ele/Dele (grave e encorpada) e Ela/Dela (suave e feminina)
+static Sound CriarBlipVozJogador(PronomeJogador pronome) {
+    const int sr = 44100;
+    float dur = (pronome == PRONOME_ELA) ? 0.044f : 0.050f;
+    int nFrames = (int)(sr * dur);
+    short *pcm = (short *)MemAlloc((unsigned int)nFrames * sizeof(short));
+    if (!pcm) return (Sound){ 0 };
+
+    float fase = 0.0f;
+    for (int i = 0; i < nFrames; i++) {
+        float t = (float)i / (float)nFrames;
+        float val = 0.0f, env = 1.0f;
+        if (pronome == PRONOME_ELA) {
+            // Ela/Dela: timbre feminino aveludado, suave e acolhedor (~348 Hz)
+            float freq = 348.0f + 10.0f * (1.0f - t);
+            fase += (2.0f * 3.14159265f * freq) / (float)sr;
+            val = 0.86f * sinf(fase) + 0.14f * sinf(fase * 2.0f);
+            float atk = fminf(1.0f, t / 0.18f);
+            float dec = powf(1.0f - t, 1.50f);
+            env = atk * dec * 0.44f;
+        } else {
+            // Ele/Dele: timbre masculino grave e firme (~116 Hz)
+            float freq = 116.0f - 6.0f * t;
+            fase += (2.0f * 3.14159265f * freq) / (float)sr;
+            val = 0.54f * sinf(fase) + 0.32f * sinf(fase * 2.0f) + 0.14f * sinf(fase * 3.0f);
+            float atk = fminf(1.0f, t / 0.12f);
+            float dec = powf(1.0f - t, 1.20f);
+            env = atk * dec * 0.54f;
+        }
+        int sample = (int)(val * env * 32767.0f);
+        if (sample >  32767) sample =  32767;
+        if (sample < -32768) sample = -32768;
+        pcm[i] = (short)sample;
+    }
+
+    Wave w = { 0 };
+    w.frameCount = (unsigned int)nFrames;
+    w.sampleRate = (unsigned int)sr;
+    w.sampleSize = 16;
+    w.channels   = 1;
+    w.data       = pcm;
+    Sound s = LoadSoundFromWave(w);
+    UnloadWave(w);
+    return s;
 }
 
 static Texture2D CriarSilhuetaBranca(const char *caminho) {
@@ -4060,6 +4451,30 @@ void InitGameplayScene(void) {
     g_blipSounds[0] = CriarBlipVozSuspeito(0);
     g_blipSounds[1] = CriarBlipVozSuspeito(1);
     g_blipSounds[2] = CriarBlipVozSuspeito(2);
+    g_blipPlayerEle = CriarBlipVozJogador(PRONOME_ELE);
+    g_blipPlayerEla = CriarBlipVozJogador(PRONOME_ELA);
+    for (int p = 0; p < GAME_NUM_PLAYERS; p++) {
+        char pPath[96];
+        snprintf(pPath, sizeof pPath, "assets/sprites/players/player_%d.png", p + 1);
+        if (FileExists(pPath)) {
+            g_playerTextures[p] = LoadTexture(pPath);
+            SetTextureFilter(g_playerTextures[p], TEXTURE_FILTER_POINT);
+        } else {
+            g_playerTextures[p] = (Texture2D){ 0 };
+        }
+    }
+    memset(&g_posePlayerFrom, 0, sizeof g_posePlayerFrom);
+    memset(&g_posePlayerTarget, 0, sizeof g_posePlayerTarget);
+    memset(&g_posePlayerCurr, 0, sizeof g_posePlayerCurr);
+    g_exprPlayerAtual    = EXPR_NEUTRO;
+    g_playerTweenT       = 1.0f;
+    g_playerTalkTimer    = 0.0f;
+    g_playerPopAnim      = 0.0f;
+    g_rotuloTomPlayer    = NULL;
+    g_falaPlayerPendente = false;
+    g_nextNodePendente[0] = '\0';
+    g_textoFalaPlayerAtual[0] = '\0';
+    g_pausaPosFalaPlayer = 0.0f;
     if (FileExists("assets/audio/sfx_hover.wav")) {
         g_sndHover = LoadSound("assets/audio/sfx_hover.wav");
     }
@@ -5677,6 +6092,13 @@ static void UpdateGameplay(void) {
     }
 
     if (g_dialogLoaded) {
+        if (g_falaPlayerPendente) {
+            if (CheckCollisionPointRec(mouse, ParaTela(OPCOES_AREA))) {
+                hover = true;
+            }
+            SetMouseCursor(hover ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+            return;
+        }
         DialogNode *node = GetCurrentNode(g_tree);
         if (node) {
             // Mesma lista que o desenho usa (ver DrawInterrogationTexts)
@@ -5701,30 +6123,18 @@ static void UpdateGameplay(void) {
                                 AdicionarMensagemChat(g_suspeitoAtual, node->speaker, node->text, false);
                             }
 
-                            // Registra a fala/pergunta do jogador
+                            // Ativa a reacao facial correspondente ao tom da pergunta e inicia o turno de fala do Player (~1s)
+                            const char *rotEscolhido = NULL;
+                            ExpressaoFacial exEscolhida = InferirExpressaoEscolhaJogador(g_tree, &active_choices[i], &rotEscolhido);
+                            SetExpressaoPlayer(exEscolhida, rotEscolhido);
+                            g_playerPopAnim = 1.0f;
+
+                            snprintf(g_textoFalaPlayerAtual, sizeof g_textoFalaPlayerAtual, "%s", active_choices[i].text);
+                            snprintf(g_nextNodePendente, sizeof g_nextNodePendente, "%s", active_choices[i].next_node);
+                            g_falaPlayerPendente = true;
+                            g_pausaPosFalaPlayer = 0.36f;
+
                             AdicionarMensagemChat(g_suspeitoAtual, "Você", active_choices[i].text, true);
-
-                            // Transiciona para o nó escolhido
-                            MakeChoiceById(g_tree, active_choices[i].next_node);
-
-                            // Registra a resposta do NPC e eventuais evidencias vistas no dialogo
-                            DialogNode *newNode = GetCurrentNode(g_tree);
-                            if (newNode) {
-                                if (strcmp(newNode->speaker, "Você") != 0) {
-                                    AdicionarMensagemChat(g_suspeitoAtual, newNode->speaker, newNode->text, false);
-                                    AtualizarExpressaoPorTexto(g_suspeitoAtual, newNode->id, newNode->text);
-                                }
-                                if (newNode->ev_desbloqueada[0] != '\0') {
-                                    RegistrarEvidenciaPorId(g_suspeitoAtual, newNode->ev_desbloqueada);
-                                }
-                                // Condicao especial de Maria D3 EV-01: apenas dialogos de confianca e sem usar vies nem injecao
-                                if (g_suspeitoAtual == 0 && g_tree->day == 3 && strcmp(newNode->id, "B.2.1") == 0) {
-                                    if (GameStateGetVisaoJogador(0) == VISAO_CONFIANCA &&
-                                        !GameStateGetViesUsado(0) && !GameStateGetInjecaoUsada(0)) {
-                                        RegistrarEvidenciaPorId(0, "EV-01");
-                                    }
-                                }
-                            }
                             return;
                         }
                     }
@@ -6002,6 +6412,7 @@ static void ProcessarTeclaEsc(void) {
         return;
     }
     if (g_dialogLoaded) {
+        if (g_falaPlayerPendente) FinalizarTurnoFalaPlayer();
         g_dialogLoaded = false;
         g_tree = NULL;
         FecharJanelasFerramentas();
@@ -6273,6 +6684,7 @@ void UpdateDrawGameplayScene(void) {
             };
             DesenharRetratoComRig(tex, g_suspeitoAtual, charDest);
         }
+        DesenharMiniRetratoPlayer();
     } else if (g_closeupAtual != CLOSEUP_NENHUM) {
         Vector2 mouseTela = RayCanvasGetMousePosition();
         Vector2 pJanela = MouseNaJanela(mouseTela);
@@ -6747,6 +7159,14 @@ void UnloadGameplayScene(void) {
         if (g_dfRetina[i].id > 0) UnloadTexture(g_dfRetina[i]);
         if (g_dfDigital[i].id > 0) UnloadTexture(g_dfDigital[i]);
     }
+    for (int p = 0; p < GAME_NUM_PLAYERS; p++) {
+        if (g_playerTextures[p].id > 0) {
+            UnloadTexture(g_playerTextures[p]);
+            g_playerTextures[p] = (Texture2D){ 0 };
+        }
+    }
+    if (g_blipPlayerEle.frameCount > 0) { UnloadSound(g_blipPlayerEle); g_blipPlayerEle = (Sound){ 0 }; }
+    if (g_blipPlayerEla.frameCount > 0) { UnloadSound(g_blipPlayerEla); g_blipPlayerEla = (Sound){ 0 }; }
     UnloadTexture(g_ditherTile);
     if (g_sndHover.frameCount > 0) {
         UnloadSound(g_sndHover);

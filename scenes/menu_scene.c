@@ -65,6 +65,12 @@ static float g_rankingAnim       = 0.0f;
 static bool  g_nomeAberto        = false;
 static float g_nomeAnim          = 0.0f;
 static char  g_nomeInput[9]      = "";
+static int   g_playerAvatarSel   = 0;
+static PronomeJogador g_playerPronomeSel = PRONOME_ELA;
+static bool  g_pronomeManual     = false;
+static Texture2D g_playerMiniTex[GAME_NUM_PLAYERS] = { 0 };
+static int   g_hoverAvatarAnt    = -1;
+static int   g_hoverPronomeAnt   = -1;
 static bool  g_voltarHoverAnt    = false;  // mouse estava no botao Voltar no frame anterior
 static bool  g_iniciarHoverAnt   = false;
 static bool  g_esperarSoltarMouse = false; // ignora os botoes do menu ate soltar o clique que abriu/fechou as opcoes
@@ -75,6 +81,11 @@ static void OnClickPlay(void) {
     TraceLog(LOG_INFO, "Botao JOGAR clicado!");
     g_nomeAberto = true;
     g_nomeInput[0] = '\0';
+    g_playerAvatarSel = GameStateGetPlayerAvatar();
+    g_playerPronomeSel = GameStateGetPlayerPronoun();
+    g_pronomeManual = false;
+    g_hoverAvatarAnt = -1;
+    g_hoverPronomeAnt = -1;
     g_voltarHoverAnt = false;
     g_iniciarHoverAnt = false;
     g_esperarSoltarMouse = true;
@@ -401,6 +412,15 @@ void InitMenuScene(void) {
         g_jiggleTempo[i] = 0.0f;
     }
 
+    for (int i = 0; i < GAME_NUM_PLAYERS; i++) {
+        char pPath[96];
+        snprintf(pPath, sizeof pPath, "assets/sprites/players/player_%d.png", i + 1);
+        if (FileExists(pPath)) {
+            g_playerMiniTex[i] = LoadTexture(pPath);
+            SetTextureFilter(g_playerMiniTex[i], TEXTURE_FILTER_POINT);
+        }
+    }
+
     MuralInit();
 }
 
@@ -682,6 +702,7 @@ static void UpdateDrawNome(void) {
 
     float a = g_nomeAnim;
     bool interativo = g_nomeAberto && a > 0.5f && !RayCanvasInputBlocked();
+    Vector2 mv = MouseVirtual();
 
     if (g_nomeAberto && IsKeyPressed(KEY_ESCAPE)) {
         FecharNome();
@@ -704,6 +725,8 @@ static void UpdateDrawNome(void) {
         }
         if (IsKeyPressed(KEY_ENTER) && g_nomeInput[0] != '\0') {
             GameStateSetPlayerName(g_nomeInput);
+            GameStateSetPlayerAvatar(g_playerAvatarSel);
+            GameStateSetPlayerPronoun(g_playerPronomeSel);
             g_shouldStartGame = true;
             return;
         }
@@ -712,14 +735,16 @@ static void UpdateDrawNome(void) {
     Color bege  = Fade((Color){ 189, 181, 168, 255 }, a);
     Color claro = Fade((Color){ 255, 242, 230, 255 }, a);
     Color medio = Fade((Color){ 125, 112, 113, 255 }, a);
+    Color escuro = Fade((Color){ 18, 16, 18, 255 }, a);
 
-    TextoOpcoes("IDENTIFICAÇÃO", OPC_LABEL_X, 128.0f, 28.0f, bege);
-    TextoOpcoes("Digite seu nome (até 8 letras):", OPC_LABEL_X, 156.0f, 18.0f, bege);
+    TextoOpcoes("IDENTIFICAÇÃO", OPC_LABEL_X, 120.0f, 26.0f, bege);
+    TextoOpcoes("Nome (até 8 letras):", OPC_LABEL_X, 144.0f, 16.0f, bege);
 
-    Rectangle caixa = { OPC_LABEL_X, 174.0f, 250.0f, 34.0f };
+    Rectangle caixa = { OPC_LABEL_X, 155.0f, 200.0f, 30.0f };
     Rectangle rCaixa = ParaTela(caixa);
-    DrawRectangleRec(rCaixa, Fade((Color){ 18, 16, 18, 255 }, a));
-    DrawRectangleLinesEx(rCaixa, 2.0f * (rCaixa.height / caixa.height), medio);
+    float esc = rCaixa.height / caixa.height;
+    DrawRectangleRec(rCaixa, escuro);
+    DrawRectangleLinesEx(rCaixa, 2.0f * esc, medio);
 
     bool cursorVis = ((int)(GetTime() * 2.2) % 2) == 0;
     char exib[16];
@@ -728,33 +753,108 @@ static void UpdateDrawNome(void) {
     } else {
         snprintf(exib, sizeof exib, "%s%s", g_nomeInput, (cursorVis && strlen(g_nomeInput) < 8) ? "_" : "");
     }
-    TextoOpcoes(exib, OPC_LABEL_X + 10.0f, 191.0f, 24.0f, claro);
+    TextoOpcoes(exib, OPC_LABEL_X + 8.0f, 170.0f, 22.0f, claro);
+
+    // Selecao de Pronomes / Voz (Ele/Dele = voz grave; Ela/Dela = voz suave/feminina)
+    TextoOpcoes("Pronomes / Voz:", OPC_LABEL_X, 198.0f, 16.0f, bege);
+    const char *lblPron[2] = { "Ele / Dele", "Ela / Dela" };
+    int hovPronAtual = -1;
+    for (int p = 0; p < 2; p++) {
+        Rectangle rPr = { OPC_LABEL_X + p * 104.0f, 209.0f, 96.0f, 22.0f };
+        bool selPr = ((int)g_playerPronomeSel == p);
+        bool hovPr = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, rPr);
+        if (hovPr) hovPronAtual = p;
+        Rectangle rPrTela = ParaTela(rPr);
+        Color fundoPr = selPr ? Fade((Color){ 189, 181, 168, 255 }, a)
+                      : hovPr ? Fade((Color){ 90, 83, 83, 255 }, a)
+                              : Fade((Color){ 28, 25, 27, 255 }, a);
+        Color bordaPr = (selPr || hovPr) ? claro : medio;
+        Color txtPr   = selPr ? Fade((Color){ 24, 21, 23, 255 }, a) : claro;
+        DrawRectangleRec(rPrTela, fundoPr);
+        DrawRectangleLinesEx(rPrTela, (selPr ? 2.0f : 1.4f) * esc, bordaPr);
+        TextoOpcoes(lblPron[p], rPr.x + 12.0f, rPr.y + rPr.height * 0.5f, 16.0f, txtPr);
+
+        if (hovPr && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            g_playerPronomeSel = (p == 1) ? PRONOME_ELA : PRONOME_ELE;
+            g_pronomeManual = true;
+            TocarSomHover();
+        }
+    }
+    if (hovPronAtual >= 0 && hovPronAtual != g_hoverPronomeAnt) TocarSomHover();
+    g_hoverPronomeAnt = hovPronAtual;
+
+    // Grade 3x2 a direita com os 6 retratos do Player
+    TextoOpcoes("Retrato do Inspetor:", 456.0f, 144.0f, 16.0f, bege);
+    const float cardS = 52.0f;
+    const float gapS  = 6.0f;
+    int hovAvatarAtual = -1;
+    // Sugestao padrao caso nao tenha clicado manualmente no pronome: Players 1,3,4 -> Ela; 2,5,6 -> Ele
+    static const PronomeJogador PRON_SUGERIDO[GAME_NUM_PLAYERS] = {
+        PRONOME_ELA, PRONOME_ELE, PRONOME_ELA, PRONOME_ELA, PRONOME_ELE, PRONOME_ELE
+    };
+    for (int k = 0; k < GAME_NUM_PLAYERS; k++) {
+        int col = k % 3;
+        int row = k / 3;
+        Rectangle rAv = { 456.0f + col * (cardS + gapS), 156.0f + row * (cardS + gapS), cardS, cardS };
+        bool selAv = (g_playerAvatarSel == k);
+        bool hovAv = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, rAv);
+        if (hovAv) hovAvatarAtual = k;
+
+        Rectangle rAvTela = ParaTela(rAv);
+        DrawRectangleRec(ParaTela((Rectangle){ rAv.x + 2.0f, rAv.y + 2.0f, rAv.width, rAv.height }), Fade(BLACK, 0.5f * a));
+        DrawRectangleRec(rAvTela, selAv ? Fade((Color){ 64, 58, 60, 255 }, a) : Fade((Color){ 24, 21, 23, 255 }, a));
+        if (g_playerMiniTex[k].id > 0) {
+            Rectangle srcP = { 0, 0, (float)g_playerMiniTex[k].width, (float)g_playerMiniTex[k].height };
+            Rectangle dstP = ParaTela((Rectangle){ rAv.x + 2.0f, rAv.y + 2.0f, rAv.width - 4.0f, rAv.height - 4.0f });
+            DrawTexturePro(g_playerMiniTex[k], srcP, dstP, (Vector2){ 0, 0 }, 0.0f, Fade(WHITE, selAv ? a : a * 0.78f));
+        }
+        DrawRectangleLinesEx(rAvTela, (selAv ? 2.4f : (hovAv ? 1.8f : 1.2f)) * esc,
+                             selAv ? claro : (hovAv ? bege : medio));
+
+        if (hovAv && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            g_playerAvatarSel = k;
+            if (!g_pronomeManual) {
+                g_playerPronomeSel = PRON_SUGERIDO[k];
+            }
+            TocarSomHover();
+        }
+    }
+    if (hovAvatarAtual >= 0 && hovAvatarAtual != g_hoverAvatarAnt) TocarSomHover();
+    g_hoverAvatarAnt = hovAvatarAtual;
+
+    TextoOpcoes((g_playerPronomeSel == PRONOME_ELA) ? "Voz: Suave (Ela/Dela)" : "Voz: Grave (Ele/Dele)",
+                456.0f, 282.0f, 15.0f, bege);
 
     bool podeIniciar = (g_nomeInput[0] != '\0');
     float bw = (float)g_botao.width * BOTAO_ESCALA;
     float bh = (float)g_botao.height * BOTAO_ESCALA;
-    Rectangle hitIniciar = { BOTAO_X, 224.0f, bw - 22.0f, bh };
-    Rectangle hitVoltar  = { BOTAO_X, OPC_Y_VOLTAR, bw - 22.0f, bh };
-    bool hoverIniciar = interativo && podeIniciar && !g_esperarSoltarMouse && CheckCollisionPointRec(MouseVirtual(), hitIniciar);
-    bool hoverVoltar  = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(MouseVirtual(), hitVoltar);
+    const float yIniciar = 240.0f;
+    const float yVoltar  = 292.0f;
+    Rectangle hitIniciar = { BOTAO_X, yIniciar, bw - 22.0f, bh };
+    Rectangle hitVoltar  = { BOTAO_X, yVoltar,  bw - 22.0f, bh };
+    bool hoverIniciar = interativo && podeIniciar && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, hitIniciar);
+    bool hoverVoltar  = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, hitVoltar);
 
     if (hoverIniciar && !g_iniciarHoverAnt) TocarSomHover();
     if (hoverVoltar && !g_voltarHoverAnt) TocarSomHover();
     g_iniciarHoverAnt = hoverIniciar;
     g_voltarHoverAnt  = hoverVoltar;
 
-    DesenharBotaoPainel("Iniciar", BOTAO_X, 224.0f, podeIniciar ? a : a * 0.45f, hoverIniciar);
-    DesenharBotaoPainel("Voltar", BOTAO_X, OPC_Y_VOLTAR, a, hoverVoltar);
+    DesenharBotaoPainel("Iniciar", BOTAO_X, yIniciar, podeIniciar ? a : a * 0.45f, hoverIniciar);
+    DesenharBotaoPainel("Voltar", BOTAO_X, yVoltar, a, hoverVoltar);
 
     if (hoverIniciar && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         GameStateSetPlayerName(g_nomeInput);
+        GameStateSetPlayerAvatar(g_playerAvatarSel);
+        GameStateSetPlayerPronoun(g_playerPronomeSel);
         g_shouldStartGame = true;
     } else if (hoverVoltar && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         FecharNome();
     }
 
     if (g_nomeAberto) {
-        SetMouseCursor((hoverIniciar || hoverVoltar) ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+        bool algumHov = hoverIniciar || hoverVoltar || (hovPronAtual >= 0) || (hovAvatarAtual >= 0);
+        SetMouseCursor(algumHov ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
     }
 }
 
@@ -792,6 +892,12 @@ void UnloadMenuScene(void) {
     if (g_sndHover.frameCount > 0) {
         UnloadSound(g_sndHover);
         g_sndHover = (Sound){ 0 };
+    }
+    for (int i = 0; i < GAME_NUM_PLAYERS; i++) {
+        if (g_playerMiniTex[i].id > 0) {
+            UnloadTexture(g_playerMiniTex[i]);
+            g_playerMiniTex[i] = (Texture2D){ 0 };
+        }
     }
     MuralUnload();
     RayCanvasClose();

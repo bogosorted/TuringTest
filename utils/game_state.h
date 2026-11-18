@@ -7,6 +7,12 @@
 #define GAME_NUM_DAYS 3
 #define GAME_NUM_SUSPECTS 3
 #define GAME_MAX_EVIDENCIAS 16
+#define GAME_NUM_PLAYERS 6
+
+typedef enum {
+    PRONOME_ELE = 0,
+    PRONOME_ELA = 1
+} PronomeJogador;
 
 // Visao individual de cada personagem quanto ao jogador
 typedef enum {
@@ -45,10 +51,14 @@ void GameStateSetInjecaoUsada(int suspeito, bool usada);
 bool GameStateGetInjecaoUsada(int suspeito);
 int  GameStateCountSpecialToolsUsed(void);
 
-// Nome do jogador (ate 8 letras) e estatisticas de pontuacao da run
-void        GameStateSetPlayerName(const char *name);
-const char *GameStateGetPlayerName(void);
-void        GameStateAddRemainingTokens(int tokens);
+// Nome, retrato (0..5) e pronomes do jogador, alem das estatisticas de pontuacao da run
+void           GameStateSetPlayerName(const char *name);
+const char    *GameStateGetPlayerName(void);
+void           GameStateSetPlayerAvatar(int avatarIdx);
+int            GameStateGetPlayerAvatar(void);
+void           GameStateSetPlayerPronoun(PronomeJogador pronome);
+PronomeJogador GameStateGetPlayerPronoun(void);
+void           GameStateAddRemainingTokens(int tokens);
 int         GameStateGetRemainingTokensTotal(void);
 void        GameStateRegisterHintUsed(void);
 int         GameStateGetUnusedHintsCount(void);
