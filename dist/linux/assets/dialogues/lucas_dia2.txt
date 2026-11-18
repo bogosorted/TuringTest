@@ -1,0 +1,76 @@
+NPC: lucas
+DIA: 2
+
+[NODE: start]
+SPEAKER: Ana Lucia
+TEXT: Estagiario.
+CHOICE: Boa tarde. Dormiu bem, lucia? -> A
+CHOICE: Boa tarde. Desculpe por ontem. -> B
+
+[NODE: A]
+SPEAKER: Ana Lucia
+TEXT: Lucia... amo que me chamem pelo sobrenome, como soube?
+CHOICE: Ah, eu nem percebi. Desculpa, não queria forçar intimidade. -> A.1
+CHOICE: Ah, desculpa, eu nem percebi. Você gosta mesmo de ser chamada de lúcia? -> A.2
+
+[NODE: B]
+SPEAKER: Ana Lucia
+TEXT: Não há problema, querido. apenas se concentre mais no seu emprego.
+CHOICE: Me pediram para eu refazer alguns relatórios. -> B.1
+CHOICE: Você pode me contar mais sobre os outros funcionarios? -> B.2
+
+[NODE: A.1]
+SPEAKER: Ana Lucia
+TEXT: Ah serio? que tipo de problemas?
+CHOICE: Problemas financeiros. Desabafei isso com uma pessoa da empresa e ela agiu de forma rude. -> A.1.1
+CHOICE: Nada importante, mas essa pessoa está me deixando desconfortável. desculpa estar incomodando. -> A.1.2
+
+[NODE: A.2]
+SPEAKER: Ana Lucia
+TEXT: Sim, sim! Pode me chamar de lúcia, sinto que você é uma pessoa de confiança.
+CHOICE: Falando nisso, você sabe quem fez os relatórios dessas semanas? -> A.2.1
+CHOICE: Enfim, Lucia, Tenho que lhe perguntar sobre os relatórios, me falaram sobre alguns erros. -> A.2.2
+
+[NODE: B.1]
+SPEAKER: Ana Lucia
+TEXT: Bem, eu falei com alguns outros setores, aparentemente alguns relatórios estão incorretos, mas nenhum meu.
+CHOICE: Nossa, isso deve ser um alívio. Como se sente? -> B.1.1
+CHOICE: Mas eu achava que os relatórios não tinham nomes e fossem arquivados por terceiros. -> B.1.2
+
+[NODE: B.2]
+SPEAKER: Ana Lucia
+TEXT: Os funcionarios do meu setor são bem treinados e prestativos, só não tanto quanto eu. Você já conheceu a Maria?
+CHOICE: Acho que já devo ter falado com ela, sim. Não lembro. -> B.2.1
+CHOICE: Ja, sim. Ela é bem galera, parece experiente. -> B.2.2
+
+[NODE: A.1.1]
+SPEAKER: Ana Lucia
+TEXT: Eu acho que sei quem é... depois a gente conversa, mas fica bem ok?
+
+[NODE: A.1.2]
+SPEAKER: Ana Lucia
+TEXT: Se for quem estou pensando, ela não foi sempre assim. Outro dia a gente conversa mais sobre.
+
+[NODE: A.2.1]
+SPEAKER: Ana Lucia
+TEXT: Sim, mas essa informação é confidencial, querido.
+
+[NODE: A.2.2]
+SPEAKER: Ana Lucia
+TEXT: Deve ter sido algum novo funcionario, meus relatórios estão corretos.
+
+[NODE: B.1.1]
+SPEAKER: Ana Lucia
+TEXT: Estou bem, queridinho. Você deveria focar mais em corrigir o relatório da pessoa incorreta, sim?
+
+[NODE: B.1.2]
+SPEAKER: Ana Lucia
+TEXT: Tenho privilégios como supervisora e não estou gostando do seu tom. Tenho que voltar ao trabalho.
+
+[NODE: B.2.1]
+SPEAKER: Ana Lucia
+TEXT: Como assim, você não lembra? A Maria é uma pessoa boa. Se você não consegue lembrar nem o nome dos seus funcionarios...
+
+[NODE: B.2.2]
+SPEAKER: Ana Lucia
+TEXT: NO começo você se sente deslocado mesmo, mas como eu já trabalho faz 3 anos, posso te falar mais sobre como se dar bem com eles.

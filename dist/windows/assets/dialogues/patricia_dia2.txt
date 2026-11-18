@@ -1,0 +1,76 @@
+NPC: patricia
+DIA: 2
+
+[NODE: start]
+SPEAKER: Maria
+TEXT: Oi, você por aqui.
+CHOICE: Está tudo bem, só vim pedir um conselho. -> A
+CHOICE: Desculpe por ontem, me sinto deslocado ainda. -> B
+
+[NODE: A]
+SPEAKER: Maria
+TEXT: Pode falar rapaz. Estamos aqui pra isso.
+CHOICE: Estou passando por problemas pessoais, e desde que comecei na empresa uma pessoa vem me tratando mal. -> A.1
+CHOICE: Os relatórios sempre vêm incorretos, queria descobrir quem está preenchendo eles. -> A.2
+
+[NODE: B]
+SPEAKER: Maria
+TEXT: Tudo bem, sou toda ouvidos.
+CHOICE: Os números nos relatóios parecem muito fora da curva. -> B.1
+CHOICE: Você gosta de viajar? -> B.2
+
+[NODE: A.1]
+SPEAKER: Maria
+TEXT: Ah serio? que tipo de problemas?
+CHOICE: Problemas financeiros. Desabafei isso com uma pessoa da empresa e ela agiu de forma rude. -> A.1.1
+CHOICE: Nada importante, mas essa pessoa está me deixando desconfortável. desculpa estar incomodando. -> A.1.2
+
+[NODE: A.2]
+SPEAKER: Maria
+TEXT: Ah, isso é facil de descobrir. mas pra que você quer saber?
+CHOICE: Quero falar com a pessoa, mas não tem o nome de quem fez o relatório. -> A.2.1
+CHOICE: Porque eu fui contratado para isso, procurar gargalos, principalmente. -> A.2.2
+
+[NODE: B.1]
+SPEAKER: Maria
+TEXT: Bom, quando chegam relatórios com erros crassos assim, eu devolvo para avaliação da supervisora.
+CHOICE: Compreendo, obrigado por explicar essa parte. -> B.1.1
+CHOICE: Vou ter de relatar caso aconteçam inconsistências demais. -> B.1.2
+
+[NODE: B.2]
+SPEAKER: Maria
+TEXT: Sim, já fui a Lisboa! Ainda lembro dos bondinhos e daquele sol lindo.
+CHOICE: Em que hotel ficou? -> B.2.1
+CHOICE: Você achou difícil entender o português deles? -> B.2.2
+
+[NODE: A.1.1]
+SPEAKER: Maria
+TEXT: Eu acho que sei quem é... depois a gente conversa, mas fica bem ok?
+
+[NODE: A.1.2]
+SPEAKER: Maria
+TEXT: Se for quem estou pensando, ela não foi sempre assim. Outro dia a gente conversa mais sobre.
+
+[NODE: A.2.1]
+SPEAKER: Maria
+TEXT: É contra o procedimento, mas poderia achar facilmente quem fez.
+
+[NODE: A.2.2]
+SPEAKER: Maria
+TEXT: Ah, entendi. Boa sorte, talvez consiga descobrir conversando com outros.
+
+[NODE: B.1.1]
+SPEAKER: Maria
+TEXT: De nada, em geral, pode contatar a supervisora.
+
+[NODE: B.1.2]
+SPEAKER: Maria
+TEXT: Pode falar para a supervisora. Estou fazendo minha parte.
+
+[NODE: B.2.1]
+SPEAKER: Maria
+TEXT: Um hotel no... centro, era ótimo aliás.
+
+[NODE: B.2.2]
+SPEAKER: Maria
+TEXT: No começo é um pouco difícil, o pessoal fala rápido, mas você acostuma.
