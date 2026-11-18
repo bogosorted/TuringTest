@@ -8,6 +8,7 @@
 #define MAX_NODE_CHOICES 8
 #define MAX_TEXT_LENGTH 512
 #define MAX_ID_LENGTH 32
+#define MAX_DIALOG_NODES 50
 
 typedef struct {
     char text[MAX_TEXT_LENGTH];

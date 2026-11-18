@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-void InitVerdictScene(void);
+bool InitVerdictScene(void);
 void UpdateDrawVerdictScene(void);
 void UnloadVerdictScene(void);
 

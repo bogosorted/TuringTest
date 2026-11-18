@@ -13,7 +13,7 @@ typedef enum {
     EMPLOYEE_GAMMA = EMPLOYEE_LUCAS
 } Employee;
 
-void InitSelectionScene(void);
+bool InitSelectionScene(void);
 void UpdateDrawSelectionScene(void);
 void UnloadSelectionScene(void);
 

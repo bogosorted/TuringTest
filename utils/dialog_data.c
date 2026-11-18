@@ -284,7 +284,9 @@ bool LoadDialogTreeFromData(int suspeito, int day, DialogTree *tree) {
     tree->suspect_index = suspeito;
     tree->day = day;
     tree->node_count = count;
-    tree->nodes = (DialogNode *)calloc((size_t)count + 4, sizeof(DialogNode));
+    if (count > MAX_DIALOG_NODES) return false;
+    tree->nodes = (DialogNode *)calloc((size_t)count, sizeof(DialogNode));
+    if (!tree->nodes) return false;
     VisaoJogador visao = GameStateGetVisaoJogador(suspeito);
     for (int i = 0; i < count; i++) {
         DialogNode *dst = &tree->nodes[i];

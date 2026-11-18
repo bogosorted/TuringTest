@@ -24,9 +24,9 @@
 #define NEXT_FONT      12
 #define NEXT_MARGIN    12
 
-static Color textColor = (Color){ 32, 29, 31, 255 };
-static Color bgColor = (Color){ 125, 112, 113, 255 };
-static Color hoverColor = (Color){ 160, 147, 142, 255 };
+static Color textColor = { 32, 29, 31, 255 };
+static Color bgColor = { 125, 112, 113, 255 };
+static Color hoverColor = { 160, 147, 142, 255 };
 
 static bool g_shouldStartInterrogation = false;
 static bool g_shouldAdvanceDay = false;
@@ -152,7 +152,7 @@ Employee SelectionSceneGetEmployee(void) {
     return EMPLOYEE_ALPHA; // Dummy, unused now
 }
 
-void InitSelectionScene(void) {
+bool InitSelectionScene(void) {
     g_shouldStartInterrogation = false;
     g_shouldAdvanceDay = false;
     g_shouldGoToVerdict = false;
@@ -165,6 +165,12 @@ void InitSelectionScene(void) {
     SetTextureFilter(g_mapaTex, TEXTURE_FILTER_POINT);
 
     RayCanvasInit(VIRTUAL_W, VIRTUAL_H);
+    if (g_mapaTex.id == 0) {
+        TraceLog(LOG_ERROR, "Falha ao carregar recurso essencial da selecao");
+        UnloadSelectionScene();
+        return false;
+    }
+    return true;
 }
 
 void UpdateDrawSelectionScene(void) {

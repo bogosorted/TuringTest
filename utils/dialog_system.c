@@ -28,12 +28,17 @@ static void TrimRight(char *str) {
 }
 
 bool LoadDialogTree(const char *filepath, DialogTree *tree) {
+    if (!filepath || filepath[0] == '\0' || !tree) return false;
+    memset(tree, 0, sizeof(DialogTree));
     FILE *f = fopen(filepath, "r");
     if (!f) return false;
 
-    memset(tree, 0, sizeof(DialogTree));
     tree->suspect_index = -1;
-    tree->nodes = (DialogNode *)calloc(50, sizeof(DialogNode));
+    tree->nodes = (DialogNode *)calloc(MAX_DIALOG_NODES, sizeof(DialogNode));
+    if (!tree->nodes) {
+        fclose(f);
+        return false;
+    }
     
     char line[512];
     DialogNode *curr = NULL;
@@ -47,6 +52,12 @@ bool LoadDialogTree(const char *filepath, DialogTree *tree) {
         } else if (strncmp(line, "DIA: ", 5) == 0) {
             tree->day = atoi(line + 5);
         } else if (strncmp(line, "[NODE: ", 7) == 0) {
+            if (tree->node_count >= MAX_DIALOG_NODES) {
+                TraceLog(LOG_WARNING, "Dialogo excedeu capacidade de %d nos: %s", MAX_DIALOG_NODES, filepath);
+                fclose(f);
+                FreeDialogTree(tree);
+                return false;
+            }
             curr = &tree->nodes[tree->node_count++];
             char *end = strchr(line + 7, ']');
             if (end) *end = '\0';
@@ -77,6 +88,7 @@ bool LoadDialogTree(const char *filepath, DialogTree *tree) {
 }
 
 void FreeDialogTree(DialogTree *tree) {
+    if (!tree) return;
     if (tree->nodes) {
         free(tree->nodes);
         tree->nodes = NULL;

@@ -599,7 +599,7 @@ bool VerdictSceneShouldRestart(void) {
     return g_tentarDeNovo;
 }
 
-void InitVerdictScene(void) {
+bool InitVerdictScene(void) {
     g_estado = ESTADO_INTRO;
     g_tempo = 0.0f;
     g_alvo = -1;
@@ -682,6 +682,12 @@ void InitVerdictScene(void) {
 
     RayCanvasInit(VIRTUAL_W, VIRTUAL_H);
     MuralInit();
+    if (g_sala.id == 0 || g_armaRT.texture.id == 0 || g_armaFinal.texture.id == 0) {
+        TraceLog(LOG_ERROR, "Falha ao carregar recursos essenciais do veredito");
+        UnloadVerdictScene();
+        return false;
+    }
+    return true;
 }
 
 #define SCORE_LIMIAR_FINAL_BOM 4400

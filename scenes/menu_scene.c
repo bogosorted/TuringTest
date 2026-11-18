@@ -255,7 +255,7 @@ static void DesenharTextoBotao(const char *txt, Rectangle botao, bool hover, flo
     DrawTextEx(g_fonte, txt,    (Vector2){ tx,                   ty },                   fontSize, spacing, corTexto);
 }
 
-void InitMenuScene(void) {
+bool InitMenuScene(void) {
     g_shouldClose = false;
     g_shouldStartGame = false;
     g_opcoesAbertas = false;
@@ -422,6 +422,12 @@ void InitMenuScene(void) {
     }
 
     MuralInit();
+    if (g_animTextura.id == 0 || g_painel.id == 0 || g_botao.id == 0 || g_logo.id == 0 || g_fonte.texture.id == 0) {
+        TraceLog(LOG_ERROR, "Falha ao carregar recursos essenciais do menu");
+        UnloadMenuScene();
+        return false;
+    }
+    return true;
 }
 
 // Troca o quadro do GIF a cada 70 ms
