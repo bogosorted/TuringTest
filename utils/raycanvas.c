@@ -110,22 +110,21 @@ void RayCanvasEndFrame(void) {
         DrawTextureRec(g_alvo.texture, src, (Vector2){ 0, 0 }, WHITE);
         EndShaderMode();
     }
-    // Aviso persistente sempre que o Modo DEV estiver ligado (para nunca esquecer ativado!)
+    // Aviso discreto no canto superior direito sempre que o Modo DEV estiver ligado
     if (SettingsGetDevMode()) {
         Rectangle tela = RayCanvasGetRect((Vector2){ 0.5f, 0.5f }, (Vector2){ 0.5f, 0.5f },
                                           (Vector2){ 0.0f, 0.0f }, (Vector2){ (float)g_refWidth, (float)g_refHeight });
         float ex = tela.width  / (float)g_refWidth;
         float ey = tela.height / (float)g_refHeight;
-        Rectangle rAviso = { tela.x + 66.0f * ex, tela.y + 8.0f * ey, 105.0f * ex, 18.0f * ey };
-        DrawRectangleRec((Rectangle){ rAviso.x + 1.5f * ex, rAviso.y + 1.5f * ey, rAviso.width, rAviso.height }, Fade(BLACK, 0.55f));
-        DrawRectangleRec(rAviso, (Color){ 138, 48, 50, 240 });
-        DrawRectangleLinesEx(rAviso, 1.4f * ey, (Color){ 224, 108, 104, 255 });
-        int fz = (int)(8.5f * ey);
+        Rectangle rAviso = { tela.x + (g_refWidth - 44.0f) * ex, tela.y + 6.0f * ey, 38.0f * ex, 13.0f * ey };
+        DrawRectangleRec(rAviso, Fade((Color){ 24, 22, 24, 255 }, 0.55f));
+        DrawRectangleLinesEx(rAviso, 1.0f * ey, Fade((Color){ 189, 181, 168, 255 }, 0.28f));
+        int fz = (int)(7.0f * ey);
         if (fz < 1) fz = 1;
-        const char *txtDev = "Modo DEV ativado.";
+        const char *txtDev = "DEV";
         int tw = MeasureText(txtDev, fz);
         DrawText(txtDev, (int)(rAviso.x + (rAviso.width - tw) * 0.5f),
-                 (int)(rAviso.y + (rAviso.height - fz) * 0.5f), fz, (Color){ 255, 242, 230, 255 });
+                 (int)(rAviso.y + (rAviso.height - fz) * 0.5f), fz, Fade((Color){ 189, 181, 168, 255 }, 0.72f));
     }
     EndDrawing();
 }

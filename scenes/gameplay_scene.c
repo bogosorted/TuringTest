@@ -1265,6 +1265,9 @@ static float     g_silVel[3]                = { 0.0f, 0.0f, 0.0f };
 static bool      g_btnAvancarHoverAnt       = false;
 static float     g_btnAvancarAnim           = 0.0f;
 static float     g_btnAvancarVel            = 0.0f;
+static bool      g_btnVereditoDevHoverAnt   = false;
+static float     g_btnVereditoDevAnim       = 0.0f;
+static float     g_btnVereditoDevVel        = 0.0f;
 static bool      g_confirmarAvancarDia      = false; // modal "Voce tem certeza?" quando ainda ha tokens
 
 // Ferramenta Scanner Deepfake (160x73 escalado em 2x -> 320x146) arrastavel
@@ -3060,15 +3063,24 @@ static Rectangle SuspeitoSilArea(int i) {
     return SUSPECT_SIL_AREA_BASE[antes == 0 ? 0 : 1];
 }
 
-// Botoes do topo da janela: Dia e Proximo Dia / Veredito
-static const Rectangle BADGE_DIA_TOPO       = {   8.0f,   8.0f,  54.0f,  20.0f };
-static const Rectangle BOTAO_AVANCAR_TOPO   = { 174.0f,   8.0f, 121.0f,  22.0f };
-static const Rectangle BOTAO_AVANCAR_PAINEL = { DIALOG_BOX_X, 316.0f, DIALOG_BOX_W, 30.0f };
+// Botoes do topo da janela: Dia, Veredito (Modo DEV) e Proximo Dia / Veredito
+static const Rectangle BADGE_DIA_TOPO         = {   8.0f,   8.0f,  54.0f,  20.0f };
+static const Rectangle BOTAO_VEREDITO_DEV_TOPO = {  76.0f,   8.0f,  90.0f,  22.0f };
+static const Rectangle BOTAO_AVANCAR_TOPO     = { 174.0f,   8.0f, 121.0f,  22.0f };
+static const Rectangle BOTAO_AVANCAR_PAINEL   = { DIALOG_BOX_X, 316.0f, DIALOG_BOX_W, 30.0f };
 
 // Modal de confirmacao ("Voce tem certeza?") quando clica para avancar ainda tendo tokens
 static const Rectangle CONFIRMAR_PAINEL  = { 155.0f,  96.0f, 330.0f, 156.0f };
 static const Rectangle CONFIRMAR_BTN_NAO = { 171.0f, 214.0f, 140.0f,  26.0f };
 static const Rectangle CONFIRMAR_BTN_SIM = { 329.0f, 214.0f, 140.0f,  26.0f };
+
+static void ExecutarIrParaVereditoDev(void) {
+    g_confirmarAvancarDia = false;
+    if (GameStateGetDay() >= 1) {
+        GameStateAddRemainingTokens(global_tokens);
+    }
+    g_irParaVeredito = true;
+}
 
 static void ExecutarAvancarDiaOuVeredito(void) {
     g_confirmarAvancarDia = false;
@@ -3860,6 +3872,37 @@ static void GetChoiceButtonLayout(int active_count, float *outBtnH, float *outSt
     }
 }
 
+// Desenha um botao animado do topo da janela com chute elastico ao passar o mouse
+static void DesenharBotaoTopoAnimado(Rectangle base, const char *texto, bool hov, bool alerta,
+                                     bool *hoverAnt, float *anim, float *vel, float dt,
+                                     Color hoverColor, Color lightTextColor, Color textColor) {
+    if (hov && !(*hoverAnt)) {
+        *vel += 9.5f;
+        TocarSomHover();
+    }
+    *hoverAnt = hov;
+    float alvo = hov ? 1.0f : 0.0f;
+    *vel += (alvo - *anim) * 220.0f * dt;
+    *vel *= expf(-15.0f * dt);
+    *anim += *vel * dt;
+
+    float pulsoAlerta = alerta ? (0.5f + 0.5f * sinf((float)GetTime() * 5.0f)) : 0.0f;
+    Rectangle btnAnim = {
+        base.x - 1.5f * (*anim),
+        base.y - 1.5f * (*anim),
+        base.width  + 3.0f * (*anim),
+        base.height + 2.0f * (*anim)
+    };
+    Rectangle sombra = { btnAnim.x + 2.0f, btnAnim.y + 2.5f, btnAnim.width, btnAnim.height };
+    DrawRectangleRec(ParaTela(sombra), Fade(BLACK, 0.55f));
+    Color corBtn = hov ? lightTextColor : (alerta ? hoverColor : (Color){ 32, 29, 31, 242 });
+    Color corBorda = (hov || pulsoAlerta > 0.5f) ? (Color){ 255, 242, 230, 255 } : lightTextColor;
+    Color corTxt = (hov || alerta) ? textColor : (Color){ 255, 242, 230, 255 };
+    DrawRectangleRec(ParaTela(btnAnim), corBtn);
+    DrawRectangleLinesEx(ParaTela(btnAnim), hov ? 2.0f : 1.5f, corBorda);
+    DrawTextInArea(texto, btnAnim, 9, corTxt);
+}
+
 static void DrawInterrogationTexts(void) {
     Color textColor = (Color){ 32, 29, 31, 255 };
     Color bgColor = (Color){ 125, 112, 113, 255 }; 
@@ -3886,36 +3929,22 @@ static void DrawInterrogationTexts(void) {
                    BADGE_DIA_TOPO, 9, (Color){ 255, 242, 230, 255 });
 
     // Botao sempre visivel "Proximo Dia >>" / "Ir ao Veredito >>" no canto superior direito da janela
-    bool hovTopo = !bloqueadoPorOverlay && CheckCollisionPointRec(mouseTela, ParaTela(BOTAO_AVANCAR_TOPO));
-
     float dt = GetFrameTime();
     if (dt > 0.05f) dt = 0.05f;
-    if (hovTopo && !g_btnAvancarHoverAnt) {
-        g_btnAvancarVel += 9.5f; // chute elastico ao passar o mouse
-        TocarSomHover();
-    }
-    g_btnAvancarHoverAnt = hovTopo;
-    float alvoBtn = hovTopo ? 1.0f : 0.0f;
-    g_btnAvancarVel += (alvoBtn - g_btnAvancarAnim) * 220.0f * dt;
-    g_btnAvancarVel *= expf(-15.0f * dt);
-    g_btnAvancarAnim += g_btnAvancarVel * dt;
 
-    float pulsoSemTokens = (!HasTokens()) ? (0.5f + 0.5f * sinf((float)GetTime() * 5.0f)) : 0.0f;
-    Rectangle btnTopoAnim = {
-        BOTAO_AVANCAR_TOPO.x - 1.5f * g_btnAvancarAnim,
-        BOTAO_AVANCAR_TOPO.y - 1.5f * g_btnAvancarAnim,
-        BOTAO_AVANCAR_TOPO.width  + 3.0f * g_btnAvancarAnim,
-        BOTAO_AVANCAR_TOPO.height + 2.0f * g_btnAvancarAnim
-    };
-    Rectangle sombraBtnTopo = { btnTopoAnim.x + 2.0f, btnTopoAnim.y + 2.5f, btnTopoAnim.width, btnTopoAnim.height };
-    DrawRectangleRec(ParaTela(sombraBtnTopo), Fade(BLACK, 0.55f));
-    Color corBtnTopo = hovTopo ? lightTextColor : ((!HasTokens()) ? hoverColor : (Color){ 32, 29, 31, 242 });
-    Color corBordaTopo = (hovTopo || pulsoSemTokens > 0.5f) ? (Color){ 255, 242, 230, 255 } : lightTextColor;
-    Color corTxtTopo = (hovTopo || !HasTokens()) ? textColor : (Color){ 255, 242, 230, 255 };
-    DrawRectangleRec(ParaTela(btnTopoAnim), corBtnTopo);
-    DrawRectangleLinesEx(ParaTela(btnTopoAnim), hovTopo ? 2.0f : 1.5f, corBordaTopo);
+    bool hovTopo = !bloqueadoPorOverlay && CheckCollisionPointRec(mouseTela, ParaTela(BOTAO_AVANCAR_TOPO));
     const char *txtBtnTopo = ultimoDia ? "Ir ao Veredito >>" : "Próximo Dia >>";
-    DrawTextInArea(txtBtnTopo, btnTopoAnim, 9, corTxtTopo);
+    DesenharBotaoTopoAnimado(BOTAO_AVANCAR_TOPO, txtBtnTopo, hovTopo, !HasTokens(),
+                             &g_btnAvancarHoverAnt, &g_btnAvancarAnim, &g_btnAvancarVel, dt,
+                             hoverColor, lightTextColor, textColor);
+
+    // No Modo DEV, permite pular direto para o Veredito em qualquer dia
+    if (SettingsGetDevMode() && !ultimoDia) {
+        bool hovVeredito = !bloqueadoPorOverlay && CheckCollisionPointRec(mouseTela, ParaTela(BOTAO_VEREDITO_DEV_TOPO));
+        DesenharBotaoTopoAnimado(BOTAO_VEREDITO_DEV_TOPO, "Veredito >>", hovVeredito, false,
+                                 &g_btnVereditoDevHoverAnt, &g_btnVereditoDevAnim, &g_btnVereditoDevVel, dt,
+                                 hoverColor, lightTextColor, textColor);
+    }
 
     // 3) Cabeçalho do Quadrante 2 (Inferior Esquerdo - OPCOES_AREA)
     if (g_alertaTokensTimer > 0.0f) {
@@ -5818,7 +5847,7 @@ static void DesenharTutorialContextual(void) {
     if (!g_tutMovimentoVisto) {
         DesenharAlvoPulsanteDia0(AreaMapaHolo());
         int setaGuia = -1;
-        static const int ORDEM_SETAS[4] = { SETA_DIREITA, SETA_ESQUERDA, SETA_CIMA, SETA_BAIXO };
+        static const int ORDEM_SETAS[4] = { SETA_ESQUERDA, SETA_DIREITA, SETA_CIMA, SETA_BAIXO };
         for (int k = 0; k < 4; k++) {
             if (DestinoSeta(g_localAtual, ORDEM_SETAS[k]) >= 0) {
                 setaGuia = ORDEM_SETAS[k];
@@ -6140,6 +6169,16 @@ static void UpdateGameplay(void) {
             if (clicou) {
                 SolicitarAvancarDia();
                 return;
+            }
+        }
+        if (SettingsGetDevMode() && GameStateGetDay() < GAME_NUM_DAYS) {
+            bool sobreBtnVereditoDev = CheckCollisionPointRec(mouse, ParaTela(BOTAO_VEREDITO_DEV_TOPO));
+            if (sobreBtnVereditoDev) {
+                hover = true;
+                if (clicou) {
+                    ExecutarIrParaVereditoDev();
+                    return;
+                }
             }
         }
     }

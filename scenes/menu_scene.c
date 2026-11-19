@@ -707,6 +707,7 @@ static void UpdateDrawNome(void) {
     if (!g_nomeAberto && g_nomeAnim < 0.01f) { g_nomeAnim = 0.0f; return; }
 
     float a = g_nomeAnim;
+    bool devMode = SettingsGetDevMode();
     bool interativo = g_nomeAberto && a > 0.5f && !RayCanvasInputBlocked();
     Vector2 mv = MouseVirtual();
 
@@ -729,7 +730,7 @@ static void UpdateDrawNome(void) {
             int len = (int)strlen(g_nomeInput);
             if (len > 0) g_nomeInput[len - 1] = '\0';
         }
-        if (IsKeyPressed(KEY_ENTER) && g_nomeInput[0] != '\0') {
+        if (IsKeyPressed(KEY_ENTER) && (g_nomeInput[0] != '\0' || devMode)) {
             GameStateSetPlayerName(g_nomeInput);
             GameStateSetPlayerAvatar(g_playerAvatarSel);
             GameStateSetPlayerPronoun(g_playerPronomeSel);
@@ -760,6 +761,9 @@ static void UpdateDrawNome(void) {
         snprintf(exib, sizeof exib, "%s%s", g_nomeInput, (cursorVis && strlen(g_nomeInput) < 8) ? "_" : "");
     }
     TextoOpcoes(exib, OPC_LABEL_X + 8.0f, 170.0f, 22.0f, claro);
+    if (devMode && g_nomeInput[0] == '\0') {
+        TextoOpcoes("(opcional)", OPC_LABEL_X + 126.0f, 170.0f, 14.0f, medio);
+    }
 
     // Grade 3x2 a direita com os 6 retratos do Player
     TextoOpcoes("Retrato do Inspetor:", 456.0f, 144.0f, 16.0f, bege);
@@ -798,7 +802,7 @@ static void UpdateDrawNome(void) {
     if (hovAvatarAtual >= 0 && hovAvatarAtual != g_hoverAvatarAnt) TocarSomHover();
     g_hoverAvatarAnt = hovAvatarAtual;
 
-    bool podeIniciar = (g_nomeInput[0] != '\0');
+    bool podeIniciar = (g_nomeInput[0] != '\0') || devMode;
     float bw = (float)g_botao.width * BOTAO_ESCALA;
     float bh = (float)g_botao.height * BOTAO_ESCALA;
     const float yIniciar = 202.0f;
