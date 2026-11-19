@@ -319,6 +319,7 @@ static bool       g_tutDialogoPerguntaFeita = false;
 static bool       g_tutChecklistVisto       = false;
 static bool       g_tutEvidenciaColetaVisto = false;
 static bool       g_tutHologramaVisto       = false;
+static bool       g_tutDicaVisto            = false;  // abriu a Dica Logica pela primeira vez
 // Suspeitos: 0 = Maria Bianca, 1 = Arthur Gadelho, 2 = Ana Lucia (a IA).
 // O local de cada um e sorteado no inicio de cada dia (SortearLocaisDoDia).
 static LocalRasec g_suspeitoLocal[3] = { LOCAL_MESA_MARIA, LOCAL_ESCRITORIO, LOCAL_SALA_REUNIAO };
@@ -939,7 +940,7 @@ static void DesenharPopupEvidencia(void) {
     Rectangle rCab = { painel.x, painel.y, painel.width, 18.0f };
     DrawRectangleRec(ParaTela(rCab), corEscura);
     const char *tituloCab = (g_evToastCount > 0)
-        ? "NOVA EVIDÊNCIA — HOLOGRAMA 3D"
+        ? "NOVA EVIDÊNCIA - HOLOGRAMA 3D"
         : TextFormat("INSPEÇÃO DE EVIDÊNCIAS 3D (%d/%d)", idxGal + 1, totGal);
     DrawTextInArea(tituloCab, rCab, 9, corBranco);
     DesenharBotaoFecharPadrao(rFechar);
@@ -1568,7 +1569,7 @@ static void OnClickEnviesar(void) {
         SetExpressaoSuspeito(2, EXPR_FELIZ, true);
     }
     if (!dev) {
-        AdicionarMensagemChat(g_suspeitoAtual, "— SISTEMA —", "Conversa encerrada após uso de viés de dados.", false);
+        AdicionarMensagemChat(g_suspeitoAtual, "- SISTEMA -", "Conversa encerrada após uso de viés de dados.", false);
     }
 }
 static void OnClickDeepfake(void) {
@@ -1651,7 +1652,7 @@ static void OnClickInjecao(void) {
     }
     if (!dev) {
         g_chatBloqueado[g_suspeitoAtual] = true;
-        AdicionarMensagemChat(g_suspeitoAtual, "— SISTEMA —", "Conversa encerrada após uso de injeção de prompt.", false);
+        AdicionarMensagemChat(g_suspeitoAtual, "- SISTEMA -", "Conversa encerrada após uso de injeção de prompt.", false);
     }
 }
 
@@ -3155,6 +3156,7 @@ static void AbrirDica(void) {
     g_dicaShake = 0.0f;
     memset(g_dicaPart, 0, sizeof g_dicaPart);
     g_dicaAberta = true;
+    g_tutDicaVisto = true;
     g_dicaTAbertura = GetTime();
 }
 
@@ -4917,6 +4919,7 @@ void GameplaySceneResetDialogues(void) {
         g_tutChecklistVisto       = false;
         g_tutEvidenciaColetaVisto = false;
         g_tutHologramaVisto       = false;
+        g_tutDicaVisto            = false;
     }
     memset(g_hotspotAtivoHoje, 0, sizeof g_hotspotAtivoHoje);
     // Dia novo: a dica e as ferramentas de teste voltam a ficar disponiveis
@@ -6434,7 +6437,7 @@ static void DesenharTutorialContextual(void) {
     if (!TutorialAtivo()) return;
 
     if (g_tutMovimentoVisto && g_tutDialogoPerguntaFeita && g_tutChecklistVisto &&
-        g_tutEvidenciaColetaVisto && g_tutHologramaVisto) {
+        g_tutEvidenciaColetaVisto && g_tutHologramaVisto && g_tutDicaVisto) {
         GameStateCompleteTutorial();
         return;
     }
@@ -6536,6 +6539,28 @@ static void DesenharTutorialContextual(void) {
                 );
                 DesenharSetaGuiaDia0((Vector2){ rCaixa.x - 42.0f, rCaixa.y + rCaixa.height * 0.5f },
                                      (Vector2){ rCaixa.x - 4.0f,  rCaixa.y + rCaixa.height * 0.5f });
+            }
+        }
+        // Dica Logica: depois do checklist, apresenta o botao do desafio de logica
+        if (g_tutChecklistVisto && !g_tutDicaVisto && !g_pranchetaAberta && g_fichaAtual < 0 && !g_deepfakeAberto) {
+            if (!g_menuAberto) {
+                DesenharAlvoPulsanteDia0(SETA_FECHADA);
+                DesenharBalaoGuiaDia0(
+                    324.0f, 238.0f, 294.0f,
+                    "DICA LÓGICA",
+                    "Abra a bandeja de ferramentas para conhecer a Dica Lógica!"
+                );
+                DesenharSetaGuiaDia0((Vector2){ 471.0f, 296.0f }, (Vector2){ 471.0f, SETA_FECHADA.y - 4.0f });
+            } else {
+                Rectangle rDica = IconeMenu(2);
+                DesenharAlvoPulsanteDia0(rDica);
+                DesenharBalaoGuiaDia0(
+                    324.0f, 140.0f, 294.0f,
+                    "DICA LÓGICA",
+                    "Clique no monitor com [?] para resolver um desafio de lógica!\nAcertou: as perguntas desta conversa não gastam Tokens.\nÉ 1 vez por dia e você tem 45 segundos. Errou ou acabou o tempo: só volta amanhã."
+                );
+                DesenharSetaGuiaDia0((Vector2){ rDica.x + rDica.width * 0.5f, 232.0f },
+                                     (Vector2){ rDica.x + rDica.width * 0.5f, rDica.y - 4.0f });
             }
         }
         return;

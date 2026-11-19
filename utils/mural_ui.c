@@ -349,14 +349,14 @@ bool MuralUpdateDraw(float alpha, Sound sndHover) {
         DesenharTextoCentrado("MURAL DE DESTAQUE",
                               (Rectangle){ 174.0f, 4.0f, 126.0f, 15.0f }, 9.0f,
                               Fade((Color){ 255, 242, 230, 255 }, alpha));
-        DesenharTextoCentrado("TOP 10 • MODO DEV",
+        DesenharTextoCentrado("TOP 10 - MODO DEV",
                               (Rectangle){ 174.0f, 18.0f, 126.0f, 12.0f }, 7.5f,
                               Fade((Color){ 160, 147, 142, 255 }, alpha));
     } else {
         DesenharTextoCentrado("MURAL DE FUNCIONÁRIOS DE DESTAQUE",
                               (Rectangle){ 176.0f, 4.0f, 316.0f, 15.0f }, 10.0f,
                               Fade((Color){ 255, 242, 230, 255 }, alpha));
-        DesenharTextoCentrado("RASEC — TOP 10 INSPETORES",
+        DesenharTextoCentrado("RASEC - TOP 10 INSPETORES",
                               (Rectangle){ 176.0f, 18.0f, 316.0f, 12.0f }, 8.0f,
                               Fade((Color){ 160, 147, 142, 255 }, alpha));
     }
@@ -522,7 +522,7 @@ bool MuralUpdateDraw(float alpha, Sound sndHover) {
         } else {
             DrawRectangleRec(ParaTela(rFaixaTopo), Fade((Color){ 24, 21, 23, 230 }, alpha));
             const char *lblPos = ocupado
-                ? (ehDestaqueNovo ? TextFormat("#%d • VOCÊ!", i + 1) : TextFormat("#%d LUGAR", i + 1))
+                ? (ehDestaqueNovo ? TextFormat("#%d - VOCÊ!", i + 1) : TextFormat("#%d LUGAR", i + 1))
                 : TextFormat("#%d VAGA", i + 1);
             Color cPos = ehDestaqueNovo ? (Color){ 255, 242, 230, 255 }
                        : ocupado        ? (Color){ 189, 181, 168, 255 }
@@ -561,7 +561,7 @@ bool MuralUpdateDraw(float alpha, Sound sndHover) {
             DesenharTextoCentrado(e->nome,
                                   (Rectangle){ plaqueta.x, plaqueta.y + 1.5f, plaqueta.width, 11.0f },
                                   9.0f, Fade((Color){ 255, 242, 230, 255 }, alpha));
-            const char *txtPts = TextFormat("%d pts %s", e->pontos, e->acertou ? "• OK" : "• X");
+            const char *txtPts = TextFormat("%d pts %s", e->pontos, e->acertou ? "- OK" : "- X");
             Color corPts = e->acertou ? (Color){ 189, 181, 168, 255 } : (Color){ 210, 96, 94, 255 };
             DesenharTextoCentrado(txtPts,
                                   (Rectangle){ plaqueta.x, plaqueta.y + 12.5f, plaqueta.width, 10.0f },
@@ -746,7 +746,7 @@ bool MuralFotoUpdateDraw(const char *nomeJogador, int pontuacao, bool acertouVer
 
     Rectangle barraTopo = { painel.x, painel.y, painel.width, 24.0f };
     DrawRectangleRec(ParaTela(barraTopo), (Color){ 125, 112, 113, 255 });
-    DesenharTextoCentrado("REGISTRO NO MURAL DE FUNCIONÁRIOS — RASEC", barraTopo, 10.0f, (Color){ 24, 21, 23, 255 });
+    DesenharTextoCentrado("REGISTRO NO MURAL DE FUNCIONÁRIOS - RASEC", barraTopo, 10.0f, (Color){ 24, 21, 23, 255 });
 
     // Moldura grande de retrato na esquerda (160 x 180 virtual)
     Rectangle molduraExt = { painel.x + 22.0f, painel.y + 40.0f, 168.0f, 206.0f };
@@ -771,7 +771,7 @@ bool MuralFotoUpdateDraw(const char *nomeJogador, int pontuacao, bool acertouVer
         DrawRectangleLinesEx(ParaTela(fotoArea), 1.2f * esc, (Color){ 125, 112, 113, 255 });
     }
 
-    DesenharTextoCentrado(TextFormat("%s — %d PTS", nomeJogador ? nomeJogador : "AGENTE", pontuacao),
+    DesenharTextoCentrado(TextFormat("%s - %d PTS", nomeJogador ? nomeJogador : "AGENTE", pontuacao),
                           (Rectangle){ molduraExt.x + 6.0f, molduraExt.y + 180.0f, molduraExt.width - 12.0f, 20.0f },
                           9.0f, (Color){ 255, 242, 230, 255 });
 

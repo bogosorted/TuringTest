@@ -45,7 +45,7 @@ static const char *SONS_GRITO[3] = {
 static const char *TEXTO_INTRO =
     "Sexta-feira, fim do expediente.\n"
     "Você chamou Maria Bianca, Arthur e Ana Lúcia para uma\n"
-    "\"revisão final de acessos\" no subsolo da RASEC.\n\n"
+    "'revisão final de acessos' no subsolo da RASEC.\n\n"
     "Eles acham que vão só assinar uns papéis.\n"
     "Não sabem que a porta se fecha atrás deles\n"
     "e que esta é a Sala de Descarte.\n\n"
@@ -1076,7 +1076,7 @@ static void DesenharCenaJornalista(void) {
     Rectangle rBarraTop = ParaTela(rBarraTopVirt);
     DrawRectangleRec(rBarraTop, Fade(TONS[1], 0.90f));
     DrawRectangleLinesEx(rBarraTop, 1.0f * escala, TONS[3]);
-    DrawText("XX/XX/XXXX — [PLANTAO DO DIA]", (int)(rBarraTop.x + 10 * escala), (int)(rBarraTop.y + 5 * escala), (int)(9 * escala), COR_CLARA);
+    DrawText("XX/XX/XXXX - [PLANTAO DO DIA]", (int)(rBarraTop.x + 10 * escala), (int)(rBarraTop.y + 5 * escala), (int)(9 * escala), COR_CLARA);
 
     // Indicador "AO VIVO" piscando no canto
     float piscaAoVivo = 0.5f + 0.5f * sinf(tNow * 4.0f);
