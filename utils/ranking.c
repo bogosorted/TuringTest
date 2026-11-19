@@ -127,3 +127,27 @@ const RankingEntry *RankingGetEntry(int index) {
     if (index < 0 || index >= g_count) return NULL;
     return &g_entries[index];
 }
+
+void RankingRemoveAt(int index) {
+    if (index < 0 || index >= g_count) return;
+    if (g_entries[index].foto[0] != '\0') {
+        remove(g_entries[index].foto);
+    }
+    for (int i = index; i < g_count - 1; i++) {
+        g_entries[i] = g_entries[i + 1];
+    }
+    g_count--;
+    memset(&g_entries[g_count], 0, sizeof g_entries[g_count]);
+    RankingSave();
+}
+
+void RankingClear(void) {
+    for (int i = 0; i < g_count; i++) {
+        if (g_entries[i].foto[0] != '\0') {
+            remove(g_entries[i].foto);
+        }
+    }
+    g_count = 0;
+    memset(g_entries, 0, sizeof g_entries);
+    RankingSave();
+}

@@ -30,6 +30,13 @@ static bool      g_btnVoltarHovAnt  = false;
 static int       g_highlightIdx     = -1;
 static bool      g_iniciado         = false;
 
+// Estado dos controles Dev no Mural (caixa de selecao + botao Apagar ranking)
+static int       g_devAlvoApagar     = -1; // -1 = Todos, 0..9 = indice especifico
+static bool      g_devDropdownAberto = false;
+static bool      g_devComboHovAnt    = false;
+static bool      g_devApagarHovAnt   = false;
+static int       g_devDropItemHovAnt = -2;
+
 // Estado da cabine de foto
 static bool          g_camTentouAbrir = false;
 static bool          g_camDisponivel  = false;
@@ -263,11 +270,16 @@ void MuralReload(int highlightRankIndex) {
     g_highlightIdx = highlightRankIndex;
     g_cardHoverAnt = -1;
     g_btnVoltarHovAnt = false;
+    g_devDropdownAberto = false;
+    g_devComboHovAnt = false;
+    g_devApagarHovAnt = false;
+    g_devDropItemHovAnt = -2;
     memset(g_cardAnim, 0, sizeof g_cardAnim);
 
     DescarregarFotosMural();
     RankingLoad();
     int total = RankingGetCount();
+    if (g_devAlvoApagar >= total) g_devAlvoApagar = -1;
     for (int i = 0; i < total && i < RANKING_MAX_ENTRIES; i++) {
         const RankingEntry *e = RankingGetEntry(i);
         if (e && e->foto[0] != '\0' && FileExists(e->foto)) {
@@ -324,16 +336,104 @@ bool MuralUpdateDraw(float alpha, Sound sndHover) {
         DesenharTextoCentrado("TURING TEST", (Rectangle){ 10.0f, 5.0f, 150.0f, 24.0f }, 14.0f, Fade((Color){ 255, 242, 230, 255 }, alpha));
     }
 
-    DesenharTextoCentrado("MURAL DE FUNCIONÁRIOS DE DESTAQUE",
-                          (Rectangle){ 176.0f, 4.0f, 316.0f, 15.0f }, 10.0f,
-                          Fade((Color){ 255, 242, 230, 255 }, alpha));
-    DesenharTextoCentrado("RASEC — TOP 10 INSPETORES",
-                          (Rectangle){ 176.0f, 18.0f, 316.0f, 12.0f }, 8.0f,
-                          Fade((Color){ 160, 147, 142, 255 }, alpha));
+    bool devMode = SettingsGetDevMode();
+    if (!devMode) {
+        g_devDropdownAberto = false;
+        g_devAlvoApagar = -1;
+    }
+
+    int count = RankingGetCount();
+    if (g_devAlvoApagar >= count) g_devAlvoApagar = -1;
+
+    if (devMode) {
+        DesenharTextoCentrado("MURAL DE DESTAQUE",
+                              (Rectangle){ 174.0f, 4.0f, 126.0f, 15.0f }, 9.0f,
+                              Fade((Color){ 255, 242, 230, 255 }, alpha));
+        DesenharTextoCentrado("TOP 10 • MODO DEV",
+                              (Rectangle){ 174.0f, 18.0f, 126.0f, 12.0f }, 7.5f,
+                              Fade((Color){ 160, 147, 142, 255 }, alpha));
+    } else {
+        DesenharTextoCentrado("MURAL DE FUNCIONÁRIOS DE DESTAQUE",
+                              (Rectangle){ 176.0f, 4.0f, 316.0f, 15.0f }, 10.0f,
+                              Fade((Color){ 255, 242, 230, 255 }, alpha));
+        DesenharTextoCentrado("RASEC — TOP 10 INSPETORES",
+                              (Rectangle){ 176.0f, 18.0f, 316.0f, 12.0f }, 8.0f,
+                              Fade((Color){ 160, 147, 142, 255 }, alpha));
+    }
+
+    // Controles DEV no topo: caixa de selecao ("Todos" ou #i Nome) + botao "Apagar ranking"
+    Rectangle rCombo = { 304.0f, 6.0f, 98.0f, 22.0f };
+    Rectangle rBtnApagar = { 406.0f, 6.0f, 90.0f, 22.0f };
+    bool cliqueTratadoDev = false;
+    if (devMode) {
+        bool hovCombo = interativo && CheckCollisionPointRec(mv, rCombo);
+        if (hovCombo) {
+            algumHover = true;
+            if (!g_devComboHovAnt) TocarHover(sndHover);
+        }
+        g_devComboHovAnt = hovCombo;
+
+        Rectangle rComboTela = ParaTela(rCombo);
+        Color cComboBg = (hovCombo || g_devDropdownAberto) ? (Color){ 56, 48, 50, 255 } : (Color){ 32, 28, 30, 255 };
+        Color cComboBorda = g_devDropdownAberto ? (Color){ 255, 242, 230, 255 } : (Color){ 160, 147, 142, 255 };
+        DrawRectangleRec(rComboTela, Fade(cComboBg, alpha));
+        DrawRectangleLinesEx(rComboTela, 1.3f * esc, Fade(cComboBorda, alpha));
+
+        const char *lblCombo = "Todos";
+        if (g_devAlvoApagar >= 0 && g_devAlvoApagar < count) {
+            const RankingEntry *sel = RankingGetEntry(g_devAlvoApagar);
+            if (sel) lblCombo = TextFormat("#%d %s", g_devAlvoApagar + 1, sel->nome);
+        } else if (count == 0) {
+            lblCombo = "Vazio";
+        }
+        Rectangle rComboTxt = { rCombo.x + 2.0f, rCombo.y, rCombo.width - 14.0f, rCombo.height };
+        DesenharTextoCentrado(lblCombo, rComboTxt, 8.0f,
+                              Fade(count > 0 ? (Color){ 255, 242, 230, 255 } : (Color){ 125, 112, 113, 255 }, alpha));
+        Rectangle rSetaBox = { rCombo.x + rCombo.width - 12.0f, rCombo.y, 10.0f, rCombo.height };
+        DesenharTextoCentrado(g_devDropdownAberto ? "^" : "v", rSetaBox, 8.0f,
+                              Fade((Color){ 189, 181, 168, 255 }, alpha));
+
+        if (interativo && hovCombo && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if (count > 0) g_devDropdownAberto = !g_devDropdownAberto;
+            cliqueTratadoDev = true;
+        }
+
+        bool podeApagar = (count > 0);
+        bool hovApagar = interativo && podeApagar && !g_devDropdownAberto && CheckCollisionPointRec(mv, rBtnApagar);
+        if (hovApagar) {
+            algumHover = true;
+            if (!g_devApagarHovAnt) TocarHover(sndHover);
+        }
+        g_devApagarHovAnt = hovApagar;
+
+        Rectangle rBtnApagarTela = ParaTela(rBtnApagar);
+        DrawRectangleRec(ParaTela((Rectangle){ rBtnApagar.x + 2.0f, rBtnApagar.y + 2.0f, rBtnApagar.width, rBtnApagar.height }),
+                         Fade(BLACK, 0.45f * alpha));
+        Color cApagarBg = !podeApagar ? (Color){ 52, 42, 44, 220 }
+                        : hovApagar   ? (Color){ 196, 72, 72, 255 }
+                                      : (Color){ 138, 48, 50, 255 };
+        DrawRectangleRec(rBtnApagarTela, Fade(cApagarBg, alpha));
+        DrawRectangleLinesEx(rBtnApagarTela, 1.3f * esc,
+                             Fade(podeApagar ? (Color){ 255, 242, 230, 255 } : (Color){ 110, 96, 98, 220 }, alpha));
+        DesenharTextoCentrado("Apagar ranking", rBtnApagar, 8.0f,
+                              Fade(podeApagar ? (Color){ 255, 242, 230, 255 } : (Color){ 125, 112, 113, 220 }, alpha));
+
+        if (interativo && hovApagar && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if (g_devAlvoApagar < 0) {
+                RankingClear();
+            } else {
+                RankingRemoveAt(g_devAlvoApagar);
+            }
+            g_devAlvoApagar = -1;
+            MuralReload(-1);
+            count = RankingGetCount();
+            cliqueTratadoDev = true;
+        }
+    }
 
     // Botao "Menu Principal" no canto superior direito
     Rectangle btnMenu = { 500.0f, 6.0f, 130.0f, 22.0f };
-    bool hovMenu = interativo && CheckCollisionPointRec(mv, btnMenu);
+    bool hovMenu = interativo && !g_devDropdownAberto && CheckCollisionPointRec(mv, btnMenu);
     if (hovMenu) {
         algumHover = true;
         if (!g_btnVoltarHovAnt) TocarHover(sndHover);
@@ -348,12 +448,15 @@ bool MuralUpdateDraw(float alpha, Sound sndHover) {
                           Fade(hovMenu ? (Color){ 24, 21, 23, 255 } : (Color){ 255, 242, 230, 255 }, alpha));
 
     bool sair = false;
-    if (interativo && ((hovMenu && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) || IsKeyPressed(KEY_ESCAPE))) {
-        sair = true;
+    if (interativo) {
+        if (g_devDropdownAberto && IsKeyPressed(KEY_ESCAPE)) {
+            g_devDropdownAberto = false;
+        } else if ((hovMenu && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) || IsKeyPressed(KEY_ESCAPE)) {
+            sair = true;
+        }
     }
 
     // 3) Grade 2x5 com os 10 Retratos ocupando toda a parede (x = 9..631, y = 40..352)
-    int count = RankingGetCount();
     const float cardW = 118.0f;
     const float cardH = 152.0f;
     const float gapX  = 8.0f;
@@ -379,7 +482,7 @@ bool MuralUpdateDraw(float alpha, Sound sndHover) {
         bool ehTop1 = (i == 0 && ocupado);
         bool ehDestaqueNovo = (i == g_highlightIdx && ocupado);
 
-        bool hov = interativo && ocupado && CheckCollisionPointRec(mv, baseCard);
+        bool hov = interativo && !g_devDropdownAberto && ocupado && CheckCollisionPointRec(mv, baseCard);
         if (hov) {
             hoverCardAtual = i;
             algumHover = true;
@@ -477,6 +580,59 @@ bool MuralUpdateDraw(float alpha, Sound sndHover) {
         TocarHover(sndHover);
     }
     g_cardHoverAnt = hoverCardAtual;
+
+    // Lista suspensa da caixa de selecao DEV (desenhada sobre os quadros)
+    if (devMode && g_devDropdownAberto && count > 0) {
+        float itemH = 16.0f;
+        int totalItens = 1 + count; // 0: Todos, 1..count: entradas do ranking
+        Rectangle rLista = { rCombo.x, rCombo.y + rCombo.height + 2.0f, rCombo.width, itemH * (float)totalItens };
+
+        DrawRectangleRec(ParaTela((Rectangle){ rLista.x + 2.0f, rLista.y + 2.0f, rLista.width, rLista.height }),
+                         Fade(BLACK, 0.65f * alpha));
+        DrawRectangleRec(ParaTela(rLista), Fade((Color){ 24, 21, 23, 252 }, alpha));
+        DrawRectangleLinesEx(ParaTela(rLista), 1.3f * esc, Fade((Color){ 255, 242, 230, 255 }, alpha));
+
+        int itemHoverAtual = -2;
+        for (int idx = -1; idx < count; idx++) {
+            int rowIdx = idx + 1;
+            Rectangle rItem = { rLista.x + 1.0f, rLista.y + (float)rowIdx * itemH, rLista.width - 2.0f, itemH };
+            bool hovItem = interativo && CheckCollisionPointRec(mv, rItem);
+            bool selItem = (g_devAlvoApagar == idx);
+            if (hovItem) {
+                itemHoverAtual = idx;
+                algumHover = true;
+            }
+
+            if (hovItem || selItem) {
+                Color cItemBg = hovItem ? (Color){ 138, 48, 50, 255 } : (Color){ 56, 48, 50, 255 };
+                DrawRectangleRec(ParaTela(rItem), Fade(cItemBg, alpha));
+            }
+            const char *txtItem = "Todos";
+            if (idx >= 0) {
+                const RankingEntry *eItem = RankingGetEntry(idx);
+                txtItem = eItem ? TextFormat("#%d %s", idx + 1, eItem->nome) : "---";
+            }
+            DesenharTextoCentrado(txtItem, rItem, 8.0f,
+                                  Fade((hovItem || selItem) ? (Color){ 255, 242, 230, 255 } : (Color){ 189, 181, 168, 255 }, alpha));
+
+            if (interativo && hovItem && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                g_devAlvoApagar = idx;
+                g_devDropdownAberto = false;
+                cliqueTratadoDev = true;
+            }
+        }
+        if (itemHoverAtual != -2 && itemHoverAtual != g_devDropItemHovAnt) {
+            TocarHover(sndHover);
+        }
+        g_devDropItemHovAnt = itemHoverAtual;
+
+        if (interativo && !cliqueTratadoDev && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+            !CheckCollisionPointRec(mv, rLista) && !CheckCollisionPointRec(mv, rCombo)) {
+            g_devDropdownAberto = false;
+        }
+    } else {
+        g_devDropItemHovAnt = -2;
+    }
 
     if (interativo) {
         SetMouseCursor(algumHover ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);

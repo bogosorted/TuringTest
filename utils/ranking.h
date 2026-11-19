@@ -21,5 +21,7 @@ void RankingAdd(const char *nome, int pontos, bool acertou);
 int  RankingAddWithPhoto(const char *nome, int pontos, bool acertou, const char *fotoPath);
 int  RankingGetCount(void);
 const RankingEntry *RankingGetEntry(int index);
+void RankingRemoveAt(int index);
+void RankingClear(void);
 
 #endif

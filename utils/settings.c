@@ -54,8 +54,13 @@ static int CompararTexto(const void *a, const void *b) {
     return strcmp(*(const char *const *)a, *(const char *const *)b);
 }
 
-// "soft-gameboy-1x" -> "Soft Gameboy"
+// Mapeia nomes especiais de paletas e formata os demais ("espaco-mental" -> "Espaço Mental")
 static void NomeBonito(const char *arquivo, char out[NOME_LEN]) {
+    if (strcmp(arquivo, "whos-liliac") == 0)   { snprintf(out, NOME_LEN, "Who's liliac?"); return; }
+    if (strcmp(arquivo, "gameboy") == 0)       { snprintf(out, NOME_LEN, "Gameboy"); return; }
+    if (strcmp(arquivo, "espaco-mental") == 0) { snprintf(out, NOME_LEN, "Espaço Mental"); return; }
+    if (strcmp(arquivo, "crepusculo") == 0)    { snprintf(out, NOME_LEN, "Crepúsculo"); return; }
+
     snprintf(out, NOME_LEN, "%s", arquivo);
     size_t n = strlen(out);
     if (n > 3 && strcmp(out + n - 3, "-1x") == 0) out[n - 3] = '\0';   // sufixo do export do Lospec

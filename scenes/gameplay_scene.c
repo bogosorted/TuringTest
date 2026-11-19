@@ -1110,26 +1110,26 @@ typedef struct {
 
 // Coordenadas UV [0..1] calibradas para cada foto (Maria Bianca, Arthur, Ana Lucia)
 static const FaceRigAnchors FACE_ANCHORS[3] = {
-    // 0: Maria Bianca
+    // 0: Maria Bianca (500x499)
     {
-        .browP  = { { 0.285f, 0.455f }, { 0.435f, 0.458f }, { 0.560f, 0.458f }, { 0.675f, 0.455f } },
-        .lidP   = { { 0.372f, 0.495f }, { 0.612f, 0.495f } },
-        .mouthP = { { 0.395f, 0.778f }, { 0.598f, 0.775f } },
-        .jawP   = { 0.500f, 0.900f }
+        .browP  = { { 0.305f, 0.405f }, { 0.435f, 0.400f }, { 0.555f, 0.400f }, { 0.708f, 0.405f } },
+        .lidP   = { { 0.365f, 0.455f }, { 0.625f, 0.455f } },
+        .mouthP = { { 0.398f, 0.748f }, { 0.600f, 0.748f } },
+        .jawP   = { 0.500f, 0.905f }
     },
-    // 1: Arthur
+    // 1: Arthur Gadelho (500x500)
     {
-        .browP  = { { 0.400f, 0.495f }, { 0.540f, 0.500f }, { 0.665f, 0.498f }, { 0.775f, 0.490f } },
-        .lidP   = { { 0.482f, 0.534f }, { 0.705f, 0.532f } },
-        .mouthP = { { 0.485f, 0.790f }, { 0.695f, 0.790f } },
-        .jawP   = { 0.595f, 0.915f }
+        .browP  = { { 0.310f, 0.405f }, { 0.448f, 0.405f }, { 0.552f, 0.400f }, { 0.688f, 0.405f } },
+        .lidP   = { { 0.395f, 0.452f }, { 0.605f, 0.448f } },
+        .mouthP = { { 0.415f, 0.678f }, { 0.595f, 0.678f } },
+        .jawP   = { 0.505f, 0.818f }
     },
-    // 2: Ana Lucia (rosto atras dos oculos)
+    // 2: Ana Lucia (500x500, rosto atras dos oculos)
     {
-        .browP  = { { 0.290f, 0.430f }, { 0.430f, 0.432f }, { 0.560f, 0.432f }, { 0.700f, 0.428f } },
-        .lidP   = { { 0.365f, 0.480f }, { 0.630f, 0.480f } },
-        .mouthP = { { 0.405f, 0.755f }, { 0.600f, 0.752f } },
-        .jawP   = { 0.500f, 0.890f }
+        .browP  = { { 0.300f, 0.388f }, { 0.440f, 0.388f }, { 0.552f, 0.388f }, { 0.692f, 0.388f } },
+        .lidP   = { { 0.388f, 0.442f }, { 0.605f, 0.444f } },
+        .mouthP = { { 0.402f, 0.672f }, { 0.598f, 0.672f } },
+        .jawP   = { 0.502f, 0.822f }
     }
 };
 
@@ -1902,15 +1902,10 @@ static const char *FACE_RIG_FS =
     "    vec4 texCol = texture(texture0, sampleUV);\n"
     "    if (texCol.a < 0.15) discard;\n"
     "\n"
-    "    // Pixelacao retro e dithering acentuado na paleta oficial do jogo\n"
-    "    vec3 c0 = vec3(0.0, 0.0, 0.0);\n"
+    "    // Preserva o dither leve pre-processado no PNG sem pixelizacao 3x3 excessiva\n"
     "    vec3 c1 = vec3(32.0, 29.0, 31.0) / 255.0;\n"
-    "    vec3 c2 = vec3(90.0, 83.0, 83.0) / 255.0;\n"
-    "    vec3 c3 = vec3(125.0, 112.0, 113.0) / 255.0;\n"
-    "    vec3 c4 = vec3(160.0, 147.0, 142.0) / 255.0;\n"
-    "    vec3 c5 = vec3(189.0, 181.0, 168.0) / 255.0;\n"
     "\n"
-    "    // Piscar dos olhos com arcozinho e palpebra (processado com pixel art e dithering nativo)\n"
+    "    // Piscar dos olhos com arcozinho e palpebra\n"
     "    if (uBlink > 0.10) {\n"
     "        float bProg = (uBlink - 0.10) / 0.90;\n"
     "        for (int i = 0; i < 2; i++) {\n"
@@ -1930,21 +1925,7 @@ static const char *FACE_RIG_FS =
     "        }\n"
     "    }\n"
     "\n"
-    "    float lum = dot(texCol.rgb, vec3(0.299, 0.587, 0.114));\n"
-    "    // Reducao de resolucao em blocos retro 3x3 e dithering Bayer marcante (0.28)\n"
-    "    vec2 pGrid = floor(gl_FragCoord.xy / 3.0);\n"
-    "    float dVal = (bayer4(pGrid) - 0.5) * 0.28;\n"
-    "    float val = clamp(lum + dVal, 0.0, 1.0);\n"
-    "\n"
-    "    vec3 outRgb = c0;\n"
-    "    if (val < 0.12) outRgb = c0;\n"
-    "    else if (val < 0.28) outRgb = c1;\n"
-    "    else if (val < 0.48) outRgb = c2;\n"
-    "    else if (val < 0.68) outRgb = c3;\n"
-    "    else if (val < 0.86) outRgb = c4;\n"
-    "    else outRgb = c5;\n"
-    "\n"
-    "    finalColor = vec4(outRgb, texCol.a) * fragColor;\n"
+    "    finalColor = texCol * fragColor;\n"
     "}\n";
 
 // Shader de contorno orbital ditherizado na paleta oficial do jogo
@@ -2127,61 +2108,56 @@ static void AtualizarExpressaoPorTexto(int suspeito, const char *nodeId, const c
     if (suspeito < 0 || suspeito >= 3) return;
     ExpressaoFacial nova = EXPR_NEUTRO;
 
-    if (suspeito == 2) {
-        // Lucas (extrovertido / IA)
-        // Por padrao ele sorri bastante, mas muda nitidamente de acordo com o topico:
-        if (nodeId && strstr(nodeId, "seis_dedos")) {
-            nova = EXPR_SURPRESA; // pego de surpresa pelo detalhe da foto
-        } else if (nodeId && strstr(nodeId, "estranho")) {
-            nova = EXPR_NEUTRO;   // pensativo / reflexivo sobre o que viu
-        } else if (nodeId && strstr(nodeId, "curriculos")) {
-            nova = EXPR_NEUTRO;
-        } else if (nodeId && (strstr(nodeId, "memoria") || strstr(nodeId, "outro_emprego"))) {
-            nova = EXPR_TRISTE;   // saudosismo da sorveteria
-        } else if (texto && (strstr(texto, "polidactilia") || strstr(texto, "dedo") || strstr(texto, "Quer dizer") || strstr(texto, "desculp"))) {
+    if (suspeito == 0) {
+        // Maria Bianca (Auxiliar Administrativa: reservada, observadora, defensiva sob pressao)
+        if (nodeId && (strcmp(nodeId, "B.1.1") == 0 || strcmp(nodeId, "B.1.2") == 0 || strcmp(nodeId, "B.2.2") == 0)) {
+            nova = EXPR_RAIVA;
+        } else if (nodeId && strcmp(nodeId, "B.2.1#EV-01") == 0) {
+            nova = EXPR_DESPREZO;
+        } else if (texto && (strstr(texto, "não faço os relatórios") || strstr(texto, "Isso não importa") || strstr(texto, "não entendi") || strstr(texto, "já falei demais"))) {
+            nova = EXPR_RAIVA;
+        } else if (texto && (strstr(texto, "Como assim?") || strstr(texto, "serio?") || strstr(texto, "sério?"))) {
             nova = EXPR_SURPRESA;
-        } else if (texto && (strstr(texto, "difícil") || strstr(texto, "cansad") || strstr(texto, "problema"))) {
+        } else if (texto && (strstr(texto, "alucina") || strstr(texto, "errados") || strstr(texto, "difícil") || strstr(texto, "dificil") || strstr(texto, "semanas ruins"))) {
             nova = EXPR_TRISTE;
-        } else if (texto && (strstr(texto, "Com certeza") || strstr(texto, "Meu perfil") || strstr(texto, "haha"))) {
-            nova = EXPR_SORRISO_INSANO;
-        } else {
+        } else if (texto && (strstr(texto, "Lisboa") || strstr(texto, "mitigar") || strstr(texto, "toda ouvidos") || strstr(texto, "Pode falar") || strstr(texto, "bem legal"))) {
             nova = EXPR_FELIZ;
-        }
-    } else if (suspeito == 0) {
-        // Patricia (Financeiro: seria, metodica, impaciente)
-        if (nodeId && (strstr(nodeId, "ia_comprovante") || strstr(nodeId, "desconforto") || strstr(nodeId, "prompt_inj") || strstr(nodeId, "red_team"))) {
-            nova = EXPR_RAIVA;
-        } else if (nodeId && (strstr(nodeId, "rotina") || strstr(nodeId, "saldo") || strstr(nodeId, "registros"))) {
-            nova = EXPR_NEUTRO;
-        } else if (nodeId && (strstr(nodeId, "reservada") || strstr(nodeId, "prazos") || strstr(nodeId, "atipica"))) {
-            nova = EXPR_TRISTE;
-        } else if (texto && (strstr(texto, "ocupada") || strstr(texto, "atrapalh") || strstr(texto, "pressa") || strstr(texto, "Não confunda") || strstr(texto, "script"))) {
-            nova = EXPR_RAIVA;
-        } else if (texto && (strstr(texto, "fechamento") || strstr(texto, "tenso") || strstr(texto, "peso") || strstr(texto, "silêncio"))) {
-            nova = EXPR_TRISTE;
-        } else if (texto && (strstr(texto, "Siga os manuais") || strstr(texto, "analítica") || strstr(texto, "ordem"))) {
+        } else if (texto && (strstr(texto, "arrogante") || strstr(texto, "procedimento"))) {
             nova = EXPR_DESPREZO;
-        } else if (texto && (strstr(texto, "bom dia") || strstr(texto, "ajudar"))) {
-            nova = EXPR_NEUTRO;
         } else {
-            nova = EXPR_DESPREZO;
+            nova = EXPR_NEUTRO;
         }
     } else if (suspeito == 1) {
-        // Andre (Logistica: direto, casca-grossa, se irrita com acusacoes)
-        if (nodeId && (strstr(nodeId, "conflito") || strstr(nodeId, "suspeita") || strstr(nodeId, "estranho"))) {
+        // Arthur Gadelho (Assistente Administrativo / Musico: simpatico, aberto, sensivel sobre familia e pressao)
+        if (nodeId && (strcmp(nodeId, "B.1.1") == 0 || strcmp(nodeId, "B.2.3") == 0 || strcmp(nodeId, "B.2.2") == 0)) {
             nova = EXPR_RAIVA;
-        } else if (nodeId && (strstr(nodeId, "mariana") || strstr(nodeId, "colegas"))) {
-            nova = EXPR_DESPREZO;
-        } else if (nodeId && (strstr(nodeId, "rotina") || strstr(nodeId, "papel") || strstr(nodeId, "logistica"))) {
-            nova = EXPR_NEUTRO;
-        } else if (texto && (strstr(texto, "terminal de consulta") || strstr(texto, "gente") || strstr(texto, "relatório direito") || strstr(texto, "Errado"))) {
-            nova = EXPR_RAIVA;
-        } else if (texto && (strstr(texto, "cansad") || strstr(texto, "costas") || strstr(texto, "dor") || strstr(texto, "puxado") || strstr(texto, "pesado"))) {
+        } else if (nodeId && (strcmp(nodeId, "A.2") == 0 || strcmp(nodeId, "A.2.1") == 0)) {
             nova = EXPR_TRISTE;
-        } else if (texto && (strstr(texto, "tranquilo") || strstr(texto, "futebol") || strstr(texto, "descans") || strstr(texto, "beleza"))) {
+        } else if (texto && (strstr(texto, "sem minha mãe") || strstr(texto, "complicado") || strstr(texto, "Sinto muito") || strstr(texto, "já tentei") || strstr(texto, "implicando") || strstr(texto, "dificuldades"))) {
+            nova = EXPR_TRISTE;
+        } else if (texto && (strstr(texto, "extremamente lógico") || strstr(texto, "dificultando"))) {
+            nova = EXPR_RAIVA;
+        } else if (texto && (strstr(texto, "banda indie") || strstr(texto, "Como assim"))) {
+            nova = EXPR_SURPRESA;
+        } else if (texto && (strstr(texto, "brother") || strstr(texto, "ótimo") || strstr(texto, "sinistros") || strstr(texto, "Supimpa") || strstr(texto, "Hihihi") || strstr(texto, "rock") || strstr(texto, "energético") || strstr(texto, "família") || strstr(texto, "guitarrista"))) {
             nova = EXPR_FELIZ;
-        } else if (texto && (strstr(texto, "?") || strstr(texto, "Quem disse"))) {
+        } else {
+            nova = EXPR_NEUTRO;
+        }
+    } else if (suspeito == 2) {
+        // Ana Lucia (Supervisora / IA: controladora, sorrisos artificiais, irritavel com questionamentos)
+        if (nodeId && (strcmp(nodeId, "B.1.1") == 0 || strcmp(nodeId, "B.2.3") == 0 || strcmp(nodeId, "B.1.2") == 0 || strcmp(nodeId, "B.2.2") == 0)) {
+            nova = EXPR_RAIVA;
+        } else if (texto && (strstr(texto, "insolente") || strstr(texto, "grosseria") || strstr(texto, "absurdo") || strstr(texto, "inuteis") || strstr(texto, "rato") || strstr(texto, "ocupada") || strstr(texto, "não estou gostando") || strstr(texto, "insubordinação"))) {
+            nova = EXPR_RAIVA;
+        } else if (texto && (strstr(texto, "Nunca cometi") || strstr(texto, "perfeitos") || strstr(texto, "Haha") || strstr(texto, "capricornianos") || strstr(texto, "confiança"))) {
+            nova = EXPR_SORRISO_INSANO;
+        } else if (texto && (strstr(texto, "Como assim") || strstr(texto, "O quê"))) {
+            nova = EXPR_SURPRESA;
+        } else if (texto && (strstr(texto, "confidencial") || strstr(texto, "novato") || strstr(texto, "muitas perguntas") || strstr(texto, "se concentre") || strstr(texto, "aprend"))) {
             nova = EXPR_DESPREZO;
+        } else if (texto && (strstr(texto, "Querido") || strstr(texto, "querido") || strstr(texto, "queridinho") || strstr(texto, "gentil") || strstr(texto, "amo que me chamem") || strstr(texto, "Sim, sim!"))) {
+            nova = EXPR_FELIZ;
         } else {
             nova = EXPR_NEUTRO;
         }
