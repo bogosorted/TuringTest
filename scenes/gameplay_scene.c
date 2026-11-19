@@ -1113,7 +1113,7 @@ static const FaceRigAnchors FACE_ANCHORS[3] = {
     // 0: Maria Bianca (500x499)
     {
         .browP  = { { 0.305f, 0.405f }, { 0.435f, 0.400f }, { 0.555f, 0.400f }, { 0.708f, 0.405f } },
-        .lidP   = { { 0.365f, 0.455f }, { 0.625f, 0.455f } },
+        .lidP   = { { 0.365f, 0.464f }, { 0.628f, 0.464f } },
         .mouthP = { { 0.398f, 0.748f }, { 0.600f, 0.748f } },
         .jawP   = { 0.500f, 0.905f }
     },
@@ -1149,6 +1149,7 @@ static int             g_locJawP             = -1;
 static int             g_locJawD             = -1;
 static int             g_locBlink            = -1;
 static int             g_locPalpebraCol      = -1;
+static int             g_locMouthOpen        = -1;
 static Shader          g_outlineDitherShader = { 0 };
 static int             g_locOutTime          = -1;
 static int             g_locOutCenter        = -1;
@@ -1838,6 +1839,7 @@ static const char *FACE_RIG_FS =
     "uniform vec2 uJawD;\n"
     "uniform float uBlink;\n"
     "uniform vec3 uPalpebraCol;\n"
+    "uniform float uMouthOpen;\n"
     "out vec4 finalColor;\n"
     "\n"
     "float rbf(vec2 p, vec2 c, float r) {\n"
@@ -1869,17 +1871,16 @@ static const char *FACE_RIG_FS =
     "    return 5.0/16.0;\n"
     "}\n"
     "\n"
-    "void main() {\n"
-    "    vec2 uv = fragTexCoord;\n"
+    "vec2 evalDisp(vec2 p) {\n"
     "    vec2 d = vec2(0.0);\n"
     "    float rBrow = 0.088;\n"
     "    for (int i = 0; i < 4; i++) {\n"
-    "        d += uBrowD[i] * rbf(uv, uBrowP[i], rBrow);\n"
+    "        d += uBrowD[i] * rbf(p, uBrowP[i], rBrow);\n"
     "    }\n"
     "    float lidRx = 0.075;\n"
     "    float lidRy = 0.052;\n"
     "    for (int i = 0; i < 2; i++) {\n"
-    "        vec2 diff = uv - uLidP[i];\n"
+    "        vec2 diff = p - uLidP[i];\n"
     "        vec2 q = diff / vec2(lidRx, lidRy);\n"
     "        q.y *= (diff.y < 0.0) ? 0.85 : 1.45;\n"
     "        float w = exp(-dot(q, q) * 0.5);\n"
@@ -1892,12 +1893,21 @@ static const char *FACE_RIG_FS =
     "    }\n"
     "    float rMouth = 0.095;\n"
     "    for (int i = 0; i < 2; i++) {\n"
-    "        d += uMouthD[i] * rbf(uv, uMouthP[i], rMouth);\n"
+    "        d += uMouthD[i] * rbf(p, uMouthP[i], rMouth);\n"
     "    }\n"
     "    vec2 mc = (uMouthP[0] + uMouthP[1]) * 0.5;\n"
     "    vec2 mcD = vec2(0.0, -(uMouthD[0].y + uMouthD[1].y) * 0.30);\n"
-    "    d += mcD * rbf(uv, mc, rMouth * 0.9);\n"
-    "    d += uJawD * rbf(uv, uJawP, 0.140);\n"
+    "    d += mcD * rbf(p, mc, rMouth * 0.9);\n"
+    "    if (uMouthOpen > 0.02 && p.y > mc.y) {\n"
+    "        d.y += uMouthOpen * 0.012 * rbf(p, mc + vec2(0.0, 0.03), 0.075);\n"
+    "    }\n"
+    "    d += uJawD * rbf(p, uJawP, 0.140);\n"
+    "    return d;\n"
+    "}\n"
+    "\n"
+    "void main() {\n"
+    "    vec2 uv = fragTexCoord;\n"
+    "    vec2 d = evalDisp(uv);\n"
     "    vec2 sampleUV = clamp(uv - d, vec2(0.001), vec2(0.999));\n"
     "    vec4 texCol = texture(texture0, sampleUV);\n"
     "    if (texCol.a < 0.15) discard;\n"
@@ -1905,21 +1915,44 @@ static const char *FACE_RIG_FS =
     "    // Preserva o dither leve pre-processado no PNG sem pixelizacao 3x3 excessiva\n"
     "    vec3 c1 = vec3(32.0, 29.0, 31.0) / 255.0;\n"
     "\n"
-    "    // Piscar dos olhos com arcozinho e palpebra\n"
-    "    if (uBlink > 0.10) {\n"
-    "        float bProg = (uBlink - 0.10) / 0.90;\n"
+    "    // Efeito rapido de abertura da boca durante a fala\n"
+    "    if (uMouthOpen > 0.03) {\n"
+    "        vec2 mL = uMouthP[0] + uMouthD[0];\n"
+    "        vec2 mR = uMouthP[1] + uMouthD[1];\n"
+    "        vec2 mCenter = (mL + mR) * 0.5;\n"
+    "        float mHalfW = max(length(mR - mL) * 0.40, 0.038);\n"
+    "        float mx = (uv.x - mCenter.x) / mHalfW;\n"
+    "        float my = (uv.y - (mCenter.y + 0.004 * uMouthOpen)) / (0.0025 + 0.013 * uMouthOpen);\n"
+    "        float mDist = mx * mx + my * my;\n"
+    "        if (mDist < 1.0) {\n"
+    "            float edge = smoothstep(1.0, 0.42, mDist);\n"
+    "            vec3 mouthDark = vec3(14.0, 12.0, 14.0) / 255.0;\n"
+    "            if (my < -0.25 && uMouthOpen > 0.48 && abs(mx) < 0.62) {\n"
+    "                mouthDark = mix(mouthDark, vec3(180.0, 170.0, 160.0) / 255.0, 0.30 * edge);\n"
+    "            }\n"
+    "            texCol.rgb = mix(texCol.rgb, mouthDark, edge * 0.90);\n"
+    "        }\n"
+    "    }\n"
+    "\n"
+    "    // Piscar dos olhos natural e centralizado na posicao real dos olhos apos a deformacao da reacao\n"
+    "    if (uBlink > 0.15) {\n"
+    "        float bProg = (uBlink - 0.15) / 0.85;\n"
     "        for (int i = 0; i < 2; i++) {\n"
-    "            // Centro calibrado um tiquinho mais para baixo (+0.018 em Y) para cobrir o olho inteiro\n"
-    "            vec2 eyeCenter = uLidP[i] + uLidD[i] + vec2(0.0, 0.018);\n"
-    "            vec2 q = (uv - eyeCenter) / vec2(0.068, 0.042);\n"
+    "            vec2 eyeCenter = uLidP[i];\n"
+    "            eyeCenter = uLidP[i] + evalDisp(eyeCenter);\n"
+    "            eyeCenter = uLidP[i] + evalDisp(eyeCenter);\n"
+    "            vec2 q = (uv - eyeCenter) / vec2(0.045, 0.022);\n"
     "            float distSq = dot(q, q);\n"
     "            if (distSq <= 1.0) {\n"
-    "                float arcY = (1.0 - q.x * q.x) * 0.40 * bProg;\n"
+    "                vec3 sAbove = texture(texture0, clamp(uLidP[i] - vec2(0.0, 0.026), vec2(0.001), vec2(0.999))).rgb;\n"
+    "                vec3 sBelow = texture(texture0, clamp(uLidP[i] + vec2(0.0, 0.028), vec2(0.001), vec2(0.999))).rgb;\n"
+    "                vec3 lidSkin = max(sAbove, sBelow) * 0.86;\n"
+    "                float arcY = (1.0 - q.x * q.x) * 0.36 * bProg;\n"
     "                float distArc = abs(q.y - arcY);\n"
     "                if (distArc < 0.16) {\n"
-    "                    texCol = vec4(c1, 1.0);\n"
-    "                } else if (q.y <= arcY + 0.35) {\n"
-    "                    texCol = vec4(uPalpebraCol, 1.0);\n"
+    "                    texCol.rgb = mix(texCol.rgb, c1, bProg);\n"
+    "                } else if (q.y <= arcY + 0.32) {\n"
+    "                    texCol.rgb = mix(texCol.rgb, lidSkin, bProg);\n"
     "                }\n"
     "            }\n"
     "        }\n"
@@ -2016,6 +2049,7 @@ static void InitFaceRigShader(void) {
         g_locJawD        = GetShaderLocation(g_faceRigShader, "uJawD");
         g_locBlink       = GetShaderLocation(g_faceRigShader, "uBlink");
         g_locPalpebraCol = GetShaderLocation(g_faceRigShader, "uPalpebraCol");
+        g_locMouthOpen   = GetShaderLocation(g_faceRigShader, "uMouthOpen");
     }
 
     g_outlineDitherShader = LoadShaderFromMemory(NULL, OUTLINE_DITHER_FS);
@@ -2188,21 +2222,24 @@ static void DesenharRetratoComRig(Texture2D tex, int suspeito, Rectangle charDes
         g_poseCurr.d[i].y = g_poseFrom.d[i].y + (g_poseTarget.d[i].y - g_poseFrom.d[i].y) * e;
     }
 
-    // Piscar natural a cada ~3.8s + movimento sutil de fala na mandibula/boca ao iniciar um dialogo
+    // Piscar natural e rapido a cada ~3.8s + abertura rapida da boca durante a fala
     float tNow = (float)GetTime();
     float cicloBlink = fmodf(tNow + suspeito * 1.1f, 3.8f);
     float blinkT = 0.0f;
-    const float duracaoBlink = 0.18f;
+    const float duracaoBlink = 0.13f;
     if (cicloBlink < duracaoBlink) {
         float bt = cicloBlink / duracaoBlink;
         blinkT = sinf(bt * 3.14159265f);
     }
 
     float talkJawAdd = 0.0f;
+    float mouthOpen  = 0.0f;
     if (g_rigTalkTimer > 0.0f) {
         g_rigTalkTimer -= dt;
         if (g_rigTalkTimer < 0.0f) g_rigTalkTimer = 0.0f;
-        talkJawAdd = (0.5f + 0.5f * sinf(tNow * 22.0f)) * 0.012f;
+        float pulse = 0.5f + 0.5f * sinf(tNow * 28.0f);
+        talkJawAdd = pulse * 0.012f;
+        mouthOpen  = 0.25f + 0.75f * fabsf(sinf(tNow * 26.0f));
     }
 
     const FaceRigAnchors *anc = &FACE_ANCHORS[suspeito];
@@ -2234,6 +2271,7 @@ static void DesenharRetratoComRig(Texture2D tex, int suspeito, Rectangle charDes
     }
     SetShaderValue(g_faceRigShader, g_locBlink, &blinkT, SHADER_UNIFORM_FLOAT);
     SetShaderValue(g_faceRigShader, g_locPalpebraCol, &palCol, SHADER_UNIFORM_VEC3);
+    SetShaderValue(g_faceRigShader, g_locMouthOpen, &mouthOpen, SHADER_UNIFORM_FLOAT);
 
     // Outline solido com degradê e dithering na paleta oficial do jogo (estilo atmosfera/aneis de planeta)
     // Destaca o personagem do fundo com espessura marcante e ondas viajando suavemente ao redor do circulo
@@ -2398,13 +2436,15 @@ static void DesenharMiniRetratoPlayer(void) {
 
     float tNow = (float)GetTime();
     float cicloBlink = fmodf(tNow + 2.3f, 4.1f);
-    float blinkT = (cicloBlink < 0.17f) ? sinf((cicloBlink / 0.17f) * 3.14159265f) : 0.0f;
+    float blinkT = (cicloBlink < 0.13f) ? sinf((cicloBlink / 0.13f) * 3.14159265f) : 0.0f;
 
     float talkJawAdd = 0.0f;
+    float mouthOpen  = 0.0f;
     if (g_playerTalkTimer > 0.0f) {
         g_playerTalkTimer -= dt;
         if (g_playerTalkTimer < 0.0f) g_playerTalkTimer = 0.0f;
-        talkJawAdd = (0.5f + 0.5f * sinf(tNow * 24.0f)) * 0.013f;
+        talkJawAdd = (0.5f + 0.5f * sinf(tNow * 28.0f)) * 0.013f;
+        mouthOpen  = 0.25f + 0.75f * fabsf(sinf(tNow * 26.0f));
     }
 
     // Mini-retrato compacto no canto inferior esquerdo da janela (54x62 base, expande levemente ao falar)
@@ -2448,6 +2488,7 @@ static void DesenharMiniRetratoPlayer(void) {
         SetShaderValue (g_faceRigShader, g_locJawD,   &jawD,       SHADER_UNIFORM_VEC2);
         SetShaderValue (g_faceRigShader, g_locBlink,  &blinkT,     SHADER_UNIFORM_FLOAT);
         SetShaderValue (g_faceRigShader, g_locPalpebraCol, &palCol, SHADER_UNIFORM_VEC3);
+        SetShaderValue (g_faceRigShader, g_locMouthOpen, &mouthOpen, SHADER_UNIFORM_FLOAT);
         DrawTexturePro(tex, src, rFotoTela, (Vector2){ 0, 0 }, 0.0f, WHITE);
         EndShaderMode();
     } else {
