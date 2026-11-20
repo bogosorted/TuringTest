@@ -62,6 +62,9 @@ static bool  g_opcoesAbertas     = false;
 static float g_opcoesAnim        = 0.0f;   // 0 = invisivel, 1 = totalmente aberto
 static bool  g_rankingAberto     = false;
 static float g_rankingAnim       = 0.0f;
+static bool  g_modoAberto        = false;
+static float g_modoAnim          = 0.0f;
+static int   g_hoverModoAnt      = -1;
 static bool  g_nomeAberto        = false;
 static float g_nomeAnim          = 0.0f;
 static char  g_nomeInput[9]      = "";
@@ -79,6 +82,14 @@ static bool g_shouldStartGame = false;
 // Funcoes de clique de cada botao
 static void OnClickPlay(void) {
     TraceLog(LOG_INFO, "Botao JOGAR clicado!");
+    g_modoAberto = true;
+    g_hoverModoAnt = -1;
+    g_voltarHoverAnt = false;
+    g_esperarSoltarMouse = true;
+}
+
+static void AbrirTelaNome(void) {
+    g_modoAberto = false;
     g_nomeAberto = true;
     g_nomeInput[0] = '\0';
     g_playerAvatarSel = GameStateGetPlayerAvatar();
@@ -104,8 +115,16 @@ static void FecharRanking(void) {
     g_esperarSoltarMouse = true;
 }
 
+static void FecharModo(void) {
+    g_modoAberto = false;
+    g_esperarSoltarMouse = true;
+}
+
 static void FecharNome(void) {
     g_nomeAberto = false;
+    g_modoAberto = true;
+    g_hoverModoAnt = -1;
+    g_voltarHoverAnt = false;
     g_esperarSoltarMouse = true;
 }
 
@@ -460,7 +479,7 @@ static void TocarSomHover(void) {
 static void UpdateMenuButtons(void) {
     Vector2 mouse = RayCanvasGetMousePosition();
     bool algumHover = false;
-    bool menuAtivo = !g_opcoesAbertas && !g_rankingAberto && !g_nomeAberto;   // com painel aberto os botoes se escondem
+    bool menuAtivo = !g_opcoesAbertas && !g_rankingAberto && !g_modoAberto && !g_nomeAberto;   // com painel aberto os botoes se escondem
     float dt = GetFrameTime();
     if (dt > 0.05f) dt = 0.05f; // evita pulo brusco se a janela travar num frame
 
@@ -699,6 +718,90 @@ static void UpdateDrawRanking(void) {
     }
 }
 
+static void UpdateDrawModo(void) {
+    float dt = GetFrameTime();
+    if (dt > 0.05f) dt = 0.05f;
+    float alvo = g_modoAberto ? 1.0f : 0.0f;
+    g_modoAnim += (alvo - g_modoAnim) * fminf(dt * 9.0f, 1.0f);
+    if (!g_modoAberto && g_modoAnim < 0.01f) { g_modoAnim = 0.0f; return; }
+
+    float a = g_modoAnim;
+    bool interativo = g_modoAberto && a > 0.5f && !RayCanvasInputBlocked();
+    Vector2 mv = MouseVirtual();
+
+    if (g_modoAberto && IsKeyPressed(KEY_ESCAPE)) {
+        FecharModo();
+        return;
+    }
+
+    Color bege   = Fade((Color){ 189, 181, 168, 255 }, a);
+    Color claro  = Fade((Color){ 255, 242, 230, 255 }, a);
+    Color medio  = Fade((Color){ 125, 112, 113, 255 }, a);
+    Color fundo  = Fade((Color){ 24, 21, 23, 255 }, a);
+    Color fundoH = Fade((Color){ 58, 52, 54, 255 }, a);
+
+    TextoOpcoes("ESCOLHA O MODO", OPC_LABEL_X, 122.0f, 26.0f, bege);
+    TextoOpcoes("Como deseja explorar a RASEC?", OPC_LABEL_X, 146.0f, 16.0f, medio);
+
+    static const char *TITULOS[2] = { "MODO 2D", "MODO 3D" };
+    static const char *LINHA1[2]  = { "Point & Click clássico", "Exploração 3D livre" };
+    static const char *LINHA2[2]  = { "com setas pelos andares", "pelo Térreo da RASEC" };
+
+    int hovModo = -1;
+    const float cardW = 186.0f;
+    const float cardH = 108.0f;
+    const float cardGap = 16.0f;
+    const float cardY = 166.0f;
+
+    for (int m = 0; m < 2; m++) {
+        Rectangle rCard = { OPC_LABEL_X + m * (cardW + cardGap), cardY, cardW, cardH };
+        bool hov = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, rCard);
+        if (hov) hovModo = m;
+
+        Rectangle rTela = ParaTela(rCard);
+        float esc = rTela.height / cardH;
+        DrawRectangleRec(ParaTela((Rectangle){ rCard.x + 2.5f, rCard.y + 3.0f, cardW, cardH }), Fade(BLACK, 0.5f * a));
+        DrawRectangleRec(rTela, hov ? fundoH : fundo);
+        DrawRectangleLinesEx(rTela, (hov ? 2.2f : 1.4f) * esc, hov ? claro : medio);
+
+        Vector2 tamTit = MeasureTextEx(g_fonte, TITULOS[m], 26.0f, 1.0f);
+        TextoOpcoes(TITULOS[m], rCard.x + (cardW - tamTit.x) * 0.5f, rCard.y + 30.0f, 26.0f, hov ? claro : bege);
+
+        Vector2 tamL1 = MeasureTextEx(g_fonte, LINHA1[m], 15.0f, 0.5f);
+        TextoOpcoes(LINHA1[m], rCard.x + (cardW - tamL1.x) * 0.5f, rCard.y + 62.0f, 15.0f, claro);
+
+        Vector2 tamL2 = MeasureTextEx(g_fonte, LINHA2[m], 15.0f, 0.5f);
+        TextoOpcoes(LINHA2[m], rCard.x + (cardW - tamL2.x) * 0.5f, rCard.y + 80.0f, 15.0f, medio);
+
+        if (hov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            GameStateSetMode((m == 0) ? MODO_2D : MODO_3D);
+            TocarSomHover();
+            AbrirTelaNome();
+            return;
+        }
+    }
+    if (hovModo >= 0 && hovModo != g_hoverModoAnt) TocarSomHover();
+    g_hoverModoAnt = hovModo;
+
+    float bw = (float)g_botao.width * BOTAO_ESCALA;
+    float bh = (float)g_botao.height * BOTAO_ESCALA;
+    const float yVoltar = 292.0f;
+    Rectangle hitVoltar = { BOTAO_X, yVoltar, bw - 22.0f, bh };
+    bool hoverVoltar = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, hitVoltar);
+    if (hoverVoltar && !g_voltarHoverAnt) TocarSomHover();
+    g_voltarHoverAnt = hoverVoltar;
+
+    DesenharBotaoPainel("Voltar", BOTAO_X, yVoltar, a, hoverVoltar);
+    if (hoverVoltar && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        FecharModo();
+    }
+
+    if (g_modoAberto) {
+        bool algumHov = hoverVoltar || (hovModo >= 0);
+        SetMouseCursor(algumHov ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+    }
+}
+
 static void UpdateDrawNome(void) {
     float dt = GetFrameTime();
     if (dt > 0.05f) dt = 0.05f;
@@ -884,6 +987,7 @@ void UpdateDrawMenuScene(void) {
     DrawMenu();
     UpdateDrawOpcoes();
     UpdateDrawRanking();
+    UpdateDrawModo();
     UpdateDrawNome();
 
     RayCanvasEnd();

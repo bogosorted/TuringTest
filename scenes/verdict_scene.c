@@ -707,13 +707,30 @@ static void CalcularESalvarPontuacao(void) {
     bool acertouVeredito = (g_alvo == AI_INDEX);
     int ptsVeredito = acertouVeredito ? 1500 : 0;
 
-    // 2) Checklist marcado na IA (ate 4 anomalias = 1200 pts), penalizando chute em massa nos inocentes
-    int marksIA = g_pranchetaMarcados[AI_INDEX];
-    int marksHumanos = g_pranchetaMarcados[0] + g_pranchetaMarcados[1];
-    int excessoHumanos = (marksHumanos > 3) ? (marksHumanos - 3) : 0;
-    int marksUteis = (marksIA > 4) ? 4 : marksIA;
-    int ptsChecklist = marksUteis * 300 - excessoHumanos * 200;
-    if (ptsChecklist < 0) ptsChecklist = 0;
+    // 2) Checklist marcado com base nos comportamentos reais de cada funcionario:
+    //    0: Inverte ordem, 1: Nao lembra cotidianos, 2: Falas padronizadas, 3: Inventou fatos,
+    //    4: Mudou contexto, 5: Mudou personalidade, 6: Segue a risca personalidade, 7: Muito evasivo(a)
+    static const bool COMPORTAMENTO_REAL[GAME_NUM_SUSPECTS][8] = {
+        /* Maria     */ { false, false, false, false, false, false, true,  true  },
+        /* Arthur    */ { false, false, false, false, false, false, true,  false },
+        /* Ana Lucia */ { true,  true,  true,  true,  true,  true,  false, false },
+    };
+    int acertosChecklist = 0;
+    int errosChecklist   = 0;
+    for (int s = 0; s < GAME_NUM_SUSPECTS; s++) {
+        const char *itens[16];
+        bool marcados[16] = { false };
+        int n = GameplaySceneItensPrancheta(s, itens, marcados, 16);
+        int lim = (n < 8) ? n : 8;
+        for (int k = 0; k < lim; k++) {
+            if (!marcados[k]) continue;
+            if (COMPORTAMENTO_REAL[s][k]) acertosChecklist++;
+            else                          errosChecklist++;
+        }
+    }
+    int ptsChecklist = acertosChecklist * 200 - errosChecklist * 120;
+    if (ptsChecklist > 1200) ptsChecklist = 1200;
+    if (ptsChecklist < 0)    ptsChecklist = 0;
 
     // 3) Evidencias coletadas (somente evidencias listadas nas tabelas, ignorando flags internas de dialogo)
     int evCount = 0;
@@ -744,7 +761,7 @@ static void CalcularESalvarPontuacao(void) {
 
     snprintf(g_scoreLinhas[0].rotulo, sizeof g_scoreLinhas[0].rotulo, "Veredito correto");
     g_scoreLinhas[0].alvo = ptsVeredito;
-    snprintf(g_scoreLinhas[1].rotulo, sizeof g_scoreLinhas[1].rotulo, "Checklist marcado (%d anomalias)", marksIA);
+    snprintf(g_scoreLinhas[1].rotulo, sizeof g_scoreLinhas[1].rotulo, "Checklist (%d acertos, %d erros)", acertosChecklist, errosChecklist);
     g_scoreLinhas[1].alvo = ptsChecklist;
     snprintf(g_scoreLinhas[2].rotulo, sizeof g_scoreLinhas[2].rotulo, "Evidencias coletadas (%d)", evCount);
     g_scoreLinhas[2].alvo = ptsEv;
@@ -763,7 +780,7 @@ static void CalcularESalvarPontuacao(void) {
     // - Final Bom:    Veredito correto + marcou checklist na IA (>=2, sem spam cego) + evitou abuso de ferramentas (<=1 usada)
     //                 + coletou evidencias (>=2) + atingiu pontuacao alta (>= SCORE_LIMIAR_FINAL_BOM).
     // - Final Neutro: Veredito correto, mas faltou pontuacao alta / checklist / evidencias / abusou de ferramentas.
-    bool checklistValido = (marksIA >= 2) && (excessoHumanos <= 2);
+    bool checklistValido = (acertosChecklist >= 2) && (errosChecklist <= 2);
     bool evitouFerramentas = (toolsUsed <= 1);
     bool temEvidencias = (evCount >= 2);
 

@@ -14,6 +14,7 @@ static bool         g_injecaoUsada[GAME_NUM_SUSPECTS] = { false };
 static char           g_playerName[9] = "AGENTE";
 static int            g_playerAvatar = 0;
 static TomVozJogador  g_playerVoiceTone = VOZ_SUAVE;
+static ModoJogo       g_gameMode = MODO_3D;
 static int            g_tokensRestantesTotal = 0;
 static int          g_dicasUsadasTotal = 0;
 
@@ -27,6 +28,18 @@ static int ParseEvIndex(const char *ev_id) {
         }
     }
     return -1;
+}
+
+void GameStateSetMode(ModoJogo modo) {
+    g_gameMode = (modo == MODO_2D) ? MODO_2D : MODO_3D;
+}
+
+ModoJogo GameStateGetMode(void) {
+    return g_gameMode;
+}
+
+bool GameStateIs3DMode(void) {
+    return g_gameMode == MODO_3D;
 }
 
 void GameStateNewRun(void) {

@@ -15,12 +15,21 @@ typedef enum {
     VOZ_SUAVE = 2
 } TomVozJogador;
 
+typedef enum {
+    MODO_2D = 0,
+    MODO_3D = 1
+} ModoJogo;
+
 // Visao individual de cada personagem quanto ao jogador
 typedef enum {
     VISAO_DUVIDA    = 0,
     VISAO_CONFIANCA = 1,
     VISAO_PRESSAO   = 2
 } VisaoJogador;
+
+void     GameStateSetMode(ModoJogo modo);
+ModoJogo GameStateGetMode(void);
+bool     GameStateIs3DMode(void);
 
 void GameStateNewRun(void);   // comeca uma partida nova (volta para o dia 1)
 void GameStateNextDay(void);  // avanca um dia

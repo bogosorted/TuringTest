@@ -180,17 +180,26 @@ static const InfoLocal LOCAIS[NUM_LOCAIS] = {
     { "ADM. 2",          "SETOR ADM. - ALA ESQ.", "",                "assets/sprites/locais/terreo/spr_background_teste.png" },
 };
 
-// Todo andar tem a mesma planta nos andares superiores; o Terreo tem Recepcao central
-// ligada a Escadaria (2D), Lanchonete (esquerda), Setor Adm. (direita) e Jardim (fundo).
+// Todo andar tem a mesma planta nos andares superiores; no modo 3D o Terreo tem Recepcao central,
+// enquanto no modo 2D o Terreo segue a planta antiga (Lanchonete - Escritorio - Escadaria).
 enum { POS_CIMA = 0, POS_ESQUERDA, POS_ESCADA, NUM_POS_ANDAR };
-static const LocalRasec PLANTA_ANDAR[HOLO_NUM_ANDARES][NUM_POS_ANDAR] = {
+static const LocalRasec PLANTA_ANDAR_3D[HOLO_NUM_ANDARES][NUM_POS_ANDAR] = {
     { LOCAL_RECEPCAO,     LOCAL_CANTINA, LOCAL_ESCADA_TERREO },
     { LOCAL_MESA_MARIA,   LOCAL_RH,      LOCAL_ESCADA_1 },
     { LOCAL_SALA_REUNIAO, LOCAL_COPA,    LOCAL_ESCADA_2 },
 };
+static const LocalRasec PLANTA_ANDAR_2D[HOLO_NUM_ANDARES][NUM_POS_ANDAR] = {
+    { LOCAL_ESCRITORIO,   LOCAL_CANTINA, LOCAL_ESCADA_TERREO },
+    { LOCAL_MESA_MARIA,   LOCAL_RH,      LOCAL_ESCADA_1 },
+    { LOCAL_SALA_REUNIAO, LOCAL_COPA,    LOCAL_ESCADA_2 },
+};
 
-// Planta de cada local no mapa holografico (mesma ordem de LOCAIS). Cada andar mede
-// HOLO_PLANTA_W x HOLO_PLANTA_D (z maior = frente); salas com 2 partes ficam em L.
+static LocalRasec PlantaAndar(int andar, int pos) {
+    return GameStateIs3DMode() ? PLANTA_ANDAR_3D[andar][pos] : PLANTA_ANDAR_2D[andar][pos];
+}
+
+// Planta de cada local no mapa holografico (mesma ordem de LOCAIS).
+// Modo 3D: planta expandida (7.6 x 4.0) com Recepcao, Jardim e Ala Esq.
 static const HoloSala HOLO_SALAS[NUM_LOCAIS] = {
     { 0, 1, { { 4.55f, 1.35f, 1.25f, 2.05f } }, false },                             // setor adm. 1
     { 0, 1, { { 0.25f, 1.40f, 1.25f, 2.00f } }, false },                             // lanchonete (cantina)
@@ -210,7 +219,7 @@ static const HoloSala HOLO_SALAS[NUM_LOCAIS] = {
     { 0, 1, { { 2.05f, 0.20f, 2.55f, 1.00f } }, false },                             // jardim
     { 0, 1, { { 6.30f, 1.75f, 1.05f, 1.70f } }, false },                             // setor adm. 2
 };
-// Corredores e passagens de cada andar
+// Corredores e passagens de cada andar (Modo 3D)
 static const HoloCorredor HOLO_CORREDORES[] = {
     { 0, { 1.50f, 2.55f, 0.55f, 0.50f } }, { 0, { 4.00f, 2.55f, 0.55f, 0.50f } }, // terreo: cantina<->recepcao<->adm1
     { 0, { 5.80f, 2.25f, 0.50f, 0.50f } },                                          // terreo: adm1<->adm2
@@ -224,20 +233,72 @@ static const HoloCorredor HOLO_CORREDORES[] = {
     { -1, { 0.85f, 1.25f, 0.50f, 0.30f } },
 };
 #define NUM_HOLO_CORREDORES ((int)(sizeof HOLO_CORREDORES / sizeof HOLO_CORREDORES[0]))
+
+// Modo 2D: holograma antigo (6.2 x 3.2) com Lanchonete - Escritorio - Escadaria no terreo
+#define NUM_LOCAIS_2D 14
+static const HoloSala HOLO_SALAS_2D[NUM_LOCAIS_2D] = {
+    { 0, 2, { { 1.6f, 0.2f, 3.2f, 1.1f }, { 1.6f, 1.3f, 0.9f, 0.45f } }, false },  // escritorio (cima, em L)
+    { 0, 1, { { 0.2f, 0.9f, 1.2f, 2.1f } }, false },                               // lanchonete (esquerda)
+    { 1, 2, { { 0.2f, 0.3f, 1.2f, 1.3f }, { 0.2f, 1.6f, 0.75f, 1.3f } }, false },  // RH (esquerda, em L)
+    { 1, 1, { { 1.9f, 0.2f, 2.5f, 1.15f } }, false },                              // mesa da Maria (cima)
+    { 2, 1, { { 1.6f, 0.2f, 3.3f, 1.25f } }, false },                              // sala de reuniao (cima)
+    { 2, 1, { { 0.2f, 1.2f, 1.2f, 1.6f } }, false },                               // copa (esquerda)
+    { 0, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },                                // escadarias (direita)
+    { 1, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
+    { 2, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
+    { -1, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, false },                              // subsolo comeco
+    { -1, 1, { { 2.4f, 1.3f, 1.4f, 1.3f } }, false },                              // subsolo escolha
+    { -1, 1, { { 0.2f, 1.2f, 1.4f, 1.5f } }, false },                              // last office
+    { -1, 1, { { 2.4f, 0.15f, 1.4f, 0.85f } }, false },                            // sala do veredito
+    { -1, 1, { { 0.2f, 0.15f, 1.4f, 0.85f } }, false },                            // area recreacao abandonada
+};
+static const HoloCorredor HOLO_CORREDORES_2D[] = {
+    { 0, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 0, { 2.9f, 1.3f,  0.45f, 0.65f } },
+    { 1, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 1, { 2.9f, 1.35f, 0.45f, 0.6f } },
+    { 2, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 2, { 2.9f, 1.45f, 0.45f, 0.5f } },
+    { -1, { 3.8f, 1.75f, 1.3f, 0.45f } },
+    { -1, { 1.6f, 1.75f, 0.8f, 0.45f } },
+    { -1, { 2.9f, 1.0f,  0.4f, 0.3f } },
+    { -1, { 0.7f, 1.0f,  0.4f, 0.2f } },
+};
+#define NUM_HOLO_CORREDORES_2D ((int)(sizeof HOLO_CORREDORES_2D / sizeof HOLO_CORREDORES_2D[0]))
+
+static const HoloSala *HoloSalasAtivas(void) {
+    return GameStateIs3DMode() ? HOLO_SALAS : HOLO_SALAS_2D;
+}
+
+static int NumHoloSalasAtivas(void) {
+    return GameStateIs3DMode() ? NUM_LOCAIS : NUM_LOCAIS_2D;
+}
+
+static const char *NomeCurtoLocal(int i) {
+    if (!GameStateIs3DMode()) {
+        if (i == LOCAL_ESCRITORIO) return "SETOR ADM.";
+        if (i == LOCAL_CANTINA)    return "LANCHONETE";
+    }
+    return LOCAIS[i].nome;
+}
+
+static LocalRasec LocalInicial(void) {
+    return GameStateIs3DMode() ? LOCAL_RECEPCAO : LOCAL_ESCRITORIO;
+}
+
 static const char *NOMES_ANDARES[HOLO_NUM_ANDARES] = { "TÉRREO", "1º ANDAR", "2º ANDAR" };
 
 // Destinos dos lances interativos da escadaria (lance central = subir; vao lateral a direita = descer)
 static int DestinoEscadaSubir(int de) {
-    if (!HOLO_SALAS[de].escada) return -1;
-    int andar = HOLO_SALAS[de].andar;
-    return (andar + 1 < HOLO_NUM_ANDARES) ? (int)PLANTA_ANDAR[andar + 1][POS_ESCADA] : -1;
+    const HoloSala *salas = HoloSalasAtivas();
+    if (!salas[de].escada) return -1;
+    int andar = salas[de].andar;
+    return (andar + 1 < HOLO_NUM_ANDARES) ? (int)PlantaAndar(andar + 1, POS_ESCADA) : -1;
 }
 
 static int DestinoEscadaDescer(int de) {
-    if (!HOLO_SALAS[de].escada) return -1;
-    int andar = HOLO_SALAS[de].andar;
+    const HoloSala *salas = HoloSalasAtivas();
+    if (!salas[de].escada) return -1;
+    int andar = salas[de].andar;
     if (de == LOCAL_ESCADA_TERREO) return SettingsGetDevMode() ? LOCAL_SUBSOLO_COMECO : -1;
-    return (andar > 0) ? (int)PLANTA_ANDAR[andar - 1][POS_ESCADA] : -1;
+    return (andar > 0) ? (int)PlantaAndar(andar - 1, POS_ESCADA) : -1;
 }
 
 // Para onde cada seta 3D leva a partir de um local (-1 = seta escondida).
@@ -270,26 +331,29 @@ static int DestinoSeta(int de, int seta) {
         if (!SettingsGetDevMode()) return -1;
         return (seta == SETA_BAIXO) ? LOCAL_SUBSOLO_LAST_OFFICE : -1;
     }
-    int andar = HOLO_SALAS[de].andar;
-    int central = (int)PLANTA_ANDAR[andar][POS_CIMA];
-    if (HOLO_SALAS[de].escada) {
+    const HoloSala *salas = HoloSalasAtivas();
+    int andar = salas[de].andar;
+    int central = (int)PlantaAndar(andar, POS_CIMA);
+    if (salas[de].escada) {
         if (seta == SETA_ESQUERDA) return central;
         return -1;
     }
     if (de == central) {
-        if (seta == SETA_ESQUERDA) return (int)PLANTA_ANDAR[andar][POS_ESQUERDA];
-        if (seta == SETA_DIREITA)  return (int)PLANTA_ANDAR[andar][POS_ESCADA];
+        if (seta == SETA_ESQUERDA) return (int)PlantaAndar(andar, POS_ESQUERDA);
+        if (seta == SETA_DIREITA)  return (int)PlantaAndar(andar, POS_ESCADA);
         return -1;
     }
     return (seta == SETA_DIREITA) ? central : -1;   // sala da esquerda: so volta
 }
 
 static unsigned LocaisAcessiveis(int de) {
-    if (de == LOCAL_RECEPCAO)     return (1u << LOCAL_CANTINA) | (1u << LOCAL_ESCRITORIO) | (1u << LOCAL_ESCADA_TERREO);
-    if (de == LOCAL_CANTINA)      return (1u << LOCAL_RECEPCAO) | (1u << LOCAL_JARDIM);
-    if (de == LOCAL_JARDIM)       return (1u << LOCAL_CANTINA) | (1u << LOCAL_ESCRITORIO);
-    if (de == LOCAL_ESCRITORIO)   return (1u << LOCAL_RECEPCAO) | (1u << LOCAL_JARDIM) | (1u << LOCAL_ESCRITORIO_2);
-    if (de == LOCAL_ESCRITORIO_2) return (1u << LOCAL_ESCRITORIO);
+    if (GameStateIs3DMode()) {
+        if (de == LOCAL_RECEPCAO)     return (1u << LOCAL_CANTINA) | (1u << LOCAL_ESCRITORIO) | (1u << LOCAL_ESCADA_TERREO);
+        if (de == LOCAL_CANTINA)      return (1u << LOCAL_RECEPCAO) | (1u << LOCAL_JARDIM);
+        if (de == LOCAL_JARDIM)       return (1u << LOCAL_CANTINA) | (1u << LOCAL_ESCRITORIO);
+        if (de == LOCAL_ESCRITORIO)   return (1u << LOCAL_RECEPCAO) | (1u << LOCAL_JARDIM) | (1u << LOCAL_ESCRITORIO_2);
+        if (de == LOCAL_ESCRITORIO_2) return (1u << LOCAL_ESCRITORIO);
+    }
 
     unsigned bits = 0;
     for (int d = 0; d < NUM_SETAS; d++) {
@@ -307,13 +371,14 @@ static unsigned LocaisAcessiveis(int de) {
 static const char *TextoSeta(int de, int seta) {
     int destino = DestinoSeta(de, seta);
     if (destino < 0) return "";
-    if (HOLO_SALAS[de].andar < 0 || HOLO_SALAS[destino].andar < 0) return LOCAIS[destino].nome;
-    if (HOLO_SALAS[de].escada && HOLO_SALAS[destino].escada)
-        return TextFormat("%s: %s", seta == SETA_CIMA ? "SUBIR" : "DESCER", NOMES_ANDARES[HOLO_SALAS[destino].andar]);
-    if (HOLO_SALAS[destino].escada) return "ESCADARIA";
-    if (HOLO_SALAS[de].escada) return TextFormat("IR PARA: %s", LOCAIS[destino].nome);   // da escadaria para a sala central
-    if (destino == (int)PLANTA_ANDAR[HOLO_SALAS[de].andar][POS_CIMA]) return TextFormat("VOLTAR: %s", LOCAIS[destino].nome);
-    return LOCAIS[destino].nome;
+    const HoloSala *salas = HoloSalasAtivas();
+    if (salas[de].andar < 0 || salas[destino].andar < 0) return NomeCurtoLocal(destino);
+    if (salas[de].escada && salas[destino].escada)
+        return TextFormat("%s: %s", seta == SETA_CIMA ? "SUBIR" : "DESCER", NOMES_ANDARES[salas[destino].andar]);
+    if (salas[destino].escada) return "ESCADARIA";
+    if (salas[de].escada) return TextFormat("IR PARA: %s", NomeCurtoLocal(destino));   // da escadaria para a sala central
+    if (destino == (int)PlantaAndar(salas[de].andar, POS_CIMA)) return TextFormat("VOLTAR: %s", NomeCurtoLocal(destino));
+    return NomeCurtoLocal(destino);
 }
 
 // Setas de navegacao na foto do local (posicoes em pixels da janela de cima, a partir do canto dela)
@@ -329,6 +394,7 @@ static Texture2D g_fundos[NUM_LOCAIS];   // fotos dos locais atras da tela
 static LocalRasec g_localAtual = LOCAL_RECEPCAO;
 
 static bool LocalEhTerreo3D(LocalRasec loc) {
+    if (!GameStateIs3DMode()) return false;
     return loc == LOCAL_RECEPCAO || loc == LOCAL_CANTINA ||
            loc == LOCAL_JARDIM   || loc == LOCAL_ESCRITORIO ||
            loc == LOCAL_ESCRITORIO_2;
@@ -373,9 +439,19 @@ static bool       g_tutMovimentoVisto       = false;
 static bool       g_tutFuncionarioVisto     = false;
 static bool       g_tutDialogoPerguntaFeita = false;
 static bool       g_tutChecklistVisto       = false;
+static bool       g_tutFichaVisto           = false;
 static bool       g_tutEvidenciaColetaVisto = false;
 static bool       g_tutHologramaVisto       = false;
 static bool       g_tutDicaVisto            = false;  // abriu a Dica Logica pela primeira vez
+
+// Subtasks do Dia 1 no Modo 2D (apenas para guiar o objetivo inicial)
+static bool       g_subtaskLanchoneteVisto  = false;
+static bool       g_subtaskIdColetado       = false;
+static bool       g_subtaskFalouSuspeito[3] = { false, false, false };
+static float      g_subtaskFadeOut          = 0.0f;
+static bool       g_cantinaIdHover          = false;
+static bool       g_cantinaIdHoverAnt       = false;
+static float      g_cantinaIdAnim           = 0.0f;
 // Suspeitos: 0 = Maria Bianca, 1 = Arthur Gadelho, 2 = Ana Lucia (a IA).
 // O local de cada um e sorteado no inicio de cada dia (SortearLocaisDoDia).
 static LocalRasec g_suspeitoLocal[3] = { LOCAL_MESA_MARIA, LOCAL_ESCRITORIO, LOCAL_SALA_REUNIAO };
@@ -701,7 +777,7 @@ static const char *TextoLanceEscada(int de, int qualLance) {
     }
     int dest = (qualLance == 0) ? DestinoEscadaSubir(de) : DestinoEscadaDescer(de);
     if (dest < 0) return NULL;
-    return TextFormat("%s: %s", qualLance == 0 ? "SUBIR" : "DESCER", NOMES_ANDARES[HOLO_SALAS[dest].andar]);
+    return TextFormat("%s: %s", qualLance == 0 ? "SUBIR" : "DESCER", NOMES_ANDARES[HoloSalasAtivas()[dest].andar]);
 }
 
 // Sorteia no maximo MAX_EVIDENCIAS_POR_DIA (2) evidencias de cenario por dia dentre as ainda nao coletadas,
@@ -715,6 +791,7 @@ static void SortearEvidenciasDoDia(int dia) {
 
     for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
         const EvidenciaHotspot *h = &EVIDENCIA_HOTSPOTS[i];
+        if (!GameStateIs3DMode() && dia == 1 && h->local == LOCAL_ESCRITORIO) continue;
         if (GameStateTemEvidencia(h->suspeito, h->ev_id)) continue;
         if (!g_hotspotJaSorteadoRun[i]) ineditos[nIneditos++] = i;
         else                            repetidos[nRepetidos++] = i;
@@ -1125,13 +1202,13 @@ static const LocalRasec CANDIDATOS_DIA[3][3][3] = {
 
 static void SortearLocaisDoDia(int dia) {
     int d = (dia < 1) ? 0 : (dia > 3) ? 2 : dia - 1;
-    // No Dia 1, o escritorio inicial fica sempre vazio (sem funcionarios)
+    // No Dia 1, o escritorio inicial fica sempre vazio (e no modo 2D a cantina tambem, para o ID de Acesso)
     for (int s = 0; s <= 2; s += 2) {
         LocalRasec cands[3];
         int nc = 0;
         for (int k = 0; k < 3; k++) {
             LocalRasec l = CANDIDATOS_DIA[s][d][k];
-            if (dia == 1 && l == LOCAL_ESCRITORIO) continue;
+            if (dia == 1 && (l == LOCAL_ESCRITORIO || (!GameStateIs3DMode() && l == LOCAL_CANTINA))) continue;
             cands[nc++] = l;
         }
         g_suspeitoLocal[s] = (nc > 0) ? cands[GetRandomValue(0, nc - 1)] : CANDIDATOS_DIA[s][d][GetRandomValue(0, 2)];
@@ -1140,13 +1217,13 @@ static void SortearLocaisDoDia(int dia) {
     LocalRasec livres[3]; int n = 0;
     for (int k = 0; k < 3; k++) {
         LocalRasec l = CANDIDATOS_DIA[1][d][k];
-        if (dia == 1 && l == LOCAL_ESCRITORIO) continue;
+        if (dia == 1 && (l == LOCAL_ESCRITORIO || (!GameStateIs3DMode() && l == LOCAL_CANTINA))) continue;
         if (l != g_suspeitoLocal[0] && l != g_suspeitoLocal[2]) livres[n++] = l;
     }
     if (n > 0) g_suspeitoLocal[1] = livres[GetRandomValue(0, n - 1)];
     else {   // nenhum livre na lista: qualquer sala (fora as escadas) vazia
         for (int l = 0; l < LOCAL_ESCADA_TERREO; l++) {
-            if (dia == 1 && l == LOCAL_ESCRITORIO) continue;
+            if (dia == 1 && (l == LOCAL_ESCRITORIO || (!GameStateIs3DMode() && l == LOCAL_CANTINA))) continue;
             if (l != (int)g_suspeitoLocal[0] && l != (int)g_suspeitoLocal[2]) { g_suspeitoLocal[1] = (LocalRasec)l; break; }
         }
     }
@@ -1343,7 +1420,9 @@ static float     g_btnVereditoDevVel        = 0.0f;
 static bool      g_confirmarAvancarDia      = false; // modal "Voce tem certeza?" quando ainda ha tokens
 
 // Ferramenta Scanner Deepfake (160x73 escalado em 2x -> 320x146) arrastavel
-#define DEEPFAKE_SCALE 2.0f
+static float     g_deepfakeScale      = 2.0f;
+static bool      g_redimDeepfake      = false;
+#define DEEPFAKE_SCALE g_deepfakeScale
 static Texture2D g_deepfakeJanela;
 static Texture2D g_dfMaos[3];               // 0=Patricia, 1=Andre, 2=Lucas (quadrado esquerdo: as 2 maos)
 static Texture2D g_dfRetina[3];             // 0=Patricia, 1=Andre, 2=Lucas (quadrado do meio: retina)
@@ -1398,6 +1477,8 @@ static Texture2D g_ficha;                     // sprite da ficha (299x285)
 static int       g_funcionario     = 0;       // funcionario sendo entrevistado
 static int       g_fichaAtual      = -1;      // -1 = ficha fechada
 static bool      g_arrastandoFicha = false;
+static bool      g_redimFicha      = false;
+static float     g_fichaScale      = 1.0f;
 static Vector2   g_fichaPos        = { 200, 20 };
 static Vector2   g_offsetFicha     = { 0, 0 };
 
@@ -1437,7 +1518,7 @@ static bool CarregarFichas(const char *caminho);
 
 
 // Guia da investigacao (checklist da prancheta)
-#define NUM_CAIXAS 7
+#define NUM_CAIXAS 8
 static Texture2D g_caixaVazia;                          // quadradinho sem X
 static Texture2D g_caixaComX;                           // quadradinho com X
 static bool      g_marcado[MAX_FICHAS][NUM_CAIXAS];     // um checklist por funcionario
@@ -1450,16 +1531,19 @@ static const char *GUIA[NUM_CAIXAS] = {
     "Mudou contexto dito anteriormente.",
     "Mudou de personalidade.",
     "Segue muito a risca a personalidade descrita.",
+    "Muito evasivo(a) nas respostas.",
 };
 
-// Tablet arrastavel (escala e dimensoes)
-#define TABLET_SCALE 0.85f
+// Tablet arrastavel e redimensionavel (escala e dimensoes)
+static float g_pranchetaScale = 0.85f;
+static bool  g_redimPrancheta = false;
+#define TABLET_SCALE g_pranchetaScale
 
 // Areas DENTRO do sprite do tablet (313x230 escalado por TABLET_SCALE)
-static const Rectangle TABLET_CONTEUDO  = {  37 * TABLET_SCALE,  30 * TABLET_SCALE, 234 * TABLET_SCALE, 171 * TABLET_SCALE };  // parte da tela onde o checklist aparece (e rola)
-static const Rectangle TABLET_BARRA     = { 277 * TABLET_SCALE,  35 * TABLET_SCALE,  10 * TABLET_SCALE, 157 * TABLET_SCALE };  // barra de rolagem desenhada no sprite (area de clique)
-static const Rectangle TABLET_FECHAR    = { 276 * TABLET_SCALE,   8 * TABLET_SCALE,  14 * TABLET_SCALE,  14 * TABLET_SCALE };  // botao [X] padronizado no canto superior direito do tablet
-static const Rectangle TABLET_MINIMIZAR = { 258 * TABLET_SCALE,   8 * TABLET_SCALE,  14 * TABLET_SCALE,  14 * TABLET_SCALE };  // botao [_] de minimizar ao lado do [X]
+#define TABLET_CONTEUDO  ((Rectangle){  37 * TABLET_SCALE,  30 * TABLET_SCALE, 234 * TABLET_SCALE, 171 * TABLET_SCALE })
+#define TABLET_BARRA     ((Rectangle){ 277 * TABLET_SCALE,  35 * TABLET_SCALE,  10 * TABLET_SCALE, 157 * TABLET_SCALE })
+#define TABLET_FECHAR    ((Rectangle){ 276 * TABLET_SCALE,   8 * TABLET_SCALE,  14 * TABLET_SCALE,  14 * TABLET_SCALE })
+#define TABLET_MINIMIZAR ((Rectangle){ 258 * TABLET_SCALE,   8 * TABLET_SCALE,  14 * TABLET_SCALE,  14 * TABLET_SCALE })
 static const Rectangle TABLET_ABA_MIN   = { 314, 10, 314, 24 }; // aba quando minimizado (barra de topo do painel direito)
 #define TABLET_POLEGAR_X  (279 * TABLET_SCALE)     // a barrinha desenhada no sprite comeca na coluna 279...
 #define TABLET_POLEGAR_W  (  6 * TABLET_SCALE)     // ...tem 6 de largura...
@@ -1557,24 +1641,25 @@ static void FecharJanelasFerramentas(void) {
 
 static void SetExpressaoSuspeito(int suspeito, ExpressaoFacial expr, bool iniciarFala);
 
-// Funcoes de clique de cada ferramenta (com exclusao mutua: abrir uma fecha a outra)
+// Funcoes de clique de cada ferramenta (permite abrir mais de uma ao mesmo tempo!)
 static void OnClickPrancheta(void) {
-    bool abrir = (!g_pranchetaAberta || g_pranchetaMinimizada);
-    FecharJanelasFerramentas();
-    if (abrir) {
+    if (!g_pranchetaAberta || g_pranchetaMinimizada) {
         g_pranchetaAberta = true;
         g_pranchetaMinimizada = false;
+    } else {
+        g_pranchetaAberta = false;
     }
     TraceLog(LOG_INFO, "Prancheta %s", (g_pranchetaAberta && !g_pranchetaMinimizada) ? "aberta" : "fechada");
 }
 static void OnClickPasta(void) {
     if (g_numFichas <= 0) return;               // arquivo nao carregou
-    bool abrir = (g_fichaAtual < 0);
-    FecharJanelasFerramentas();
-    if (abrir) {
+    if (g_fichaAtual < 0) {
         int alvo = g_dialogLoaded ? g_funcionario : SUSPECT_FICHA_INDEX[g_suspeitoAtual];
         if (alvo < 0 || alvo >= g_numFichas) alvo = 0;
         g_fichaAtual = alvo;
+        if (g_dialogLoaded) g_tutFichaVisto = true;
+    } else {
+        g_fichaAtual = -1;
     }
     g_fichaScroll = 0.0f;                       // sempre abre no topo
     g_arrastandoBarra = false;
@@ -1676,7 +1761,6 @@ static void OnClickDeepfake(void) {
     } else {
         SetExpressaoSuspeito(g_suspeitoAtual, (g_suspeitoAtual == 2) ? EXPR_MEDO : EXPR_SURPRESA, false);
     }
-    FecharJanelasFerramentas();
     g_deepfakeAberto = true;
     TraceLog(LOG_INFO, "Scanner Deepfake aberto");
 }
@@ -1827,7 +1911,7 @@ static Vector2 MouseNaImagem(void) {
 static bool MouseSobreFicha(void) {
     Vector2 m = MouseNaImagem();
     if (g_fichaAtual >= 0) {
-        Rectangle area = { g_fichaPos.x, g_fichaPos.y, (float)g_ficha.width, (float)g_ficha.height };
+        Rectangle area = { g_fichaPos.x, g_fichaPos.y, (float)g_ficha.width * g_fichaScale, (float)g_ficha.height * g_fichaScale };
         if (CheckCollisionPointRec(m, area)) return true;
     }
     if (g_deepfakeAberto) {
@@ -2028,6 +2112,28 @@ static const char *FACE_RIG_FS =
     "            }\n"
     "        }\n"
     "    }\n"
+    "\n"
+    "    // Dither Bayer 4x4 leve nos funcionarios mantendo as cores originais legiveis\n"
+    "    float bayerM[16] = float[16](\n"
+    "         0.0,  8.0,  2.0, 10.0,\n"
+    "        12.0,  4.0, 14.0,  6.0,\n"
+    "         3.0, 11.0,  1.0,  9.0,\n"
+    "        15.0,  7.0, 13.0,  5.0\n"
+    "    );\n"
+    "    vec2 pGrid = mod(floor(gl_FragCoord.xy / 2.0), 4.0);\n"
+    "    int bIdx = int(pGrid.y) * 4 + int(pGrid.x);\n"
+    "    float bayerVal = (bayerM[bIdx] / 16.0) - 0.5;\n"
+    "    float lumD = dot(texCol.rgb, vec3(0.299, 0.587, 0.114)) + bayerVal * 0.15;\n"
+    "    vec3 pal[6] = vec3[6](\n"
+    "        vec3(0.0),\n"
+    "        vec3(32.0, 29.0, 31.0) / 255.0,\n"
+    "        vec3(90.0, 83.0, 83.0) / 255.0,\n"
+    "        vec3(125.0, 112.0, 113.0) / 255.0,\n"
+    "        vec3(160.0, 147.0, 142.0) / 255.0,\n"
+    "        vec3(189.0, 181.0, 168.0) / 255.0\n"
+    "    );\n"
+    "    int pIdx = int(clamp(floor(lumD * 5.0 + 0.5), 0.0, 5.0));\n"
+    "    texCol.rgb = mix(texCol.rgb, pal[pIdx], 0.34);\n"
     "\n"
     "    finalColor = texCol * fragColor;\n"
     "}\n";
@@ -4442,7 +4548,9 @@ static void DesenharMapaHolo(void) {
     DrawTexturePro(tex, (Rectangle){ 0, 0, (float)tex.width, -(float)tex.height },
                    ParaTela(area), (Vector2){ 0, 0 }, 0.0f, WHITE);
 
-    int andarAtual = HOLO_SALAS[g_localAtual].andar;
+    const HoloSala *salas = HoloSalasAtivas();
+    int numSalas = NumHoloSalasAtivas();
+    int andarAtual = salas[g_localAtual].andar;
     unsigned acessiveis = LocaisAcessiveis(g_localAtual);
     if (SettingsGetDevMode()) {
         Vector2 pSub = MapaHoloPosAndar(-1);
@@ -4454,11 +4562,11 @@ static void DesenharMapaHolo(void) {
         Color cor = (a == andarAtual) ? (Color){ 255, 242, 230, 255 } : (Color){ 125, 112, 113, 255 };
         DrawTextLeftAligned(NOMES_ANDARES[a], (Vector2){ area.x + p.x, area.y + p.y + 2.0f }, 7, cor);
     }
-    for (int i = 0; i < NUM_LOCAIS; i++) {
-        if (!SettingsGetDevMode() && HOLO_SALAS[i].andar < 0) continue;
+    for (int i = 0; i < numSalas; i++) {
+        if (!SettingsGetDevMode() && salas[i].andar < 0) continue;
         Vector2 p = MapaHoloPosSala(i);
         bool ativo = (i == (int)g_localAtual) || ((acessiveis >> i) & 1u);
-        RotuloMapa(LOCAIS[i].nome, (Vector2){ area.x + p.x, area.y + p.y },
+        RotuloMapa(NomeCurtoLocal(i), (Vector2){ area.x + p.x, area.y + p.y },
                    ativo ? (Color){ 255, 242, 230, 255 } : (Color){ 125, 112, 113, 255 });
     }
 
@@ -4704,15 +4812,20 @@ static void DrawInterrogationTexts(void) {
     DrawTextInArea(TextFormat("DIA %d/%d", diaAtual, GAME_NUM_DAYS),
                    BADGE_DIA_TOPO, 9, (Color){ 255, 242, 230, 255 });
 
-    // Botao sempre visivel "Proximo Dia >>" / "Ir ao Veredito >>" no canto superior direito da janela
+    // Botao "Proximo Dia >>" / "Ir ao Veredito >>" (no Dia 1 do Modo 2D so aparece apos concluir as subtasks)
     float dt = GetFrameTime();
     if (dt > 0.05f) dt = 0.05f;
 
-    bool hovTopo = !bloqueadoPorOverlay && CheckCollisionPointRec(mouseTela, ParaTela(BOTAO_AVANCAR_TOPO));
-    const char *txtBtnTopo = ultimoDia ? "Ir ao Veredito >>" : "Próximo Dia >>";
-    DesenharBotaoTopoAnimado(BOTAO_AVANCAR_TOPO, txtBtnTopo, hovTopo, !HasTokens(),
-                             &g_btnAvancarHoverAnt, &g_btnAvancarAnim, &g_btnAvancarVel, dt,
-                             hoverColor, lightTextColor, textColor);
+    bool podeMostrarAvancar = GameStateIs3DMode() || (diaAtual != 1) || SettingsGetDevMode() ||
+                              (g_subtaskLanchoneteVisto && g_subtaskIdColetado &&
+                               g_subtaskFalouSuspeito[0] && g_subtaskFalouSuspeito[1] && g_subtaskFalouSuspeito[2]);
+    if (podeMostrarAvancar) {
+        bool hovTopo = !bloqueadoPorOverlay && CheckCollisionPointRec(mouseTela, ParaTela(BOTAO_AVANCAR_TOPO));
+        const char *txtBtnTopo = ultimoDia ? "Ir ao Veredito >>" : "Próximo Dia >>";
+        DesenharBotaoTopoAnimado(BOTAO_AVANCAR_TOPO, txtBtnTopo, hovTopo, !HasTokens(),
+                                 &g_btnAvancarHoverAnt, &g_btnAvancarAnim, &g_btnAvancarVel, dt,
+                                 hoverColor, lightTextColor, textColor);
+    }
 
     // No Modo DEV, permite pular direto para o Veredito em qualquer dia
     if (SettingsGetDevMode() && !ultimoDia) {
@@ -5012,9 +5125,17 @@ void GameplaySceneResetDialogues(void) {
         g_tutFuncionarioVisto     = false;
         g_tutDialogoPerguntaFeita = false;
         g_tutChecklistVisto       = false;
+        g_tutFichaVisto           = false;
         g_tutEvidenciaColetaVisto = false;
         g_tutHologramaVisto       = false;
         g_tutDicaVisto            = false;
+        g_subtaskLanchoneteVisto  = false;
+        g_subtaskIdColetado       = false;
+        memset(g_subtaskFalouSuspeito, 0, sizeof g_subtaskFalouSuspeito);
+        g_subtaskFadeOut          = 0.0f;
+        g_cantinaIdHover          = false;
+        g_cantinaIdHoverAnt       = false;
+        g_cantinaIdAnim           = 0.0f;
     }
     memset(g_hotspotAtivoHoje, 0, sizeof g_hotspotAtivoHoje);
     // Dia novo: a dica e as ferramentas de teste voltam a ficar disponiveis
@@ -5031,8 +5152,10 @@ void GameplaySceneResetDialogues(void) {
     g_confirmarAvancarDia = false;
     g_confirmarAbandonarRun = false;
     g_voltarParaMenu = false;
-    g_localAtual = LOCAL_RECEPCAO;
-    Terreo3DDefinirSala(TERREO_SALA_RECEPCAO, TERREO_DEST_NENHUM);
+    g_localAtual = LocalInicial();
+    if (GameStateIs3DMode()) {
+        Terreo3DDefinirSala(TERREO_SALA_RECEPCAO, TERREO_DEST_NENHUM);
+    }
     memset(g_enviesarUsado, 0, sizeof g_enviesarUsado);
     memset(g_deepfakeUsado, 0, sizeof g_deepfakeUsado);
     memset(g_injecaoUsada, 0, sizeof g_injecaoUsada);
@@ -5049,6 +5172,12 @@ void GameplaySceneResetDialogues(void) {
 // mais escolhas" e o que significa "ver todos os dialogos" na pratica.
 bool GameplaySceneDayFinished(void) {
     if (g_falaPlayerPendente) return false;
+    if (!GameStateIs3DMode() && GameStateGetDay() == 1 && !SettingsGetDevMode()) {
+        if (!g_subtaskLanchoneteVisto || !g_subtaskIdColetado ||
+            !g_subtaskFalouSuspeito[0] || !g_subtaskFalouSuspeito[1] || !g_subtaskFalouSuspeito[2]) {
+            return false;
+        }
+    }
     if (!HasTokens()) return true;
 
     if (!g_treesLoaded) return false;
@@ -5217,7 +5346,7 @@ bool InitGameplayScene(void) {
     g_confirmarAvancarDia = false;
     g_confirmarAbandonarRun = false;
     g_voltarParaMenu = false;
-    g_localAtual = LOCAL_RECEPCAO;
+    g_localAtual = LocalInicial();
     g_closeupAtual = CLOSEUP_NENHUM;
     g_closeupItemHoverAnt = false;
     g_closeupItemAnim = 0.0f;
@@ -5431,12 +5560,18 @@ bool InitGameplayScene(void) {
     SetTextureFilter(g_texUltimoDescerBranca, TEXTURE_FILTER_POINT);
 
     LimparMonologoInterno();
-    MapaHoloInit(HOLO_SALAS, NUM_LOCAIS, HOLO_CORREDORES, NUM_HOLO_CORREDORES);
+    if (GameStateIs3DMode()) {
+        MapaHoloInit(HOLO_SALAS, NUM_LOCAIS, HOLO_CORREDORES, NUM_HOLO_CORREDORES, true);
+    } else {
+        MapaHoloInit(HOLO_SALAS_2D, NUM_LOCAIS_2D, HOLO_CORREDORES_2D, NUM_HOLO_CORREDORES_2D, false);
+    }
     EvidenciaHoloInit();
     g_galeriaHoloAberta = false;
     g_galeriaHoloIdx    = 0;
     Setas3DInit((int)JANELA_AREA.width, (int)JANELA_AREA.height, SETAS_POS);
-    Terreo3DInit((int)JANELA_AREA.width, (int)JANELA_AREA.height);
+    if (GameStateIs3DMode()) {
+        Terreo3DInit((int)JANELA_AREA.width, (int)JANELA_AREA.height);
+    }
     g_sndPassos = FileExists("assets/audio/passos_2.wav") ? LoadSound("assets/audio/passos_2.wav") : (Sound){ 0 };
     g_setaHover = -1;
     g_setaHoverAnt = -1;
@@ -5879,9 +6014,31 @@ static Rectangle CaixaNaImagem(int i) {
 }
 // ---------- Arraste da ficha ----------
 
-// Converte algo que esta DENTRO da ficha para a imagem (acompanha o arraste)
+// Converte algo que esta DENTRO da ficha para a imagem (acompanha o arraste e escala)
 static Rectangle NaFicha(Rectangle r) {
-    return (Rectangle){ g_fichaPos.x + r.x, g_fichaPos.y + r.y, r.width, r.height };
+    return (Rectangle){
+        g_fichaPos.x + r.x * g_fichaScale,
+        g_fichaPos.y + r.y * g_fichaScale,
+        r.width * g_fichaScale,
+        r.height * g_fichaScale
+    };
+}
+
+static Rectangle AlcaRedimJanela(Rectangle area) {
+    return (Rectangle){ area.x + area.width - 12.0f, area.y + area.height - 12.0f, 12.0f, 12.0f };
+}
+
+static void DesenharAlcaRedim(Rectangle area) {
+    Rectangle grip = AlcaRedimJanela(area);
+    Color cor = CheckCollisionPointRec(MouseNaImagem(), grip)
+        ? (Color){ 255, 242, 230, 255 }
+        : (Color){ 160, 147, 142, 220 };
+    for (int k = 0; k < 3; k++) {
+        float off = 2.0f + k * 3.0f;
+        Rectangle p1 = ParaTela((Rectangle){ grip.x + off, grip.y + grip.height - 2.0f, 1.0f, 1.0f });
+        Rectangle p2 = ParaTela((Rectangle){ grip.x + grip.width - 2.0f, grip.y + off, 1.0f, 1.0f });
+        DrawLineEx((Vector2){ p1.x, p1.y }, (Vector2){ p2.x, p2.y }, 1.4f, cor);
+    }
 }
 
 // ---------- Parte da ficha que rola ----------
@@ -5992,7 +6149,10 @@ static bool UpdateFicha(void) {
     if (g_fichaAtual < 0) return false;
 
     Vector2 mouse = MouseNaImagem();
-    Rectangle area = { g_fichaPos.x, g_fichaPos.y, (float)g_ficha.width, (float)g_ficha.height };
+    float w = (float)g_ficha.width * g_fichaScale;
+    float h = (float)g_ficha.height * g_fichaScale;
+    Rectangle area = { g_fichaPos.x, g_fichaPos.y, w, h };
+    Rectangle grip = AlcaRedimJanela(area);
 
     // Mede o conteudo da ficha aberta (muda quando troca de funcionario)
     g_fichaConteudoH = ConteudoFicha(&g_fichas[g_fichaAtual], g_fichaAtual, 0, 0, false);
@@ -6005,11 +6165,17 @@ static bool UpdateFicha(void) {
     }
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        // Alca de redimensionamento no canto inferior direito
+        if (CheckCollisionPointRec(mouse, grip)) {
+            g_redimFicha = true;
+            return true;
+        }
         // Botao X: fecha a ficha
         if (CheckCollisionPointRec(mouse, NaFicha(FICHA_FECHAR))) {
             g_fichaAtual = -1;
             g_arrastandoFicha = false;
             g_arrastandoBarra = false;
+            g_redimFicha = false;
             return true;
         }
         // Botoes '<' e '>' na barra de titulo: troca entre os funcionarios da RASEC
@@ -6029,12 +6195,30 @@ static bool UpdateFicha(void) {
             if (CheckCollisionPointRec(mouse, barra)) g_offsetBarra = mouse.y - barra.y;
             else                                      g_offsetBarra = barra.height / 2.0f;
             g_arrastandoBarra = true;
+            return true;
         }
         // Clicou no resto da ficha: comeca a arrastar a ficha
-        else if (CheckCollisionPointRec(mouse, area)) {
+        if (CheckCollisionPointRec(mouse, area)) {
             g_arrastandoFicha = true;
             g_offsetFicha = (Vector2){ mouse.x - g_fichaPos.x, mouse.y - g_fichaPos.y };
+            return true;
         }
+    }
+
+    if (g_redimFicha) {
+        if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            g_redimFicha = false;
+        } else {
+            float nw = mouse.x - g_fichaPos.x;
+            float s = nw / (float)g_ficha.width;
+            if (s < 0.68f) s = 0.68f;
+            if (s > 1.25f) s = 1.25f;
+            if (g_fichaPos.x + g_ficha.width * s > g_interface.width) s = (g_interface.width - g_fichaPos.x) / g_ficha.width;
+            if (g_fichaPos.y + g_ficha.height * s > g_interface.height) s = (g_interface.height - g_fichaPos.y) / g_ficha.height;
+            g_fichaScale = s;
+            SetMouseCursor(MOUSE_CURSOR_RESIZE_NWSE);
+        }
+        return true;
     }
 
     // Arrastando a barrinha: o conteudo acompanha
@@ -6042,8 +6226,8 @@ static bool UpdateFicha(void) {
         if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
             g_arrastandoBarra = false;
         } else {
-            float topo = mouse.y - g_offsetBarra - (g_fichaPos.y + FICHA_BARRA.y + 3.0f);
-            g_fichaScroll = topo / FichaCursoBarra() * maxScroll;
+            float topo = mouse.y - g_offsetBarra - (g_fichaPos.y + (FICHA_BARRA.y + 3.0f) * g_fichaScale);
+            g_fichaScroll = topo / (FichaCursoBarra() * g_fichaScale) * maxScroll;
         }
     }
 
@@ -6056,7 +6240,13 @@ static bool UpdateFicha(void) {
         return true;
     }
 
-    if (!g_arrastandoFicha) return false;
+    if (!g_arrastandoFicha) {
+        if (CheckCollisionPointRec(mouse, grip)) {
+            SetMouseCursor(MOUSE_CURSOR_RESIZE_NWSE);
+            return true;
+        }
+        return false;
+    }
 
     // Soltou o botao: para de arrastar
     if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
@@ -6069,8 +6259,8 @@ static bool UpdateFicha(void) {
     g_fichaPos.y = mouse.y - g_offsetFicha.y;
 
     // Nao deixa sair da tela
-    float maxX = (float)(g_interface.width  - g_ficha.width);
-    float maxY = (float)(g_interface.height - g_ficha.height);
+    float maxX = (float)g_interface.width  - w;
+    float maxY = (float)g_interface.height - h;
     if (g_fichaPos.x < 0)    g_fichaPos.x = 0;
     if (g_fichaPos.y < 0)    g_fichaPos.y = 0;
     if (g_fichaPos.x > maxX) g_fichaPos.x = maxX;
@@ -6089,7 +6279,6 @@ static bool UpdatePrancheta(void) {
     if (g_pranchetaAberta && g_pranchetaMinimizada) {
         if (CheckCollisionPointRec(mouse, TABLET_ABA_MIN)) {
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                FecharJanelasFerramentas();
                 g_pranchetaAberta = true;
                 g_pranchetaMinimizada = false;
                 return true;
@@ -6105,6 +6294,7 @@ static bool UpdatePrancheta(void) {
     float tabletW = (float)g_prancheta.width  * TABLET_SCALE;
     float tabletH = (float)g_prancheta.height * TABLET_SCALE;
     Rectangle area = { g_pranchetaPos.x, g_pranchetaPos.y, tabletW, tabletH };
+    Rectangle grip = AlcaRedimJanela(area);
 
     g_tabletConteudoH = TabletLayout();
     float maxScroll = TabletMaxScroll();
@@ -6116,6 +6306,11 @@ static bool UpdatePrancheta(void) {
     }
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        // Alca de redimensionamento
+        if (CheckCollisionPointRec(mouse, grip)) {
+            g_redimPrancheta = true;
+            return true;
+        }
         // Botao [X] padronizado do tablet: fecha completamente o Guia da Investigacao
         if (CheckCollisionPointRec(mouse, NoTablet(TABLET_FECHAR))) {
             if (g_tutDialogoPerguntaFeita) g_tutChecklistVisto = true;
@@ -6123,6 +6318,7 @@ static bool UpdatePrancheta(void) {
             g_pranchetaMinimizada = false;
             g_arrastando = false;
             g_arrastandoBarraTablet = false;
+            g_redimPrancheta = false;
             return true;
         }
         // Botao [_] de minimizar o tablet
@@ -6131,6 +6327,7 @@ static bool UpdatePrancheta(void) {
             g_pranchetaMinimizada = true;
             g_arrastando = false;
             g_arrastandoBarraTablet = false;
+            g_redimPrancheta = false;
             return true;
         }
         // 0) Clicou num quadradinho (so na parte visivel da tela): marca/desmarca
@@ -6149,12 +6346,30 @@ static bool UpdatePrancheta(void) {
             if (CheckCollisionPointRec(mouse, pol)) g_offsetBarraTablet = mouse.y - pol.y;
             else                                    g_offsetBarraTablet = pol.height / 2.0f;
             g_arrastandoBarraTablet = true;
+            return true;
         }
         // 2) Clicou no resto do tablet: comeca a arrastar o tablet
-        else if (CheckCollisionPointRec(mouse, area)) {
+        if (CheckCollisionPointRec(mouse, area)) {
             g_arrastando = true;
             g_offsetArraste = (Vector2){ mouse.x - g_pranchetaPos.x, mouse.y - g_pranchetaPos.y };
+            return true;
         }
+    }
+
+    if (g_redimPrancheta) {
+        if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            g_redimPrancheta = false;
+        } else {
+            float nw = mouse.x - g_pranchetaPos.x;
+            float s = nw / (float)g_prancheta.width;
+            if (s < 0.62f) s = 0.62f;
+            if (s > 1.20f) s = 1.20f;
+            if (g_pranchetaPos.x + g_prancheta.width * s > g_interface.width) s = (g_interface.width - g_pranchetaPos.x) / g_prancheta.width;
+            if (g_pranchetaPos.y + g_prancheta.height * s > g_interface.height) s = (g_interface.height - g_pranchetaPos.y) / g_prancheta.height;
+            g_pranchetaScale = s;
+            SetMouseCursor(MOUSE_CURSOR_RESIZE_NWSE);
+        }
+        return true;
     }
 
     // Arrastando a barrinha: o checklist acompanha
@@ -6205,10 +6420,10 @@ static bool UpdatePrancheta(void) {
 // - Quadrado 1 (Esquerda): As 2 mãos abertas (o próprio jogador conta os dedos e analisa)
 // - Quadrado 2 (Meio):     A retina / íris do suspeito
 // - Retângulo 3 (Direita): A impressão digital do suspeito
-static const Rectangle DEEPFAKE_SLOT_MAOS    = {  14 * DEEPFAKE_SCALE, 15 * DEEPFAKE_SCALE, 50 * DEEPFAKE_SCALE, 43 * DEEPFAKE_SCALE };
-static const Rectangle DEEPFAKE_SLOT_RETINA  = {  76 * DEEPFAKE_SCALE, 14 * DEEPFAKE_SCALE, 23 * DEEPFAKE_SCALE, 23 * DEEPFAKE_SCALE };
-static const Rectangle DEEPFAKE_SLOT_DIGITAL = { 110 * DEEPFAKE_SCALE,  4 * DEEPFAKE_SCALE, 36 * DEEPFAKE_SCALE, 65 * DEEPFAKE_SCALE };
-static const Rectangle DEEPFAKE_FECHAR       = { 147 * DEEPFAKE_SCALE,  2 * DEEPFAKE_SCALE, 11 * DEEPFAKE_SCALE, 11 * DEEPFAKE_SCALE };
+#define DEEPFAKE_SLOT_MAOS    ((Rectangle){  14 * DEEPFAKE_SCALE, 15 * DEEPFAKE_SCALE, 50 * DEEPFAKE_SCALE, 43 * DEEPFAKE_SCALE })
+#define DEEPFAKE_SLOT_RETINA  ((Rectangle){  76 * DEEPFAKE_SCALE, 14 * DEEPFAKE_SCALE, 23 * DEEPFAKE_SCALE, 23 * DEEPFAKE_SCALE })
+#define DEEPFAKE_SLOT_DIGITAL ((Rectangle){ 110 * DEEPFAKE_SCALE,  4 * DEEPFAKE_SCALE, 36 * DEEPFAKE_SCALE, 65 * DEEPFAKE_SCALE })
+#define DEEPFAKE_FECHAR       ((Rectangle){ 147 * DEEPFAKE_SCALE,  2 * DEEPFAKE_SCALE, 11 * DEEPFAKE_SCALE, 11 * DEEPFAKE_SCALE })
 
 static Rectangle NoDeepfake(Rectangle r) {
     return (Rectangle){ g_deepfakePos.x + r.x, g_deepfakePos.y + r.y, r.width, r.height };
@@ -6221,20 +6436,47 @@ static bool UpdateDeepfake(void) {
     float w = (float)g_deepfakeJanela.width  * DEEPFAKE_SCALE;
     float h = (float)g_deepfakeJanela.height * DEEPFAKE_SCALE;
     Rectangle area = { g_deepfakePos.x, g_deepfakePos.y, w, h };
+    Rectangle grip = AlcaRedimJanela(area);
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (CheckCollisionPointRec(mouse, grip)) {
+            g_redimDeepfake = true;
+            return true;
+        }
         if (CheckCollisionPointRec(mouse, NoDeepfake(DEEPFAKE_FECHAR))) {
             g_deepfakeAberto = false;
             g_arrastandoDeepfake = false;
+            g_redimDeepfake = false;
             return true;
         }
         if (CheckCollisionPointRec(mouse, area)) {
             g_arrastandoDeepfake = true;
             g_offsetDeepfake = (Vector2){ mouse.x - g_deepfakePos.x, mouse.y - g_deepfakePos.y };
+            return true;
         }
     }
 
+    if (g_redimDeepfake) {
+        if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            g_redimDeepfake = false;
+        } else {
+            float nw = mouse.x - g_deepfakePos.x;
+            float s = nw / (float)g_deepfakeJanela.width;
+            if (s < 1.25f) s = 1.25f;
+            if (s > 2.65f) s = 2.65f;
+            if (g_deepfakePos.x + g_deepfakeJanela.width * s > g_interface.width) s = (g_interface.width - g_deepfakePos.x) / g_deepfakeJanela.width;
+            if (g_deepfakePos.y + g_deepfakeJanela.height * s > g_interface.height) s = (g_interface.height - g_deepfakePos.y) / g_deepfakeJanela.height;
+            g_deepfakeScale = s;
+            SetMouseCursor(MOUSE_CURSOR_RESIZE_NWSE);
+        }
+        return true;
+    }
+
     if (!g_arrastandoDeepfake) {
+        if (CheckCollisionPointRec(mouse, grip)) {
+            SetMouseCursor(MOUSE_CURSOR_RESIZE_NWSE);
+            return true;
+        }
         if (CheckCollisionPointRec(mouse, NoDeepfake(DEEPFAKE_FECHAR))) {
             SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
             return true;
@@ -6330,6 +6572,7 @@ static void DesenharDeepfake(void) {
 
     // Botao [X] padronizado no canto superior direito da janela deepfake
     DesenharBotaoFecharPadrao(NoDeepfake(DEEPFAKE_FECHAR));
+    DesenharAlcaRedim(area);
 
     // Lupa automatica 2x ao passar o mouse sobre RETINA ou DIGITAL para inspecionar detalhes com nitidez total
     if (!g_arrastandoDeepfake && g_dialogLoaded && g_suspeitoAtual >= 0 && g_suspeitoAtual < 3) {
@@ -6594,7 +6837,7 @@ static void DesenharTutorialContextual(void) {
         return;
     }
 
-    // 3) Em interrogatorio: ensina Dialogos/Tokens e depois o Checklist
+    // 3) Em interrogatorio: ensina Dialogos/Tokens, depois a Ficha, depois o Checklist e a Dica Logica
     if (g_dialogLoaded) {
         if (!g_tutDialogoPerguntaFeita) {
             Rectangle rToken = { 196.0f, 232.0f, 97.0f, 16.0f };
@@ -6607,6 +6850,28 @@ static void DesenharTutorialContextual(void) {
                 "Clique em uma pergunta abaixo para interrogar!\nCada pergunta consome 1 Token (8 por dia). Observe a resposta no chat."
             );
             DesenharSetaGuiaDia0((Vector2){ 136.0f, 214.0f }, (Vector2){ 136.0f, rPerg.y - 4.0f });
+            return;
+        }
+        if (!g_tutFichaVisto && !g_falaPlayerPendente) {
+            if (!g_menuAberto) {
+                DesenharAlvoPulsanteDia0(SETA_FECHADA);
+                DesenharBalaoGuiaDia0(
+                    324.0f, 238.0f, 294.0f,
+                    "FICHA DO FUNCIONÁRIO",
+                    "Abra a bandeja de ferramentas abaixo para consultar a Ficha do funcionário!"
+                );
+                DesenharSetaGuiaDia0((Vector2){ 471.0f, 296.0f }, (Vector2){ 471.0f, SETA_FECHADA.y - 4.0f });
+            } else {
+                Rectangle rFicha = IconeMenu(1);
+                DesenharAlvoPulsanteDia0(rFicha);
+                DesenharBalaoGuiaDia0(
+                    324.0f, 152.0f, 294.0f,
+                    "FICHA CADASTRAL",
+                    "Clique na Pasta para ver personalidade e comportamentos esperados!\nCompare a ficha com o que o funcionário diz."
+                );
+                DesenharSetaGuiaDia0((Vector2){ rFicha.x + rFicha.width * 0.5f, 232.0f },
+                                     (Vector2){ rFicha.x + rFicha.width * 0.5f, rFicha.y - 4.0f });
+            }
             return;
         }
         if (!g_tutChecklistVisto && !g_falaPlayerPendente) {
@@ -6625,7 +6890,7 @@ static void DesenharTutorialContextual(void) {
                     DesenharBalaoGuiaDia0(
                         324.0f, 164.0f, 294.0f,
                         "TABLET DE CHECKLIST",
-                        "Clique no Tablet para anotar contradições e suspeitas!\n(Ao lado há a Ficha cadastral e outras ferramentas.)"
+                        "Clique no Tablet para anotar o que você observou neste funcionário!"
                     );
                     DesenharSetaGuiaDia0((Vector2){ rTab.x + rTab.width * 0.5f, 232.0f },
                                          (Vector2){ rTab.x + rTab.width * 0.5f, rTab.y - 4.0f });
@@ -6636,19 +6901,35 @@ static void DesenharTutorialContextual(void) {
                 DesenharSetaGuiaDia0((Vector2){ 471.0f, 64.0f }, (Vector2){ 471.0f, TABLET_ABA_MIN.y + TABLET_ABA_MIN.height + 4.0f });
             } else {
                 g_tabletConteudoH = TabletLayout();
-                Rectangle rCaixa = CaixaNaImagem(0);
-                DesenharAlvoPulsanteDia0(rCaixa);
+                int idxAlvo = (g_suspeitoAtual == 1) ? 6 : (g_suspeitoAtual == 0) ? 7 : 0;
+                Rectangle cont = NoTablet(TABLET_CONTEUDO);
+                float itemTop = g_caixaY[idxAlvo];
+                float itemBot = itemTop + CAIXA_TAM + 6.0f;
+                if (itemTop < g_tabletScroll) g_tabletScroll = itemTop;
+                else if (itemBot > g_tabletScroll + cont.height) g_tabletScroll = itemBot - cont.height;
+                float maxSc = TabletMaxScroll();
+                if (g_tabletScroll < 0.0f) g_tabletScroll = 0.0f;
+                if (g_tabletScroll > maxSc) g_tabletScroll = maxSc;
+
+                Rectangle rCaixa = CaixaNaImagem(idxAlvo);
+                Rectangle rItem = { rCaixa.x - 2.0f, rCaixa.y - 2.0f, cont.width, CAIXA_TAM + 4.0f };
+                float pisca = 0.5f + 0.5f * sinf((float)GetTime() * 8.0f);
+                Color corPisca = Fade((Color){ 255, 255, 255, 255 }, 0.35f + 0.65f * pisca);
+                Rectangle rContTela = ParaTela(cont);
+                BeginScissorMode((int)rContTela.x, (int)rContTela.y, (int)rContTela.width, (int)rContTela.height);
+                DrawRectangleLinesEx(ParaTela(rItem), 2.0f, corPisca);
+                EndScissorMode();
+
                 DesenharBalaoGuiaDia0(
                     12.0f, 82.0f, 280.0f,
                     "ANOTANDO NO CHECKLIST",
-                    "Marque [X] nos itens que combinarem com o comportamento do funcionário!\nAnotações corretas somam pontos na avaliação final."
+                    "Compare com a Ficha e marque [X] no comportamento destacado no Tablet!\nAnotações corretas somam pontos no Veredito."
                 );
-                DesenharSetaGuiaDia0((Vector2){ rCaixa.x - 42.0f, rCaixa.y + rCaixa.height * 0.5f },
-                                     (Vector2){ rCaixa.x - 4.0f,  rCaixa.y + rCaixa.height * 0.5f });
             }
+            return;
         }
-        // Dica Logica: depois do checklist, apresenta o botao do desafio de logica
-        if (g_tutChecklistVisto && !g_tutDicaVisto && !g_pranchetaAberta && g_fichaAtual < 0 && !g_deepfakeAberto) {
+        // Dica Logica: depois do checklist e da ficha, apresenta o botao do desafio de logica
+        if (g_tutChecklistVisto && g_tutFichaVisto && !g_tutDicaVisto && !g_pranchetaAberta && g_fichaAtual < 0 && !g_deepfakeAberto) {
             if (!g_menuAberto) {
                 DesenharAlvoPulsanteDia0(SETA_FECHADA);
                 DesenharBalaoGuiaDia0(
@@ -6999,9 +7280,12 @@ static void UpdateGameplay(void) {
     bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     bool hover = CheckCollisionPointRec(mouse, seta);
 
-    // Botao sempre visivel de Avancar para o Proximo Dia / Veredito no topo da janela
+    // Botao de Avancar para o Proximo Dia / Veredito no topo da janela (no Dia 1 do Modo 2D so apos subtasks)
     {
-        bool sobreBtnTopo = CheckCollisionPointRec(mouse, ParaTela(BOTAO_AVANCAR_TOPO));
+        bool podeAvancarTopo = GameStateIs3DMode() || (GameStateGetDay() != 1) || SettingsGetDevMode() ||
+                               (g_subtaskLanchoneteVisto && g_subtaskIdColetado &&
+                                g_subtaskFalouSuspeito[0] && g_subtaskFalouSuspeito[1] && g_subtaskFalouSuspeito[2]);
+        bool sobreBtnTopo = podeAvancarTopo && CheckCollisionPointRec(mouse, ParaTela(BOTAO_AVANCAR_TOPO));
         if (sobreBtnTopo) {
             hover = true;
             if (clicou) {
@@ -7190,6 +7474,12 @@ static void UpdateGameplay(void) {
             if (g_escadaHover >= 0) {
                 hover = true;
                 if (clicou) {
+                    if (!GameStateIs3DMode() && GameStateGetDay() == 1 && g_localAtual == LOCAL_ESCADA_TERREO &&
+                        g_escadaHover == 0 && !g_subtaskIdColetado && !SettingsGetDevMode()) {
+                        TocarSomHover();
+                        DispararMonologoInterno("Preciso pegar meu ID de Acesso na mesa da Lanchonete antes de subir as escadas.");
+                        return;
+                    }
                     int dest = (g_escadaHover == 0) ? DestinoEscadaSubir(g_localAtual) : DestinoEscadaDescer(g_localAtual);
                     LimparMonologoInterno();
                     FecharJanelasFerramentas();
@@ -7237,6 +7527,7 @@ static void UpdateGameplay(void) {
                 hover = true;
                 if (clicou) {
                     g_tutFuncionarioVisto = true;
+                    g_subtaskFalouSuspeito[i] = true;
                     g_tree = &g_trees[i];
                     g_dialogLoaded = true;
                     g_suspeitoAtual = i;
@@ -7316,6 +7607,25 @@ static void UpdateGameplay(void) {
                 hover = true;
             }
         }
+        // Modo 2D Dia 1: pegar o ID de Acesso na mesa da Lanchonete
+        g_cantinaIdHover = false;
+        if (!GameStateIs3DMode() && GameStateGetDay() == 1 && g_localAtual == LOCAL_CANTINA &&
+            !g_subtaskIdColetado && !sobreSuspeito && g_setaHover < 0 && CheckCollisionPointRec(mouse, ParaTela(JANELA_AREA))) {
+            Rectangle rId = { JANELA_AREA.x + 240.0f, JANELA_AREA.y + 118.0f, 26.0f, 28.0f };
+            if (CheckCollisionPointRec(mouse, ParaTela(rId))) {
+                g_cantinaIdHover = true;
+                if (!g_cantinaIdHoverAnt) TocarSomHover();
+                hover = true;
+                if (clicou) {
+                    g_subtaskIdColetado = true;
+                    g_cantinaIdHover = false;
+                    TocarSomHover();
+                    DispararMonologoInterno("Agora que eu peguei meu acesso posso subir as escadas.");
+                    return;
+                }
+            }
+        }
+        g_cantinaIdHoverAnt = g_cantinaIdHover;
         if (!LocalEhTerreo3D(g_localAtual) && !sobreSuspeito && g_setaHover < 0 && CheckCollisionPointRec(mouse, ParaTela(JANELA_AREA))) {
             Vector2 pJanela = MouseNaJanela(mouse);
             for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
@@ -7472,24 +7782,39 @@ static void DesenharSpriteDestacadoProfundidade(Texture2D tex, Rectangle destBas
         destBaseVirt.width,
         destBaseVirt.height
     };
-    DrawTexturePro(tex, src, ParaTela(sombraVirt), (Vector2){ 0, 0 }, 0.0f, Fade(BLACK, 0.45f + 0.25f * anim));
+    DrawTexturePro(tex, src, ParaTela(sombraVirt), (Vector2){ 0, 0 }, 0.0f, Fade(BLACK, 0.55f + 0.25f * anim));
 
-    // 2) Contorno luminoso na silhueta exata do objeto (sutil quando em repouso, aceso no hover)
-    float alphaOut = hov ? 0.96f : (0.32f + 0.32f * pulso);
+    // 2) Contorno luminoso bem visivel em 8 direcoes na silhueta exata do objeto
+    float alphaOut = hov ? 1.00f : (0.58f + 0.42f * pulso);
     Color corOut = Fade((Color){ 255, 242, 230, 255 }, alphaOut);
-    float offDist = hov ? 1.3f : 1.0f;
-    const Vector2 offs[4] = { { -offDist, 0 }, { offDist, 0 }, { 0, -offDist }, { 0, offDist } };
-    for (int d = 0; d < 4; d++) {
+    float offDist = hov ? 2.0f : 1.5f;
+    const Vector2 offs[8] = {
+        { -offDist, 0 }, { offDist, 0 }, { 0, -offDist }, { 0, offDist },
+        { -offDist * 0.7f, -offDist * 0.7f }, { offDist * 0.7f, -offDist * 0.7f },
+        { -offDist * 0.7f,  offDist * 0.7f }, { offDist * 0.7f,  offDist * 0.7f }
+    };
+    for (int d = 0; d < 8; d++) {
         Rectangle rOut = { destVirt.x + offs[d].x, destVirt.y + offs[d].y, destVirt.width, destVirt.height };
         DrawTexturePro(tex, src, ParaTela(rOut), (Vector2){ 0, 0 }, 0.0f, corOut);
     }
 
-    // 3) Proprio objeto na frente + leve clareamento no hover
+    // 3) Proprio objeto na frente + realce pulsante/hover
     DrawTexturePro(tex, src, ParaTela(destVirt), (Vector2){ 0, 0 }, 0.0f, WHITE);
-    if (anim > 0.05f) {
-        DrawTexturePro(tex, src, ParaTela(destVirt), (Vector2){ 0, 0 }, 0.0f,
-                       Fade((Color){ 255, 242, 230, 255 }, 0.16f * fminf(anim, 1.0f)));
-    }
+    float brilho = hov ? 0.28f * fminf(anim, 1.0f) : (0.08f + 0.12f * pulso);
+    DrawTexturePro(tex, src, ParaTela(destVirt), (Vector2){ 0, 0 }, 0.0f,
+                   Fade((Color){ 255, 242, 230, 255 }, brilho));
+}
+
+static void DesenharIndicadorExclamacao(Rectangle destVirt, bool hov, float pulso) {
+    float cx = destVirt.x + destVirt.width * 0.5f;
+    float cy = destVirt.y - 10.0f - 2.0f * pulso;
+    if (cy < JANELA_AREA.y + 4.0f) cy = destVirt.y + 4.0f;
+    Rectangle badge = { cx - 7.0f, cy, 14.0f, 13.0f };
+    Rectangle rTela = ParaTela(badge);
+    DrawRectangleRec(ParaTela((Rectangle){ badge.x + 1.0f, badge.y + 1.0f, badge.width, badge.height }), Fade(BLACK, 0.65f));
+    DrawRectangleRec(rTela, hov ? (Color){ 255, 242, 230, 255 } : (Color){ 32, 29, 31, 240 });
+    DrawRectangleLinesEx(rTela, 1.4f, (Color){ 255, 242, 230, 255 });
+    DrawTextInArea("!", badge, 9, hov ? (Color){ 32, 29, 31, 255 } : (Color){ 255, 242, 230, 255 });
 }
 
 static void DesenharLanceEscadaDestacado(Texture2D tex, Texture2D texBranca, Rectangle bboxJanela, bool hov, float anim, float pulso) {
@@ -7574,6 +7899,63 @@ static void DesenharObjetosInterativosSala(float dt) {
             h->bboxJanela.height
         };
         DesenharSpriteDestacadoProfundidade(g_texHotspotMasks[i], destVirt, hov, g_hotspotAnim[i], pulso);
+        DesenharIndicadorExclamacao(destVirt, hov, pulso);
+    }
+
+    // Modo 2D Dia 1: ID de Acesso na mesa da Lanchonete
+    if (!GameStateIs3DMode() && GameStateGetDay() == 1 && g_localAtual == LOCAL_CANTINA && !g_subtaskIdColetado && g_texCrachaMini.id > 0) {
+        float alvoId = g_cantinaIdHover ? 1.0f : 0.0f;
+        g_cantinaIdAnim += (alvoId - g_cantinaIdAnim) * fminf(1.0f, 14.0f * dt);
+        Rectangle rIdVirt = { JANELA_AREA.x + 246.0f, JANELA_AREA.y + 123.0f, 14.0f, 20.0f };
+        DesenharSpriteDestacadoProfundidade(g_texCrachaMini, rIdVirt, g_cantinaIdHover, g_cantinaIdAnim, pulso);
+        DesenharIndicadorExclamacao(rIdVirt, g_cantinaIdHover, pulso);
+    }
+}
+
+static void DesenharSubtasksDia1(void) {
+    if (GameStateIs3DMode() || GameStateGetDay() != 1 || g_dialogLoaded || g_closeupAtual != CLOSEUP_NENHUM) return;
+
+    bool todasFeitas = g_subtaskLanchoneteVisto && g_subtaskIdColetado &&
+                       g_subtaskFalouSuspeito[0] && g_subtaskFalouSuspeito[1] && g_subtaskFalouSuspeito[2];
+    if (todasFeitas) {
+        float dt = GetFrameTime();
+        if (dt > 0.05f) dt = 0.05f;
+        g_subtaskFadeOut += dt * 2.2f;
+        if (g_subtaskFadeOut >= 1.0f) {
+            g_subtaskFadeOut = 1.0f;
+            return;
+        }
+    }
+
+    float a = 1.0f - g_subtaskFadeOut;
+    float slideX = 48.0f * g_subtaskFadeOut;
+    Rectangle box = { JANELA_AREA.x + JANELA_AREA.width - 150.0f + slideX, JANELA_AREA.y + 4.0f, 146.0f, 78.0f };
+    Rectangle rTela = ParaTela(box);
+    DrawRectangleRec(ParaTela((Rectangle){ box.x + 1.5f, box.y + 1.5f, box.width, box.height }), Fade(BLACK, 0.55f * a));
+    DrawRectangleRec(rTela, Fade((Color){ 24, 21, 23, 255 }, 0.88f * a));
+    DrawRectangleLinesEx(rTela, 1.3f, Fade((Color){ 160, 147, 142, 255 }, 0.86f * a));
+    TextoNaImagem("OBJETIVOS - DIA 1", box.x + 6.0f, box.y + 4.0f, 7.5f, Fade((Color){ 189, 181, 168, 255 }, a));
+
+    const char *itens[5] = {
+        "Ir a Lanchonete",
+        "Pegar ID na mesa",
+        "Falar com Arthur",
+        "Falar com Maria",
+        "Falar com Ana Lucia"
+    };
+    bool feitos[5] = {
+        g_subtaskLanchoneteVisto,
+        g_subtaskIdColetado,
+        g_subtaskFalouSuspeito[1],
+        g_subtaskFalouSuspeito[0],
+        g_subtaskFalouSuspeito[2]
+    };
+    for (int i = 0; i < 5; i++) {
+        float y = box.y + 16.0f + i * 12.0f;
+        Color cor = feitos[i] ? Fade((Color){ 125, 112, 113, 255 }, a) : Fade((Color){ 255, 242, 230, 255 }, a);
+        char linha[48];
+        snprintf(linha, sizeof linha, "[%c] %s", feitos[i] ? 'X' : ' ', itens[i]);
+        TextoNaImagem(linha, box.x + 6.0f, y, 7.5f, cor);
     }
 }
 
@@ -7584,6 +7966,8 @@ static void DesenharRotuloObjetoInterativoSala(void) {
         textoDica = TextoLanceEscada(g_localAtual, g_escadaHover);
     } else if (g_hotspotHover >= 0) {
         textoDica = EVIDENCIA_HOTSPOTS[g_hotspotHover].dica;
+    } else if (g_cantinaIdHover) {
+        textoDica = "Pegar seu ID de Acesso";
     }
     if (!textoDica) return;
 
@@ -7671,8 +8055,11 @@ void UpdateDrawGameplayScene(void) {
     if (!emTransicao && !UpdatePopupEvidencia() && !UpdateConfirmarAbandonar() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
         UpdateGameplay();
     }
-    if (g_localAtual != LOCAL_RECEPCAO) {
+    if (g_localAtual != LocalInicial()) {
         g_tutMovimentoVisto = true;
+    }
+    if (g_localAtual == LOCAL_CANTINA) {
+        g_subtaskLanchoneteVisto = true;
     }
 
     // 1) Fundo na janela de cima (preenche sem distorcer) - cena 3D do terreo, foto do local atual ou close-up
@@ -7869,6 +8256,7 @@ void UpdateDrawGameplayScene(void) {
             if (g_setaHover >= 0) DesenharRotuloSeta(g_setaHover);
             DesenharRotuloObjetoInterativoSala();
         }
+        DesenharSubtasksDia1();
     }
 
     // Fundo animado procedural bem sutil nos quadrantes de demarcação (proeminentemente cor sólida original)
@@ -7986,6 +8374,7 @@ void UpdateDrawGameplayScene(void) {
             // Botoes no canto superior direito do tablet: minimizar [_] e fechar [X]
             DesenharBotaoMinimizarPadrao(NoTablet(TABLET_MINIMIZAR));
             DesenharBotaoFecharPadrao(NoTablet(TABLET_FECHAR));
+            DesenharAlcaRedim(area);
         }
     }
     // 5) Ficha do funcionario (por cima de tudo)
@@ -7993,8 +8382,9 @@ void UpdateDrawGameplayScene(void) {
         const Ficha *f = &g_fichas[g_fichaAtual];
         float x = g_fichaPos.x;
         float y = g_fichaPos.y;
+        float fs = g_fichaScale;
 
-        Rectangle area   = { x, y, (float)g_ficha.width, (float)g_ficha.height };
+        Rectangle area   = { x, y, (float)g_ficha.width * fs, (float)g_ficha.height * fs };
         Rectangle origem = { 0, 0, (float)g_ficha.width, (float)g_ficha.height };
         DrawTexturePro(g_ficha, origem, ParaTela(area), (Vector2){ 0, 0 }, 0.0f, WHITE);
 
@@ -8060,8 +8450,9 @@ void UpdateDrawGameplayScene(void) {
         ConteudoFicha(f, g_fichaAtual, x + FICHA_SCROLL.x, y + FICHA_SCROLL.y - g_fichaScroll, true);
         EndScissorMode();
 
-        // Barra de rolagem
+        // Barra de rolagem e alca de redimensionamento
         DesenharBarraFicha();
+        DesenharAlcaRedim(area);
     }
     // 6) Ferramenta Scanner Deepfake (se aberta)
     DesenharDeepfake();
