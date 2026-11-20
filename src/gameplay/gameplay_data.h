@@ -49,6 +49,12 @@ typedef enum {
     LOCAL_CEO,
     LOCAL_REUNIAO_1,
     LOCAL_REUNIAO_2,
+    LOCAL_ESCADA_3,
+    LOCAL_ESCADA_4,
+    LOCAL_2D_CIBER,
+    LOCAL_2D_SERVIDORES,
+    LOCAL_2D_TREINO_1,
+    LOCAL_2D_TREINO_2,
     NUM_LOCAIS
 } LocalRasec;
 
@@ -65,7 +71,7 @@ typedef struct {
 
 enum { POS_CIMA = 0, POS_ESQUERDA, POS_ESCADA, NUM_POS_ANDAR };
 
-#define NUM_LOCAIS_2D 14
+#define NUM_LOCAIS_2D NUM_LOCAIS
 
 extern const InfoLocal    LOCAIS[NUM_LOCAIS];
 extern const HoloSala     HOLO_SALAS[NUM_LOCAIS];

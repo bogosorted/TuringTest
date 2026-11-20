@@ -109,7 +109,7 @@ void MapaHoloInit(const HoloSala *salas, int numSalas, const HoloCorredor *corre
 
     int maxAndar = 0;
     for (int i = 0; i < g_numSalas; i++) {
-        if (g_salas[i].andar > maxAndar) maxAndar = g_salas[i].andar;
+        if (g_salas[i].numPartes > 0 && g_salas[i].andar > maxAndar) maxAndar = g_salas[i].andar;
     }
     g_numAndares = maxAndar + 1;
     if (g_numAndares < 1) g_numAndares = 1;
@@ -248,7 +248,7 @@ static void DesenharCorredor(const HoloCorredor *k, bool andarAtual) {
 // Existe escadaria no andar de cima? (no ultimo andar so tem a porta para descer)
 static bool TemEscadaAcima(int andar) {
     for (int i = 0; i < g_numSalas; i++)
-        if (g_salas[i].escada && g_salas[i].andar == andar + 1) return true;
+        if (g_salas[i].escada && g_salas[i].numPartes > 0 && g_salas[i].andar == andar + 1) return true;
     return false;
 }
 
@@ -325,9 +325,9 @@ static void DesenharSala(int i, bool atual, bool hover, bool acessivel) {
 // Poco da escadaria: linhas verticais ligando as escadas de andares vizinhos
 static void DesenharPocoEscada(void) {
     for (int i = 0; i < g_numSalas; i++) {
-        if (!g_salas[i].escada) continue;
+        if (!g_salas[i].escada || g_salas[i].numPartes == 0) continue;
         for (int j = 0; j < g_numSalas; j++) {
-            if (!g_salas[j].escada || g_salas[j].andar != g_salas[i].andar + 1) continue;
+            if (!g_salas[j].escada || g_salas[j].numPartes == 0 || g_salas[j].andar != g_salas[i].andar + 1) continue;
             HoloRet r = g_salas[i].partes[0];
             HoloRet r2 = g_salas[j].partes[0];
             if (fabsf(r.x - r2.x) > 0.25f) continue;
@@ -370,6 +370,7 @@ void MapaHoloRender(int largura, int altura, int salaAtual, int salaHover, uint6
         DesenharCorredor(&g_corredores[k], g_corredores[k].andar == andarAtual);
     }
     for (int i = 0; i < g_numSalas; i++) {
+        if (g_salas[i].numPartes == 0) continue;
         if (!SettingsGetDevMode() && g_salas[i].andar < 0) continue;
         bool acessivel = ((acessiveis >> i) & 1ULL) != 0;
         DesenharSala(i, i == salaAtual, i == salaHover && acessivel, acessivel || i == salaAtual);
@@ -415,7 +416,7 @@ int MapaHoloSalaEm(Vector2 ponto) {
     for (int andar = g_numAndares - 1; andar >= minAndar; andar--) {
         for (int i = 0; i < g_numSalas; i++) {
             const HoloSala *s = &g_salas[i];
-            if (s->andar != andar) continue;
+            if (s->numPartes == 0 || s->andar != andar) continue;
             float alt = s->escada ? ESCADA_ALT : PAREDE_ALT;
             for (int p = 0; p < s->numPartes; p++) {
                 HoloRet r = s->partes[p];

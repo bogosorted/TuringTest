@@ -6,12 +6,12 @@ const InfoLocal LOCAIS[NUM_LOCAIS] = {
     { "ADM. 1",          "SETOR ADMINISTRATIVO",   "",             "assets/sprites/locais/terreo/spr_background_teste.png" },
     { "CANTINA",         "LANCHONETE DA RASEC",    "",             "assets/sprites/locais/terreo/spr_background_cantina.png" },
     { "RH",              "RH DA RASEC",            "Vazio",        "assets/sprites/locais/1_andar/spr_background_rh.png" },
-    { "CONTAB.",         "SETOR DE CONTABILIDADE", "Vazio",        "assets/sprites/locais/1_andar/spr_background_mesa_maria.png" },
+    { "CONTAB.",         "SETOR DE CONTABILIDADE", "Vazio",        "assets/sprites/locais/1_andar/spr_background_contabilidade.png" },
     { "AUDIT.",          "AUDITÓRIO",              "Vazio",        "assets/sprites/locais/2_andar/spr_background_sala_reuniao.png" },
-    { "COPA",            "COPA DO 2º ANDAR",       "Vazio",        "assets/sprites/locais/2_andar/spr_background_geladeira_coffe.png" },
+    { "COPA",            "COPA DO 4º ANDAR",       "Vazio",        "assets/sprites/locais/2_andar/spr_background_geladeira_coffe.png" },
     { "ESCADA",          "ESCADARIA - TÉRREO",     "Escadas",      FUNDO_ESCADA_MEIO },
     { "ESCADA",          "ESCADARIA - 1º ANDAR",   "Escadas",      FUNDO_ESCADA_MEIO },
-    { "ESCADA",          "ESCADARIA - 2º ANDAR",   "Último andar", FUNDO_ESCADA_ULTIMO },
+    { "ESCADA",          "ESCADARIA - 2º ANDAR",   "Escadas",      FUNDO_ESCADA_MEIO },
     { "SUBSOLO",         "SUBSOLO - ENTRADA",      "Vazio",        "assets/sprites/locais/subsolo/local_comeco.png" },
     { "BIFURC.",         "SUBSOLO - ESCOLHA",      "Vazio",        "assets/sprites/locais/subsolo/local_escolha.png" },
     { "ÚLT. ESCR.",      "ÚLTIMO ESCRITÓRIO",      "Vazio",        "assets/sprites/locais/subsolo/last_office.png" },
@@ -40,6 +40,12 @@ const InfoLocal LOCAIS[NUM_LOCAIS] = {
     { "SALA CEO",        "SALA DO CEO (TRANCADA)", "",             "assets/sprites/locais/2_andar/spr_background_sala_reuniao.png" },
     { "REUNIÃO 1",       "SALA DE REUNIÃO 1",      "",             "assets/sprites/locais/2_andar/spr_background_sala_reuniao.png" },
     { "REUNIÃO 2",       "SALA DE REUNIÃO 2",      "",             "assets/sprites/locais/2_andar/spr_background_sala_reuniao.png" },
+    { "ESCADA",          "ESCADARIA - 3º ANDAR",   "Escadas",      FUNDO_ESCADA_MEIO },
+    { "ESCADA",          "ESCADARIA - 4º ANDAR",   "Último andar", FUNDO_ESCADA_ULTIMO },
+    { "CIBER.",          "SETOR DE CIBERSEGURANÇA","Vazio",        "assets/sprites/locais/2_andar/spr_background_ciberseguranca.png" },
+    { "SERVIDORES",      "SALA DE SERVIDORES",     "Vazio",        "assets/sprites/locais/2_andar/spr_background_servidores.png" },
+    { "TREINO IA 1",     "TREINAMENTO DE IA 1",    "Vazio",        "assets/sprites/locais/3_andar/spr_background_treino_ia_1.png" },
+    { "TREINO IA 2",     "TREINAMENTO DE IA 2",    "Vazio",        "assets/sprites/locais/3_andar/spr_background_treino_ia_2.png" },
 };
 
 static const LocalRasec PLANTA_ANDAR_3D[HOLO_NUM_ANDARES][NUM_POS_ANDAR] = {
@@ -51,11 +57,11 @@ static const LocalRasec PLANTA_ANDAR_3D[HOLO_NUM_ANDARES][NUM_POS_ANDAR] = {
 };
 
 static const LocalRasec PLANTA_ANDAR_2D[HOLO_NUM_ANDARES][NUM_POS_ANDAR] = {
-    { LOCAL_ESCRITORIO,   LOCAL_CANTINA, LOCAL_ESCADA_TERREO },
-    { LOCAL_MESA_MARIA,   LOCAL_RH,      LOCAL_ESCADA_1 },
-    { LOCAL_SALA_REUNIAO, LOCAL_COPA,    LOCAL_ESCADA_2 },
-    { LOCAL_SALA_REUNIAO, LOCAL_COPA,    LOCAL_ESCADA_2 },
-    { LOCAL_SALA_REUNIAO, LOCAL_COPA,    LOCAL_ESCADA_2 },
+    { LOCAL_ESCRITORIO,   LOCAL_CANTINA,       LOCAL_ESCADA_TERREO },
+    { LOCAL_MESA_MARIA,   LOCAL_RH,            LOCAL_ESCADA_1 },
+    { LOCAL_2D_CIBER,     LOCAL_2D_SERVIDORES, LOCAL_ESCADA_2 },
+    { LOCAL_2D_TREINO_1,  LOCAL_2D_TREINO_2,   LOCAL_ESCADA_3 },
+    { LOCAL_SALA_REUNIAO, LOCAL_COPA,          LOCAL_ESCADA_4 },
 };
 
 const HoloSala HOLO_SALAS[NUM_LOCAIS] = {
@@ -105,6 +111,12 @@ const HoloSala HOLO_SALAS[NUM_LOCAIS] = {
     { 4, 1, { { 5.95f, 2.05f, 1.45f, 1.75f } }, false },  // LOCAL_CEO (Trancada - visivel no holograma)
     { 4, 1, { { 3.95f, 2.05f, 1.90f, 1.75f } }, false },  // LOCAL_REUNIAO_1
     { 4, 1, { { 3.95f, 0.20f, 1.90f, 1.75f } }, false },  // LOCAL_REUNIAO_2
+    { -1, 0, { { 0 } }, true },                           // LOCAL_ESCADA_3 (2D)
+    { -1, 0, { { 0 } }, true },                           // LOCAL_ESCADA_4 (2D)
+    { -1, 0, { { 0 } }, false },                          // LOCAL_2D_CIBER (2D)
+    { -1, 0, { { 0 } }, false },                          // LOCAL_2D_SERVIDORES (2D)
+    { -1, 0, { { 0 } }, false },                          // LOCAL_2D_TREINO_1 (2D)
+    { -1, 0, { { 0 } }, false },                          // LOCAL_2D_TREINO_2 (2D)
 };
 
 const HoloCorredor HOLO_CORREDORES[] = {
@@ -142,26 +154,34 @@ const HoloCorredor HOLO_CORREDORES[] = {
 const int NUM_HOLO_CORREDORES = (int)(sizeof HOLO_CORREDORES / sizeof HOLO_CORREDORES[0]);
 
 const HoloSala HOLO_SALAS_2D[NUM_LOCAIS_2D] = {
-    { 0, 2, { { 1.6f, 0.2f, 3.2f, 1.1f }, { 1.6f, 1.3f, 0.9f, 0.45f } }, false },
-    { 0, 1, { { 0.2f, 0.9f, 1.2f, 2.1f } }, false },
-    { 1, 2, { { 0.2f, 0.3f, 1.2f, 1.3f }, { 0.2f, 1.6f, 0.75f, 1.3f } }, false },
-    { 1, 1, { { 1.9f, 0.2f, 2.5f, 1.15f } }, false },
-    { 2, 1, { { 1.6f, 0.2f, 3.3f, 1.25f } }, false },
-    { 2, 1, { { 0.2f, 1.2f, 1.2f, 1.6f } }, false },
-    { 0, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
-    { 1, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
-    { 2, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
-    { -1, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, false },
-    { -1, 1, { { 2.4f, 1.3f, 1.4f, 1.3f } }, false },
-    { -1, 1, { { 0.2f, 1.2f, 1.4f, 1.5f } }, false },
-    { -1, 1, { { 2.4f, 0.15f, 1.4f, 0.85f } }, false },
-    { -1, 1, { { 0.2f, 0.15f, 1.4f, 0.85f } }, false },
+    [LOCAL_ESCRITORIO]          = { 0, 2, { { 1.6f, 0.2f, 3.2f, 1.1f }, { 1.6f, 1.3f, 0.9f, 0.45f } }, false },
+    [LOCAL_CANTINA]             = { 0, 1, { { 0.2f, 0.9f, 1.2f, 2.1f } }, false },
+    [LOCAL_RH]                  = { 1, 2, { { 0.2f, 0.3f, 1.2f, 1.3f }, { 0.2f, 1.6f, 0.75f, 1.3f } }, false },
+    [LOCAL_MESA_MARIA]          = { 1, 1, { { 1.9f, 0.2f, 2.5f, 1.15f } }, false },
+    [LOCAL_SALA_REUNIAO]        = { 4, 1, { { 1.6f, 0.2f, 3.3f, 1.25f } }, false },
+    [LOCAL_COPA]                = { 4, 1, { { 0.2f, 1.2f, 1.2f, 1.6f } }, false },
+    [LOCAL_ESCADA_TERREO]       = { 0, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
+    [LOCAL_ESCADA_1]            = { 1, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
+    [LOCAL_ESCADA_2]            = { 2, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
+    [LOCAL_SUBSOLO_COMECO]      = { -1, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, false },
+    [LOCAL_SUBSOLO_ESCOLHA]     = { -1, 1, { { 2.4f, 1.3f, 1.4f, 1.3f } }, false },
+    [LOCAL_SUBSOLO_LAST_OFFICE] = { -1, 1, { { 0.2f, 1.2f, 1.4f, 1.5f } }, false },
+    [LOCAL_SUBSOLO_VEREDITO]    = { -1, 1, { { 2.4f, 0.15f, 1.4f, 0.85f } }, false },
+    [LOCAL_SUBSOLO_RECREACAO]   = { -1, 1, { { 0.2f, 0.15f, 1.4f, 0.85f } }, false },
+    [LOCAL_ESCADA_3]            = { 3, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
+    [LOCAL_ESCADA_4]            = { 4, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
+    [LOCAL_2D_CIBER]            = { 2, 1, { { 1.8f, 0.2f, 2.8f, 1.2f } }, false },
+    [LOCAL_2D_SERVIDORES]       = { 2, 1, { { 0.2f, 0.8f, 1.2f, 2.0f } }, false },
+    [LOCAL_2D_TREINO_1]         = { 3, 1, { { 1.7f, 0.2f, 3.0f, 1.2f } }, false },
+    [LOCAL_2D_TREINO_2]         = { 3, 1, { { 0.2f, 0.5f, 1.2f, 2.3f } }, false },
 };
 
 const HoloCorredor HOLO_CORREDORES_2D[] = {
     { 0, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 0, { 2.9f, 1.3f,  0.45f, 0.65f } },
     { 1, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 1, { 2.9f, 1.35f, 0.45f, 0.6f } },
-    { 2, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 2, { 2.9f, 1.45f, 0.45f, 0.5f } },
+    { 2, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 2, { 2.9f, 1.40f, 0.45f, 0.55f } },
+    { 3, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 3, { 2.9f, 1.40f, 0.45f, 0.55f } },
+    { 4, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 4, { 2.9f, 1.45f, 0.45f, 0.5f } },
     { -1, { 3.8f, 1.75f, 1.3f, 0.45f } },
     { -1, { 1.6f, 1.75f, 0.8f, 0.45f } },
     { -1, { 2.9f, 1.0f,  0.4f, 0.3f } },

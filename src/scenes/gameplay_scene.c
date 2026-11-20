@@ -424,7 +424,7 @@ static bool ObterLanceSubir(int local, Texture2D *outTex, Texture2D *outBranca,
 static bool ObterLanceDescer(int local, Texture2D *outTex, Texture2D *outBranca,
                              Rectangle *outBbox, const Vector2 **outPoly, int *outVerts) {
     if (DestinoEscadaDescer(local) < 0) return false;
-    if (local == LOCAL_ESCADA_2) {
+    if (DestinoEscadaSubir(local) < 0) {
         if (outTex)    *outTex    = g_texUltimoDescer;
         if (outBranca) *outBranca = g_texUltimoDescerBranca;
         if (outBbox)   *outBbox   = ULTIMO_DESCER_BBOX;
@@ -3311,6 +3311,7 @@ static void DesenharMapaHolo(void) {
         DrawTextLeftAligned(NOMES_ANDARES[a], (Vector2){ area.x + p.x, area.y + p.y + 2.0f }, 7, cor);
     }
     for (int i = 0; i < numSalas; i++) {
+        if (salas[i].numPartes == 0) continue;
         if (!SettingsGetDevMode() && salas[i].andar < 0) continue;
         if (GameStateIs3DMode() && salas[i].escada) continue;
         Vector2 p = MapaHoloPosSala(i);
@@ -3352,9 +3353,11 @@ static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
         DrawRectangleRec(ParaTela(rTitulo), Fade((Color){ 36, 32, 34, 255 }, 0.85f));
         DrawRectangleLinesEx(ParaTela(rTitulo), 2, borderColor);
 
+        int andarTitulo = GameplayHoloSalasAtivas()[g_localAtual].andar;
+        const char *nomeAndarTitulo = (andarTitulo >= 0 && andarTitulo < HOLO_NUM_ANDARES) ? NOMES_ANDARES[andarTitulo] : "SUBSOLO";
         const char *tituloChat = (g_dialogLoaded && suspectIndex >= 0 && suspectIndex < 3)
                                  ? "HISTÓRICO DA CONVERSA"
-                                 : TextFormat("MAPA DA RASEC - %s", NOMES_ANDARES[HOLO_SALAS[g_localAtual].andar]);
+                                 : TextFormat("MAPA DA RASEC - %s", nomeAndarTitulo);
         DrawTextInArea(tituloChat, rTitulo, 10, (Color){ 255, 242, 230, 255 });
     }
 
@@ -3683,8 +3686,8 @@ static void DrawInterrogationTexts(void) {
                 presentes[nAqui++] = k;
             }
             const char *info;
-            if (!LocalEhTerreo3D(g_localAtual) && HOLO_SALAS[g_localAtual].escada) {
-                info = (g_localAtual == LOCAL_ESCADA_2)
+            if (!LocalEhTerreo3D(g_localAtual) && GameplayHoloSalasAtivas()[g_localAtual].escada) {
+                info = (DestinoEscadaSubir(g_localAtual) < 0)
                     ? "Você está no último andar.\n(Clique na escada para descer ou na seta para entrar)"
                     : "Você está na escadaria.\n(Clique nas escadas para mudar de andar ou na seta para entrar)";
             } else if (nAqui == 1) {
