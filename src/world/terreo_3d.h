@@ -11,6 +11,27 @@ typedef enum {
     TERREO_SALA_JARDIM,
     TERREO_SALA_ESCRITORIO,
     TERREO_SALA_ESCRITORIO_2,
+    TERREO_SALA_CONVIVIO,
+    TERREO_SALA_ESCADA_TERREO,
+    TERREO_SALA_ESCADA_1,
+    TERREO_SALA_HALL_1,
+    TERREO_SALA_CONTABILIDADE_1,
+    TERREO_SALA_CONTABILIDADE_2,
+    TERREO_SALA_ARQUIVO_1,
+    TERREO_SALA_COPA_1,
+    TERREO_SALA_HALL_2,
+    TERREO_SALA_CIBER_1,
+    TERREO_SALA_CIBER_2,
+    TERREO_SALA_SERVER_1,
+    TERREO_SALA_SERVER_2,
+    TERREO_SALA_HALL_3,
+    TERREO_SALA_TREINO_ESCRITORIO,
+    TERREO_SALA_TREINO_IA,
+    TERREO_SALA_GARAGEM_PROTOTIPOS,
+    TERREO_SALA_HALL_4,
+    TERREO_SALA_AUDITORIO,
+    TERREO_SALA_REUNIAO_1,
+    TERREO_SALA_REUNIAO_2,
     TERREO_NUM_SALAS
 } TerreoSalaId;
 
@@ -21,7 +42,27 @@ typedef enum {
     TERREO_DEST_JARDIM,
     TERREO_DEST_ESCRITORIO,
     TERREO_DEST_ESCRITORIO_2,
-    TERREO_DEST_ESCADA_2D
+    TERREO_DEST_CONVIVIO,
+    TERREO_DEST_ESCADA_2D,
+    TERREO_DEST_ESCADA_1,
+    TERREO_DEST_HALL_1,
+    TERREO_DEST_CONTABILIDADE_1,
+    TERREO_DEST_CONTABILIDADE_2,
+    TERREO_DEST_ARQUIVO_1,
+    TERREO_DEST_COPA_1,
+    TERREO_DEST_HALL_2,
+    TERREO_DEST_CIBER_1,
+    TERREO_DEST_CIBER_2,
+    TERREO_DEST_SERVER_1,
+    TERREO_DEST_SERVER_2,
+    TERREO_DEST_HALL_3,
+    TERREO_DEST_TREINO_ESCRITORIO,
+    TERREO_DEST_TREINO_IA,
+    TERREO_DEST_GARAGEM_PROTOTIPOS,
+    TERREO_DEST_HALL_4,
+    TERREO_DEST_AUDITORIO,
+    TERREO_DEST_REUNIAO_1,
+    TERREO_DEST_REUNIAO_2
 } TerreoDestino;
 
 typedef enum {
@@ -81,6 +122,27 @@ const TerreoSalaDef *SalaLanchoneteDef(void);
 const TerreoSalaDef *SalaJardimDef(void);
 const TerreoSalaDef *SalaEscritorioDef(void);
 const TerreoSalaDef *SalaEscritorio2Def(void);
+const TerreoSalaDef *SalaConvivioDef(void);
+const TerreoSalaDef *SalaEscadaTerreoDef(void);
+const TerreoSalaDef *SalaEscada1Def(void);
+const TerreoSalaDef *SalaHall1Def(void);
+const TerreoSalaDef *SalaContabilidade1Def(void);
+const TerreoSalaDef *SalaContabilidade2Def(void);
+const TerreoSalaDef *SalaArquivo1Def(void);
+const TerreoSalaDef *SalaCopa1Def(void);
+const TerreoSalaDef *SalaHall2Def(void);
+const TerreoSalaDef *SalaCiber1Def(void);
+const TerreoSalaDef *SalaCiber2Def(void);
+const TerreoSalaDef *SalaServer1Def(void);
+const TerreoSalaDef *SalaServer2Def(void);
+const TerreoSalaDef *SalaHall3Def(void);
+const TerreoSalaDef *SalaTreinoEscritorioDef(void);
+const TerreoSalaDef *SalaTreinoIADef(void);
+const TerreoSalaDef *SalaGaragemPrototiposDef(void);
+const TerreoSalaDef *SalaHall4Def(void);
+const TerreoSalaDef *SalaAuditorioDef(void);
+const TerreoSalaDef *SalaReuniao1Def(void);
+const TerreoSalaDef *SalaReuniao2Def(void);
 
 // Helpers compartilhados de geometria 3D (sem projecao de sombras)
 Color TerreoLum(float l);
@@ -94,6 +156,12 @@ void  TerreoSilhuetaNPC(Vector3 pos, float yawDeg);
 void  TerreoSilhuetaSombra(Vector3 pos, float yawDeg, bool sentado);
 void  TerreoBebedouro(Vector3 pos);
 void  TerreoImpressora(Vector3 pos, float rotYDeg);
+void  TerreoArmario(Vector3 pos, float rotYDeg, float largura, float altura, float prof);
+void  TerreoPlanta(Vector3 pos, float escala);
+void  TerreoEscadaCaracol(Vector3 centro, float raioInt, float raioExt, float altBase, float altTopo, int degraus, float angIniDeg, float angDeltaDeg, bool comMuretaExterna);
+void  TerreoElevador(Vector3 pos, float rotYDeg);
+void  TerreoRackServidor(Vector3 pos, float rotYDeg);
+void  TerreoRoboPrototipo(Vector3 pos, float rotYDeg);
 
 // Ciclo de vida e loop da cena 3D do Terreo
 void Terreo3DInit(int largura, int altura);

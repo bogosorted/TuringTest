@@ -11,8 +11,10 @@
 #define PLACA_ESP      0.08f
 #define PAREDE_ALT     0.32f
 #define ESCADA_DEGRAUS 6
-#define MAX_SALAS      24
+#define MAX_SALAS      48
 
+static int   g_numAndares = 3;
+static bool  g_modo3D = false;
 static float g_andarAlt = 3.2f;
 static float g_plantaW  = 7.6f;
 static float g_plantaD  = 4.0f;
@@ -103,6 +105,15 @@ void MapaHoloInit(const HoloSala *salas, int numSalas, const HoloCorredor *corre
     g_numSalas = (numSalas > MAX_SALAS) ? MAX_SALAS : numSalas;
     g_corredores = corredores;
     g_numCorredores = numCorredores;
+    g_modo3D = modo3D;
+
+    int maxAndar = 0;
+    for (int i = 0; i < g_numSalas; i++) {
+        if (g_salas[i].andar > maxAndar) maxAndar = g_salas[i].andar;
+    }
+    g_numAndares = maxAndar + 1;
+    if (g_numAndares < 1) g_numAndares = 1;
+    if (g_numAndares > HOLO_NUM_ANDARES) g_numAndares = HOLO_NUM_ANDARES;
 
     if (modo3D) {
         g_andarAlt = 3.2f;
@@ -143,8 +154,8 @@ void MapaHoloUnload(void) {
 // Camera de frente e de cima, balancando devagar (o holograma "flutua")
 static void PosicionarCamera(float ang, float flutua) {
     float centroY = SettingsGetDevMode()
-        ? g_andarAlt * 0.5f + 0.15f
-        : g_andarAlt * (HOLO_NUM_ANDARES - 1) / 2.0f + 0.15f;
+        ? g_andarAlt * (g_numAndares - 2) / 2.0f + 0.15f
+        : g_andarAlt * (g_numAndares - 1) / 2.0f + 0.15f;
     Vector3 alvo = { g_plantaW / 2.0f, centroY, g_plantaD / 2.0f };
     g_camera.target = alvo;
     g_camera.position = (Vector3){ alvo.x + sinf(ang) * g_camDist, alvo.y + g_camAlt + flutua, alvo.z + cosf(ang) * g_camDist };
@@ -153,7 +164,7 @@ static void PosicionarCamera(float ang, float flutua) {
 // Menor fovy em que o predio inteiro cabe na textura (com folga). Recalculado so quando o tamanho muda.
 static void AjustarZoom(void) {
     PosicionarCamera(0.0f, 0.0f);
-    float topo = AlturaAndar(HOLO_NUM_ANDARES - 1) + ESCADA_ALT;
+    float topo = AlturaAndar(g_numAndares - 1) + ESCADA_ALT;
     float base = SettingsGetDevMode() ? AlturaAndar(-1) - PLACA_ESP : -PLACA_ESP;
     Vector3 cantos[8];
     for (int i = 0; i < 8; i++) {
@@ -193,9 +204,34 @@ static void DesenharPlaneRet(int andar, HoloRet r, float y, Color cor) {
 }
 
 static void DesenharAndar(int andar, bool andarAtual) {
+    Color corPlaca = Lum(andarAtual ? LUM_PLACA_ATUAL : LUM_PLACA);
+    Color corBorda = Lum(andarAtual ? LUM_PLACA_BORDA_AT : LUM_PLACA_BORDA);
+    if (g_modo3D && andar >= 0) {
+        if (andar == 0) {
+            // Terreo completo (TerreoRASEC3D.png): 0..7.6 x 0..4.0
+            Vector3 c = { g_plantaW / 2.0f, AlturaAndar(andar), g_plantaD / 2.0f };
+            DrawCube(c, g_plantaW, PLACA_ESP, g_plantaD, corPlaca);
+            DrawCubeWires(c, g_plantaW, PLACA_ESP, g_plantaD, corBorda);
+        } else {
+            // 1o Andar+ (PrimeiroAndarRASEC3D.png): com recorte aberto sobre o Jardim (x=1.70..3.90, z=0..1.95)
+            // Bloco esquerdo (Copa + Banheiros)
+            Vector3 cEsq = { 0.85f, AlturaAndar(andar), 2.00f };
+            DrawCube(cEsq, 1.70f, PLACA_ESP, 4.00f, corPlaca);
+            DrawCubeWires(cEsq, 1.70f, PLACA_ESP, 4.00f, corBorda);
+            // Bloco central-frente (Hall 1 + Escada, abaixo do jardim)
+            Vector3 cMid = { 2.80f, AlturaAndar(andar), 2.975f };
+            DrawCube(cMid, 2.20f, PLACA_ESP, 2.05f, corPlaca);
+            DrawCubeWires(cMid, 2.20f, PLACA_ESP, 2.05f, corBorda);
+            // Bloco direito (Contabilidade 1, 2, Arquivo, Sala de manutencao)
+            Vector3 cDir = { 5.75f, AlturaAndar(andar), 2.00f };
+            DrawCube(cDir, 3.70f, PLACA_ESP, 4.00f, corPlaca);
+            DrawCubeWires(cDir, 3.70f, PLACA_ESP, 4.00f, corBorda);
+        }
+        return;
+    }
     Vector3 c = { g_plantaW / 2.0f, AlturaAndar(andar), g_plantaD / 2.0f };
-    DrawCube(c, g_plantaW, PLACA_ESP, g_plantaD, Lum(andarAtual ? LUM_PLACA_ATUAL : LUM_PLACA));
-    DrawCubeWires(c, g_plantaW, PLACA_ESP, g_plantaD, Lum(andarAtual ? LUM_PLACA_BORDA_AT : LUM_PLACA_BORDA));
+    DrawCube(c, g_plantaW, PLACA_ESP, g_plantaD, corPlaca);
+    DrawCubeWires(c, g_plantaW, PLACA_ESP, g_plantaD, corBorda);
 }
 
 static void DesenharCorredor(const HoloCorredor *k, bool andarAtual) {
@@ -304,7 +340,7 @@ static void DesenharPocoEscada(void) {
     }
 }
 
-void MapaHoloRender(int largura, int altura, int salaAtual, int salaHover, unsigned acessiveis, float tempo) {
+void MapaHoloRender(int largura, int altura, int salaAtual, int salaHover, uint64_t acessiveis, float tempo) {
     if (!g_pronto || largura <= 0 || altura <= 0) return;
     GarantirTexturas(largura, altura);
     PosicionarCamera(sinf(tempo * 0.15f) * 0.10f, sinf(tempo * 0.4f) * 0.08f);
@@ -317,15 +353,25 @@ void MapaHoloRender(int largura, int altura, int salaAtual, int salaHover, unsig
     ClearBackground(BLANK);
     BeginMode3D(g_camera);
     DesenharPocoEscada();
+    if (g_modo3D) {
+        // Poco vertical do elevador conectando Recepcao <-> Hall 1+ (x=3.35, z=2.35)
+        float cxE = 3.35f, czE = 2.35f, ew = 0.42f, ed = 0.36f;
+        for (int a = 0; a + 1 < g_numAndares; a++) {
+            float y0 = AlturaAndar(a) + PLACA_ESP * 0.5f;
+            float y1 = AlturaAndar(a + 1) + PLACA_ESP * 0.5f;
+            DrawCube((Vector3){ cxE, (y0 + y1) * 0.5f, czE }, ew, y1 - y0, ed, Lum(LUM_SALA_OFF));
+            DrawCubeWires((Vector3){ cxE, (y0 + y1) * 0.5f, czE }, ew, y1 - y0, ed, Lum(LUM_PAREDE_DEST));
+        }
+    }
     int minAndar = SettingsGetDevMode() ? -1 : 0;
-    for (int a = minAndar; a < HOLO_NUM_ANDARES; a++) DesenharAndar(a, a == andarAtual);
+    for (int a = minAndar; a < g_numAndares; a++) DesenharAndar(a, a == andarAtual);
     for (int k = 0; k < g_numCorredores; k++) {
         if (!SettingsGetDevMode() && g_corredores[k].andar < 0) continue;
         DesenharCorredor(&g_corredores[k], g_corredores[k].andar == andarAtual);
     }
     for (int i = 0; i < g_numSalas; i++) {
         if (!SettingsGetDevMode() && g_salas[i].andar < 0) continue;
-        bool acessivel = (acessiveis >> i) & 1u;
+        bool acessivel = ((acessiveis >> i) & 1ULL) != 0;
         DesenharSala(i, i == salaAtual, i == salaHover && acessivel, acessivel || i == salaAtual);
     }
     EndMode3D();
@@ -358,11 +404,15 @@ Texture2D MapaHoloTextura(void) {
     return g_final.texture;
 }
 
+int MapaHoloNumAndares(void) {
+    return g_numAndares;
+}
+
 int MapaHoloSalaEm(Vector2 ponto) {
     if (!g_pronto || !g_texPronta) return -1;
     // De cima para baixo: o andar de cima e desenhado por ultimo e fica na frente
     int minAndar = SettingsGetDevMode() ? -1 : 0;
-    for (int andar = HOLO_NUM_ANDARES - 1; andar >= minAndar; andar--) {
+    for (int andar = g_numAndares - 1; andar >= minAndar; andar--) {
         for (int i = 0; i < g_numSalas; i++) {
             const HoloSala *s = &g_salas[i];
             if (s->andar != andar) continue;

@@ -64,6 +64,24 @@ add_executable(turing_test
     src/world/sala_jardim.c
     src/world/sala_escritorio.c
     src/world/sala_escritorio_2.c
+    src/world/sala_convivio.c
+    src/world/sala_hall_1.c
+    src/world/sala_contabilidade_1.c
+    src/world/sala_contabilidade_2.c
+    src/world/sala_arquivo_1.c
+    src/world/sala_copa_1.c
+    src/world/sala_hall_2.c
+    src/world/sala_ciber_1.c
+    src/world/sala_ciber_2.c
+    src/world/sala_server_1.c
+    src/world/sala_server_2.c
+    src/world/sala_hall_3.c
+    src/world/sala_treino_escritorio.c
+    src/world/sala_treino_ia.c
+    src/world/sala_garagem_prototipos.c
+    src/world/sala_hall_4.c
+    src/world/sala_auditorio.c
+    src/world/sala_reuniao_4.c
 )
 target_include_directories(turing_test PRIVATE
     ${CMAKE_SOURCE_DIR}/src

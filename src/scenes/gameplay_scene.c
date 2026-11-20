@@ -1079,6 +1079,7 @@ static bool      g_btnVereditoDevHoverAnt   = false;
 static float     g_btnVereditoDevAnim       = 0.0f;
 static float     g_btnVereditoDevVel        = 0.0f;
 static bool      g_confirmarAvancarDia      = false; // modal "Voce tem certeza?" quando ainda ha tokens
+static bool      g_elevadorAberto           = false; // menu de andares do elevador 3D
 
 // Ferramenta Scanner Deepfake (160x73 escalado em 2x -> 320x146) arrastavel
 static float     g_deepfakeScale      = 2.0f;
@@ -2605,6 +2606,128 @@ static void SolicitarAvancarDia(void) {
     }
 }
 
+static const Rectangle ELEVADOR_PAINEL = { 178, 28, 284, 272 };
+
+typedef struct {
+    int         andar;
+    const char *rotulo;
+    LocalRasec  destino;
+    bool        disponivel;
+    bool        interagivel;
+} ElevadorAndarOpcao;
+
+static const ElevadorAndarOpcao ELEVADOR_OPCOES[6] = {
+    {  4, "4  -  4º ANDAR (Executivo)",      LOCAL_HALL_4,   true,  true  },
+    {  3, "3  -  3º ANDAR (Treinamento IA)", LOCAL_HALL_3,   true,  true  },
+    {  2, "2  -  2º ANDAR (Cibersegurança)", LOCAL_HALL_2,   true,  true  },
+    {  1, "1  -  1º ANDAR (Contabilidade)",  LOCAL_HALL_1,   true,  true  },
+    {  0, "0  -  TÉRREO (Recepção)",        LOCAL_RECEPCAO, true,  true  },
+    { -1, "-1  -  SUBSOLO (Bloqueado)",     LOCAL_RECEPCAO, false, false },
+};
+
+static bool UpdateMenuElevador(void) {
+    if (!g_elevadorAberto) return false;
+
+    Vector2 mouse = RayCanvasGetMousePosition();
+    bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    bool hover = false;
+
+    Rectangle btnFechar = { ELEVADOR_PAINEL.x + ELEVADOR_PAINEL.width - 19, ELEVADOR_PAINEL.y + 3, 16, 16 };
+    if (CheckCollisionPointRec(mouse, ParaTela(btnFechar))) {
+        hover = true;
+        if (clicou) {
+            g_elevadorAberto = false;
+            return true;
+        }
+    }
+
+    int andarAtual = HOLO_SALAS[g_localAtual].andar;
+    for (int i = 0; i < 6; i++) {
+        const ElevadorAndarOpcao *op = &ELEVADOR_OPCOES[i];
+        if (!op->interagivel || !op->disponivel || op->andar == andarAtual) continue;
+        Rectangle btn = { ELEVADOR_PAINEL.x + 18, ELEVADOR_PAINEL.y + 42 + i * 36.0f, ELEVADOR_PAINEL.width - 36, 30 };
+        if (CheckCollisionPointRec(mouse, ParaTela(btn))) {
+            hover = true;
+            if (clicou) {
+                g_elevadorAberto = false;
+                LimparMonologoInterno();
+                FecharJanelasFerramentas();
+                g_closeupAtual = CLOSEUP_NENHUM;
+                g_transDestino = (int)op->destino;
+                g_transTempo = 0.0f;
+                if (g_sndPassos.frameCount > 0) {
+                    SetSoundVolume(g_sndPassos, 0.7f * SettingsGetSfxVolume());
+                    PlaySound(g_sndPassos);
+                }
+                return true;
+            }
+        }
+    }
+
+    SetMouseCursor(hover ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+    return true;
+}
+
+static void DesenharMenuElevador(void) {
+    if (!g_elevadorAberto) return;
+
+    Vector2 mouse = RayCanvasGetMousePosition();
+    Color corEscura   = {  32,  29,  31, 255 };
+    Color corFundo    = { 125, 112, 113, 252 };
+    Color corDestaque = { 189, 181, 168, 255 };
+    Color corBranco   = { 255, 242, 230, 255 };
+
+    DrawRectangleRec(GetTelaRect(), Fade(BLACK, 0.55f));
+    Rectangle sombra = { ELEVADOR_PAINEL.x + 4, ELEVADOR_PAINEL.y + 4, ELEVADOR_PAINEL.width, ELEVADOR_PAINEL.height };
+    DrawRectangleRec(ParaTela(sombra), Fade(BLACK, 0.6f));
+
+    Rectangle rPainel = ParaTela(ELEVADOR_PAINEL);
+    DrawRectangleRec(rPainel, corFundo);
+    DrawRectangleLinesEx(rPainel, 2.0f, corDestaque);
+
+    Rectangle barraTitulo = { ELEVADOR_PAINEL.x, ELEVADOR_PAINEL.y, ELEVADOR_PAINEL.width, 22 };
+    DrawRectangleRec(ParaTela(barraTitulo), corEscura);
+    DrawTextInArea("ELEVADOR - ESCOLHA O ANDAR",
+                   (Rectangle){ ELEVADOR_PAINEL.x, ELEVADOR_PAINEL.y, ELEVADOR_PAINEL.width - 22, 22 },
+                   10, corBranco);
+
+    Rectangle btnFechar = { ELEVADOR_PAINEL.x + ELEVADOR_PAINEL.width - 19, ELEVADOR_PAINEL.y + 3, 16, 16 };
+    DesenharBotaoFecharPadrao(btnFechar);
+
+    int andarAtual = HOLO_SALAS[g_localAtual].andar;
+    for (int i = 0; i < 6; i++) {
+        const ElevadorAndarOpcao *op = &ELEVADOR_OPCOES[i];
+        Rectangle btn = { ELEVADOR_PAINEL.x + 18, ELEVADOR_PAINEL.y + 42 + i * 36.0f, ELEVADOR_PAINEL.width - 36, 30 };
+        Rectangle rBtn = ParaTela(btn);
+        bool atual = (op->andar == andarAtual);
+        bool podeClicar = op->interagivel && op->disponivel && !atual;
+        bool hov = podeClicar && CheckCollisionPointRec(mouse, rBtn);
+
+        Color bg = corEscura;
+        Color borda = (Color){ 90, 82, 84, 255 };
+        Color txtCor = (Color){ 125, 112, 113, 255 };
+
+        if (!op->interagivel) {
+            bg = (Color){ 24, 21, 23, 255 };
+            borda = (Color){ 64, 58, 60, 255 };
+            txtCor = (Color){ 95, 86, 88, 255 };
+        } else if (atual) {
+            bg = (Color){ 64, 58, 62, 255 };
+            borda = corBranco;
+            txtCor = corBranco;
+        } else if (op->disponivel) {
+            bg = hov ? (Color){ 68, 61, 64, 255 } : (Color){ 42, 38, 40, 255 };
+            borda = hov ? corBranco : corDestaque;
+            txtCor = corBranco;
+        }
+
+        DrawRectangleRec(rBtn, bg);
+        DrawRectangleLinesEx(rBtn, atual ? 2.0f : 1.5f, borda);
+        const char *label = atual ? TextFormat("%s  [ATUAL]", op->rotulo) : op->rotulo;
+        DrawTextInArea(label, btn, 9, txtCor);
+    }
+}
+
 static bool UpdateConfirmarAvancar(void) {
     if (!g_confirmarAvancarDia) return false;
 
@@ -3175,21 +3298,23 @@ static void DesenharMapaHolo(void) {
     const HoloSala *salas = HoloSalasAtivas();
     int numSalas = NumHoloSalasAtivas();
     int andarAtual = salas[g_localAtual].andar;
-    unsigned acessiveis = LocaisAcessiveis(g_localAtual);
+    uint64_t acessiveis = LocaisAcessiveis(g_localAtual);
     if (SettingsGetDevMode()) {
         Vector2 pSub = MapaHoloPosAndar(-1);
         Color corSub = (-1 == andarAtual) ? (Color){ 255, 242, 230, 255 } : (Color){ 125, 112, 113, 255 };
         DrawTextLeftAligned("SUBSOLO", (Vector2){ area.x + pSub.x, area.y + pSub.y + 2.0f }, 7, corSub);
     }
-    for (int a = 0; a < HOLO_NUM_ANDARES; a++) {
+    int numAndaresHolo = MapaHoloNumAndares();
+    for (int a = 0; a < numAndaresHolo; a++) {
         Vector2 p = MapaHoloPosAndar(a);
         Color cor = (a == andarAtual) ? (Color){ 255, 242, 230, 255 } : (Color){ 125, 112, 113, 255 };
         DrawTextLeftAligned(NOMES_ANDARES[a], (Vector2){ area.x + p.x, area.y + p.y + 2.0f }, 7, cor);
     }
     for (int i = 0; i < numSalas; i++) {
         if (!SettingsGetDevMode() && salas[i].andar < 0) continue;
+        if (GameStateIs3DMode() && salas[i].escada) continue;
         Vector2 p = MapaHoloPosSala(i);
-        bool ativo = (i == (int)g_localAtual) || ((acessiveis >> i) & 1u);
+        bool ativo = (i == (int)g_localAtual) || (((acessiveis >> i) & 1ULL) != 0);
         RotuloMapa(NomeCurtoLocal(i), (Vector2){ area.x + p.x, area.y + p.y },
                    ativo ? (Color){ 255, 242, 230, 255 } : (Color){ 125, 112, 113, 255 });
     }
@@ -3558,7 +3683,7 @@ static void DrawInterrogationTexts(void) {
                 presentes[nAqui++] = k;
             }
             const char *info;
-            if (HOLO_SALAS[g_localAtual].escada) {
+            if (!LocalEhTerreo3D(g_localAtual) && HOLO_SALAS[g_localAtual].escada) {
                 info = (g_localAtual == LOCAL_ESCADA_2)
                     ? "Você está no último andar.\n(Clique na escada para descer ou na seta para entrar)"
                     : "Você está na escadaria.\n(Clique nas escadas para mudar de andar ou na seta para entrar)";
@@ -3772,6 +3897,7 @@ void GameplaySceneResetDialogues(void) {
     g_avancarDia = false;
     g_irParaVeredito = false;
     g_confirmarAvancarDia = false;
+    g_elevadorAberto = false;
     g_confirmarAbandonarRun = false;
     g_voltarParaMenu = false;
     g_localAtual = LocalInicial();
@@ -3932,6 +4058,7 @@ bool InitGameplayScene(void) {
     g_avancarDia = false;
     g_irParaVeredito = false;
     g_confirmarAvancarDia = false;
+    g_elevadorAberto = false;
     g_confirmarAbandonarRun = false;
     g_voltarParaMenu = false;
     g_localAtual = LocalInicial();
@@ -6003,8 +6130,8 @@ static void UpdateGameplay(void) {
                 return;
             }
         }
-        // Lances interativos da escadaria (depois da verificacao de SETA_ESQUERDA para nunca bloquear a seta!)
-        if (HOLO_SALAS[g_localAtual].escada && g_setaHover < 0 && CheckCollisionPointRec(mouse, ParaTela(JANELA_AREA))) {
+        // Lances interativos da escadaria 2D (apenas fora de salas 3D!)
+        if (!LocalEhTerreo3D(g_localAtual) && HOLO_SALAS[g_localAtual].escada && g_setaHover < 0 && CheckCollisionPointRec(mouse, ParaTela(JANELA_AREA))) {
             Vector2 pJanela = MouseNaJanela(mouse);
             const Vector2 *polySub = NULL, *polyDes = NULL;
             int vertsSub = 0, vertsDes = 0;
@@ -6105,7 +6232,7 @@ static void UpdateGameplay(void) {
             bool escBloqueado = (g_evToastCount > 0) || g_galeriaHoloAberta || (g_fichaAtual >= 0) ||
                                 g_deepfakeAberto || (g_pranchetaAberta && !g_pranchetaMinimizada) ||
                                 g_dicaAberta || g_confirmarAvancarDia || g_confirmarAbandonarRun ||
-                                monologoAtivo;
+                                g_elevadorAberto || monologoAtivo;
             bool sobreBotaoTopo = CheckCollisionPointRec(mouse, ParaTela(BOTAO_AVANCAR_TOPO)) ||
                                   (SettingsGetDevMode() && GameStateGetDay() < GAME_NUM_DAYS &&
                                    CheckCollisionPointRec(mouse, ParaTela(BOTAO_VEREDITO_DEV_TOPO)));
@@ -6132,7 +6259,11 @@ static void UpdateGameplay(void) {
             }
             if (tRes.acionouObjeto) {
                 TocarSomHover();
-                if (g_localAtual == LOCAL_ESCRITORIO && tRes.objetoId &&
+                if (tRes.objetoId && strcmp(tRes.objetoId, "elevador") == 0) {
+                    LimparMonologoInterno();
+                    FecharJanelasFerramentas();
+                    g_elevadorAberto = true;
+                } else if (g_localAtual == LOCAL_ESCRITORIO && tRes.objetoId &&
                     strcmp(tRes.objetoId, "mesa_relatorios") == 0 &&
                     g_hotspotAtivoHoje[1] && !GameStateTemEvidencia(1, "EV-03")) {
                     LimparMonologoInterno();
@@ -6259,6 +6390,7 @@ static void ProcessarTeclaEsc(void) {
         FecharPausa();
         return;
     }
+    if (g_elevadorAberto)        { g_elevadorAberto = false;        return; }
     if (g_confirmarAvancarDia)   { g_confirmarAvancarDia = false;   return; }
     if (g_dicaAberta)            { FecharDica();                    return; }
     if (g_fichaAtual >= 0 || (g_pranchetaAberta && !g_pranchetaMinimizada) || g_deepfakeAberto) {
@@ -6409,7 +6541,7 @@ static void DesenharObjetosInterativosSala(float dt) {
     if (g_dialogLoaded || g_closeupAtual != CLOSEUP_NENHUM) return;
     float pulso = 0.5f + 0.5f * sinf((float)GetTime() * 3.6f);
 
-    if (HOLO_SALAS[g_localAtual].escada) {
+    if (!LocalEhTerreo3D(g_localAtual) && HOLO_SALAS[g_localAtual].escada) {
         for (int k = 0; k < 2; k++) {
             float alvoE = (g_escadaHover == k) ? 1.0f : 0.0f;
             g_escadaAnim[k] += (alvoE - g_escadaAnim[k]) * fminf(1.0f, 14.0f * dt);
@@ -6599,7 +6731,7 @@ void UpdateDrawGameplayScene(void) {
     }
 
     // Os modais (abandonar run / confirmar dia), a ficha, o scanner deepfake e a prancheta ficam por cima de tudo
-    if (!emTransicao && !UpdatePopupEvidencia() && !UpdateConfirmarAbandonar() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
+    if (!emTransicao && !UpdatePopupEvidencia() && !UpdateMenuElevador() && !UpdateConfirmarAbandonar() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
         UpdateGameplay();
     }
     if (g_localAtual != LocalInicial()) {
@@ -7009,6 +7141,9 @@ void UpdateDrawGameplayScene(void) {
 
     // 9) Modal de confirmacao ("Voce tem certeza?") ao avancar dia com tokens restantes
     DesenharConfirmarAvancar();
+
+    // 9a) Menu de andares do elevador 3D
+    DesenharMenuElevador();
 
     // 9b) Modal "Abandonar a run?" (ESC com tudo fechado)
     DesenharConfirmarAbandonar();

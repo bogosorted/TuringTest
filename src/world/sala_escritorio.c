@@ -101,10 +101,10 @@ static const SalaPorta ESC_PORTAS[] = {
         1.45f,
         {  5.20f, -1.55f, 0.65f, 1.40f }
     },
-    // Fundo -> vai para o Jardim
+    // Fundo -> vai para a Area de Convivio
     {
-        TERREO_DEST_JARDIM,
-        "Porta (Jardim)",
+        TERREO_DEST_CONVIVIO,
+        "Porta (Área de Convívio)",
         { { -0.70f, 0.0f, -4.35f }, {  0.70f, 2.30f, -3.90f } },
         {  0.00f, 0.0f, -3.95f },
         1.45f,
@@ -181,9 +181,9 @@ static void DesenharEscritorio(float tempo, bool evRelatoriosAtiva) {
     TerreoCaixa((Vector3){ 2.15f, 1.65f, ESC_MIN_Z + 0.03f },
                 (Vector3){ 1.50f, 0.90f, 0.04f }, 0.80f, 0.76f, 0.68f, 0.18f);
 
-    // 1) CANTO ESQUERDO SUPERIOR: Gaveteiros + Impressora AO LADO (nao na frente!)
-    TerreoCaixa((Vector3){ -5.05f, 0.75f, -3.55f }, (Vector3){ 0.72f, 1.50f, 0.65f }, 0.40f, 0.30f, 0.28f, 0.12f);
-    TerreoCaixa((Vector3){ -4.25f, 0.75f, -3.55f }, (Vector3){ 0.72f, 1.50f, 0.65f }, 0.40f, 0.30f, 0.28f, 0.12f);
+    // 1) CANTO ESQUERDO SUPERIOR: Armarios (modelo 3D_cabinet_7) + Impressora AO LADO
+    TerreoArmario((Vector3){ -5.05f, 0.0f, -3.55f }, 0.0f, 0.78f, 1.55f, 0.62f);
+    TerreoArmario((Vector3){ -4.20f, 0.0f, -3.55f }, 0.0f, 0.78f, 1.55f, 0.62f);
     TerreoImpressora((Vector3){ -3.25f, 0.0f, -3.55f }, 0.0f);
 
     // 2) FILEIRAS CENTRAIS DE BAIAS + PILHA DE PAPEIS (apenas quando a pista estiver ativa)

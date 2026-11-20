@@ -3,6 +3,7 @@
 
 #include "raylib.h"
 #include <stdbool.h>
+#include <stdint.h>
 
 // Mapa 3D do predio da RASEC estilo holograma (low poly + dithering na rampa da paleta).
 // Os andares ficam empilhados como no predio de verdade; cada sala e feita de 1 ou 2
@@ -11,7 +12,7 @@
 // A cena e desenhada numa textura em que 1 pixel = 1 pixel virtual da interface,
 // entao todas as posicoes 2D abaixo estao em pixels dessa textura.
 
-#define HOLO_NUM_ANDARES 3
+#define HOLO_NUM_ANDARES 5
 
 typedef struct {
     float x, z, w, d;           // retangulo na planta do andar
@@ -35,8 +36,9 @@ void      MapaHoloUnload(void);
 // Desenha a cena numa textura do tamanho pedido (recriada se o tamanho mudar).
 // "acessiveis" tem um bit por sala: salas fora dele aparecem apagadas.
 // Chamar FORA de qualquer BeginTextureMode (ou seja, antes de RayCanvasBegin).
-void      MapaHoloRender(int largura, int altura, int salaAtual, int salaHover, unsigned acessiveis, float tempo);
+void      MapaHoloRender(int largura, int altura, int salaAtual, int salaHover, uint64_t acessiveis, float tempo);
 Texture2D MapaHoloTextura(void);   // textura render (desenhar com altura negativa)
+int       MapaHoloNumAndares(void);
 
 int       MapaHoloSalaEm(Vector2 ponto);   // sala sob o ponto (pixels da textura) ou -1
 Vector2   MapaHoloPosSala(int sala);       // centro do piso da sala, para o rotulo

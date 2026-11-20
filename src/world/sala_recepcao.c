@@ -1,6 +1,7 @@
 #include "terreo_3d.h"
 #include "raymath.h"
 #include "rlgl.h"
+#include <stddef.h>
 
 #ifndef PI
 #define PI 3.14159265358979323846f
@@ -10,7 +11,7 @@ static const float REC_MIN_X = -5.80f;
 static const float REC_MAX_X =  5.80f;
 static const float REC_MIN_Z = -4.20f;
 static const float REC_MAX_Z =  4.20f;
-static const float REC_WALL_H = 3.10f;
+static const float REC_WALL_H = 4.20f;
 
 // Recepcao ampla (sem portas de banheiro):
 // - Balcao grande em formato de U redondo conectado a parede do fundo (player nao entra)
@@ -22,7 +23,6 @@ static const PlayerColliderBox REC_COLLIDERS[] = {
     { -1.95f,  1.45f, -1.00f,  2.40f }, // Poltrona esquerda
     {  2.30f,  1.45f,  3.25f,  2.40f }, // Poltrona direita
     { -0.05f,  1.50f,  1.35f,  2.35f }, // Mesinha de centro
-    {  2.95f, -4.20f,  3.32f, -1.65f }, // Guarda-corpo esquerdo da escada
     { -5.45f,  2.65f, -4.45f,  3.65f }, // Vaso decorativo frente-esquerda
 };
 
@@ -44,6 +44,15 @@ static const SalaInteractable REC_INTERACTABLES[] = {
         2.20f,
         false,
         "Sofá estofado, poltronas confortáveis e uma mesinha com arranjo floral para visitantes aguardarem atendimento."
+    },
+    {
+        "elevador",
+        "Elevador",
+        { 4.35f, 1.15f, -3.95f },
+        { 2.15f, 2.30f, 0.65f },
+        1.85f,
+        true,
+        NULL
     }
 };
 
@@ -65,26 +74,8 @@ static const SalaPorta REC_PORTAS[] = {
         {  5.50f, 0.0f,  1.35f },
         1.45f,
         {  5.20f,  0.70f, 0.65f, 1.30f }
-    },
-    // Topo da escadaria aberta (player sobe os degraus ate o topo!)
-    {
-        TERREO_DEST_ESCADA_2D,
-        "Escadaria Principal",
-        { {  3.32f, 0.0f, -4.15f }, {  5.65f, 2.75f, -1.70f } },
-        {  4.45f, 0.0f, -3.10f },
-        1.45f,
-        {  3.35f, -4.15f, 2.35f, 0.78f }
     }
 };
-
-// Calcula a altura do jogador conforme ele sobe os degraus da escadaria aberta
-static float AlturaRecepcao(float x, float z) {
-    if (x >= 3.30f && z <= -1.65f) {
-        float t = Clamp((-1.65f - z) / 2.15f, 0.0f, 1.0f);
-        return t * 1.55f;
-    }
-    return 0.0f;
-}
 
 static void DesenharPoltronaClara(Vector3 pos, float rotYDeg) {
     rlPushMatrix();
@@ -190,8 +181,8 @@ static void DesenharRecepcao(float tempo, bool evRelatoriosAtiva) {
     // Janela panoramica na parede do fundo (entre o balcao e a escada) com arvore e jardim visiveis!
     {
         float wx = 0.70f, wy = 1.75f, ww = 3.10f, wh = 1.60f;
-        // Fundo externo claro (ceu do jardim)
-        TerreoCaixa((Vector3){ wx, wy, REC_MIN_Z - 1.35f }, (Vector3){ ww + 1.20f, wh + 1.10f, 0.06f },
+        // Fundo externo claro (ceu do jardim, contido atras da janela sem vazar acima da parede)
+        TerreoCaixa((Vector3){ wx, wy, REC_MIN_Z - 1.35f }, (Vector3){ ww + 0.50f, wh + 0.40f, 0.06f },
                     0.78f, 0.84f, 0.72f, -1.0f);
         // Gramado e mureta baixa do jardim
         TerreoCaixa((Vector3){ wx, wy - 0.75f, REC_MIN_Z - 0.80f }, (Vector3){ ww + 0.90f, 0.36f, 0.95f },
@@ -280,16 +271,8 @@ static void DesenharRecepcao(float tempo, bool evRelatoriosAtiva) {
     TerreoCadeira((Vector3){ -3.45f, 0.0f, -3.05f }, 8.0f);
     TerreoSilhuetaSombra((Vector3){ -3.45f, 0.0f, -3.00f }, 8.0f, true);
 
-    // Escadaria aberta no canto superior direito (player sobe os degraus!)
-    TerreoCaixa((Vector3){ 3.10f, 0.58f, -2.95f }, (Vector3){ 0.12f, 1.16f, 2.30f }, 0.42f, 0.34f, 0.32f, 0.12f);
-    for (int dgr = 0; dgr < 8; dgr++) {
-        float yStep = 0.18f + dgr * 0.22f;
-        float zStep = -1.85f - dgr * 0.28f;
-        TerreoCaixa((Vector3){ 4.42f, yStep * 0.5f, zStep },
-                    (Vector3){ 2.40f, yStep, 0.30f }, 0.68f - dgr * 0.025f, 0.44f, 0.38f, 0.12f);
-    }
-    DrawCylinderEx((Vector3){ 3.22f, 1.05f, -1.75f }, (Vector3){ 3.22f, 2.65f, -3.95f }, 0.030f, 0.030f, 8, TerreoLum(0.86f));
-    DrawCylinderEx((Vector3){ 5.62f, 1.05f, -1.75f }, (Vector3){ 5.62f, 2.65f, -3.95f }, 0.030f, 0.030f, 8, TerreoLum(0.86f));
+    // Elevador no canto superior direito
+    TerreoElevador((Vector3){ 4.35f, 0.0f, REC_MIN_Z + 0.04f }, 0.0f);
 
     // Area de espera central: SOFA CLARO BEM DEFINIDO (almofadas + bracos + encosto + base escura)
     // Base de madeira escura
@@ -336,7 +319,6 @@ static const TerreoSalaDef SALA_RECEPCAO_DEF = {
     .numInteractables = (int)(sizeof(REC_INTERACTABLES) / sizeof(REC_INTERACTABLES[0])),
     .portas           = REC_PORTAS,
     .numPortas        = (int)(sizeof(REC_PORTAS) / sizeof(REC_PORTAS[0])),
-    .heightFunc       = AlturaRecepcao,
     .drawFunc         = DesenharRecepcao
 };
 

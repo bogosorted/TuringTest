@@ -29,6 +29,26 @@ typedef enum {
     LOCAL_RECEPCAO,
     LOCAL_JARDIM,
     LOCAL_ESCRITORIO_2,
+    LOCAL_HALL_1,
+    LOCAL_CONTABILIDADE_1,
+    LOCAL_CONTABILIDADE_2,
+    LOCAL_ARQUIVO_1,
+    LOCAL_COPA_1,
+    LOCAL_CONVIVIO,
+    LOCAL_HALL_2,
+    LOCAL_CIBER_1,
+    LOCAL_CIBER_2,
+    LOCAL_SERVER_1,
+    LOCAL_SERVER_2,
+    LOCAL_HALL_3,
+    LOCAL_TREINO_ESCRITORIO,
+    LOCAL_TREINO_IA,
+    LOCAL_GARAGEM_PROTOTIPOS,
+    LOCAL_HALL_4,
+    LOCAL_AUDITORIO,
+    LOCAL_CEO,
+    LOCAL_REUNIAO_1,
+    LOCAL_REUNIAO_2,
     NUM_LOCAIS
 } LocalRasec;
 
@@ -66,7 +86,7 @@ LocalRasec      GameplayLocalInicial(void);
 int             GameplayDestinoEscadaSubir(int de);
 int             GameplayDestinoEscadaDescer(int de);
 int             GameplayDestinoSeta(int de, int seta);
-unsigned        GameplayLocaisAcessiveis(int de);
+uint64_t        GameplayLocaisAcessiveis(int de);
 const char     *GameplayTextoSeta(int de, int seta);
 
 bool            GameplayLocalEhTerreo3D(LocalRasec loc);

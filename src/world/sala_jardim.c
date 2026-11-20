@@ -76,10 +76,10 @@ static const SalaPorta JAR_PORTAS[] = {
         1.45f,
         { -6.25f, -0.65f, 0.65f, 1.30f }
     },
-    // Direita -> vai para Setor Administrativo
+    // Direita -> vai para Area de Convivio
     {
-        TERREO_DEST_ESCRITORIO,
-        "Porta (Setor Administrativo)",
+        TERREO_DEST_CONVIVIO,
+        "Porta (Área de Convívio)",
         { {  5.85f, 0.0f, -0.70f }, {  6.35f, 2.30f,  0.70f } },
         {  5.90f, 0.0f,  0.00f },
         1.45f,
