@@ -13,7 +13,7 @@ static bool         g_deepfakeUsado[GAME_NUM_SUSPECTS] = { false };
 static bool         g_injecaoUsada[GAME_NUM_SUSPECTS] = { false };
 static char           g_playerName[9] = "AGENTE";
 static int            g_playerAvatar = 0;
-static PronomeJogador g_playerPronoun = PRONOME_ELA;
+static TomVozJogador  g_playerVoiceTone = VOZ_SUAVE;
 static int            g_tokensRestantesTotal = 0;
 static int          g_dicasUsadasTotal = 0;
 
@@ -168,12 +168,18 @@ int GameStateGetPlayerAvatar(void) {
     return g_playerAvatar;
 }
 
-void GameStateSetPlayerPronoun(PronomeJogador pronome) {
-    g_playerPronoun = (pronome == PRONOME_ELA) ? PRONOME_ELA : PRONOME_ELE;
+bool GameStateIsPlayerFemale(void) {
+    // Retratos 0, 2 e 3 (Players 1, 3 e 4) sao femininos; 1, 4 e 5 (Players 2, 5 e 6) sao masculinos
+    return (g_playerAvatar == 0 || g_playerAvatar == 2 || g_playerAvatar == 3);
 }
 
-PronomeJogador GameStateGetPlayerPronoun(void) {
-    return g_playerPronoun;
+void GameStateSetPlayerVoiceTone(TomVozJogador tom) {
+    if (tom < VOZ_GRAVE || tom > VOZ_SUAVE) tom = VOZ_MEDIA;
+    g_playerVoiceTone = tom;
+}
+
+TomVozJogador GameStateGetPlayerVoiceTone(void) {
+    return g_playerVoiceTone;
 }
 
 void GameStateAddRemainingTokens(int tokens) {

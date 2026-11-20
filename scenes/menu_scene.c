@@ -66,11 +66,11 @@ static bool  g_nomeAberto        = false;
 static float g_nomeAnim          = 0.0f;
 static char  g_nomeInput[9]      = "";
 static int   g_playerAvatarSel   = 0;
-static PronomeJogador g_playerPronomeSel = PRONOME_ELA;
-static bool  g_pronomeManual     = false;
+static TomVozJogador g_playerVozSel = VOZ_SUAVE;
+static bool  g_vozManual         = false;
 static Texture2D g_playerMiniTex[GAME_NUM_PLAYERS] = { 0 };
 static int   g_hoverAvatarAnt    = -1;
-static int   g_hoverPronomeAnt   = -1;
+static int   g_hoverVozAnt       = -1;
 static bool  g_voltarHoverAnt    = false;  // mouse estava no botao Voltar no frame anterior
 static bool  g_iniciarHoverAnt   = false;
 static bool  g_esperarSoltarMouse = false; // ignora os botoes do menu ate soltar o clique que abriu/fechou as opcoes
@@ -82,10 +82,10 @@ static void OnClickPlay(void) {
     g_nomeAberto = true;
     g_nomeInput[0] = '\0';
     g_playerAvatarSel = GameStateGetPlayerAvatar();
-    g_playerPronomeSel = GameStateGetPlayerPronoun();
-    g_pronomeManual = false;
+    g_playerVozSel = GameStateGetPlayerVoiceTone();
+    g_vozManual = false;
     g_hoverAvatarAnt = -1;
-    g_hoverPronomeAnt = -1;
+    g_hoverVozAnt = -1;
     g_voltarHoverAnt = false;
     g_iniciarHoverAnt = false;
     g_esperarSoltarMouse = true;
@@ -733,7 +733,7 @@ static void UpdateDrawNome(void) {
         if (IsKeyPressed(KEY_ENTER) && (g_nomeInput[0] != '\0' || devMode)) {
             GameStateSetPlayerName(g_nomeInput);
             GameStateSetPlayerAvatar(g_playerAvatarSel);
-            GameStateSetPlayerPronoun(g_playerPronomeSel);
+            GameStateSetPlayerVoiceTone(g_playerVozSel);
             g_shouldStartGame = true;
             return;
         }
@@ -765,14 +765,43 @@ static void UpdateDrawNome(void) {
         TextoOpcoes("(opcional)", OPC_LABEL_X + 126.0f, 170.0f, 14.0f, medio);
     }
 
+    // Selecao de Tom de Voz (sem pronomes: Grave, Medio ou Suave)
+    TextoOpcoes("Tom de Voz:", OPC_LABEL_X, 198.0f, 16.0f, bege);
+    const char *lblVoz[3] = { "Grave", "Médio", "Suave" };
+    int hovVozAtual = -1;
+    for (int v = 0; v < 3; v++) {
+        Rectangle rVz = { OPC_LABEL_X + v * 68.0f, 209.0f, 64.0f, 22.0f };
+        bool selVz = ((int)g_playerVozSel == v);
+        bool hovVz = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, rVz);
+        if (hovVz) hovVozAtual = v;
+        Rectangle rVzTela = ParaTela(rVz);
+        Color fundoVz = selVz ? Fade((Color){ 189, 181, 168, 255 }, a)
+                      : hovVz ? Fade((Color){ 90, 83, 83, 255 }, a)
+                              : Fade((Color){ 28, 25, 27, 255 }, a);
+        Color bordaVz = (selVz || hovVz) ? claro : medio;
+        Color txtVz   = selVz ? Fade((Color){ 24, 21, 23, 255 }, a) : claro;
+        DrawRectangleRec(rVzTela, fundoVz);
+        DrawRectangleLinesEx(rVzTela, (selVz ? 2.0f : 1.4f) * esc, bordaVz);
+        Vector2 tamTxtVz = MeasureTextEx(g_fonte, lblVoz[v], 15.0f, 0.5f);
+        TextoOpcoes(lblVoz[v], rVz.x + (rVz.width - tamTxtVz.x) * 0.5f, rVz.y + rVz.height * 0.5f, 15.0f, txtVz);
+
+        if (hovVz && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            g_playerVozSel = (TomVozJogador)v;
+            g_vozManual = true;
+            TocarSomHover();
+        }
+    }
+    if (hovVozAtual >= 0 && hovVozAtual != g_hoverVozAnt) TocarSomHover();
+    g_hoverVozAnt = hovVozAtual;
+
     // Grade 3x2 a direita com os 6 retratos do Player
     TextoOpcoes("Retrato do Inspetor:", 456.0f, 144.0f, 16.0f, bege);
     const float cardS = 52.0f;
     const float gapS  = 6.0f;
     int hovAvatarAtual = -1;
-    // Sugestao padrao de pronome por retrato: Players 1,3,4 -> Ela; 2,5,6 -> Ele
-    static const PronomeJogador PRON_SUGERIDO[GAME_NUM_PLAYERS] = {
-        PRONOME_ELA, PRONOME_ELE, PRONOME_ELA, PRONOME_ELA, PRONOME_ELE, PRONOME_ELE
+    // Sugestao padrao de tom de voz por retrato caso nao tenha escolhido manualmente: Players 1,3,4 -> Suave; 2,5,6 -> Grave
+    static const TomVozJogador VOZ_SUGERIDA[GAME_NUM_PLAYERS] = {
+        VOZ_SUAVE, VOZ_GRAVE, VOZ_SUAVE, VOZ_SUAVE, VOZ_GRAVE, VOZ_GRAVE
     };
     for (int k = 0; k < GAME_NUM_PLAYERS; k++) {
         int col = k % 3;
@@ -795,18 +824,25 @@ static void UpdateDrawNome(void) {
 
         if (hovAv && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             g_playerAvatarSel = k;
-            g_playerPronomeSel = PRON_SUGERIDO[k];
+            if (!g_vozManual) {
+                g_playerVozSel = VOZ_SUGERIDA[k];
+            }
             TocarSomHover();
         }
     }
     if (hovAvatarAtual >= 0 && hovAvatarAtual != g_hoverAvatarAnt) TocarSomHover();
     g_hoverAvatarAnt = hovAvatarAtual;
 
+    const char *descVoz = (g_playerVozSel == VOZ_SUAVE) ? "Voz: Suave"
+                        : (g_playerVozSel == VOZ_MEDIA) ? "Voz: Média"
+                                                        : "Voz: Grave";
+    TextoOpcoes(descVoz, 456.0f, 282.0f, 15.0f, bege);
+
     bool podeIniciar = (g_nomeInput[0] != '\0') || devMode;
     float bw = (float)g_botao.width * BOTAO_ESCALA;
     float bh = (float)g_botao.height * BOTAO_ESCALA;
-    const float yIniciar = 202.0f;
-    const float yVoltar  = 254.0f;
+    const float yIniciar = 240.0f;
+    const float yVoltar  = 292.0f;
     Rectangle hitIniciar = { BOTAO_X, yIniciar, bw - 22.0f, bh };
     Rectangle hitVoltar  = { BOTAO_X, yVoltar,  bw - 22.0f, bh };
     bool hoverIniciar = interativo && podeIniciar && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, hitIniciar);
@@ -823,14 +859,14 @@ static void UpdateDrawNome(void) {
     if (hoverIniciar && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         GameStateSetPlayerName(g_nomeInput);
         GameStateSetPlayerAvatar(g_playerAvatarSel);
-        GameStateSetPlayerPronoun(g_playerPronomeSel);
+        GameStateSetPlayerVoiceTone(g_playerVozSel);
         g_shouldStartGame = true;
     } else if (hoverVoltar && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         FecharNome();
     }
 
     if (g_nomeAberto) {
-        bool algumHov = hoverIniciar || hoverVoltar || (hovAvatarAtual >= 0);
+        bool algumHov = hoverIniciar || hoverVoltar || (hovVozAtual >= 0) || (hovAvatarAtual >= 0);
         SetMouseCursor(algumHov ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
     }
 }

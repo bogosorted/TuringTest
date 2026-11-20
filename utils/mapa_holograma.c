@@ -7,12 +7,12 @@
 // ---------------------------------------------------------------
 // Geometria (unidades do mundo 3D)
 // ---------------------------------------------------------------
-#define ANDAR_ALT      2.6f     // distancia vertical entre andares (grande o bastante para um nao cobrir o outro)
+#define ANDAR_ALT      3.2f     // distancia vertical entre andares (grande o bastante para um nao cobrir o outro)
 #define ESCADA_ALT     0.9f     // altura do ultimo degrau
 #define PLACA_ESP      0.08f
 #define PAREDE_ALT     0.32f
 #define ESCADA_DEGRAUS 6
-#define MAX_SALAS      16
+#define MAX_SALAS      24
 
 // Brilho de cada elemento (0..1). O shader converte em tons da rampa com dithering.
 #define LUM_PLACA          0.14f
@@ -127,9 +127,9 @@ static void PosicionarCamera(float ang, float flutua) {
         ? ANDAR_ALT * 0.5f + 0.15f
         : ANDAR_ALT * (HOLO_NUM_ANDARES - 1) / 2.0f + 0.15f;
     Vector3 alvo = { HOLO_PLANTA_W / 2.0f, centroY, HOLO_PLANTA_D / 2.0f };
-    float dist = 13.0f;
+    float dist = 15.5f;
     g_camera.target = alvo;
-    g_camera.position = (Vector3){ alvo.x + sinf(ang) * dist, alvo.y + 7.0f + flutua, alvo.z + cosf(ang) * dist };
+    g_camera.position = (Vector3){ alvo.x + sinf(ang) * dist, alvo.y + 8.6f + flutua, alvo.z + cosf(ang) * dist };
 }
 
 // Menor fovy em que o predio inteiro cabe na textura (com folga). Recalculado so quando o tamanho muda.
@@ -275,6 +275,8 @@ static void DesenharPocoEscada(void) {
         for (int j = 0; j < g_numSalas; j++) {
             if (!g_salas[j].escada || g_salas[j].andar != g_salas[i].andar + 1) continue;
             HoloRet r = g_salas[i].partes[0];
+            HoloRet r2 = g_salas[j].partes[0];
+            if (fabsf(r.x - r2.x) > 0.25f) continue;
             float y0 = AlturaAndar(g_salas[i].andar), y1 = AlturaAndar(g_salas[j].andar);
             float xs[2] = { r.x, r.x + r.w }, zs[2] = { r.z, r.z + r.d };
             for (int a = 0; a < 2; a++)

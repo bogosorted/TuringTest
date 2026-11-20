@@ -1,0 +1,45 @@
+{
+  "room": "escritorio",
+  "interactables": [
+    {
+      "id": "mesa_relatorios",
+      "label": "Pilha de Relatórios",
+      "position": [1.35, 0.90, 1.85],
+      "size": [1.15, 0.85, 1.05],
+      "interactRadius": 1.90,
+      "flavorText": "Pilhas altas de relatórios administrativos aguardam revisão. Várias páginas têm anotações apressadas à margem."
+    },
+    {
+      "id": "impressora_setor",
+      "label": "Impressora e Arquivos",
+      "position": [-3.90, 1.05, -3.15],
+      "size": [2.65, 1.65, 1.45],
+      "interactRadius": 2.15,
+      "flavorText": "Central de impressão no canto esquerdo superior. A bandeja transborda de formulários e os gaveteiros ao lado estão trancados."
+    },
+    {
+      "id": "baias_centrais",
+      "label": "Baias de Trabalho",
+      "position": [-0.45, 0.95, -0.55],
+      "size": [3.80, 1.05, 1.25],
+      "interactRadius": 2.05,
+      "flavorText": "Estações separadas por divisórias acústicas. Os terminais ainda exibem planilhas de produtividade."
+    },
+    {
+      "id": "estacoes_parede_direita",
+      "label": "Computadores da Ala Direita",
+      "position": [5.00, 0.95, -0.45],
+      "size": [1.35, 1.05, 4.40],
+      "interactRadius": 2.15,
+      "flavorText": "Mesas encostadas na parede direita com terminais dedicados ao fechamento contábil do setor."
+    },
+    {
+      "id": "quadro_avisos_adm",
+      "label": "Quadro de Metas",
+      "position": [2.15, 1.65, -4.10],
+      "size": [1.60, 0.95, 0.40],
+      "interactRadius": 1.90,
+      "flavorText": "Quadro de metas do Setor Administrativo. Alguém sublinhou o prazo da supervisão duas vezes."
+    }
+  ]
+}

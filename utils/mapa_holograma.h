@@ -12,8 +12,8 @@
 // entao todas as posicoes 2D abaixo estao em pixels dessa textura.
 
 #define HOLO_NUM_ANDARES 3
-#define HOLO_PLANTA_W    6.2f   // largura de cada andar (unidades do mundo, eixo x)
-#define HOLO_PLANTA_D    3.2f   // profundidade de cada andar (eixo z; z maior = mais perto da camera)
+#define HOLO_PLANTA_W    7.6f   // largura de cada andar (unidades do mundo, eixo x)
+#define HOLO_PLANTA_D    4.0f   // profundidade de cada andar (eixo z; z maior = mais perto da camera)
 
 typedef struct {
     float x, z, w, d;           // retangulo na planta do andar

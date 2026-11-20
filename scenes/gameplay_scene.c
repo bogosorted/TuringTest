@@ -13,6 +13,7 @@
 #include "../utils/mapa_holograma.h"
 #include "../utils/evidencia_holograma.h"
 #include "../utils/setas_3d.h"
+#include "../utils/terreo_3d.h"
 #include "../utils/game_state.h"
 #include "../utils/dialog_data.h"
 #include <stddef.h>
@@ -143,6 +144,9 @@ typedef enum {
     LOCAL_SUBSOLO_LAST_OFFICE,
     LOCAL_SUBSOLO_VEREDITO,
     LOCAL_SUBSOLO_RECREACAO,
+    LOCAL_RECEPCAO,
+    LOCAL_JARDIM,
+    LOCAL_ESCRITORIO_2,
     NUM_LOCAIS
 } LocalRasec;
 
@@ -157,30 +161,30 @@ typedef struct {
 #define FUNDO_ESCADA_MEIO    "assets/sprites/locais/spr_background_escadaria.png"
 #define FUNDO_ESCADA_ULTIMO  "assets/sprites/locais/spr_background_escadaria_ultimo.png"
 static const InfoLocal LOCAIS[NUM_LOCAIS] = {
-    { "SETOR ADM.",      "SETOR ADMINISTRATIVO",  "",                "assets/sprites/locais/terreo/spr_background_teste.png" },
-    { "LANCHONETE",      "LANCHONETE DA RASEC",   "",                "assets/sprites/locais/terreo/spr_background_cantina.png" },
+    { "ADM. 1",          "SETOR ADMINISTRATIVO",  "",                "assets/sprites/locais/terreo/spr_background_teste.png" },
+    { "CANTINA",         "LANCHONETE DA RASEC",   "",                "assets/sprites/locais/terreo/spr_background_cantina.png" },
     { "RH",              "RH DA RASEC",           "Vazio",           "assets/sprites/locais/1_andar/spr_background_rh.png" },
-    { "CONTABILIDADE",   "SETOR DE CONTABILIDADE", "Vazio",           "assets/sprites/locais/1_andar/spr_background_mesa_maria.png" },
-    { "AUDITÓRIO",       "AUDITÓRIO",             "Vazio",           "assets/sprites/locais/2_andar/spr_background_sala_reuniao.png" },
+    { "CONTAB.",         "SETOR DE CONTABILIDADE", "Vazio",          "assets/sprites/locais/1_andar/spr_background_mesa_maria.png" },
+    { "AUDIT.",          "AUDITÓRIO",             "Vazio",           "assets/sprites/locais/2_andar/spr_background_sala_reuniao.png" },
     { "COPA",            "COPA DO 2º ANDAR",      "Vazio",           "assets/sprites/locais/2_andar/spr_background_geladeira_coffe.png" },
     { "ESCADA",          "ESCADARIA - TÉRREO",    "Escadas",         FUNDO_ESCADA_MEIO   },   // terreo: sobe p/ 1o andar; descer tenta ir ao subsolo
     { "ESCADA",          "ESCADARIA - 1º ANDAR",  "Escadas",         FUNDO_ESCADA_MEIO   },
     { "ESCADA",          "ESCADARIA - 2º ANDAR",  "Último andar",    FUNDO_ESCADA_ULTIMO },   // ultimo andar: so a escada para descer
     { "SUBSOLO",         "SUBSOLO - ENTRADA",     "Vazio",           "assets/sprites/locais/subsolo/local_comeco.png" },
-    { "BIFURCAÇÃO",      "SUBSOLO - ESCOLHA",     "Vazio",           "assets/sprites/locais/subsolo/local_escolha.png" },
-    { "ÚLTIMO ESCRIT.",  "ÚLTIMO ESCRITÓRIO",     "Vazio",           "assets/sprites/locais/subsolo/last_office.png" },
-    { "SALA VEREDITO",   "SALA DO VEREDITO",      "Vazio",           "assets/sprites/veredito/spr_veredito_sala.png" },
-    { "RECREAÇÃO",       "ÁREA DE RECREAÇÃO",     "Vazio",           "assets/sprites/locais/subsolo/area_recreacao_abandonada.png" },
+    { "BIFURC.",         "SUBSOLO - ESCOLHA",     "Vazio",           "assets/sprites/locais/subsolo/local_escolha.png" },
+    { "ÚLT. ESCR.",      "ÚLTIMO ESCRITÓRIO",     "Vazio",           "assets/sprites/locais/subsolo/last_office.png" },
+    { "VEREDITO",        "SALA DO VEREDITO",      "Vazio",           "assets/sprites/veredito/spr_veredito_sala.png" },
+    { "RECRE.",          "ÁREA DE RECREAÇÃO",     "Vazio",           "assets/sprites/locais/subsolo/area_recreacao_abandonada.png" },
+    { "RECEPÇÃO",        "RECEPÇÃO DA RASEC",     "",                "assets/sprites/locais/terreo/spr_background_teste.png" },
+    { "JARDIM",          "JARDIM / DESCANSO",     "",                "assets/sprites/locais/terreo/spr_background_teste.png" },
+    { "ADM. 2",          "SETOR ADM. - ALA ESQ.", "",                "assets/sprites/locais/terreo/spr_background_teste.png" },
 };
 
-// Todo andar tem a mesma planta: uma sala em cima, uma sala a esquerda, a escadaria a direita
-// e um corredor em T no meio (so enfeite). A sala de cima e a central do andar:
-//   sala central:    esquerda = sala da esquerda, direita = escadaria
-//   sala da esquerda: direita = volta para a central
-//   escadaria:        cima = sobe um andar, baixo = desce um andar, esquerda = volta para a central
+// Todo andar tem a mesma planta nos andares superiores; o Terreo tem Recepcao central
+// ligada a Escadaria (2D), Lanchonete (esquerda), Setor Adm. (direita) e Jardim (fundo).
 enum { POS_CIMA = 0, POS_ESQUERDA, POS_ESCADA, NUM_POS_ANDAR };
 static const LocalRasec PLANTA_ANDAR[HOLO_NUM_ANDARES][NUM_POS_ANDAR] = {
-    { LOCAL_ESCRITORIO,   LOCAL_CANTINA, LOCAL_ESCADA_TERREO },
+    { LOCAL_RECEPCAO,     LOCAL_CANTINA, LOCAL_ESCADA_TERREO },
     { LOCAL_MESA_MARIA,   LOCAL_RH,      LOCAL_ESCADA_1 },
     { LOCAL_SALA_REUNIAO, LOCAL_COPA,    LOCAL_ESCADA_2 },
 };
@@ -188,31 +192,36 @@ static const LocalRasec PLANTA_ANDAR[HOLO_NUM_ANDARES][NUM_POS_ANDAR] = {
 // Planta de cada local no mapa holografico (mesma ordem de LOCAIS). Cada andar mede
 // HOLO_PLANTA_W x HOLO_PLANTA_D (z maior = frente); salas com 2 partes ficam em L.
 static const HoloSala HOLO_SALAS[NUM_LOCAIS] = {
-    { 0, 2, { { 1.6f, 0.2f, 3.2f, 1.1f }, { 1.6f, 1.3f, 0.9f, 0.45f } }, false },  // escritorio (cima, em L)
-    { 0, 1, { { 0.2f, 0.9f, 1.2f, 2.1f } }, false },                               // lanchonete (esquerda)
-    { 1, 2, { { 0.2f, 0.3f, 1.2f, 1.3f }, { 0.2f, 1.6f, 0.75f, 1.3f } }, false },  // RH (esquerda, em L)
-    { 1, 1, { { 1.9f, 0.2f, 2.5f, 1.15f } }, false },                              // mesa da Maria (cima)
-    { 2, 1, { { 1.6f, 0.2f, 3.3f, 1.25f } }, false },                              // sala de reuniao (cima)
-    { 2, 1, { { 0.2f, 1.2f, 1.2f, 1.6f } }, false },                               // copa (esquerda)
-    { 0, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },                                // escadarias (direita)
-    { 1, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
-    { 2, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
-    { -1, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, false },                              // subsolo comeco (direita, abaixo da escada)
-    { -1, 1, { { 2.4f, 1.3f, 1.4f, 1.3f } }, false },                              // subsolo escolha (centro)
-    { -1, 1, { { 0.2f, 1.2f, 1.4f, 1.5f } }, false },                              // last office (esquerda)
-    { -1, 1, { { 2.4f, 0.15f, 1.4f, 0.85f } }, false },                            // sala do veredito (cima-centro)
-    { -1, 1, { { 0.2f, 0.15f, 1.4f, 0.85f } }, false },                            // area recreacao abandonada (cima-esquerda)
+    { 0, 1, { { 4.55f, 1.35f, 1.25f, 2.05f } }, false },                             // setor adm. 1
+    { 0, 1, { { 0.25f, 1.40f, 1.25f, 2.00f } }, false },                             // lanchonete (cantina)
+    { 1, 2, { { 0.25f, 0.35f, 1.50f, 1.65f }, { 0.25f, 2.00f, 0.95f, 1.60f } }, false }, // RH (em L)
+    { 1, 1, { { 2.35f, 0.25f, 2.95f, 1.40f } }, false },                             // contabilidade
+    { 2, 1, { { 2.05f, 0.25f, 3.65f, 1.50f } }, false },                             // auditorio
+    { 2, 1, { { 0.25f, 1.45f, 1.50f, 2.00f } }, false },                             // copa
+    { 0, 1, { { 6.30f, 0.25f, 1.00f, 1.15f } }, true },                              // escadaria terreo
+    { 1, 1, { { 6.30f, 0.25f, 1.00f, 3.45f } }, true },                              // escadaria 1
+    { 2, 1, { { 6.30f, 0.25f, 1.00f, 3.45f } }, true },                              // escadaria 2
+    { -1, 1, { { 6.30f, 0.25f, 1.00f, 3.45f } }, false },                            // subsolo comeco
+    { -1, 1, { { 3.05f, 1.65f, 1.70f, 1.60f } }, false },                            // subsolo escolha
+    { -1, 1, { { 0.25f, 1.55f, 1.75f, 1.85f } }, false },                            // ultimo escritorio
+    { -1, 1, { { 3.05f, 0.20f, 1.70f, 1.05f } }, false },                            // sala veredito
+    { -1, 1, { { 0.25f, 0.20f, 1.75f, 1.05f } }, false },                            // recreacao
+    { 0, 1, { { 2.05f, 2.05f, 1.95f, 1.45f } }, false },                             // recepcao
+    { 0, 1, { { 2.05f, 0.20f, 2.55f, 1.00f } }, false },                             // jardim
+    { 0, 1, { { 6.30f, 1.75f, 1.05f, 1.70f } }, false },                             // setor adm. 2
 };
-// Corredor em T de cada andar (so enfeite): faixa ligando a sala da esquerda a escadaria
-// e um trecho subindo ate a sala de cima
+// Corredores e passagens de cada andar
 static const HoloCorredor HOLO_CORREDORES[] = {
-    { 0, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 0, { 2.9f, 1.3f,  0.45f, 0.65f } },
-    { 1, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 1, { 2.9f, 1.35f, 0.45f, 0.6f } },
-    { 2, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 2, { 2.9f, 1.45f, 0.45f, 0.5f } },
-    { -1, { 3.8f, 1.75f, 1.3f, 0.45f } },                                          // subsolo: comeco -> escolha
-    { -1, { 1.6f, 1.75f, 0.8f, 0.45f } },                                          // subsolo: escolha -> last office
-    { -1, { 2.9f, 1.0f,  0.4f, 0.3f } },                                           // subsolo: escolha -> veredito
-    { -1, { 0.7f, 1.0f,  0.4f, 0.2f } },                                           // subsolo: last office -> recreacao
+    { 0, { 1.50f, 2.55f, 0.55f, 0.50f } }, { 0, { 4.00f, 2.55f, 0.55f, 0.50f } }, // terreo: cantina<->recepcao<->adm1
+    { 0, { 5.80f, 2.25f, 0.50f, 0.50f } },                                          // terreo: adm1<->adm2
+    { 0, { 1.50f, 0.55f, 0.55f, 0.50f } }, { 0, { 4.60f, 0.55f, 0.55f, 0.80f } }, // terreo: cantina<->jardim<->adm1
+    { 0, { 3.90f, 1.20f, 2.40f, 0.35f } },                                          // terreo: ligacao para escadaria
+    { 1, { 1.75f, 2.45f, 4.55f, 0.65f } }, { 1, { 3.55f, 1.65f, 0.55f, 0.80f } },
+    { 2, { 1.75f, 2.45f, 4.55f, 0.65f } }, { 2, { 3.55f, 1.75f, 0.55f, 0.70f } },
+    { -1, { 4.75f, 2.20f, 1.55f, 0.55f } },
+    { -1, { 2.00f, 2.20f, 1.05f, 0.55f } },
+    { -1, { 3.65f, 1.25f, 0.50f, 0.40f } },
+    { -1, { 0.85f, 1.25f, 0.50f, 0.30f } },
 };
 #define NUM_HOLO_CORREDORES ((int)(sizeof HOLO_CORREDORES / sizeof HOLO_CORREDORES[0]))
 static const char *NOMES_ANDARES[HOLO_NUM_ANDARES] = { "TÉRREO", "1º ANDAR", "2º ANDAR" };
@@ -276,6 +285,12 @@ static int DestinoSeta(int de, int seta) {
 }
 
 static unsigned LocaisAcessiveis(int de) {
+    if (de == LOCAL_RECEPCAO)     return (1u << LOCAL_CANTINA) | (1u << LOCAL_ESCRITORIO) | (1u << LOCAL_ESCADA_TERREO);
+    if (de == LOCAL_CANTINA)      return (1u << LOCAL_RECEPCAO) | (1u << LOCAL_JARDIM);
+    if (de == LOCAL_JARDIM)       return (1u << LOCAL_CANTINA) | (1u << LOCAL_ESCRITORIO);
+    if (de == LOCAL_ESCRITORIO)   return (1u << LOCAL_RECEPCAO) | (1u << LOCAL_JARDIM) | (1u << LOCAL_ESCRITORIO_2);
+    if (de == LOCAL_ESCRITORIO_2) return (1u << LOCAL_ESCRITORIO);
+
     unsigned bits = 0;
     for (int d = 0; d < NUM_SETAS; d++) {
         int destino = DestinoSeta(de, d);
@@ -311,7 +326,48 @@ static const Vector2 SETAS_POS[NUM_SETAS] = {
 
 static Texture2D g_fundos[NUM_LOCAIS];   // fotos dos locais atras da tela
 
-static LocalRasec g_localAtual = LOCAL_ESCRITORIO;
+static LocalRasec g_localAtual = LOCAL_RECEPCAO;
+
+static bool LocalEhTerreo3D(LocalRasec loc) {
+    return loc == LOCAL_RECEPCAO || loc == LOCAL_CANTINA ||
+           loc == LOCAL_JARDIM   || loc == LOCAL_ESCRITORIO ||
+           loc == LOCAL_ESCRITORIO_2;
+}
+
+static TerreoSalaId TerreoSalaPorLocal(LocalRasec loc) {
+    switch (loc) {
+        case LOCAL_RECEPCAO:     return TERREO_SALA_RECEPCAO;
+        case LOCAL_CANTINA:      return TERREO_SALA_LANCHONETE;
+        case LOCAL_JARDIM:       return TERREO_SALA_JARDIM;
+        case LOCAL_ESCRITORIO:   return TERREO_SALA_ESCRITORIO;
+        case LOCAL_ESCRITORIO_2: return TERREO_SALA_ESCRITORIO_2;
+        default:                 return TERREO_SALA_RECEPCAO;
+    }
+}
+
+static TerreoDestino TerreoDestinoPorLocal(LocalRasec loc) {
+    switch (loc) {
+        case LOCAL_RECEPCAO:      return TERREO_DEST_RECEPCAO;
+        case LOCAL_CANTINA:       return TERREO_DEST_LANCHONETE;
+        case LOCAL_JARDIM:        return TERREO_DEST_JARDIM;
+        case LOCAL_ESCRITORIO:    return TERREO_DEST_ESCRITORIO;
+        case LOCAL_ESCRITORIO_2:  return TERREO_DEST_ESCRITORIO_2;
+        case LOCAL_ESCADA_TERREO: return TERREO_DEST_ESCADA_2D;
+        default:                  return TERREO_DEST_NENHUM;
+    }
+}
+
+static LocalRasec LocalPorTerreoDestino(TerreoDestino dest) {
+    switch (dest) {
+        case TERREO_DEST_RECEPCAO:     return LOCAL_RECEPCAO;
+        case TERREO_DEST_LANCHONETE:   return LOCAL_CANTINA;
+        case TERREO_DEST_JARDIM:       return LOCAL_JARDIM;
+        case TERREO_DEST_ESCRITORIO:   return LOCAL_ESCRITORIO;
+        case TERREO_DEST_ESCRITORIO_2: return LOCAL_ESCRITORIO_2;
+        case TERREO_DEST_ESCADA_2D:    return LOCAL_ESCADA_TERREO;
+        default:                       return LOCAL_RECEPCAO;
+    }
+}
 // Estado do tutorial contextual (progride conforme o jogador avanca na partida)
 static bool       g_tutMovimentoVisto       = false;
 static bool       g_tutFuncionarioVisto     = false;
@@ -545,8 +601,9 @@ static int       g_escadaHover            = -1;  // -1 = nenhum, 0 = subir, 1 = 
 static int       g_escadaHoverAnt         = -1;
 static float     g_escadaAnim[2]          = { 0.0f, 0.0f };
 
-// Monologo interno do Inspetor na caixa de dialogo inferior (ex.: ao tentar descer para o subsolo)
+// Monologo interno / falas na caixa de dialogo inferior (ex.: flavor text, recepcionista)
 static const char *g_monologoTexto      = NULL;
+static const char *g_monologoSpeaker    = NULL;
 static int         g_monologoChars      = 0;
 static float       g_monologoCharTimer  = 0.0f;
 static float       g_monologoVidaTimer  = 0.0f;
@@ -554,6 +611,7 @@ static int         g_monologoBlipCount  = 0;
 
 static void LimparMonologoInterno(void) {
     g_monologoTexto     = NULL;
+    g_monologoSpeaker   = NULL;
     g_monologoChars     = 0;
     g_monologoCharTimer = 0.0f;
     g_monologoVidaTimer = 0.0f;
@@ -562,6 +620,16 @@ static void LimparMonologoInterno(void) {
 
 static void DispararMonologoInterno(const char *texto) {
     g_monologoTexto     = texto;
+    g_monologoSpeaker   = NULL;
+    g_monologoChars     = 0;
+    g_monologoCharTimer = 0.0f;
+    g_monologoVidaTimer = 5.5f;
+    g_monologoBlipCount = 0;
+}
+
+static void DispararMonologoInternoComSpeaker(const char *texto, const char *speaker) {
+    g_monologoTexto     = texto;
+    g_monologoSpeaker   = speaker;
     g_monologoChars     = 0;
     g_monologoCharTimer = 0.0f;
     g_monologoVidaTimer = 5.5f;
@@ -647,7 +715,6 @@ static void SortearEvidenciasDoDia(int dia) {
 
     for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
         const EvidenciaHotspot *h = &EVIDENCIA_HOTSPOTS[i];
-        if (dia == 1 && h->local == LOCAL_ESCRITORIO) continue;
         if (GameStateTemEvidencia(h->suspeito, h->ev_id)) continue;
         if (!g_hotspotJaSorteadoRun[i]) ineditos[nIneditos++] = i;
         else                            repetidos[nRepetidos++] = i;
@@ -1209,8 +1276,7 @@ static const FaceRigAnchors PLAYER_ANCHORS[GAME_NUM_PLAYERS] = {
     }
 };
 static Texture2D       g_playerTextures[GAME_NUM_PLAYERS] = { 0 };
-static Sound           g_blipPlayerEle      = { 0 }; // Ele/Dele: voz grave
-static Sound           g_blipPlayerEla      = { 0 }; // Ela/Dela: voz suave e feminina
+static Sound           g_blipPlayerVoz[3]   = { 0 }; // 0=Grave, 1=Medio, 2=Suave
 static ExpressaoFacial g_exprPlayerAtual    = EXPR_NEUTRO;
 static FaceRigPose     g_posePlayerFrom     = { 0 };
 static FaceRigPose     g_posePlayerTarget   = { 0 };
@@ -1224,19 +1290,22 @@ static char            g_nextNodePendente[MAX_ID_LENGTH] = "";
 static char            g_textoFalaPlayerAtual[MAX_TEXT_LENGTH] = "";
 static float           g_pausaPosFalaPlayer = 0.0f;
 
-static void TocarBlipVozJogador(void) {
-    bool ehEla = (GameStateGetPlayerPronoun() == PRONOME_ELA);
-    Sound snd = ehEla ? g_blipPlayerEla : g_blipPlayerEle;
-    if (snd.frameCount == 0) snd = ehEla ? g_blipSounds[0] : g_blipSounds[1];
+static void TocarBlipVozComTom(TomVozJogador tom) {
+    int idx = (tom >= VOZ_GRAVE && tom <= VOZ_SUAVE) ? (int)tom : (int)VOZ_MEDIA;
+    Sound snd = g_blipPlayerVoz[idx];
+    if (snd.frameCount == 0) snd = (idx == VOZ_SUAVE) ? g_blipSounds[0] : g_blipSounds[1];
     if (snd.frameCount > 0) {
-        float pitch = ehEla
-            ? (1.03f + ((float)GetRandomValue(-4, 5) / 100.0f))
-            : (0.84f + ((float)GetRandomValue(-3, 3) / 100.0f));
-        float vol = ehEla ? 0.44f : 0.56f;
+        float basePitch = (idx == VOZ_SUAVE) ? 1.03f : (idx == VOZ_MEDIA ? 0.96f : 0.84f);
+        float pitch = basePitch + ((float)GetRandomValue(-3, 4) / 100.0f);
+        float vol   = (idx == VOZ_SUAVE) ? 0.44f : (idx == VOZ_MEDIA ? 0.50f : 0.56f);
         SetSoundPitch(snd, pitch);
         SetSoundVolume(snd, vol * SettingsGetSfxVolume());
         PlaySound(snd);
     }
+}
+
+static void TocarBlipVozJogador(void) {
+    TocarBlipVozComTom(GameStateGetPlayerVoiceTone());
 }
 static float           g_setaMenuAnim       = 0.0f;
 static float           g_setaMenuVel        = 0.0f;
@@ -4180,12 +4249,16 @@ static void AtualizarMonologoInterno(float dt) {
             if (c != ' ' && c != '\n' && c != '"' && c != '.' && c != ',') {
                 g_monologoBlipCount++;
                 if ((g_monologoBlipCount % 2) == 0) {
-                    TocarBlipVozJogador();
+                    if (g_monologoSpeaker && strcmp(g_monologoSpeaker, "Recepcionista") == 0) {
+                        TocarBlipVozComTom(VOZ_SUAVE);
+                    } else {
+                        TocarBlipVozJogador();
+                    }
                 }
             }
         }
         if (g_monologoChars > totalLen) g_monologoChars = totalLen;
-    } else {
+    } else if (!LocalEhTerreo3D(g_localAtual)) {
         g_monologoVidaTimer -= dt;
         if (g_monologoVidaTimer <= 0.0f) {
             LimparMonologoInterno();
@@ -4392,7 +4465,9 @@ static void DesenharMapaHolo(void) {
     // Dica embaixo do mapa: mostra o destino sob o mouse (seta ou lance da escada)
     const char *dica = "Use as setas na imagem para andar pelo prédio.";
     bool hovNav = false;
-    if (g_setaHover >= 0) {
+    if (LocalEhTerreo3D(g_localAtual)) {
+        dica = "WASD/Setas: andar | E ou clique: examinar";
+    } else if (g_setaHover >= 0) {
         dica = TextFormat("Seta: %s", TextoSeta(g_localAtual, g_setaHover));
         hovNav = true;
     } else if (g_escadaHover >= 0) {
@@ -4712,7 +4787,11 @@ static void DrawInterrogationTexts(void) {
 
         bool temMonologo = (g_monologoTexto != NULL && g_monologoVidaTimer > 0.0f);
         int tamTitulo = (g_localAtual == LOCAL_ESCRITORIO || g_localAtual == LOCAL_MESA_MARIA) ? 9 : 10;
-        DrawTextLeftAligned(temMonologo ? "VOCÊ (PENSAMENTO)" : LOCAIS[g_localAtual].titulo,
+        const char *tituloCaixa = LOCAIS[g_localAtual].titulo;
+        if (temMonologo) {
+            tituloCaixa = g_monologoSpeaker ? g_monologoSpeaker : "VOCÊ (PENSAMENTO)";
+        }
+        DrawTextLeftAligned(tituloCaixa,
                             (Vector2){ 12, 235 }, tamTitulo,
                             temMonologo ? (Color){ 255, 242, 230, 255 } : lightTextColor);
 
@@ -4722,12 +4801,20 @@ static void DrawInterrogationTexts(void) {
                              temMonologo ? (Color){ 255, 242, 230, 255 } : hoverColor);
 
         if (temMonologo) {
-            char bufMono[256];
+            char bufMono[512];
             int nCopy = g_monologoChars;
             if (nCopy > (int)sizeof(bufMono) - 1) nCopy = (int)sizeof(bufMono) - 1;
             memcpy(bufMono, g_monologoTexto, (size_t)nCopy);
             bufMono[nCopy] = '\0';
-            DrawTextInArea(bufMono, infoBox, 10, (Color){ 255, 242, 230, 255 });
+            if (strchr(bufMono, '\n') != NULL) {
+                DrawTextInArea(bufMono, infoBox, 10, (Color){ 255, 242, 230, 255 });
+            } else {
+                DrawChoiceTextInArea(bufMono, infoBox, 10, (Color){ 255, 242, 230, 255 });
+            }
+            if (LocalEhTerreo3D(g_localAtual) && g_monologoChars >= (int)strlen(g_monologoTexto)) {
+                Rectangle rConf = { infoBox.x + infoBox.width - 84, infoBox.y + infoBox.height - 14, 80, 12 };
+                DrawTextInArea("[E] Confirmar", rConf, 8, lightTextColor);
+            }
         } else {
             int presentes[3];
             int nAqui = 0;
@@ -4753,10 +4840,18 @@ static void DrawInterrogationTexts(void) {
                 info = TextFormat("Aperte %s %s ou %s %s para conversar com %s.",
                                   naNo0, NOMES_SUSPEITOS[presentes[0]],
                                   naNo1, NOMES_SUSPEITOS[presentes[1]], pronPlural);
+            } else if (LocalEhTerreo3D(g_localAtual)) {
+                const char *acao = Terreo3DProximaAcao();
+                if (acao) {
+                    DrawChoiceTextInArea(acao, infoBox, 10, (Color){ 255, 242, 230, 255 });
+                    info = NULL;
+                } else {
+                    info = "Use WASD/Setas para explorar o andar.\n[E] ou clique perto de objetos para interagir.";
+                }
             } else {
                 info = "Os suspeitos não estão aqui...\n(Use as setas para andar pelo prédio)";
             }
-            DrawTextInArea(info, infoBox, 10, (Color){ 255, 242, 230, 255 });
+            if (info) DrawTextInArea(info, infoBox, 10, (Color){ 255, 242, 230, 255 });
         }
 
         // Botao de acesso rapido ao inspecionador de Hologramas 3D das evidencias ja coletadas
@@ -4936,7 +5031,8 @@ void GameplaySceneResetDialogues(void) {
     g_confirmarAvancarDia = false;
     g_confirmarAbandonarRun = false;
     g_voltarParaMenu = false;
-    g_localAtual = LOCAL_ESCRITORIO;
+    g_localAtual = LOCAL_RECEPCAO;
+    Terreo3DDefinirSala(TERREO_SALA_RECEPCAO, TERREO_DEST_NENHUM);
     memset(g_enviesarUsado, 0, sizeof g_enviesarUsado);
     memset(g_deepfakeUsado, 0, sizeof g_deepfakeUsado);
     memset(g_injecaoUsada, 0, sizeof g_injecaoUsada);
@@ -5039,10 +5135,10 @@ static Sound CriarBlipVozSuspeito(int suspeito) {
     return snd;
 }
 
-// Sintetiza as 2 vozes dedicadas do Player: Ele/Dele (grave e encorpada) e Ela/Dela (suave e feminina)
-static Sound CriarBlipVozJogador(PronomeJogador pronome) {
+// Sintetiza os 3 tons de voz dedicados do Player: Grave, Medio (neutro) e Suave
+static Sound CriarBlipVozJogador(TomVozJogador tom) {
     const int sr = 44100;
-    float dur = (pronome == PRONOME_ELA) ? 0.044f : 0.050f;
+    float dur = (tom == VOZ_SUAVE) ? 0.044f : (tom == VOZ_MEDIA ? 0.047f : 0.050f);
     int nFrames = (int)(sr * dur);
     short *pcm = (short *)MemAlloc((unsigned int)nFrames * sizeof(short));
     if (!pcm) return (Sound){ 0 };
@@ -5051,16 +5147,24 @@ static Sound CriarBlipVozJogador(PronomeJogador pronome) {
     for (int i = 0; i < nFrames; i++) {
         float t = (float)i / (float)nFrames;
         float val = 0.0f, env = 1.0f;
-        if (pronome == PRONOME_ELA) {
-            // Ela/Dela: timbre feminino aveludado, suave e acolhedor (~348 Hz)
+        if (tom == VOZ_SUAVE) {
+            // Suave: timbre aveludado e agudo (~348 Hz)
             float freq = 348.0f + 10.0f * (1.0f - t);
             fase += (2.0f * 3.14159265f * freq) / (float)sr;
             val = 0.86f * sinf(fase) + 0.14f * sinf(fase * 2.0f);
             float atk = fminf(1.0f, t / 0.18f);
             float dec = powf(1.0f - t, 1.50f);
             env = atk * dec * 0.44f;
+        } else if (tom == VOZ_MEDIA) {
+            // Medio: timbre neutro e equilibrado (~212 Hz)
+            float freq = 212.0f + 4.0f * (1.0f - t);
+            fase += (2.0f * 3.14159265f * freq) / (float)sr;
+            val = 0.72f * sinf(fase) + 0.22f * sinf(fase * 2.0f) + 0.06f * sinf(fase * 3.0f);
+            float atk = fminf(1.0f, t / 0.15f);
+            float dec = powf(1.0f - t, 1.35f);
+            env = atk * dec * 0.49f;
         } else {
-            // Ele/Dele: timbre masculino grave e firme (~116 Hz)
+            // Grave: timbre encorpado e firme (~116 Hz)
             float freq = 116.0f - 6.0f * t;
             fase += (2.0f * 3.14159265f * freq) / (float)sr;
             val = 0.54f * sinf(fase) + 0.32f * sinf(fase * 2.0f) + 0.14f * sinf(fase * 3.0f);
@@ -5113,7 +5217,7 @@ bool InitGameplayScene(void) {
     g_confirmarAvancarDia = false;
     g_confirmarAbandonarRun = false;
     g_voltarParaMenu = false;
-    g_localAtual = LOCAL_ESCRITORIO;
+    g_localAtual = LOCAL_RECEPCAO;
     g_closeupAtual = CLOSEUP_NENHUM;
     g_closeupItemHoverAnt = false;
     g_closeupItemAnim = 0.0f;
@@ -5195,8 +5299,9 @@ bool InitGameplayScene(void) {
     g_blipSounds[0] = CriarBlipVozSuspeito(0);
     g_blipSounds[1] = CriarBlipVozSuspeito(1);
     g_blipSounds[2] = CriarBlipVozSuspeito(2);
-    g_blipPlayerEle = CriarBlipVozJogador(PRONOME_ELE);
-    g_blipPlayerEla = CriarBlipVozJogador(PRONOME_ELA);
+    g_blipPlayerVoz[VOZ_GRAVE] = CriarBlipVozJogador(VOZ_GRAVE);
+    g_blipPlayerVoz[VOZ_MEDIA] = CriarBlipVozJogador(VOZ_MEDIA);
+    g_blipPlayerVoz[VOZ_SUAVE] = CriarBlipVozJogador(VOZ_SUAVE);
     for (int p = 0; p < GAME_NUM_PLAYERS; p++) {
         char pPath[96];
         snprintf(pPath, sizeof pPath, "assets/sprites/players/player_%d.png", p + 1);
@@ -5331,6 +5436,7 @@ bool InitGameplayScene(void) {
     g_galeriaHoloAberta = false;
     g_galeriaHoloIdx    = 0;
     Setas3DInit((int)JANELA_AREA.width, (int)JANELA_AREA.height, SETAS_POS);
+    Terreo3DInit((int)JANELA_AREA.width, (int)JANELA_AREA.height);
     g_sndPassos = FileExists("assets/audio/passos_2.wav") ? LoadSound("assets/audio/passos_2.wav") : (Sound){ 0 };
     g_setaHover = -1;
     g_setaHoverAnt = -1;
@@ -6570,6 +6676,14 @@ static void DesenharTutorialContextual(void) {
     //    4a) Unico tutorial inicial: Movimentacao no mapa
     if (!g_tutMovimentoVisto) {
         DesenharAlvoPulsanteDia0(AreaMapaHolo());
+        if (LocalEhTerreo3D(g_localAtual)) {
+            DesenharBalaoGuiaDia0(
+                18.0f, 38.0f, 268.0f,
+                "EXPLORAÇÃO DO TÉRREO",
+                "Use WASD ou Setas para caminhar, [E] ou clique perto de objetos/NPCs para interagir.\nO Mapa 3D à direita mostra sua posição atual."
+            );
+            return;
+        }
         int setaGuia = -1;
         static const int ORDEM_SETAS[4] = { SETA_ESQUERDA, SETA_DIREITA, SETA_CIMA, SETA_BAIXO };
         for (int k = 0; k < 4; k++) {
@@ -6598,7 +6712,7 @@ static void DesenharTutorialContextual(void) {
     }
 
     //    4b) Ao encontrar uma evidencia na sala: mostra como inspecionar
-    if (!g_tutEvidenciaColetaVisto) {
+    if (!g_tutEvidenciaColetaVisto && g_localAtual != LOCAL_ESCRITORIO) {
         for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
             const EvidenciaHotspot *h = &EVIDENCIA_HOTSPOTS[i];
             if (!g_hotspotAtivoHoje[i]) continue;
@@ -7018,8 +7132,8 @@ static void UpdateGameplay(void) {
             }
         }
     } else {
-        // Setas de navegacao na foto do local (por cima dos suspeitos e dos objetos)
-        {
+        // Setas de navegacao na foto do local (apenas nas areas 2D)
+        if (!LocalEhTerreo3D(g_localAtual)) {
             bool visiveis[NUM_SETAS];
             for (int d = 0; d < NUM_SETAS; d++) visiveis[d] = DestinoSeta(g_localAtual, d) >= 0;
             Vector2 pJanela = MouseNaJanela(mouse);
@@ -7043,6 +7157,9 @@ static void UpdateGameplay(void) {
                     return;
                 }
             }
+        } else {
+            g_setaHover = -1;
+            g_setaHoverAnt = -1;
         }
         if (g_localAtual == LOCAL_SUBSOLO_LAST_OFFICE && SettingsGetDevMode() && g_setaHover < 0 &&
             CheckCollisionPointRec(MouseNaJanela(mouse), LAST_OFFICE_COMPUTER_AREA)) {
@@ -7092,12 +7209,24 @@ static void UpdateGameplay(void) {
         } else {
             g_escadaHoverAnt = -1;
         }
-        // Permite completar a digitacao do monologo interno clicando na caixa de dialogo inferior
-        if (clicou && g_monologoTexto && g_monologoChars < (int)strlen(g_monologoTexto) &&
-            CheckCollisionPointRec(mouse, ParaTela(OPCOES_AREA))) {
-            g_monologoChars = (int)strlen(g_monologoTexto);
-            g_monologoVidaTimer = 5.5f;
-            return;
+        // Monologo interno: em salas 3D do Terreo, E (ou clique na caixa) completa/confirma e trava movimento
+        if (g_monologoTexto && g_monologoVidaTimer > 0.0f) {
+            bool clicouCaixa = clicou && CheckCollisionPointRec(mouse, ParaTela(OPCOES_AREA));
+            if (LocalEhTerreo3D(g_localAtual) && (IsKeyPressed(KEY_E) || clicouCaixa)) {
+                int totalLen = (int)strlen(g_monologoTexto);
+                if (g_monologoChars < totalLen) {
+                    g_monologoChars = totalLen;
+                } else {
+                    LimparMonologoInterno();
+                }
+                return;
+            }
+            if (!LocalEhTerreo3D(g_localAtual) && clicouCaixa &&
+                g_monologoChars < (int)strlen(g_monologoTexto)) {
+                g_monologoChars = (int)strlen(g_monologoTexto);
+                g_monologoVidaTimer = 5.5f;
+                return;
+            }
         }
         bool sobreSuspeito = false;
         for (int i = 0; i < 3; i++) {
@@ -7132,7 +7261,62 @@ static void UpdateGameplay(void) {
                 }
             }
         }
-        if (!sobreSuspeito && g_setaHover < 0 && CheckCollisionPointRec(mouse, ParaTela(JANELA_AREA))) {
+        if (LocalEhTerreo3D(g_localAtual)) {
+            bool sobreJanela = CheckCollisionPointRec(mouse, ParaTela(JANELA_AREA));
+            bool monologoAtivo = (g_monologoTexto != NULL && g_monologoVidaTimer > 0.0f);
+            bool escBloqueado = (g_evToastCount > 0) || g_galeriaHoloAberta || (g_fichaAtual >= 0) ||
+                                g_deepfakeAberto || (g_pranchetaAberta && !g_pranchetaMinimizada) ||
+                                g_dicaAberta || g_confirmarAvancarDia || g_confirmarAbandonarRun ||
+                                monologoAtivo;
+            bool sobreBotaoTopo = CheckCollisionPointRec(mouse, ParaTela(BOTAO_AVANCAR_TOPO)) ||
+                                  (SettingsGetDevMode() && GameStateGetDay() < GAME_NUM_DAYS &&
+                                   CheckCollisionPointRec(mouse, ParaTela(BOTAO_VEREDITO_DEV_TOPO)));
+            bool podeClicar3D = sobreJanela && !sobreSuspeito && !escBloqueado && !sobreBotaoTopo && !MouseSobreFicha();
+            TerreoInteracaoResultado tRes = Terreo3DUpdate(
+                GetFrameTime(),
+                MouseNaJanela(mouse),
+                sobreJanela && !sobreSuspeito && !sobreBotaoTopo && !MouseSobreFicha(),
+                podeClicar3D,
+                escBloqueado
+            );
+            if (tRes.acionouDestino) {
+                LimparMonologoInterno();
+                FecharJanelasFerramentas();
+                g_closeupAtual = CLOSEUP_NENHUM;
+                g_transDestino = (int)LocalPorTerreoDestino(tRes.destino);
+                g_transTempo = 0.0f;
+                if (g_sndPassos.frameCount > 0) {
+                    SetSoundVolume(g_sndPassos, 0.7f * SettingsGetSfxVolume());
+                    PlaySound(g_sndPassos);
+                }
+                SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+                return;
+            }
+            if (tRes.acionouObjeto) {
+                TocarSomHover();
+                if (g_localAtual == LOCAL_ESCRITORIO && tRes.objetoId &&
+                    strcmp(tRes.objetoId, "mesa_relatorios") == 0 &&
+                    g_hotspotAtivoHoje[1] && !GameStateTemEvidencia(1, "EV-03")) {
+                    LimparMonologoInterno();
+                    FecharJanelasFerramentas();
+                    g_closeupAtual = CLOSEUP_PILHA_RELATORIOS;
+                    g_closeupItemHoverAnt = false;
+                    g_closeupItemAnim = 0.0f;
+                    g_closeupItemVel = 0.0f;
+                } else if (tRes.flavorText) {
+                    if (tRes.objetoId && strcmp(tRes.objetoId, "recepcionista") == 0) {
+                        DispararMonologoInternoComSpeaker(tRes.flavorText, "Recepcionista");
+                    } else {
+                        DispararMonologoInterno(tRes.flavorText);
+                    }
+                }
+                return;
+            }
+            if (Terreo3DMouseEmInteragivel()) {
+                hover = true;
+            }
+        }
+        if (!LocalEhTerreo3D(g_localAtual) && !sobreSuspeito && g_setaHover < 0 && CheckCollisionPointRec(mouse, ParaTela(JANELA_AREA))) {
             Vector2 pJanela = MouseNaJanela(mouse);
             for (int i = 0; i < NUM_EVIDENCIA_HOTSPOTS; i++) {
                 const EvidenciaHotspot *h = &EVIDENCIA_HOTSPOTS[i];
@@ -7376,6 +7560,7 @@ static void DesenharObjetosInterativosSala(float dt) {
         const EvidenciaHotspot *h = &EVIDENCIA_HOTSPOTS[i];
         if (!g_hotspotAtivoHoje[i]) continue;
         if (h->local != g_localAtual) continue;
+        if (LocalEhTerreo3D(h->local)) continue;
         if (GameStateTemEvidencia(h->suspeito, h->ev_id)) continue;
 
         bool hov = (g_hotspotHover == i);
@@ -7423,15 +7608,22 @@ void UpdateDrawGameplayScene(void) {
     // O mapa 3D vai para uma textura propria, entao precisa ser desenhado antes do
     // RayCanvasBegin (que pode estar desenhando o frame inteiro em outra textura)
     if (!g_dialogLoaded) {
+        if (LocalEhTerreo3D(g_localAtual) && g_closeupAtual == CLOSEUP_NENHUM) {
+            Terreo3DSetEvidenciaAtiva(g_localAtual == LOCAL_ESCRITORIO &&
+                                      g_hotspotAtivoHoje[1] && !GameStateTemEvidencia(1, "EV-03"));
+            Terreo3DRender((float)GetTime());
+        }
         Rectangle holoArea = AreaMapaHolo();
         int salaHoverMapa = -1;
-        if (g_setaHover >= 0)        salaHoverMapa = DestinoSeta(g_localAtual, g_setaHover);
-        else if (g_escadaHover == 0) salaHoverMapa = DestinoEscadaSubir(g_localAtual);
-        else if (g_escadaHover == 1) salaHoverMapa = DestinoEscadaDescer(g_localAtual);
+        if (!LocalEhTerreo3D(g_localAtual)) {
+            if (g_setaHover >= 0)        salaHoverMapa = DestinoSeta(g_localAtual, g_setaHover);
+            else if (g_escadaHover == 0) salaHoverMapa = DestinoEscadaSubir(g_localAtual);
+            else if (g_escadaHover == 1) salaHoverMapa = DestinoEscadaDescer(g_localAtual);
+        }
         MapaHoloRender((int)holoArea.width, (int)holoArea.height, (int)g_localAtual,
                        salaHoverMapa,
                        LocaisAcessiveis(g_localAtual), (float)GetTime());
-        {
+        if (!LocalEhTerreo3D(g_localAtual)) {
             bool visiveis[NUM_SETAS];
             for (int d = 0; d < NUM_SETAS; d++) visiveis[d] = DestinoSeta(g_localAtual, d) >= 0;
             Setas3DRender(visiveis, g_setaHover, (float)GetTime());
@@ -7462,7 +7654,12 @@ void UpdateDrawGameplayScene(void) {
         float antes = g_transTempo;
         g_transTempo += fminf(GetFrameTime(), 0.05f);
         if (antes < TRANS_ESCURECE && g_transTempo >= TRANS_ESCURECE) {
+            LocalRasec anterior = g_localAtual;
             g_localAtual = (LocalRasec)g_transDestino;
+            if (LocalEhTerreo3D(g_localAtual) && anterior != g_localAtual) {
+                Terreo3DDefinirSala(TerreoSalaPorLocal(g_localAtual), TerreoDestinoPorLocal(anterior));
+                LimparMonologoInterno();
+            }
         }
         if (g_transTempo >= TRANS_ESCURECE + TRANS_PRETO + TRANS_CLAREIA) {
             g_transTempo = -1.0f;
@@ -7474,11 +7671,11 @@ void UpdateDrawGameplayScene(void) {
     if (!emTransicao && !UpdatePopupEvidencia() && !UpdateConfirmarAbandonar() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
         UpdateGameplay();
     }
-    if (g_localAtual != LOCAL_ESCRITORIO) {
+    if (g_localAtual != LOCAL_RECEPCAO) {
         g_tutMovimentoVisto = true;
     }
 
-    // 1) Fundo na janela de cima (preenche sem distorcer) - foto do local atual ou close-up inspecionado
+    // 1) Fundo na janela de cima (preenche sem distorcer) - cena 3D do terreo, foto do local atual ou close-up
     if (!g_dialogLoaded && g_closeupAtual == CLOSEUP_GELADEIRA && g_texGeladeiraAberta.id > 0) {
         DrawTextureCover(g_texGeladeiraAberta, JANELA_AREA);
     } else if (!g_dialogLoaded && g_closeupAtual == CLOSEUP_COMPUTER_SECRET && g_texComputerSecret.id > 0) {
@@ -7487,6 +7684,10 @@ void UpdateDrawGameplayScene(void) {
         DrawTextureCover(g_texMesaCaneta, JANELA_AREA);
     } else if (!g_dialogLoaded && g_closeupAtual == CLOSEUP_PILHA_RELATORIOS && g_texPilhaRelatorios.id > 0) {
         DrawTextureCover(g_texPilhaRelatorios, JANELA_AREA);
+    } else if (!g_dialogLoaded && LocalEhTerreo3D(g_localAtual)) {
+        Texture2D texTerreo = Terreo3DTextura();
+        DrawTexturePro(texTerreo, (Rectangle){ 0, 0, (float)texTerreo.width, -(float)texTerreo.height },
+                       ParaTela(JANELA_AREA), (Vector2){ 0, 0 }, 0.0f, WHITE);
     } else {
         DrawTextureCover(g_fundos[g_localAtual].id > 0 ? g_fundos[g_localAtual] : g_fundos[LOCAL_ESCRITORIO],
                          JANELA_AREA);
@@ -7660,14 +7861,14 @@ void UpdateDrawGameplayScene(void) {
                            hov ? (Color){ 32, 29, 31, 255 } : (Color){ 255, 242, 230, 255 });
         }
         EndScissorMode();
-        // Setas 3D de navegacao por cima da foto + destino ao passar o mouse
-        {
+        if (!LocalEhTerreo3D(g_localAtual)) {
+            // Setas 3D de navegacao por cima da foto + destino ao passar o mouse
             Texture2D setas = Setas3DTextura();
             DrawTexturePro(setas, (Rectangle){ 0, 0, (float)setas.width, -(float)setas.height },
                            ParaTela(JANELA_AREA), (Vector2){ 0, 0 }, 0.0f, WHITE);
             if (g_setaHover >= 0) DesenharRotuloSeta(g_setaHover);
+            DesenharRotuloObjetoInterativoSala();
         }
-        DesenharRotuloObjetoInterativoSala();
     }
 
     // Fundo animado procedural bem sutil nos quadrantes de demarcação (proeminentemente cor sólida original)
@@ -7945,6 +8146,7 @@ void UnloadGameplayScene(void) {
     MapaHoloUnload();
     EvidenciaHoloUnload();
     Setas3DUnload();
+    Terreo3DUnload();
     g_transTempo = -1.0f;
     if (g_sndPassos.frameCount > 0) UnloadSound(g_sndPassos);
     g_sndPassos = (Sound){ 0 };
@@ -7993,8 +8195,12 @@ void UnloadGameplayScene(void) {
             g_playerTextures[p] = (Texture2D){ 0 };
         }
     }
-    if (g_blipPlayerEle.frameCount > 0) { UnloadSound(g_blipPlayerEle); g_blipPlayerEle = (Sound){ 0 }; }
-    if (g_blipPlayerEla.frameCount > 0) { UnloadSound(g_blipPlayerEla); g_blipPlayerEla = (Sound){ 0 }; }
+    for (int v = 0; v < 3; v++) {
+        if (g_blipPlayerVoz[v].frameCount > 0) {
+            UnloadSound(g_blipPlayerVoz[v]);
+            g_blipPlayerVoz[v] = (Sound){ 0 };
+        }
+    }
     UnloadTexture(g_ditherTile);
     if (g_sndHover.frameCount > 0) {
         UnloadSound(g_sndHover);

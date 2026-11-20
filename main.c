@@ -167,7 +167,11 @@ int main(void) {
                     GameStateNewRun();               // volta para o dia 1
                     ResetTokens();                   // tokens do dia 1
                     GameplaySceneResetDialogues();   // dialogos "nao vistos" de novo
-                    GoToWithTransition(SCENE_INTRO, NULL);   // fade-out -> texto de contexto
+                    if (SettingsGetDevMode()) {
+                        GoToWithTransition(SCENE_GAMEPLAY, NULL);
+                    } else {
+                        GoToWithTransition(SCENE_INTRO, NULL);   // fade-out -> texto de contexto
+                    }
                 }
                 break;
 
@@ -175,7 +179,8 @@ int main(void) {
                 UpdateDrawIntroScene();
 
                 if (IntroSceneShouldContinue() && !TransitionActive()) {
-                    GoToWithTransition(SCENE_GAMEPLAY, TextFormat("Dia %d", GameStateGetDay()));
+                    const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d", GameStateGetDay());
+                    GoToWithTransition(SCENE_GAMEPLAY, transTexto);
                 }
                 break;
 
@@ -188,11 +193,11 @@ int main(void) {
                     GameStateNextDay();
                     ResetTokens();                   // tokens do novo dia
                     GameplaySceneResetDialogues();
-                    GoToWithTransition(SCENE_GAMEPLAY,
-                                       TextFormat("Dia %d", GameStateGetDay()));
+                    const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d", GameStateGetDay());
+                    GoToWithTransition(SCENE_GAMEPLAY, transTexto);
                 } else if (SelectionSceneShouldGoToVerdict() && !TransitionActive()) {
-                    GoToWithTransition(SCENE_VERDICT,
-                                       TextFormat("Dia %d - Veredito", GAME_NUM_DAYS + 1));
+                    const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d - Veredito", GAME_NUM_DAYS + 1);
+                    GoToWithTransition(SCENE_VERDICT, transTexto);
                 }
                 break;
 
@@ -207,11 +212,11 @@ int main(void) {
                     GameStateNextDay();
                     ResetTokens();
                     GameplaySceneResetDialogues();
-                    GoToWithTransition(SCENE_GAMEPLAY,
-                                       TextFormat("Dia %d", GameStateGetDay()));
+                    const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d", GameStateGetDay());
+                    GoToWithTransition(SCENE_GAMEPLAY, transTexto);
                 } else if (GameplaySceneShouldGoToVerdict() && !TransitionActive()) {
-                    GoToWithTransition(SCENE_VERDICT,
-                                       TextFormat("Dia %d - Veredito", GAME_NUM_DAYS + 1));
+                    const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d - Veredito", GAME_NUM_DAYS + 1);
+                    GoToWithTransition(SCENE_VERDICT, transTexto);
                 } else if (GameplaySceneGoToSelection() && !TransitionActive()) {
                     GoToWithTransition(SCENE_SELECTION, NULL);
                 }

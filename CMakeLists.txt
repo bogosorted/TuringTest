@@ -34,7 +34,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(raylib)
 
-add_executable(turing_test main.c scenes/menu_scene.c scenes/gameplay_scene.c scenes/selection_scene.c utils/raycanvas.c utils/dialog_system.c utils/dialog_data.c utils/transition.c utils/game_state.c utils/settings.c utils/options_ui.c utils/ranking.c utils/webcam.c utils/mural_ui.c utils/mapa_holograma.c utils/evidencia_holograma.c utils/setas_3d.c scenes/verdict_scene.c scenes/intro_scene.c)
+add_executable(turing_test main.c scenes/menu_scene.c scenes/gameplay_scene.c scenes/selection_scene.c utils/raycanvas.c utils/dialog_system.c utils/dialog_data.c utils/transition.c utils/game_state.c utils/settings.c utils/options_ui.c utils/ranking.c utils/webcam.c utils/mural_ui.c utils/mapa_holograma.c utils/evidencia_holograma.c utils/setas_3d.c utils/player_character.c utils/terreo_3d.c utils/sala_recepcao.c utils/sala_lanchonete.c utils/sala_jardim.c utils/sala_escritorio.c utils/sala_escritorio_2.c scenes/verdict_scene.c scenes/intro_scene.c)
 target_link_libraries(turing_test PRIVATE raylib)
 if(WIN32)
     target_link_libraries(turing_test PRIVATE mf mfplat mfreadwrite mfuuid ole32)
@@ -42,6 +42,8 @@ endif()
 
 if(WIN32)
     file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
+    file(COPY ${CMAKE_SOURCE_DIR}/src DESTINATION ${CMAKE_BINARY_DIR})
 else()
     file(CREATE_LINK ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/assets SYMBOLIC)
+    file(CREATE_LINK ${CMAKE_SOURCE_DIR}/src ${CMAKE_BINARY_DIR}/src SYMBOLIC)
 endif()

@@ -10,9 +10,10 @@
 #define GAME_NUM_PLAYERS 6
 
 typedef enum {
-    PRONOME_ELE = 0,
-    PRONOME_ELA = 1
-} PronomeJogador;
+    VOZ_GRAVE = 0,
+    VOZ_MEDIA = 1,
+    VOZ_SUAVE = 2
+} TomVozJogador;
 
 // Visao individual de cada personagem quanto ao jogador
 typedef enum {
@@ -51,13 +52,14 @@ void GameStateSetInjecaoUsada(int suspeito, bool usada);
 bool GameStateGetInjecaoUsada(int suspeito);
 int  GameStateCountSpecialToolsUsed(void);
 
-// Nome, retrato (0..5) e pronomes do jogador, alem das estatisticas de pontuacao da run
-void           GameStateSetPlayerName(const char *name);
-const char    *GameStateGetPlayerName(void);
-void           GameStateSetPlayerAvatar(int avatarIdx);
-int            GameStateGetPlayerAvatar(void);
-void           GameStateSetPlayerPronoun(PronomeJogador pronome);
-PronomeJogador GameStateGetPlayerPronoun(void);
+// Nome, retrato (0..5), genero do retrato e tom de voz do jogador, alem das estatisticas de pontuacao da run
+void          GameStateSetPlayerName(const char *name);
+const char   *GameStateGetPlayerName(void);
+void          GameStateSetPlayerAvatar(int avatarIdx);
+int           GameStateGetPlayerAvatar(void);
+bool          GameStateIsPlayerFemale(void);
+void          GameStateSetPlayerVoiceTone(TomVozJogador tom);
+TomVozJogador GameStateGetPlayerVoiceTone(void);
 void           GameStateAddRemainingTokens(int tokens);
 int         GameStateGetRemainingTokensTotal(void);
 void        GameStateRegisterHintUsed(void);
