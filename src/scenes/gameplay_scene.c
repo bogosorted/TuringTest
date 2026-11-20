@@ -6,18 +6,31 @@
 #include <math.h>
 #include "gameplay_scene.h"
 #include "selection_scene.h"
-#include "../utils/settings.h"
-#include "../utils/options_ui.h"
-#include "../utils/raycanvas.h"
-#include "../utils/dialog_system.h"
-#include "../utils/mapa_holograma.h"
-#include "../utils/evidencia_holograma.h"
-#include "../utils/setas_3d.h"
-#include "../utils/terreo_3d.h"
-#include "../utils/game_state.h"
-#include "../utils/dialog_data.h"
+#include "settings.h"
+#include "options_ui.h"
+#include "raycanvas.h"
+#include "dialog_system.h"
+#include "mapa_holograma.h"
+#include "evidencia_holograma.h"
+#include "setas_3d.h"
+#include "terreo_3d.h"
+#include "game_state.h"
+#include "dialog_data.h"
+#include "ui_common.h"
+#include "gameplay_data.h"
+#include "gameplay_logic_hint.h"
 #include <stddef.h>
 #include "rlgl.h"
+
+#define GetTelaRect                UIGetTelaRect
+#define ParaTela                   UIParaTela
+#define DrawTextInArea             UIDrawTextInArea
+#define DrawTextLeftAligned        UIDrawTextLeftAligned
+#define DrawTextWrappedLeftAligned UIDrawTextWrappedLeftAligned
+#define DesenharBotaoFecharPadrao    UIDrawCloseButton
+#define RemoverAcentos             UIRemoverAcentos
+#define CriarSilhuetaBranca(p)     UICriarSilhuetaColorida((p), WHITE, 20, true)
+#define CriarSilhuetaIcone(p)      UICriarSilhuetaColorida((p), (Color){ 255, 242, 230, 255 }, 0, false)
 
 #define NUM_TOOLS 6
 
@@ -64,376 +77,35 @@ static void TocarSomHover(void) {
 // Texturas das duas versoes da tela
 static Texture2D g_interface;       // spr_interface_principal (640x360)
 
-#define VIRTUAL_W 640
-#define VIRTUAL_H 360
+#define VIRTUAL_W UI_VIRTUAL_W
+#define VIRTUAL_H UI_VIRTUAL_H
 
 // Areas do spr_interface_principal (pixels da imagem 640x360)
 static const Rectangle JANELA_AREA         = { 3,   3, 298, 221 };  // janela transparente (fundo + NPC)
 static const Rectangle OPCOES_AREA         = { 3, 227, 298, 130 };  // painel de baixo (opcoes de dialogo)
 static const Rectangle PAINEL_DIREITO_AREA = { 304, 3, 333, 354 };  // quadrante da direita (historico e ferramentas)
 
-// Texturas de Perlin Noise e Shader animado do menu
-static Texture2D g_noise1;
-static Texture2D g_noise2;
-static Texture2D g_fundoBranco;
-static Shader    g_shaderFundo;
-static int       g_shaderTimeLoc   = -1;
-static int       g_shaderNoise1Loc = -1;
-static int       g_shaderNoise2Loc = -1;
-
-static const char *SHADER_FUNDO_FS =
-    "#version 330\n"
-    "in vec2 fragTexCoord;\n"
-    "in vec4 fragColor;\n"
-    "uniform sampler2D texture0;\n"
-    "uniform sampler2D noiseTex1;\n"
-    "uniform sampler2D noiseTex2;\n"
-    "uniform float time;\n"
-    "out vec4 finalColor;\n"
-    "float bayer4x4(vec2 p) {\n"
-    "    int x = int(mod(p.x, 4.0));\n"
-    "    int y = int(mod(p.y, 4.0));\n"
-    "    int idx = y * 4 + x;\n"
-    "    const int m[16] = int[16](\n"
-    "         0,  8,  2, 10,\n"
-    "        12,  4, 14,  6,\n"
-    "         3, 11,  1,  9,\n"
-    "        15,  7, 13,  5\n"
-    "    );\n"
-    "    return (float(m[idx]) / 15.0) - 0.5;\n"
-    "}\n"
-    "void main() {\n"
-    "    vec2 px = floor(fragTexCoord * vec2(640.0, 360.0));\n"
-    "    vec2 uv = px / vec2(640.0, 360.0);\n"
-    "    vec2 drift1 = vec2(sin(time * 0.14) * 0.012, cos(time * 0.11) * 0.012);\n"
-    "    vec2 drift2 = vec2(cos(time * 0.18) * 0.018, sin(time * 0.15) * 0.018);\n"
-    "    float v1 = texture(noiseTex1, clamp(uv + drift1, 0.002, 0.998)).r;\n"
-    "    float v2 = texture(noiseTex2, clamp(uv + drift2, 0.002, 0.998)).r;\n"
-    "    float val = v1 * 0.72 + v2 * 0.28;\n"
-    "    float onda = sin(val * 18.0 + time * 0.32);\n"
-    "    float b = bayer4x4(px);\n"
-    "    float dOnda = b * 0.28;\n"
-    "    float dVal  = b * 0.18;\n"
-    "    vec3 cPreto   = vec3( 0.0,  0.0,  0.0) / 255.0;\n"
-    "    vec3 cEscuro0 = vec3(18.0, 16.0, 18.0) / 255.0;\n"
-    "    vec3 cBase    = vec3(32.0, 29.0, 31.0) / 255.0;\n"
-    "    vec3 cMeio    = vec3(44.0, 39.0, 41.0) / 255.0;\n"
-    "    vec3 cClaro   = vec3(62.0, 56.0, 57.0) / 255.0;\n"
-    "    vec3 col = cBase;\n"
-    "    if (val + dVal < 0.38 || onda + dOnda < -0.52) col = cPreto;\n"
-    "    else if (val + dVal < 0.48 || onda + dOnda < -0.18) col = cEscuro0;\n"
-    "    else if (onda + dOnda > 0.74) col = cClaro;\n"
-    "    else if (onda + dOnda > 0.36) col = cMeio;\n"
-    "    finalColor = vec4(col, 1.0) * fragColor;\n"
-    "}\n";
+static UIBgShader g_bgShader = { 0 };
 #define NPC_TAMANHO 180.0f
-// Locais do predio da RASEC. Cada andar tem sua escadaria, e so por ela da para mudar de andar
-// (um andar por vez). Para criar um local: some um valor aqui, uma linha em LOCAIS e uma em HOLO_SALAS.
-typedef enum {
-    LOCAL_ESCRITORIO = 0,
-    LOCAL_CANTINA,
-    LOCAL_RH,
-    LOCAL_MESA_MARIA,
-    LOCAL_SALA_REUNIAO,
-    LOCAL_COPA,
-    LOCAL_ESCADA_TERREO,
-    LOCAL_ESCADA_1,
-    LOCAL_ESCADA_2,
-    LOCAL_SUBSOLO_COMECO,
-    LOCAL_SUBSOLO_ESCOLHA,
-    LOCAL_SUBSOLO_LAST_OFFICE,
-    LOCAL_SUBSOLO_VEREDITO,
-    LOCAL_SUBSOLO_RECREACAO,
-    LOCAL_RECEPCAO,
-    LOCAL_JARDIM,
-    LOCAL_ESCRITORIO_2,
-    NUM_LOCAIS
-} LocalRasec;
-
-typedef struct {
-    const char *nome;      // nome curto (rotulo no mapa holografico)
-    const char *titulo;    // titulo no painel de baixo
-    const char *quem;      // quem esta no local
-    const char *fundo;     // foto do local (dithering na rampa original)
-} InfoLocal;
-
-#define FUNDO_ESCADA_SUBSOLO "assets/sprites/locais/spr_background_escadaria_subsolo.png" // reservado p/ final secreto no subsolo
-#define FUNDO_ESCADA_MEIO    "assets/sprites/locais/spr_background_escadaria.png"
-#define FUNDO_ESCADA_ULTIMO  "assets/sprites/locais/spr_background_escadaria_ultimo.png"
-static const InfoLocal LOCAIS[NUM_LOCAIS] = {
-    { "ADM. 1",          "SETOR ADMINISTRATIVO",  "",                "assets/sprites/locais/terreo/spr_background_teste.png" },
-    { "CANTINA",         "LANCHONETE DA RASEC",   "",                "assets/sprites/locais/terreo/spr_background_cantina.png" },
-    { "RH",              "RH DA RASEC",           "Vazio",           "assets/sprites/locais/1_andar/spr_background_rh.png" },
-    { "CONTAB.",         "SETOR DE CONTABILIDADE", "Vazio",          "assets/sprites/locais/1_andar/spr_background_mesa_maria.png" },
-    { "AUDIT.",          "AUDITÓRIO",             "Vazio",           "assets/sprites/locais/2_andar/spr_background_sala_reuniao.png" },
-    { "COPA",            "COPA DO 2º ANDAR",      "Vazio",           "assets/sprites/locais/2_andar/spr_background_geladeira_coffe.png" },
-    { "ESCADA",          "ESCADARIA - TÉRREO",    "Escadas",         FUNDO_ESCADA_MEIO   },   // terreo: sobe p/ 1o andar; descer tenta ir ao subsolo
-    { "ESCADA",          "ESCADARIA - 1º ANDAR",  "Escadas",         FUNDO_ESCADA_MEIO   },
-    { "ESCADA",          "ESCADARIA - 2º ANDAR",  "Último andar",    FUNDO_ESCADA_ULTIMO },   // ultimo andar: so a escada para descer
-    { "SUBSOLO",         "SUBSOLO - ENTRADA",     "Vazio",           "assets/sprites/locais/subsolo/local_comeco.png" },
-    { "BIFURC.",         "SUBSOLO - ESCOLHA",     "Vazio",           "assets/sprites/locais/subsolo/local_escolha.png" },
-    { "ÚLT. ESCR.",      "ÚLTIMO ESCRITÓRIO",     "Vazio",           "assets/sprites/locais/subsolo/last_office.png" },
-    { "VEREDITO",        "SALA DO VEREDITO",      "Vazio",           "assets/sprites/veredito/spr_veredito_sala.png" },
-    { "RECRE.",          "ÁREA DE RECREAÇÃO",     "Vazio",           "assets/sprites/locais/subsolo/area_recreacao_abandonada.png" },
-    { "RECEPÇÃO",        "RECEPÇÃO DA RASEC",     "",                "assets/sprites/locais/terreo/spr_background_teste.png" },
-    { "JARDIM",          "JARDIM / DESCANSO",     "",                "assets/sprites/locais/terreo/spr_background_teste.png" },
-    { "ADM. 2",          "SETOR ADM. - ALA ESQ.", "",                "assets/sprites/locais/terreo/spr_background_teste.png" },
-};
-
-// Todo andar tem a mesma planta nos andares superiores; no modo 3D o Terreo tem Recepcao central,
-// enquanto no modo 2D o Terreo segue a planta antiga (Lanchonete - Escritorio - Escadaria).
-enum { POS_CIMA = 0, POS_ESQUERDA, POS_ESCADA, NUM_POS_ANDAR };
-static const LocalRasec PLANTA_ANDAR_3D[HOLO_NUM_ANDARES][NUM_POS_ANDAR] = {
-    { LOCAL_RECEPCAO,     LOCAL_CANTINA, LOCAL_ESCADA_TERREO },
-    { LOCAL_MESA_MARIA,   LOCAL_RH,      LOCAL_ESCADA_1 },
-    { LOCAL_SALA_REUNIAO, LOCAL_COPA,    LOCAL_ESCADA_2 },
-};
-static const LocalRasec PLANTA_ANDAR_2D[HOLO_NUM_ANDARES][NUM_POS_ANDAR] = {
-    { LOCAL_ESCRITORIO,   LOCAL_CANTINA, LOCAL_ESCADA_TERREO },
-    { LOCAL_MESA_MARIA,   LOCAL_RH,      LOCAL_ESCADA_1 },
-    { LOCAL_SALA_REUNIAO, LOCAL_COPA,    LOCAL_ESCADA_2 },
-};
-
-static LocalRasec PlantaAndar(int andar, int pos) {
-    return GameStateIs3DMode() ? PLANTA_ANDAR_3D[andar][pos] : PLANTA_ANDAR_2D[andar][pos];
-}
-
-// Planta de cada local no mapa holografico (mesma ordem de LOCAIS).
-// Modo 3D: planta expandida (7.6 x 4.0) com Recepcao, Jardim e Ala Esq.
-static const HoloSala HOLO_SALAS[NUM_LOCAIS] = {
-    { 0, 1, { { 4.55f, 1.35f, 1.25f, 2.05f } }, false },                             // setor adm. 1
-    { 0, 1, { { 0.25f, 1.40f, 1.25f, 2.00f } }, false },                             // lanchonete (cantina)
-    { 1, 2, { { 0.25f, 0.35f, 1.50f, 1.65f }, { 0.25f, 2.00f, 0.95f, 1.60f } }, false }, // RH (em L)
-    { 1, 1, { { 2.35f, 0.25f, 2.95f, 1.40f } }, false },                             // contabilidade
-    { 2, 1, { { 2.05f, 0.25f, 3.65f, 1.50f } }, false },                             // auditorio
-    { 2, 1, { { 0.25f, 1.45f, 1.50f, 2.00f } }, false },                             // copa
-    { 0, 1, { { 6.30f, 0.25f, 1.00f, 1.15f } }, true },                              // escadaria terreo
-    { 1, 1, { { 6.30f, 0.25f, 1.00f, 3.45f } }, true },                              // escadaria 1
-    { 2, 1, { { 6.30f, 0.25f, 1.00f, 3.45f } }, true },                              // escadaria 2
-    { -1, 1, { { 6.30f, 0.25f, 1.00f, 3.45f } }, false },                            // subsolo comeco
-    { -1, 1, { { 3.05f, 1.65f, 1.70f, 1.60f } }, false },                            // subsolo escolha
-    { -1, 1, { { 0.25f, 1.55f, 1.75f, 1.85f } }, false },                            // ultimo escritorio
-    { -1, 1, { { 3.05f, 0.20f, 1.70f, 1.05f } }, false },                            // sala veredito
-    { -1, 1, { { 0.25f, 0.20f, 1.75f, 1.05f } }, false },                            // recreacao
-    { 0, 1, { { 2.05f, 2.05f, 1.95f, 1.45f } }, false },                             // recepcao
-    { 0, 1, { { 2.05f, 0.20f, 2.55f, 1.00f } }, false },                             // jardim
-    { 0, 1, { { 6.30f, 1.75f, 1.05f, 1.70f } }, false },                             // setor adm. 2
-};
-// Corredores e passagens de cada andar (Modo 3D)
-static const HoloCorredor HOLO_CORREDORES[] = {
-    { 0, { 1.50f, 2.55f, 0.55f, 0.50f } }, { 0, { 4.00f, 2.55f, 0.55f, 0.50f } }, // terreo: cantina<->recepcao<->adm1
-    { 0, { 5.80f, 2.25f, 0.50f, 0.50f } },                                          // terreo: adm1<->adm2
-    { 0, { 1.50f, 0.55f, 0.55f, 0.50f } }, { 0, { 4.60f, 0.55f, 0.55f, 0.80f } }, // terreo: cantina<->jardim<->adm1
-    { 0, { 3.90f, 1.20f, 2.40f, 0.35f } },                                          // terreo: ligacao para escadaria
-    { 1, { 1.75f, 2.45f, 4.55f, 0.65f } }, { 1, { 3.55f, 1.65f, 0.55f, 0.80f } },
-    { 2, { 1.75f, 2.45f, 4.55f, 0.65f } }, { 2, { 3.55f, 1.75f, 0.55f, 0.70f } },
-    { -1, { 4.75f, 2.20f, 1.55f, 0.55f } },
-    { -1, { 2.00f, 2.20f, 1.05f, 0.55f } },
-    { -1, { 3.65f, 1.25f, 0.50f, 0.40f } },
-    { -1, { 0.85f, 1.25f, 0.50f, 0.30f } },
-};
-#define NUM_HOLO_CORREDORES ((int)(sizeof HOLO_CORREDORES / sizeof HOLO_CORREDORES[0]))
-
-// Modo 2D: holograma antigo (6.2 x 3.2) com Lanchonete - Escritorio - Escadaria no terreo
-#define NUM_LOCAIS_2D 14
-static const HoloSala HOLO_SALAS_2D[NUM_LOCAIS_2D] = {
-    { 0, 2, { { 1.6f, 0.2f, 3.2f, 1.1f }, { 1.6f, 1.3f, 0.9f, 0.45f } }, false },  // escritorio (cima, em L)
-    { 0, 1, { { 0.2f, 0.9f, 1.2f, 2.1f } }, false },                               // lanchonete (esquerda)
-    { 1, 2, { { 0.2f, 0.3f, 1.2f, 1.3f }, { 0.2f, 1.6f, 0.75f, 1.3f } }, false },  // RH (esquerda, em L)
-    { 1, 1, { { 1.9f, 0.2f, 2.5f, 1.15f } }, false },                              // mesa da Maria (cima)
-    { 2, 1, { { 1.6f, 0.2f, 3.3f, 1.25f } }, false },                              // sala de reuniao (cima)
-    { 2, 1, { { 0.2f, 1.2f, 1.2f, 1.6f } }, false },                               // copa (esquerda)
-    { 0, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },                                // escadarias (direita)
-    { 1, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
-    { 2, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
-    { -1, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, false },                              // subsolo comeco
-    { -1, 1, { { 2.4f, 1.3f, 1.4f, 1.3f } }, false },                              // subsolo escolha
-    { -1, 1, { { 0.2f, 1.2f, 1.4f, 1.5f } }, false },                              // last office
-    { -1, 1, { { 2.4f, 0.15f, 1.4f, 0.85f } }, false },                            // sala do veredito
-    { -1, 1, { { 0.2f, 0.15f, 1.4f, 0.85f } }, false },                            // area recreacao abandonada
-};
-static const HoloCorredor HOLO_CORREDORES_2D[] = {
-    { 0, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 0, { 2.9f, 1.3f,  0.45f, 0.65f } },
-    { 1, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 1, { 2.9f, 1.35f, 0.45f, 0.6f } },
-    { 2, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 2, { 2.9f, 1.45f, 0.45f, 0.5f } },
-    { -1, { 3.8f, 1.75f, 1.3f, 0.45f } },
-    { -1, { 1.6f, 1.75f, 0.8f, 0.45f } },
-    { -1, { 2.9f, 1.0f,  0.4f, 0.3f } },
-    { -1, { 0.7f, 1.0f,  0.4f, 0.2f } },
-};
-#define NUM_HOLO_CORREDORES_2D ((int)(sizeof HOLO_CORREDORES_2D / sizeof HOLO_CORREDORES_2D[0]))
-
-static const HoloSala *HoloSalasAtivas(void) {
-    return GameStateIs3DMode() ? HOLO_SALAS : HOLO_SALAS_2D;
-}
-
-static int NumHoloSalasAtivas(void) {
-    return GameStateIs3DMode() ? NUM_LOCAIS : NUM_LOCAIS_2D;
-}
-
-static const char *NomeCurtoLocal(int i) {
-    if (!GameStateIs3DMode()) {
-        if (i == LOCAL_ESCRITORIO) return "SETOR ADM.";
-        if (i == LOCAL_CANTINA)    return "LANCHONETE";
-    }
-    return LOCAIS[i].nome;
-}
-
-static LocalRasec LocalInicial(void) {
-    return GameStateIs3DMode() ? LOCAL_RECEPCAO : LOCAL_ESCRITORIO;
-}
-
-static const char *NOMES_ANDARES[HOLO_NUM_ANDARES] = { "TÉRREO", "1º ANDAR", "2º ANDAR" };
-
-// Destinos dos lances interativos da escadaria (lance central = subir; vao lateral a direita = descer)
-static int DestinoEscadaSubir(int de) {
-    const HoloSala *salas = HoloSalasAtivas();
-    if (!salas[de].escada) return -1;
-    int andar = salas[de].andar;
-    return (andar + 1 < HOLO_NUM_ANDARES) ? (int)PlantaAndar(andar + 1, POS_ESCADA) : -1;
-}
-
-static int DestinoEscadaDescer(int de) {
-    const HoloSala *salas = HoloSalasAtivas();
-    if (!salas[de].escada) return -1;
-    int andar = salas[de].andar;
-    if (de == LOCAL_ESCADA_TERREO) return SettingsGetDevMode() ? LOCAL_SUBSOLO_COMECO : -1;
-    return (andar > 0) ? (int)PlantaAndar(andar - 1, POS_ESCADA) : -1;
-}
-
-// Para onde cada seta 3D leva a partir de um local (-1 = seta escondida).
-// Na escadaria, apenas a seta da esquerda (voltar para a sala do andar) aparece; subir/descer e clicando nos lances!
-static int DestinoSeta(int de, int seta) {
-    if (de == LOCAL_SUBSOLO_COMECO) {
-        if (!SettingsGetDevMode()) return -1;
-        if (seta == SETA_CIMA)  return LOCAL_SUBSOLO_ESCOLHA;
-        if (seta == SETA_BAIXO) return LOCAL_ESCADA_TERREO;
-        return -1;
-    }
-    if (de == LOCAL_SUBSOLO_ESCOLHA) {
-        if (!SettingsGetDevMode()) return -1;
-        if (seta == SETA_ESQUERDA) return LOCAL_SUBSOLO_LAST_OFFICE;
-        if (seta == SETA_DIREITA)  return LOCAL_SUBSOLO_VEREDITO;
-        if (seta == SETA_BAIXO)    return LOCAL_SUBSOLO_COMECO;
-        return -1;
-    }
-    if (de == LOCAL_SUBSOLO_VEREDITO) {
-        if (!SettingsGetDevMode()) return -1;
-        return (seta == SETA_BAIXO) ? LOCAL_SUBSOLO_ESCOLHA : -1;
-    }
-    if (de == LOCAL_SUBSOLO_LAST_OFFICE) {
-        if (!SettingsGetDevMode()) return -1;
-        if (seta == SETA_CIMA)  return LOCAL_SUBSOLO_RECREACAO;
-        if (seta == SETA_BAIXO) return LOCAL_SUBSOLO_ESCOLHA;
-        return -1;
-    }
-    if (de == LOCAL_SUBSOLO_RECREACAO) {
-        if (!SettingsGetDevMode()) return -1;
-        return (seta == SETA_BAIXO) ? LOCAL_SUBSOLO_LAST_OFFICE : -1;
-    }
-    const HoloSala *salas = HoloSalasAtivas();
-    int andar = salas[de].andar;
-    int central = (int)PlantaAndar(andar, POS_CIMA);
-    if (salas[de].escada) {
-        if (seta == SETA_ESQUERDA) return central;
-        return -1;
-    }
-    if (de == central) {
-        if (seta == SETA_ESQUERDA) return (int)PlantaAndar(andar, POS_ESQUERDA);
-        if (seta == SETA_DIREITA)  return (int)PlantaAndar(andar, POS_ESCADA);
-        return -1;
-    }
-    return (seta == SETA_DIREITA) ? central : -1;   // sala da esquerda: so volta
-}
-
-static unsigned LocaisAcessiveis(int de) {
-    if (GameStateIs3DMode()) {
-        if (de == LOCAL_RECEPCAO)     return (1u << LOCAL_CANTINA) | (1u << LOCAL_ESCRITORIO) | (1u << LOCAL_ESCADA_TERREO);
-        if (de == LOCAL_CANTINA)      return (1u << LOCAL_RECEPCAO) | (1u << LOCAL_JARDIM);
-        if (de == LOCAL_JARDIM)       return (1u << LOCAL_CANTINA) | (1u << LOCAL_ESCRITORIO);
-        if (de == LOCAL_ESCRITORIO)   return (1u << LOCAL_RECEPCAO) | (1u << LOCAL_JARDIM) | (1u << LOCAL_ESCRITORIO_2);
-        if (de == LOCAL_ESCRITORIO_2) return (1u << LOCAL_ESCRITORIO);
-    }
-
-    unsigned bits = 0;
-    for (int d = 0; d < NUM_SETAS; d++) {
-        int destino = DestinoSeta(de, d);
-        if (destino >= 0) bits |= 1u << destino;
-    }
-    int dSub = DestinoEscadaSubir(de);
-    int dDes = DestinoEscadaDescer(de);
-    if (dSub >= 0) bits |= 1u << dSub;
-    if (dDes >= 0) bits |= 1u << dDes;
-    return bits;
-}
-
-// Texto que aparece ao passar o mouse na seta
-static const char *TextoSeta(int de, int seta) {
-    int destino = DestinoSeta(de, seta);
-    if (destino < 0) return "";
-    const HoloSala *salas = HoloSalasAtivas();
-    if (salas[de].andar < 0 || salas[destino].andar < 0) return NomeCurtoLocal(destino);
-    if (salas[de].escada && salas[destino].escada)
-        return TextFormat("%s: %s", seta == SETA_CIMA ? "SUBIR" : "DESCER", NOMES_ANDARES[salas[destino].andar]);
-    if (salas[destino].escada) return "ESCADARIA";
-    if (salas[de].escada) return TextFormat("IR PARA: %s", NomeCurtoLocal(destino));   // da escadaria para a sala central
-    if (destino == (int)PlantaAndar(salas[de].andar, POS_CIMA)) return TextFormat("VOLTAR: %s", NomeCurtoLocal(destino));
-    return NomeCurtoLocal(destino);
-}
-
-// Setas de navegacao na foto do local (posicoes em pixels da janela de cima, a partir do canto dela)
-static const Vector2 SETAS_POS[NUM_SETAS] = {
-    { 149.0f,  52.0f },   // cima
-    { 149.0f, 192.0f },   // baixo (so na escadaria, onde nao ha suspeitos)
-    {  26.0f, 118.0f },   // esquerda
-    { 272.0f, 118.0f },   // direita
-};
+// Dados e navegacao dos locais extraidos para src/gameplay/gameplay_data.c
+#define PlantaAndar            GameplayPlantaAndar
+#define HoloSalasAtivas        GameplayHoloSalasAtivas
+#define NumHoloSalasAtivas     GameplayNumHoloSalasAtivas
+#define NomeCurtoLocal         GameplayNomeCurtoLocal
+#define LocalInicial           GameplayLocalInicial
+#define DestinoEscadaSubir     GameplayDestinoEscadaSubir
+#define DestinoEscadaDescer    GameplayDestinoEscadaDescer
+#define DestinoSeta            GameplayDestinoSeta
+#define LocaisAcessiveis       GameplayLocaisAcessiveis
+#define TextoSeta              GameplayTextoSeta
+#define LocalEhTerreo3D        GameplayLocalEhTerreo3D
+#define TerreoSalaPorLocal     GameplayTerreoSalaPorLocal
+#define TerreoDestinoPorLocal  GameplayTerreoDestinoPorLocal
+#define LocalPorTerreoDestino  GameplayLocalPorTerreoDestino
 
 static Texture2D g_fundos[NUM_LOCAIS];   // fotos dos locais atras da tela
-
 static LocalRasec g_localAtual = LOCAL_RECEPCAO;
 
-static bool LocalEhTerreo3D(LocalRasec loc) {
-    if (!GameStateIs3DMode()) return false;
-    return loc == LOCAL_RECEPCAO || loc == LOCAL_CANTINA ||
-           loc == LOCAL_JARDIM   || loc == LOCAL_ESCRITORIO ||
-           loc == LOCAL_ESCRITORIO_2;
-}
-
-static TerreoSalaId TerreoSalaPorLocal(LocalRasec loc) {
-    switch (loc) {
-        case LOCAL_RECEPCAO:     return TERREO_SALA_RECEPCAO;
-        case LOCAL_CANTINA:      return TERREO_SALA_LANCHONETE;
-        case LOCAL_JARDIM:       return TERREO_SALA_JARDIM;
-        case LOCAL_ESCRITORIO:   return TERREO_SALA_ESCRITORIO;
-        case LOCAL_ESCRITORIO_2: return TERREO_SALA_ESCRITORIO_2;
-        default:                 return TERREO_SALA_RECEPCAO;
-    }
-}
-
-static TerreoDestino TerreoDestinoPorLocal(LocalRasec loc) {
-    switch (loc) {
-        case LOCAL_RECEPCAO:      return TERREO_DEST_RECEPCAO;
-        case LOCAL_CANTINA:       return TERREO_DEST_LANCHONETE;
-        case LOCAL_JARDIM:        return TERREO_DEST_JARDIM;
-        case LOCAL_ESCRITORIO:    return TERREO_DEST_ESCRITORIO;
-        case LOCAL_ESCRITORIO_2:  return TERREO_DEST_ESCRITORIO_2;
-        case LOCAL_ESCADA_TERREO: return TERREO_DEST_ESCADA_2D;
-        default:                  return TERREO_DEST_NENHUM;
-    }
-}
-
-static LocalRasec LocalPorTerreoDestino(TerreoDestino dest) {
-    switch (dest) {
-        case TERREO_DEST_RECEPCAO:     return LOCAL_RECEPCAO;
-        case TERREO_DEST_LANCHONETE:   return LOCAL_CANTINA;
-        case TERREO_DEST_JARDIM:       return LOCAL_JARDIM;
-        case TERREO_DEST_ESCRITORIO:   return LOCAL_ESCRITORIO;
-        case TERREO_DEST_ESCRITORIO_2: return LOCAL_ESCRITORIO_2;
-        case TERREO_DEST_ESCADA_2D:    return LOCAL_ESCADA_TERREO;
-        default:                       return LOCAL_RECEPCAO;
-    }
-}
 // Estado do tutorial contextual (progride conforme o jogador avanca na partida)
 static bool       g_tutMovimentoVisto       = false;
 static bool       g_tutFuncionarioVisto     = false;
@@ -532,9 +204,6 @@ static bool PontoNoPoligono(Vector2 p, const Vector2 *verts, int n) {
     }
     return dentro;
 }
-
-static Rectangle ParaTela(Rectangle r);
-static void DrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, Color cor);
 
 static Vector2 MouseNaJanela(Vector2 mouseTela) {
     Rectangle jTela = ParaTela(JANELA_AREA);
@@ -846,9 +515,6 @@ static void SortearEvidenciasDoDia(int dia) {
     }
 }
 
-static Rectangle ParaTela(Rectangle r);
-static void DrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, Color cor);
-
 static const Rectangle EV_MODAL_HOLO_PAINEL  = { 140.0f,  18.0f, 360.0f, 324.0f };
 static const Rectangle EV_MODAL_HOLO_VITRINE = { 152.0f,  40.0f, 336.0f, 204.0f };
 
@@ -1047,11 +713,6 @@ static bool UpdatePopupEvidencia(void) {
     SetMouseCursor(cursorMao ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
     return true;
 }
-
-static Rectangle GetTelaRect(void);
-static void DesenharBotaoFecharPadrao(Rectangle rectVirtual);
-static void DrawTextLeftAligned(const char *texto, Vector2 pos, int tamanhoFonte, Color cor);
-static void DrawTextWrappedLeftAligned(const char *text, Vector2 pos, float maxWidth, int fontSize, Color color);
 
 static void DesenharPopupEvidencia(void) {
     if (g_evToastCount <= 0 && !g_galeriaHoloAberta) return;
@@ -1809,59 +1470,18 @@ static void OnClickInjecao(void) {
     }
 }
 
-// Retangulo onde a imagem inteira e desenhada (centralizada no canvas)
-static Rectangle GetTelaRect(void) {
-    return RayCanvasGetRect(
-        (Vector2){ 0.5f, 0.5f },
-        (Vector2){ 0.5f, 0.5f },
-        (Vector2){ 0.0f, 0.0f },
-        (Vector2){ (float)g_interface.width, (float)g_interface.height }
-    );
-}
-
-// Converte um retangulo "da imagem" para a posicao real no canvas
-static Rectangle ParaTela(Rectangle r) {
-    Rectangle tela = GetTelaRect();
-
-    // Quanto a imagem foi ampliada (1 = tamanho original)
-    float escalaX = tela.width  / (float)g_interface.width;
-    float escalaY = tela.height / (float)g_interface.height;
-
-    return (Rectangle){
-        tela.x + r.x * escalaX,
-        tela.y + r.y * escalaY,
-        r.width  * escalaX,
-        r.height * escalaY
-    };
-}
-
 static void DesenharFundoShaderQuadrante(Rectangle rVirt, float escurecimento) {
-    if (g_shaderFundo.id == 0) return;
+    if (!g_bgShader.valido) return;
     Rectangle rTela = ParaTela(rVirt);
     if (rTela.width <= 0 || rTela.height <= 0) return;
 
-    // 1) Base sólida proeminente na cor oficial anterior (32, 29, 31)
     DrawRectangleRec(rTela, (Color){ 32, 29, 31, 255 });
 
     BeginScissorMode((int)rTela.x, (int)rTela.y, (int)rTela.width, (int)rTela.height);
-
-    float tAgora = (float)GetTime();
-    BeginShaderMode(g_shaderFundo);
-    if (g_shaderTimeLoc >= 0) {
-        SetShaderValue(g_shaderFundo, g_shaderTimeLoc, &tAgora, SHADER_UNIFORM_FLOAT);
-    }
-    if (g_shaderNoise1Loc >= 0) SetShaderValueTexture(g_shaderFundo, g_shaderNoise1Loc, g_noise1);
-    if (g_shaderNoise2Loc >= 0) SetShaderValueTexture(g_shaderFundo, g_shaderNoise2Loc, g_noise2);
-
-    // 2) O shader é desenhado de forma bem suave e sutil (apenas 18% de opacidade)
-    DrawTexturePro(g_fundoBranco, (Rectangle){ 0, 0, (float)VIRTUAL_W, (float)VIRTUAL_H },
-                   GetTelaRect(), (Vector2){ 0, 0 }, 0.0f, Fade(WHITE, 0.18f));
-    EndShaderMode();
-
+    UIBgShaderDraw(&g_bgShader, (float)GetTime(), Fade(WHITE, 0.18f));
     if (escurecimento > 0.0f) {
         DrawRectangleRec(rTela, Fade((Color){ 32, 29, 31, 255 }, escurecimento));
     }
-
     EndScissorMode();
 }
 
@@ -1932,30 +1552,6 @@ static bool MouseSobreFicha(void) {
     return false;
 }
 
-// Desenha um botao quadrado [X] padronizado em todas as janelas e popups,
-// com o 'X' geometricamente centralizado no meio exato do quadrado!
-static void DesenharBotaoFecharPadrao(Rectangle rectVirtual) {
-    Rectangle r = ParaTela(rectVirtual);
-    bool hov = CheckCollisionPointRec(RayCanvasGetMousePosition(), r);
-    Color corFundo = hov ? COR_NEGACAO : COR_NEGACAO_FUNDO;
-    Color corBorda = hov ? (Color){ 255, 242, 230, 255 } : COR_NEGACAO_CLARO;
-    Color corX     = (Color){ 255, 242, 230, 255 };
-
-    DrawRectangleRec(r, corFundo);
-    DrawRectangleLinesEx(r, hov ? 1.5f : 1.0f, corBorda);
-
-    float cx = r.x + r.width  * 0.5f;
-    float cy = r.y + r.height * 0.5f;
-    float lado = (r.width < r.height) ? r.width : r.height;
-    float braco = lado * 0.27f;
-    float espessura = lado * 0.12f;
-    if (espessura < 1.8f) espessura = 1.8f;
-
-    DrawLineEx((Vector2){ cx - braco, cy - braco }, (Vector2){ cx + braco, cy + braco }, espessura, corX);
-    DrawLineEx((Vector2){ cx + braco, cy - braco }, (Vector2){ cx - braco, cy + braco }, espessura, corX);
-}
-
-// Desenha o botao de minimizar [_] padronizado
 static void DesenharBotaoMinimizarPadrao(Rectangle rectVirtual) {
     Rectangle r = ParaTela(rectVirtual);
     bool hov = CheckCollisionPointRec(RayCanvasGetMousePosition(), r);
@@ -2688,64 +2284,6 @@ static void DesenharMiniRetratoPlayer(void) {
              g_falaPlayerPendente ? (Color){ 255, 242, 230, 255 } : (Color){ 189, 181, 168, 245 });
 }
 
-// Desenha um texto centralizado dentro de uma area da imagem 640x360.
-// O tamanho da fonte acompanha o zoom da tela e encolhe se o texto nao couber.
-static void DrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, Color cor) {
-    Rectangle destino = ParaTela(area);
-    float escala = destino.height / area.height;
-    int tam = (int)(tamanhoFonte * escala);
-    if (tam < 1) tam = 1;
-
-    float margem = 6.0f * escala;
-    float maxLargura = destino.width - margem * 2.0f;
-    if (maxLargura < 10.0f) maxLargura = destino.width;
-
-    int minTam = (int)(5.0f * escala);
-    if (minTam < 1) minTam = 1;
-
-    if (strchr(texto, '\n') != NULL) {
-        char linhas[4][256];
-        int numLinhas = 0;
-        const char *p = texto;
-        while (*p != '\0' && numLinhas < 4) {
-            int i = 0;
-            while (*p != '\0' && *p != '\n' && i < 255) {
-                linhas[numLinhas][i++] = *p++;
-            }
-            linhas[numLinhas][i] = '\0';
-            numLinhas++;
-            if (*p == '\n') p++;
-        }
-        for (int l = 0; l < numLinhas; l++) {
-            while (tam > minTam && MeasureText(linhas[l], tam) > maxLargura) {
-                tam--;
-            }
-        }
-        float linhaEspaco = 4.0f * escala;
-        float alturaTotal = (float)numLinhas * (float)tam + (float)(numLinhas - 1) * linhaEspaco;
-        float yBase = destino.y + (destino.height - alturaTotal) / 2.0f;
-        for (int l = 0; l < numLinhas; l++) {
-            int lw = MeasureText(linhas[l], tam);
-            float lx = destino.x + (destino.width - lw) / 2.0f;
-            if (lx < destino.x + margem) lx = destino.x + margem;
-            float ly = yBase + (float)l * ((float)tam + linhaEspaco);
-            DrawText(linhas[l], (int)lx, (int)ly, tam, cor);
-        }
-        return;
-    }
-
-    while (tam > minTam && MeasureText(texto, tam) > maxLargura) {
-        tam--;
-    }
-
-    int largura = MeasureText(texto, tam);
-    float x = destino.x + (destino.width - largura) / 2.0f;
-    if (x < destino.x + margem) x = destino.x + margem;
-    float y = destino.y + (destino.height - tam) / 2.0f;
-
-    DrawText(texto, (int)x, (int)y, tam, cor);
-}
-
 // Quebra o texto em palavras em ate 3 linhas para caber dentro de maxLargura.
 // Retorna o numero de linhas usadas, ou 4 se ultrapassar 3 linhas ou uma palavra nao couber.
 static int WrapTextLines(const char *texto, int tam, float maxLargura, char lines[3][256]) {
@@ -2968,931 +2506,17 @@ static void DrawTextWaveInArea(const char *texto, Rectangle area, int tamanhoFon
     }
 }
 
-static void DrawTextLeftAligned(const char *texto, Vector2 pos, int tamanhoFonte, Color cor) {
-    Rectangle fakeArea = {pos.x, pos.y, 10, 10};
-    Rectangle destino = ParaTela(fakeArea);
-    float escala = destino.height / 10.0f;
-    int tam = (int)(tamanhoFonte * escala);
-    if (tam < 1) tam = 1;
-    DrawText(texto, (int)destino.x, (int)destino.y, tam, cor);
-}
-
-static void DrawTextWrappedLeftAligned(const char *texto, Vector2 pos, float maxLargura, int tamanhoFonte, Color cor) {
-    Rectangle fakeArea = {0, 0, maxLargura, 10};
-    float maxScaledW = ParaTela(fakeArea).width;
-    float escala = ParaTela(fakeArea).height / 10.0f;
-    int tam = (int)(tamanhoFonte * escala);
-    
-    char buffer[1024];
-    strncpy(buffer, texto, 1023);
-    buffer[1023] = '\0';
-    
-    char *word = strtok(buffer, " ");
-    char line[1024] = "";
-    int yOffset = 0;
-    
-    while (word != NULL) {
-        char testLine[1024];
-        strncpy(testLine, line, 1023);
-        testLine[1023] = '\0';
-        if (strlen(testLine) > 0) {
-            strncat(testLine, " ", 1023 - strlen(testLine));
-        }
-        strncat(testLine, word, 1023 - strlen(testLine));
-        
-        if (MeasureText(testLine, tam) > maxScaledW && strlen(line) > 0) {
-            DrawTextLeftAligned(line, (Vector2){ pos.x, pos.y + yOffset }, tamanhoFonte, cor);
-            strcpy(line, word);
-            yOffset += (tamanhoFonte + 4);
-        } else {
-            strcpy(line, testLine);
-        }
-        word = strtok(NULL, " ");
-    }
-    if (strlen(line) > 0) {
-        DrawTextLeftAligned(line, (Vector2){ pos.x, pos.y + yOffset }, tamanhoFonte, cor);
-    }
-}
-// ---------------------------------------------------------------
-// DICA (minigame de logica)
-// ---------------------------------------------------------------
-typedef struct {
-    const char *frase;      // proposicao em portugues
-    const char *p;          // o que "p" significa
-    const char *q;          // o que "q" significa
-    const char *resposta;   // forma simbolica canonica (qualquer formula equivalente tambem vale)
-} Proposicao;
-
-// Simbolos em ASCII (a fonte padrao da raylib nao tem os simbolos logicos):
-//   ~ nao    ^ e    v ou    -> se...entao    <-> se e somente se
-#define NUM_PROPOSICOES 16
-static const Proposicao PROPOSICOES[NUM_PROPOSICOES] = {
-    { "Maria Bianca confere os relatórios e Arthur não entrega o relatório.",
-      "Maria Bianca confere os relatórios", "Arthur entrega o relatório", "p ^ ~q" },
-    { "Se Analu cobra os relatórios, então Maria Bianca não sai mais cedo.",
-      "Analu cobra os relatórios", "Maria Bianca sai mais cedo", "p -> ~q" },
-    { "Arthur não toca guitarra ou Analu devolve o relatório.",
-      "Arthur toca guitarra", "Analu devolve o relatório", "~p v q" },
-    { "Não é verdade que o ID sumiu e o cofre abriu.",
-      "o ID sumiu", "o cofre abriu", "~(p ^ q)" },
-    { "Arthur dá uma caneta preta se, e somente se, é próximo de Maria Bianca.",
-      "Arthur dá uma caneta preta", "Arthur é próximo de Maria Bianca", "p <-> q" },
-    { "Se Maria Bianca não assina o relatório, então o setor não é auditado.",
-      "Maria Bianca assina o relatório", "o setor é auditado", "~p -> ~q" },
-    { "Analu está no setor ou Maria Bianca está viajando.",
-      "Analu está no setor", "Maria Bianca está viajando", "p v q" },
-    { "Nem Arthur nem Analu estavam no setor.",
-      "Arthur estava no setor", "Analu estava no setor", "~p ^ ~q" },
-    { "Se Maria Bianca fala de viagens, então ela está à vontade.",
-      "Maria Bianca fala de viagens", "Maria Bianca está à vontade", "p -> q" },
-    { "Maria Bianca não está à vontade ou não fala de viagens.",
-      "Maria Bianca está à vontade", "Maria Bianca fala de viagens", "~p v ~q" },
-    { "Arthur puxa assunto e Analu não está por perto.",
-      "Arthur puxa assunto", "Analu está por perto", "p ^ ~q" },
-    { "Não é verdade que Maria Bianca ou Arthur acessaram o sistema.",
-      "Maria Bianca acessou o sistema", "Arthur acessou o sistema", "~(p v q)" },
-    { "É falso que, se Arthur chega atrasado, Analu o repreende.",
-      "Arthur chega atrasado", "Analu repreende Arthur", "~(p -> q)" },
-    { "Ou Maria Bianca ou Arthur sabe de quem é a caneta, mas não ambos.",
-      "Maria Bianca sabe de quem é a caneta", "Arthur sabe de quem é a caneta", "(p v q) ^ ~(p ^ q)" },
-    { "Analu devolve o relatório se, e somente se, ele está errado.",
-      "Analu devolve o relatório", "o relatório está errado", "p <-> q" },
-    { "Se Arthur presenteia a caneta, então Maria Bianca fica desconfiada.",
-      "Arthur presenteia a caneta", "Maria Bianca fica desconfiada", "p -> q" },
-};
-
-// ---- Formulas: blocos que o jogador clica, interpretador e comparacao por tabela-verdade ----
-enum { T_P, T_Q, T_NOT, T_AND, T_OR, T_IMP, T_IFF, T_LP, T_RP };
-static const char *TOKEN_TXT[9] = { "p", "q", "~", "^", "v", "->", "<->", "(", ")" };
-// Ordem dos 9 blocos na paleta: fileira 1 (p q ~ ( )) e fileira 2 (^ v -> <->)
-static const int BLOCO_TOKEN[9] = { T_P, T_Q, T_NOT, T_LP, T_RP, T_AND, T_OR, T_IMP, T_IFF };
-#define DICA_MAX_TOKENS 14
-
-// Converte "p ^ ~q" em tokens. Devolve quantos tokens leu.
-static int TokenizarFormula(const char *txt, int *out, int max) {
-    int n = 0;
-    for (const char *c = txt; *c && n < max; c++) {
-        switch (*c) {
-            case 'p': out[n++] = T_P; break;
-            case 'q': out[n++] = T_Q; break;
-            case '~': out[n++] = T_NOT; break;
-            case '^': out[n++] = T_AND; break;
-            case 'v': out[n++] = T_OR; break;
-            case '(': out[n++] = T_LP; break;
-            case ')': out[n++] = T_RP; break;
-            case '-': if (c[1] == '>') { out[n++] = T_IMP; c++; } break;
-            case '<': if (c[1] == '-' && c[2] == '>') { out[n++] = T_IFF; c += 2; } break;
-            default: break;
-        }
-    }
-    return n;
-}
-
-typedef struct { const int *tok; int n; int pos; bool erro; bool p, q; } ParserFormula;
-
-static bool PfIff(ParserFormula *ps);
-static bool PfUnario(ParserFormula *ps) {
-    if (ps->pos >= ps->n) { ps->erro = true; return false; }
-    int t = ps->tok[ps->pos++];
-    if (t == T_NOT) return !PfUnario(ps);
-    if (t == T_P) return ps->p;
-    if (t == T_Q) return ps->q;
-    if (t == T_LP) {
-        bool v = PfIff(ps);
-        if (ps->pos < ps->n && ps->tok[ps->pos] == T_RP) ps->pos++; else ps->erro = true;
-        return v;
-    }
-    ps->erro = true;
-    return false;
-}
-static bool PfE(ParserFormula *ps) {
-    bool v = PfUnario(ps);
-    while (!ps->erro && ps->pos < ps->n && ps->tok[ps->pos] == T_AND) { ps->pos++; bool r = PfUnario(ps); v = v && r; }
-    return v;
-}
-static bool PfOu(ParserFormula *ps) {
-    bool v = PfE(ps);
-    while (!ps->erro && ps->pos < ps->n && ps->tok[ps->pos] == T_OR) { ps->pos++; bool r = PfE(ps); v = v || r; }
-    return v;
-}
-static bool PfImp(ParserFormula *ps) {
-    bool v = PfOu(ps);
-    if (!ps->erro && ps->pos < ps->n && ps->tok[ps->pos] == T_IMP) { ps->pos++; bool r = PfImp(ps); v = !v || r; }
-    return v;
-}
-static bool PfIff(ParserFormula *ps) {
-    bool v = PfImp(ps);
-    while (!ps->erro && ps->pos < ps->n && ps->tok[ps->pos] == T_IFF) { ps->pos++; bool r = PfImp(ps); v = (v == r); }
-    return v;
-}
-
-// Calcula a tabela-verdade (bits 0..3 = p,q em 00,01,10,11). Devolve false se a formula for invalida.
-static bool TabelaVerdade(const int *tok, int n, int *tabela) {
-    *tabela = 0;
-    if (n <= 0) return false;
-    for (int i = 0; i < 4; i++) {
-        ParserFormula ps = { tok, n, 0, false, (i & 2) != 0, (i & 1) != 0 };
-        bool v = PfIff(&ps);
-        if (ps.erro || ps.pos != n) return false;
-        if (v) *tabela |= (1 << i);
-    }
-    return true;
-}
-
-// Monta o texto da formula ("~p v (q ^ p)") a partir dos tokens
-static void FormulaParaTexto(const int *tok, int n, char *buf, size_t cap) {
-    buf[0] = '\0';
-    for (int i = 0; i < n; i++) {
-        size_t len = strlen(buf);
-        bool semEspaco = (i == 0) || tok[i - 1] == T_NOT || tok[i - 1] == T_LP || tok[i] == T_RP;
-        snprintf(buf + len, cap - len, "%s%s", semEspaco ? "" : " ", TOKEN_TXT[tok[i]]);
-    }
-}
-
+// Dica logica extraida para src/gameplay/gameplay_logic_hint.c
 static Texture2D g_dicaAceso;     // botao disponivel
 static Texture2D g_dicaApagado;   // botao bloqueado
-
-// A dica abre pelo 3o icone do menu de ferramentas (FERRAMENTAS[2])
-static const Rectangle DICA_PAINEL = { 170, 32, 300, 296 };
-static const Rectangle DICA_OK     = { 170 + 100, 32 + 254, 100, 26 };
-
-static bool g_dicaUsadaHoje      = false;  // true depois de responder (certo ou errado)
-static bool g_entrevistaLiberada = false;  // acertou: a entrevista atual tem tokens infinitos
-static bool g_infinitosAntes     = false;  // como estava o global_infinite_tokens antes da dica
-
-static bool   g_dicaAberta = false;
-static double g_dicaTAbertura = 0.0;   // quando o painel abriu (animacao de "tela ligando")
-#define DICA_TEMPO_TOTAL 45.0f   // segundos para montar a formula depois de apertar "Comecar"
-static int    g_dicaEstado = 3;    // 3 = explicacao, 0 = montando a formula (cronometro rodando), 1 = acertou, 2 = errou
-static float  g_dicaTempo = DICA_TEMPO_TOTAL; // segundos restantes
-static bool   g_dicaTempoEsgotado = false;
-static int    g_dicaPagina = 0;    // pagina da explicacao (0..2)
-#define DICA_NUM_PAGINAS 3
-static int    g_dicaAtual  = 0;    // qual proposicao foi sorteada
-static unsigned g_dicaSorteadas = 0; // proposicoes ja vistas (so repete quando acabarem todas)
-static int    g_dicaFormula[DICA_MAX_TOKENS];
-static int    g_dicaNFormula = 0;
-static float  g_dicaInvalidaT = 0.0f; // > 0: mostra "formula invalida" por um instante
-static float  g_dicaShake = 0.0f;     // tremida do painel (segundos restantes)
-static float  g_dicaShakeAmp = 0.0f;
-
-// Sons sintetizados (sem arquivos novos): clique, acerto e erro
-static Sound g_dicaSndClique, g_dicaSndAcerto, g_dicaSndErro;
-
-// Faixas de particulas de comemoracao/erro (coordenadas virtuais)
-typedef struct { Vector2 pos, vel; float vida, vidaMax; Color cor; } DicaParticula;
-#define DICA_NUM_PART 48
-static DicaParticula g_dicaPart[DICA_NUM_PART];
-
-static Sound CriarSomNotas(const float *freqs, int nNotas, float durNota, bool quadrada, float vol) {
-    const int taxa = 22050;
-    int porNota = (int)(durNota * taxa);
-    int total = porNota * nNotas;
-    short *dados = (short *)MemAlloc((unsigned)total * sizeof(short));
-    float fase = 0.0f;
-    for (int n = 0; n < nNotas; n++) {
-        for (int i = 0; i < porNota; i++) {
-            float t = (float)i / (float)porNota;
-            float env = (1.0f - t) * (1.0f - t);
-            if (i < 80) env *= (float)i / 80.0f;
-            fase += 2.0f * PI * freqs[n] / (float)taxa;
-            float v = quadrada ? ((sinf(fase) >= 0.0f) ? 1.0f : -1.0f) * 0.6f : sinf(fase);
-            dados[n * porNota + i] = (short)(v * env * vol * 32000.0f);
-        }
-    }
-    Wave w = { (unsigned)total, (unsigned)taxa, 16, 1, dados };
-    Sound snd = LoadSoundFromWave(w);
-    MemFree(dados);
-    return snd;
-}
-
-static void GarantirSonsDica(void) {
-    if (g_dicaSndClique.frameCount > 0) return;
-    float fClique[1] = { 540.0f };
-    float fAcerto[3] = { 660.0f, 880.0f, 1320.0f };
-    float fErro[2]   = { 220.0f, 150.0f };
-    g_dicaSndClique = CriarSomNotas(fClique, 1, 0.05f, false, 0.35f);
-    g_dicaSndAcerto = CriarSomNotas(fAcerto, 3, 0.09f, false, 0.45f);
-    g_dicaSndErro   = CriarSomNotas(fErro, 2, 0.16f, true, 0.35f);
-}
-
-static void TocarSomDica(Sound snd, float pitch) {
-    if (snd.frameCount == 0) return;
-    SetSoundVolume(snd, SettingsGetSfxVolume());
-    SetSoundPitch(snd, pitch);
-    PlaySound(snd);
-}
-
-static void LiberarSonsDica(void) {
-    if (g_dicaSndClique.frameCount > 0) UnloadSound(g_dicaSndClique);
-    if (g_dicaSndAcerto.frameCount > 0) UnloadSound(g_dicaSndAcerto);
-    if (g_dicaSndErro.frameCount > 0)   UnloadSound(g_dicaSndErro);
-    g_dicaSndClique = g_dicaSndAcerto = g_dicaSndErro = (Sound){ 0 };
-}
-
-static float Rand01(void) { return (float)GetRandomValue(0, 1000) / 1000.0f; }
-
-static void SoltarParticulasDica(bool acerto) {
-    Color verdes[3]    = { { 120, 190, 140, 255 }, { 189, 181, 168, 255 }, { 255, 242, 230, 255 } };
-    Color vermelhos[3] = { { 224, 108, 104, 255 }, { 196,  72,  72, 255 }, { 138,  48,  50, 255 } };
-    int quantas = acerto ? DICA_NUM_PART : DICA_NUM_PART / 3;
-    for (int i = 0; i < DICA_NUM_PART; i++) {
-        DicaParticula *pt = &g_dicaPart[i];
-        if (i >= quantas) { pt->vida = 0.0f; continue; }
-        float ang = (acerto ? -PI * (0.1f + 0.8f * Rand01()) : 2.0f * PI * Rand01());
-        float vel = 50.0f + 110.0f * Rand01();
-        pt->pos = (Vector2){ DICA_PAINEL.x + DICA_PAINEL.width * 0.5f, DICA_PAINEL.y + 190.0f };
-        pt->vel = (Vector2){ cosf(ang) * vel, sinf(ang) * vel };
-        pt->vidaMax = pt->vida = 0.7f + 0.8f * Rand01();
-        pt->cor = (acerto ? verdes : vermelhos)[GetRandomValue(0, 2)];
-    }
-}
-
-static void DesenharParticulasDica(void) {
-    float dt = GetFrameTime();
-    if (dt > 0.05f) dt = 0.05f;
-    for (int i = 0; i < DICA_NUM_PART; i++) {
-        DicaParticula *pt = &g_dicaPart[i];
-        if (pt->vida <= 0.0f) continue;
-        pt->vida -= dt;
-        pt->vel.y += 220.0f * dt;
-        pt->pos.x += pt->vel.x * dt;
-        pt->pos.y += pt->vel.y * dt;
-        float a = pt->vida / pt->vidaMax;
-        if (a < 0.0f) a = 0.0f;
-        DrawRectangleRec(ParaTela((Rectangle){ pt->pos.x, pt->pos.y, 3, 3 }), Fade(pt->cor, a));
-    }
-}
-
-// Retangulos dos blocos (0..8), do apagar e do enviar
-static Rectangle BlocoDica(int i) {
-    float x0 = DICA_PAINEL.x + 6, w = DICA_PAINEL.width - 12, y0 = DICA_PAINEL.y;
-    if (i < 5) {
-        float bw = (w - 4 * 4.0f) / 5.0f;
-        return (Rectangle){ x0 + i * (bw + 4.0f), y0 + 192, bw, 26 };
-    }
-    float bw = (w - 3 * 4.0f) / 4.0f;
-    return (Rectangle){ x0 + (i - 5) * (bw + 4.0f), y0 + 222, bw, 26 };
-}
-static Rectangle BotaoApagarDica(void) {
-    return (Rectangle){ DICA_PAINEL.x + 6, DICA_PAINEL.y + 258, (DICA_PAINEL.width - 12 - 8) / 2, 28 };
-}
-static Rectangle BotaoEnviarDica(void) {
-    Rectangle a = BotaoApagarDica();
-    return (Rectangle){ a.x + a.width + 8, a.y, a.width, a.height };
-}
-static Rectangle BotaoComecarDica(void) {
-    return (Rectangle){ DICA_PAINEL.x + 6, DICA_PAINEL.y + 258, DICA_PAINEL.width - 12, 28 };
-}
-
-// Dicas de cada bloco (aparecem ao passar o mouse)
-static const char *BLOCO_AJUDA[9] = {
-    "= primeira afirmação", "= segunda afirmação", "= NÃO (nega o que vem depois)",
-    "= abre um grupo", "= fecha o grupo", "= E (as duas valem)", "= OU (pelo menos uma vale)",
-    "= SE ... ENTÃO", "= SE E SOMENTE SE"
-};
-
-// Uma vez por dia, e so durante uma conversa (no Modo DEV, sempre disponivel na conversa)
-static bool DicaDisponivel(void) {
-    return g_dialogLoaded && (!g_dicaUsadaHoje || SettingsGetDevMode());
-}
-
-// Acertou: tokens infinitos so nesta entrevista
-static void LiberarEntrevista(void) {
-    g_infinitosAntes = global_infinite_tokens;
-    global_infinite_tokens = true;
-    g_entrevistaLiberada = true;
-}
-
-// A entrevista acabou: tokens voltam ao normal
-static void EncerrarEntrevistaLiberada(void) {
-    if (g_entrevistaLiberada) global_infinite_tokens = g_infinitosAntes || SettingsGetDevMode();
-    g_entrevistaLiberada = false;
-}
-
-// Abre o puzzle da dica (chamado pelo icone do menu de ferramentas).
-// Fora de uma conversa, ou se ja usou hoje, nao faz nada (o icone fica apagado).
-static void AbrirDica(void) {
-    if (!DicaDisponivel() || g_dicaAberta) return;
-    GarantirSonsDica();
-    // Sorteia entre as que ainda nao apareceram (quando todas ja apareceram, recomeca)
-    unsigned todas = (1u << NUM_PROPOSICOES) - 1u;
-    if ((g_dicaSorteadas & todas) == todas) g_dicaSorteadas = 0;
-    int livres[NUM_PROPOSICOES], nLivres = 0;
-    for (int i = 0; i < NUM_PROPOSICOES; i++) if (!(g_dicaSorteadas & (1u << i))) livres[nLivres++] = i;
-    g_dicaAtual = livres[GetRandomValue(0, nLivres - 1)];
-    g_dicaSorteadas |= (1u << g_dicaAtual);
-    g_dicaPagina = 0;
-    g_dicaEstado = 3;               // primeiro a explicacao; o tempo so corre depois do "Comecar"
-    g_dicaTempo = DICA_TEMPO_TOTAL;
-    g_dicaTempoEsgotado = false;
-    g_dicaNFormula = 0;
-    g_dicaInvalidaT = 0.0f;
-    g_dicaShake = 0.0f;
-    memset(g_dicaPart, 0, sizeof g_dicaPart);
-    g_dicaAberta = true;
-    g_tutDicaVisto = true;
-    g_dicaTAbertura = GetTime();
-}
-
-// Fecha o painel. Se o desafio ja tinha comecado e nao foi respondido, conta como perdido.
-static void FecharDica(void) {
-    if (g_dicaAberta && g_dicaEstado == 0) {
-        if (!g_dicaUsadaHoje) GameStateRegisterHintUsed();
-        g_dicaUsadaHoje = true;
-    }
-    g_dicaAberta = false;
-}
-
-// Resultado final do desafio (acerto, erro ou tempo esgotado). Gasta a dica do dia.
-static void FinalizarDica(bool acertou, bool tempoEsgotou) {
-    if (!g_dicaUsadaHoje) GameStateRegisterHintUsed();
-    g_dicaUsadaHoje = true;   // certo ou errado, a dica acabou por hoje
-    g_dicaTempoEsgotado = tempoEsgotou;
-    if (acertou) {
-        g_dicaEstado = 1;
-        LiberarEntrevista();
-        g_dicaShake = 0.18f; g_dicaShakeAmp = 1.5f;
-        TocarSomDica(g_dicaSndAcerto, 1.0f);
-    } else {
-        g_dicaEstado = 2;
-        g_dicaShake = 0.32f; g_dicaShakeAmp = 4.0f;
-        TocarSomDica(g_dicaSndErro, 1.0f);
-    }
-    SoltarParticulasDica(acertou);
-}
-
-// Confere a formula montada contra a resposta (por tabela-verdade: formulas equivalentes valem)
-static void EnviarDica(void) {
-    int tabUser = 0, tabCerta = 0;
-    if (!TabelaVerdade(g_dicaFormula, g_dicaNFormula, &tabUser)) {
-        g_dicaInvalidaT = 1.3f;
-        TocarSomDica(g_dicaSndErro, 1.4f);
-        return;
-    }
-    int certa[DICA_MAX_TOKENS];
-    int nCerta = TokenizarFormula(PROPOSICOES[g_dicaAtual].resposta, certa, DICA_MAX_TOKENS);
-    TabelaVerdade(certa, nCerta, &tabCerta);
-    FinalizarDica(tabUser == tabCerta, false);
-}
-
-// Cuida do painel da dica.
-// Devolve true se a dica "pegou" o mouse neste frame.
-static bool UpdateDica(void) {
-    Vector2 mouse = RayCanvasGetMousePosition();
-    bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-
-    // Painel aberto: so ele recebe o mouse
-    if (g_dicaAberta) {
-        bool hover = false;
-        float dt = GetFrameTime();
-        if (g_dicaInvalidaT > 0.0f) g_dicaInvalidaT -= dt;
-        if (g_dicaShake > 0.0f) g_dicaShake -= dt;
-        if (g_dicaEstado == 0) {
-            g_dicaTempo -= dt;
-            if (g_dicaTempo <= 0.0f) { g_dicaTempo = 0.0f; FinalizarDica(false, true); }
-        }
-
-        // Botao [X] quadrado padronizado para fechar
-        Rectangle btnFechar = { DICA_PAINEL.x + DICA_PAINEL.width - 19, DICA_PAINEL.y + 3, 16, 16 };
-        if (CheckCollisionPointRec(mouse, ParaTela(btnFechar))) {
-            hover = true;
-            if (clicou) {
-                FecharDica();
-                return true;
-            }
-        }
-
-        if (g_dicaEstado == 3) {
-            // Paginas: [Voltar] [Proximo] ... na ultima, o botao da direita comeca o desafio
-            bool ultima = (g_dicaPagina == DICA_NUM_PAGINAS - 1);
-            Rectangle rProx = (g_dicaPagina == 0) ? BotaoComecarDica() : BotaoEnviarDica();
-            Rectangle rVolta = BotaoApagarDica();
-            bool proximo = IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER);
-            bool volta = false;
-            if (CheckCollisionPointRec(mouse, ParaTela(rProx))) { hover = true; if (clicou) proximo = true; }
-            if (g_dicaPagina > 0 && CheckCollisionPointRec(mouse, ParaTela(rVolta))) { hover = true; if (clicou) volta = true; }
-            if (GetTime() - g_dicaTAbertura > 0.25) {
-                if (volta) {
-                    g_dicaPagina--;
-                    TocarSomDica(g_dicaSndClique, 0.8f);
-                } else if (proximo && !ultima) {
-                    g_dicaPagina++;
-                    TocarSomDica(g_dicaSndClique, 1.1f);
-                } else if (proximo && ultima) {
-                    g_dicaEstado = 0;
-                    g_dicaTempo = DICA_TEMPO_TOTAL;
-                    TocarSomDica(g_dicaSndClique, 1.2f);
-                }
-            }
-        } else if (g_dicaEstado == 0) {
-            for (int i = 0; i < 9; i++) {
-                if (!CheckCollisionPointRec(mouse, ParaTela(BlocoDica(i)))) continue;
-                hover = true;
-                if (clicou && g_dicaNFormula < DICA_MAX_TOKENS) {
-                    g_dicaFormula[g_dicaNFormula++] = BLOCO_TOKEN[i];
-                    g_dicaInvalidaT = 0.0f;
-                    TocarSomDica(g_dicaSndClique, 0.9f + 0.05f * (float)(i % 5));
-                }
-            }
-            bool apagar = IsKeyPressed(KEY_BACKSPACE);
-            bool enviar = IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER);
-            if (CheckCollisionPointRec(mouse, ParaTela(BotaoApagarDica()))) { hover = true; if (clicou) apagar = true; }
-            if (CheckCollisionPointRec(mouse, ParaTela(BotaoEnviarDica()))) { hover = true; if (clicou) enviar = true; }
-            if (apagar && g_dicaNFormula > 0) {
-                g_dicaNFormula--;
-                g_dicaInvalidaT = 0.0f;
-                TocarSomDica(g_dicaSndClique, 0.7f);
-            }
-            if (enviar) EnviarDica();
-        } else if (CheckCollisionPointRec(mouse, ParaTela(DICA_OK))) {
-            hover = true;
-            if (clicou) FecharDica();
-        }
-        SetMouseCursor(hover ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
-        return true;
-    }
-    return false;
-}
-
-// ---- Texto de formulas com simbolos desenhados (a fonte do jogo nao tem o "E" e o "OU" logicos) ----
-// '~' vira o simbolo de negacao, '^' vira um V de cabeca para baixo e, se converteV, 'v' vira um V normal, os dois bem maiores que a letra.
-static float EscalaVirtDica(void) {
-    return ParaTela((Rectangle){ 0, 0, 10, 10 }).height / 10.0f;
-}
-
-// Todos os simbolos das formulas sao desenhados com o mesmo traco (arredondado), na mesma altura:
-//   ~ nao   ^ e   v ou   -> se...entao   <-> se e somente se   ( ) parenteses
-#define GLIFO_LADO(tamPx)  ((tamPx) * 0.62f)
-
-// Se txt comeca com um simbolo desenhado, devolve quantos caracteres ele ocupa (0 = nao e simbolo)
-// e o tipo em *tipo: '~' '^' 'v' '>' (->) '=' (<->) '(' ')'
-static int SimboloDica(const char *c, bool converteV, char *tipo) {
-    if (c[0] == '<' && c[1] == '-' && c[2] == '>') { *tipo = '='; return 3; }
-    if (c[0] == '-' && c[1] == '>')                { *tipo = '>'; return 2; }
-    if (c[0] == '^' || c[0] == '~' || c[0] == '(' || c[0] == ')' || (converteV && c[0] == 'v')) { *tipo = c[0]; return 1; }
-    return 0;
-}
-
-static float GlifoLargura(char tipo, int tamPx) {
-    float lado = GLIFO_LADO(tamPx);
-    switch (tipo) {
-        case '>': return lado * 1.35f;
-        case '=': return lado * 1.65f;
-        case '(': case ')': return lado * 0.5f;
-        default:  return lado;
-    }
-}
-static float GlifoAvanco(char tipo, int tamPx) {
-    float folga = (tipo == '(' || tipo == ')') ? tamPx * 0.14f : tamPx * 0.26f;
-    return GlifoLargura(tipo, tamPx) + folga;
-}
-
-// Largura (em px de tela) do texto da formula na fonte tamPx
-static float MedirFormulaDica(const char *txt, int tamPx, bool converteV) {
-    float w = 0.0f;
-    char run[96]; int n = 0;
-    const char *c = txt;
-    for (;;) {
-        char tipo = 0;
-        int len = (*c == '\0') ? 0 : SimboloDica(c, converteV, &tipo);
-        if (*c == '\0' || len > 0) {
-            run[n] = '\0';
-            if (n > 0) w += (float)MeasureText(run, tamPx);
-            n = 0;
-            if (*c == '\0') break;
-            w += GlifoAvanco(tipo, tamPx);
-            c += len;
-        } else if (n < 95) {
-            run[n++] = *c++;
-        } else {
-            c++;
-        }
-    }
-    return w;
-}
-
-// Traco com pontas arredondadas (sem falhas nas junções)
-static void TracoArredondadoDica(Vector2 a, Vector2 b, float esp, Color cor) {
-    DrawLineEx(a, b, esp, cor);
-    DrawCircleV(a, esp * 0.5f, cor);
-    DrawCircleV(b, esp * 0.5f, cor);
-}
-
-// Desenha um simbolo com o canto superior esquerdo da caixa em (x, ys)
-static void DesenharGlifoDica(char tipo, float x, float ys, int tamPx, Color cor) {
-    float lado = GLIFO_LADO(tamPx);
-    float larg = GlifoLargura(tipo, tamPx);
-    float esp = fmaxf(1.6f, tamPx * 0.12f);
-    float cy = ys + tamPx * 0.46f;              // centro vertical das letras minusculas
-    float l = x + esp * 0.5f, r = x + larg - esp * 0.5f;
-    float t = cy - lado * 0.5f + esp * 0.5f, b = cy + lado * 0.5f - esp * 0.5f;
-    float m = (l + r) * 0.5f;
-    if (tipo == '^') {            // E: V de cabeca para baixo
-        TracoArredondadoDica((Vector2){ l, b }, (Vector2){ m, t }, esp, cor);
-        TracoArredondadoDica((Vector2){ m, t }, (Vector2){ r, b }, esp, cor);
-    } else if (tipo == 'v') {     // OU: V normal
-        TracoArredondadoDica((Vector2){ l, t }, (Vector2){ m, b }, esp, cor);
-        TracoArredondadoDica((Vector2){ m, b }, (Vector2){ r, t }, esp, cor);
-    } else if (tipo == '~') {     // NAO: barra com gancho para baixo na ponta direita
-        float yBarra = t + (b - t) * 0.25f;
-        TracoArredondadoDica((Vector2){ l, yBarra }, (Vector2){ r, yBarra }, esp, cor);
-        TracoArredondadoDica((Vector2){ r, yBarra }, (Vector2){ r, b }, esp, cor);
-    } else if (tipo == '>' || tipo == '=') {   // SE...ENTAO (seta) e SE E SOMENTE SE (seta dupla)
-        float h = lado * 0.3f;
-        TracoArredondadoDica((Vector2){ l, cy }, (Vector2){ r, cy }, esp, cor);
-        TracoArredondadoDica((Vector2){ r - h, cy - h }, (Vector2){ r, cy }, esp, cor);
-        TracoArredondadoDica((Vector2){ r - h, cy + h }, (Vector2){ r, cy }, esp, cor);
-        if (tipo == '=') {
-            TracoArredondadoDica((Vector2){ l + h, cy - h }, (Vector2){ l, cy }, esp, cor);
-            TracoArredondadoDica((Vector2){ l + h, cy + h }, (Vector2){ l, cy }, esp, cor);
-        }
-    } else {                      // parenteses: arco de 8 segmentos
-        float alt = lado * 1.15f;
-        float yt = cy - alt * 0.5f;
-        Vector2 ant = { 0, 0 };
-        for (int i = 0; i <= 8; i++) {
-            float u = (float)i / 8.0f * 2.0f - 1.0f;           // -1..1
-            float px = (tipo == '(') ? (l + (r - l) * u * u) : (r - (r - l) * u * u);
-            Vector2 pt = { px, yt + (u + 1.0f) * 0.5f * alt };
-            if (i > 0) TracoArredondadoDica(ant, pt, esp, cor);
-            ant = pt;
-        }
-    }
-}
-
-// Desenha a formula com o canto superior esquerdo em (xs, ys) (px de tela). Devolve a largura desenhada.
-static float DesenharFormulaDicaPx(const char *txt, float xs, float ys, int tamPx, Color cor, bool converteV) {
-    float x = xs;
-    char run[96]; int n = 0;
-    const char *c = txt;
-    for (;;) {
-        char tipo = 0;
-        int len = (*c == '\0') ? 0 : SimboloDica(c, converteV, &tipo);
-        if (*c == '\0' || len > 0) {
-            run[n] = '\0';
-            if (n > 0) { DrawText(run, (int)x, (int)ys, tamPx, cor); x += (float)MeasureText(run, tamPx); }
-            n = 0;
-            if (*c == '\0') break;
-            DesenharGlifoDica(tipo, x + tamPx * 0.06f, ys, tamPx, cor);
-            x += GlifoAvanco(tipo, tamPx);
-            c += len;
-        } else if (n < 95) {
-            run[n++] = *c++;
-        } else {
-            c++;
-        }
-    }
-    return x - xs;
-}
-
-// Alinhada a esquerda em coordenadas virtuais. Devolve a largura em unidades virtuais.
-static float DesenharFormulaDicaVirt(const char *txt, Vector2 pos, int tam, Color cor, bool converteV) {
-    Rectangle d = ParaTela((Rectangle){ pos.x, pos.y, 10, 10 });
-    float esc = d.height / 10.0f;
-    int tamPx = (int)(tam * esc); if (tamPx < 1) tamPx = 1;
-    return DesenharFormulaDicaPx(txt, d.x, d.y, tamPx, cor, converteV) / esc;
-}
-
-// Centralizada numa area virtual
-static void DesenharFormulaDicaCentro(const char *txt, Rectangle area, int tam, Color cor, bool converteV) {
-    Rectangle d = ParaTela(area);
-    float esc = d.height / area.height;
-    int tamPx = (int)(tam * esc); if (tamPx < 1) tamPx = 1;
-    float w = MedirFormulaDica(txt, tamPx, converteV);
-    DesenharFormulaDicaPx(txt, d.x + (d.width - w) * 0.5f, d.y + (d.height - tamPx) * 0.5f, tamPx, cor, converteV);
-}
-
-// Botao no estilo dos modais (sombra, borda que acende no hover), com tamanho de fonte ajustavel
-static void DesenharBotaoDicaT(Rectangle rVirt, const char *rotulo, int tam, bool hover,
-                               Color fundo, Color fundoHover, Color borda, Color bordaHover, Color texto) {
-    DrawRectangleRec(ParaTela((Rectangle){ rVirt.x + 2, rVirt.y + 2, rVirt.width, rVirt.height }), Fade(BLACK, 0.45f));
-    DrawRectangleRec(ParaTela(rVirt), hover ? fundoHover : fundo);
-    DrawRectangleLinesEx(ParaTela(rVirt), hover ? 2.0f : 1.5f, hover ? bordaHover : borda);
-    DrawTextInArea(rotulo, rVirt, tam, texto);
-}
-
-// Chip com o simbolo (p ou q) e o significado ao lado
-static void DesenharChipProposicao(Rectangle rVirt, const char *simbolo, const char *significado) {
-    Color corEscura   = {  32,  29,  31, 255 };
-    Color corClaro    = { 160, 147, 142, 255 };
-    Color corDestaque = { 189, 181, 168, 255 };
-    Color corBranco   = { 255, 242, 230, 255 };
-    DrawRectangleRec(ParaTela(rVirt), corClaro);
-    DrawRectangleLinesEx(ParaTela(rVirt), 1.0f, corDestaque);
-    Rectangle selo = { rVirt.x, rVirt.y, 28, rVirt.height };
-    DrawRectangleRec(ParaTela(selo), corEscura);
-    DrawTextInArea(simbolo, selo, 14, corBranco);
-    DrawTextWrappedLeftAligned(significado, (Vector2){ rVirt.x + 34, rVirt.y + (rVirt.height - 10) * 0.5f - 1 },
-                               rVirt.width - 38, 10, corEscura);
-}
-
-static void DesenharDicaConteudo(void) {
-    Color corEscura   = {  32,  29,  31, 255 };
-    Color corFundo    = { 125, 112, 113, 252 };
-    Color corClaro    = { 160, 147, 142, 255 };
-    Color corDestaque = { 189, 181, 168, 255 };
-    Color corBranco   = { 255, 242, 230, 255 };
-    Color verde       = {  52, 100,  66, 255 };
-    Color verdeHover  = {  72, 130,  90, 255 };
-    Color verdeClaro  = { 120, 190, 140, 255 };
-    Vector2 mouse = RayCanvasGetMousePosition();
-
-    const Proposicao *p = &PROPOSICOES[g_dicaAtual];
-    float x = DICA_PAINEL.x + 6;
-    float y = DICA_PAINEL.y;
-    float largura = DICA_PAINEL.width - 12;
-
-    // Escurece o resto da tela e desenha a sombra do painel
-    float t = (float)(GetTime() - g_dicaTAbertura) / 0.22f;
-    if (t > 1.0f) t = 1.0f;
-    float ease = 1.0f - (1.0f - t) * (1.0f - t) * (1.0f - t);
-    DrawRectangleRec(GetTelaRect(), Fade(BLACK, 0.55f * ease));
-
-    // "Tela ligando": o painel abre na vertical a partir do meio, depois o conteudo aparece
-    if (t < 1.0f) {
-        float h = DICA_PAINEL.height * ease;
-        Rectangle abrindo = { DICA_PAINEL.x, DICA_PAINEL.y + (DICA_PAINEL.height - h) * 0.5f, DICA_PAINEL.width, h };
-        DrawRectangleRec(ParaTela(abrindo), corFundo);
-        DrawRectangleLinesEx(ParaTela(abrindo), 2.0f, corDestaque);
-        return;
-    }
-
-    DrawRectangleRec(ParaTela((Rectangle){ DICA_PAINEL.x + 4, DICA_PAINEL.y + 4, DICA_PAINEL.width, DICA_PAINEL.height }),
-                     Fade(BLACK, 0.6f));
-
-    // Painel, borda clara e barra de titulo (com o mini monitor do icone)
-    DrawRectangleRec(ParaTela(DICA_PAINEL), corFundo);
-    DrawRectangleLinesEx(ParaTela(DICA_PAINEL), 2.0f, corDestaque);
-    Rectangle barraTit = { DICA_PAINEL.x, DICA_PAINEL.y, DICA_PAINEL.width, 24 };
-    DrawRectangleRec(ParaTela(barraTit), corEscura);
-    DrawTexturePro(g_dicaAceso, (Rectangle){ 0, 0, (float)g_dicaAceso.width, (float)g_dicaAceso.height },
-                   ParaTela((Rectangle){ DICA_PAINEL.x + 4, DICA_PAINEL.y + 4, 16, 16 }),
-                   (Vector2){ 0, 0 }, 0.0f, WHITE);
-    DrawTextInArea("DICA - LÓGICA", (Rectangle){ DICA_PAINEL.x + 22, DICA_PAINEL.y, 110, 24 }, 11, corBranco);
-    DesenharBotaoFecharPadrao((Rectangle){ DICA_PAINEL.x + DICA_PAINEL.width - 20, DICA_PAINEL.y + 4, 16, 16 });
-
-    // Cronometro: numero na barra de titulo e faixa de progresso logo abaixo (fica vermelha no fim)
-    if (g_dicaEstado == 0) {
-        bool urgente = g_dicaTempo <= 10.0f;
-        bool piscaOn = !urgente || fmodf((float)GetTime(), 0.5f) < 0.3f;
-        Color corTempo = urgente ? COR_NEGACAO_CLARO : verdeClaro;
-        char tempoTxt[16];
-        snprintf(tempoTxt, sizeof tempoTxt, "%d s", (int)ceilf(g_dicaTempo));
-        if (piscaOn) DrawTextInArea(tempoTxt, (Rectangle){ DICA_PAINEL.x + DICA_PAINEL.width - 76, DICA_PAINEL.y, 52, 24 }, 12, corTempo);
-        float frac = g_dicaTempo / DICA_TEMPO_TOTAL;
-        DrawRectangleRec(ParaTela((Rectangle){ DICA_PAINEL.x + 2, DICA_PAINEL.y + 24, DICA_PAINEL.width - 4, 4 }), corEscura);
-        DrawRectangleRec(ParaTela((Rectangle){ DICA_PAINEL.x + 2, DICA_PAINEL.y + 24, (DICA_PAINEL.width - 4) * frac, 4 }),
-                         urgente ? COR_NEGACAO : verdeClaro);
-    }
-
-    // ---------------- Explicacao em 3 paginas (antes do cronometro comecar) ----------------
-    if (g_dicaEstado == 3) {
-        if (g_dicaPagina == 0) {
-            DrawTextLeftAligned("1/3   Entenda a frase", (Vector2){ x, y + 32 }, 11, corEscura);
-            DrawTextWrappedLeftAligned("Toda frase tem duas partes, chamadas de p e q. Veja um exemplo:",
-                                       (Vector2){ x, y + 50 }, largura, 10, corEscura);
-            Rectangle ex = { x, y + 80, largura, 26 };
-            DrawRectangleRec(ParaTela(ex), corEscura);
-            DrawRectangleLinesEx(ParaTela(ex), 1.0f, corDestaque);
-            DrawTextLeftAligned(">", (Vector2){ ex.x + 6, ex.y + 7 }, 12, COR_NEGACAO_CLARO);
-            DrawTextLeftAligned("Chove e faz frio.", (Vector2){ ex.x + 20, ex.y + 7 }, 12, corBranco);
-            DesenharChipProposicao((Rectangle){ x, y + 114, largura, 24 }, "p", "chove");
-            DesenharChipProposicao((Rectangle){ x, y + 142, largura, 24 }, "q", "faz frio");
-            DrawTextLeftAligned("Escreva a frase só com símbolos:", (Vector2){ x, y + 172 }, 10, corEscura);
-            {   // Linha: O [e] vira [simbolo do E]
-                float esc = EscalaVirtDica(), xx = x, yy = y + 187;
-                DrawTextLeftAligned("O", (Vector2){ xx, yy + 4 }, 11, corEscura);
-                xx += (float)MeasureText("O", (int)(11 * esc)) / esc + 6;
-                Rectangle chipE = { xx, yy, 18, 18 };
-                DrawRectangleRec(ParaTela(chipE), corEscura);
-                DrawTextInArea("e", chipE, 12, corBranco);
-                xx += 18 + 6;
-                DrawTextLeftAligned("vira", (Vector2){ xx, yy + 4 }, 11, corEscura);
-                xx += (float)MeasureText("vira", (int)(11 * esc)) / esc + 6;
-                Rectangle chipS = { xx, yy, 28, 18 };
-                DrawRectangleRec(ParaTela(chipS), corEscura);
-                DesenharFormulaDicaCentro("^", chipS, 14, corBranco, true);
-            }
-            Rectangle resp = { x, y + 210, largura, 28 };
-            DrawRectangleRec(ParaTela(resp), corEscura);
-            DrawRectangleLinesEx(ParaTela(resp), 1.0f, verdeClaro);
-            DesenharFormulaDicaCentro("p ^ q", resp, 16, corBranco, true);
-        } else if (g_dicaPagina == 1) {
-            DrawTextLeftAligned("2/3   O que cada símbolo diz", (Vector2){ x, y + 32 }, 11, corEscura);
-            static const char *simb[6]  = { "~", "^", "v", "->", "<->", "( )" };
-            static const char *nome[6]  = { "NÃO", "E", "OU", "SE ... ENTÃO", "SE E SOMENTE SE", "AGRUPA" };
-            static const char *exF[6] = { "~p", "p ^ q", "p v q", "p -> q", "p <-> q", "~(p ^ q)" };
-            static const char *exM[6] = {
-                "= não p",
-                "= p e q",
-                "= p ou q",
-                "= se p então q",
-                "= os dois valem ou nenhum vale",
-                "= não (p e q)"
-            };
-            for (int i = 0; i < 6; i++) {
-                Rectangle lin = { x, y + 48 + i * 31, largura, 28 };
-                DrawRectangleRec(ParaTela(lin), corClaro);
-                DrawRectangleLinesEx(ParaTela(lin), 1.0f, corDestaque);
-                Rectangle selo = { lin.x, lin.y, 48, lin.height };
-                DrawRectangleRec(ParaTela(selo), corEscura);
-                DesenharFormulaDicaCentro(simb[i], selo, 16, corBranco, true);
-                DrawTextLeftAligned(nome[i], (Vector2){ lin.x + 54, lin.y + 2 }, 9, corEscura);
-                float wF = DesenharFormulaDicaVirt(exF[i], (Vector2){ lin.x + 54, lin.y + 14 }, 10, corEscura, true);
-                DrawTextLeftAligned(exM[i], (Vector2){ lin.x + 54 + wF + 5, lin.y + 15 }, 9, corEscura);
-            }
-        } else {
-            DrawTextLeftAligned("3/3   O desafio", (Vector2){ x, y + 32 }, 11, corEscura);
-            Rectangle relogio = { x, y + 52, largura, 46 };
-            DrawRectangleRec(ParaTela(relogio), corEscura);
-            DrawRectangleLinesEx(ParaTela(relogio), 1.0f, verdeClaro);
-            DrawTextInArea("45 SEGUNDOS", (Rectangle){ relogio.x, relogio.y + 3, relogio.width, 24 }, 16, verdeClaro);
-            DrawTextInArea("o tempo só começa no botão abaixo", (Rectangle){ relogio.x, relogio.y + 27, relogio.width, 16 }, 9, corBranco);
-            DrawTextWrappedLeftAligned("- Clique nos blocos para montar a fórmula e aperte Enviar.",
-                                       (Vector2){ x, y + 112 }, largura, 10, corEscura);
-            DrawTextWrappedLeftAligned("- Passe o mouse num bloco para ver o que ele significa.",
-                                       (Vector2){ x, y + 142 }, largura, 10, corEscura);
-            DrawTextWrappedLeftAligned("- Acertou: a entrevista não gasta tokens.",
-                                       (Vector2){ x, y + 172 }, largura, 10, verde);
-            DrawTextWrappedLeftAligned("- Errou ou o tempo acabou: a dica só volta amanhã.",
-                                       (Vector2){ x, y + 196 }, largura, 10, COR_NEGACAO_FUNDO);
-        }
-
-        // Indicador de pagina (3 quadradinhos)
-        for (int i = 0; i < DICA_NUM_PAGINAS; i++) {
-            Rectangle d = { DICA_PAINEL.x + DICA_PAINEL.width * 0.5f - 17.0f + i * 12.0f, y + 245, 9, 6 };
-            DrawRectangleRec(ParaTela(d), (i == g_dicaPagina) ? corEscura : corDestaque);
-        }
-
-        // Botoes de navegacao
-        bool ultima = (g_dicaPagina == DICA_NUM_PAGINAS - 1);
-        Rectangle rProx = (g_dicaPagina == 0) ? BotaoComecarDica() : BotaoEnviarDica();
-        if (g_dicaPagina > 0) {
-            Rectangle rV = BotaoApagarDica();
-            DesenharBotaoDicaT(rV, "< Voltar", 11, CheckCollisionPointRec(mouse, ParaTela(rV)),
-                               corClaro, corDestaque, corEscura, corBranco, corEscura);
-        }
-        DesenharBotaoDicaT(rProx, ultima ? "Começar!" : "Próximo >", 12, CheckCollisionPointRec(mouse, ParaTela(rProx)),
-                           verde, verdeHover, verdeClaro, corBranco, corBranco);
-        return;
-    }
-
-    // ---------------- Desafio ----------------
-    // Proposicao numa "tela de terminal": fundo escuro, texto claro e scanlines
-    Rectangle tela = { x, y + 32, largura, 48 };
-    DrawRectangleRec(ParaTela(tela), corEscura);
-    for (float ly = tela.y + 1; ly < tela.y + tela.height; ly += 2.0f) {
-        DrawRectangleRec(ParaTela((Rectangle){ tela.x, ly, tela.width, 1 }), Fade(BLACK, 0.35f));
-    }
-    DrawRectangleLinesEx(ParaTela(tela), 1.0f, corDestaque);
-    DrawTextLeftAligned(">", (Vector2){ tela.x + 6, tela.y + 6 }, 11, COR_NEGACAO_CLARO);
-    DrawTextWrappedLeftAligned(p->frase, (Vector2){ tela.x + 20, tela.y + 6 }, tela.width - 26, 11, corBranco);
-
-    // Legenda: o que p e q significam
-    DesenharChipProposicao((Rectangle){ x, y + 86,  largura, 26 }, "p", p->p);
-    DesenharChipProposicao((Rectangle){ x, y + 116, largura, 26 }, "q", p->q);
-
-    if (g_dicaEstado == 0) {
-        // Legenda do bloco sob o mouse (ou instrucao) e visor da formula montada
-        int blocoSob = -1;
-        for (int i = 0; i < 9; i++) if (CheckCollisionPointRec(mouse, ParaTela(BlocoDica(i)))) blocoSob = i;
-        if (blocoSob < 0) {
-            DrawTextLeftAligned("Monte a forma simbólica:", (Vector2){ x, y + 148 }, 10, corEscura);
-        } else {
-            float wSim = DesenharFormulaDicaVirt(TOKEN_TXT[BLOCO_TOKEN[blocoSob]], (Vector2){ x, y + 147 }, 11, corEscura, true);
-            DrawTextLeftAligned(BLOCO_AJUDA[blocoSob], (Vector2){ x + wSim + 5, y + 148 }, 10, corEscura);
-        }
-        Rectangle visor = { x, y + 162, largura, 26 };
-        bool invalida = g_dicaInvalidaT > 0.0f;
-        DrawRectangleRec(ParaTela(visor), corEscura);
-        DrawRectangleLinesEx(ParaTela(visor), 1.0f, invalida ? COR_NEGACAO_CLARO : corDestaque);
-        char txt[96];
-        if (invalida) {
-            snprintf(txt, sizeof txt, "Fórmula inválida!");
-        } else {
-            FormulaParaTexto(g_dicaFormula, g_dicaNFormula, txt, sizeof txt);
-            if (fmodf((float)GetTime(), 1.0f) < 0.5f) strncat(txt, "_", sizeof txt - strlen(txt) - 1);
-        }
-        DesenharFormulaDicaVirt(txt, (Vector2){ visor.x + 8, visor.y + 6 }, 14, invalida ? COR_NEGACAO_CLARO : corBranco, !invalida);
-
-        // Blocos grandes: variaveis em bege, operadores em cinza claro
-        for (int i = 0; i < 9; i++) {
-            Rectangle r = BlocoDica(i);
-            bool hover = CheckCollisionPointRec(mouse, ParaTela(r));
-            bool variavel = (BLOCO_TOKEN[i] == T_P || BLOCO_TOKEN[i] == T_Q);
-            DesenharBotaoDicaT(r, "", 16, hover,
-                               variavel ? corDestaque : corClaro, corBranco, corEscura, corBranco, corEscura);
-            DesenharFormulaDicaCentro(TOKEN_TXT[BLOCO_TOKEN[i]], r, 16, corEscura, true);
-        }
-        Rectangle rA = BotaoApagarDica(), rE = BotaoEnviarDica();
-        DesenharBotaoDicaT(rA, "Apagar", 12, CheckCollisionPointRec(mouse, ParaTela(rA)),
-                           COR_NEGACAO_FUNDO, COR_NEGACAO, COR_NEGACAO_CLARO, corBranco, corBranco);
-        DesenharBotaoDicaT(rE, "Enviar", 12, CheckCollisionPointRec(mouse, ParaTela(rE)),
-                           verde, verdeHover, verdeClaro, corBranco, corBranco);
-    } else {
-        // Resultado: faixa verde/vermelha com icone de certo/errado
-        const char *nome = (g_funcionario < g_numFichas) ? g_fichas[g_funcionario].nome : "este funcionário";
-        bool acertou = (g_dicaEstado == 1);
-        Rectangle badge = { x, y + 152, largura, 90 };
-        Color badgeFundo = acertou ? verde : COR_NEGACAO_FUNDO;
-        Color badgeBorda = acertou ? verdeClaro : COR_NEGACAO_CLARO;
-        DrawRectangleRec(ParaTela(badge), badgeFundo);
-        DrawRectangleLinesEx(ParaTela(badge), 1.5f, badgeBorda);
-
-        Rectangle rIco = ParaTela((Rectangle){ badge.x + 8, badge.y + 8, 26, 26 });
-        DrawRectangleRec(rIco, corEscura);
-        float cx = rIco.x + rIco.width * 0.5f, cy = rIco.y + rIco.height * 0.5f, k = rIco.width * 0.25f;
-        if (acertou) {
-            DrawLineEx((Vector2){ cx - k, cy }, (Vector2){ cx - k * 0.3f, cy + k * 0.8f }, 2.5f, badgeBorda);
-            DrawLineEx((Vector2){ cx - k * 0.3f, cy + k * 0.8f }, (Vector2){ cx + k, cy - k * 0.8f }, 2.5f, badgeBorda);
-        } else {
-            DrawLineEx((Vector2){ cx - k, cy - k }, (Vector2){ cx + k, cy + k }, 2.5f, badgeBorda);
-            DrawLineEx((Vector2){ cx + k, cy - k }, (Vector2){ cx - k, cy + k }, 2.5f, badgeBorda);
-        }
-        float tx = badge.x + 42, tw = badge.width - 50, esc = EscalaVirtDica();
-        if (acertou) {
-            char msg[160];
-            snprintf(msg, sizeof msg, "Correto! A entrevista com %s não gasta tokens.", nome);
-            DrawTextWrappedLeftAligned(msg, (Vector2){ tx, badge.y + 8 }, tw, 11, corBranco);
-        } else {
-            float yy = badge.y + 8;
-            DrawTextLeftAligned(g_dicaTempoEsgotado ? "Tempo esgotado!" : "Errado!", (Vector2){ tx, yy }, 12, corBranco);
-            yy += 20;
-            if (!g_dicaTempoEsgotado) {
-                char sua[96];
-                FormulaParaTexto(g_dicaFormula, g_dicaNFormula, sua, sizeof sua);
-                DrawTextLeftAligned("Você montou:", (Vector2){ tx, yy + 2 }, 10, corBranco);
-                float wl = (float)MeasureText("Você montou:", (int)(10 * esc)) / esc;
-                DesenharFormulaDicaVirt(sua, (Vector2){ tx + wl + 6, yy }, 12, corBranco, true);
-                yy += 20;
-            }
-            DrawTextLeftAligned("Resposta certa:", (Vector2){ tx, yy + 2 }, 10, corBranco);
-            float wl = (float)MeasureText("Resposta certa:", (int)(10 * esc)) / esc;
-            DesenharFormulaDicaVirt(p->resposta, (Vector2){ tx + wl + 6, yy }, 12, corBranco, true);
-            DrawTextLeftAligned("A dica só volta amanhã.", (Vector2){ badge.x + 8, badge.y + 68 }, 10, corBranco);
-        }
-
-        DesenharBotaoDicaT(DICA_OK, "OK", 12, CheckCollisionPointRec(mouse, ParaTela(DICA_OK)),
-                           corClaro, corDestaque, corEscura, corBranco, corEscura);
-    }
-}
-
-// Desenha o painel da dica (se estiver aberto): conteudo com tremida + particulas por cima
-static void DesenharDica(void) {
-    if (!g_dicaAberta) return;
-    bool tremendo = g_dicaShake > 0.0f;
-    if (tremendo) {
-        float a = g_dicaShakeAmp * (g_dicaShake / 0.3f > 1.0f ? 1.0f : g_dicaShake / 0.3f);
-        float tt = (float)GetTime() * 70.0f;
-        rlPushMatrix();
-        rlTranslatef(sinf(tt) * a, cosf(tt * 1.3f) * a * 0.5f, 0.0f);
-    }
-    DesenharDicaConteudo();
-    if (tremendo) rlPopMatrix();
-    DesenharParticulasDica();
-}
-
+#define g_dicaAberta              LogicHintIsOpen()
+#define DicaDisponivel()          LogicHintIsAvailable(g_dialogLoaded)
+#define AbrirDica()               LogicHintOpen(g_dialogLoaded, &g_tutDicaVisto)
+#define FecharDica()              LogicHintClose()
+#define UpdateDica()              LogicHintUpdate()
+#define DesenharDica()            LogicHintDraw((g_funcionario < g_numFichas) ? g_fichas[g_funcionario].nome : NULL)
+#define EncerrarEntrevistaLiberada() LogicHintEndInterview()
+#define LiberarSonsDica()         LogicHintUnload()
 // Quadrante 2 (Inferior Esquerdo: OPCOES_AREA = { 3, 227, 298, 130 })
 #define DIALOG_BOX_X      11.0f
 #define DIALOG_BOX_W      282.0f
@@ -4093,7 +2717,7 @@ static const Rectangle PAUSA_BTN_SIM = { 329.0f, 268.0f, 140.0f,  26.0f };
 #define PAUSA_Y_PERGUNTA  239.0f
 
 static const OptionsUiLayout LAYOUT_PAUSA = {
-    .x = 171.0f, .direita = 469.0f, .yPrimeira = 96.0f, .passoY = 24.0f,
+    .x = 171.0f, .direita = 469.0f, .yPrimeira = 86.0f, .passoY = 21.0f,
     .larguraValor = 40.0f, .gapNome = 10.0f
 };
 
@@ -4592,9 +3216,7 @@ static void DesenharMapaHolo(void) {
 }
 
 static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
-    Color textColor  = (Color){ 32, 29, 31, 255 };
-    Color bgColor    = (Color){ 125, 112, 113, 255 };
-    Color hoverColor = (Color){ 160, 147, 142, 255 };
+        Color textColor  = (Color){ 32, 29, 31, 255 };
     Color borderColor = (Color){ 160, 147, 142, 255 };
 
     // Barra de título no topo do painel da direita (mostra o mapa fora do interrogatório;
@@ -5139,9 +3761,9 @@ void GameplaySceneResetDialogues(void) {
     }
     memset(g_hotspotAtivoHoje, 0, sizeof g_hotspotAtivoHoje);
     // Dia novo: a dica e as ferramentas de teste voltam a ficar disponiveis
-    g_dicaUsadaHoje = false;
+    if (GameStateGetDay() <= 1) LogicHintResetRun();
+    else LogicHintResetDay();
     g_testeEspecialHoje = false;
-    g_dicaAberta = false;
     g_deepfakeAberto = false;
     g_pranchetaAberta = false;
     g_pranchetaMinimizada = false;
@@ -5189,20 +3811,6 @@ bool GameplaySceneDayFinished(void) {
         if (GetAvailableChoices(&g_trees[t], restantes) > 0) return false;
     }
     return true;
-}
-
-static Texture2D CriarSilhuetaIcone(const char *caminho) {
-    Image img = LoadImage(caminho);
-    ImageFormat(&img, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
-    Color *px = (Color *)img.data;
-    int total = img.width * img.height;
-    for (int i = 0; i < total; i++) {
-        if (px[i].a > 0) px[i] = (Color){ 255, 242, 230, px[i].a };
-    }
-    Texture2D tex = LoadTextureFromImage(img);
-    UnloadImage(img);
-    SetTextureFilter(tex, TEXTURE_FILTER_POINT);
-    return tex;
 }
 
 // Sintetiza um blip de voz com timbre exclusivo para cada suspeito (sem alterar blip_patricia.wav da jornalista)
@@ -5318,26 +3926,6 @@ static Sound CriarBlipVozJogador(TomVozJogador tom) {
     return s;
 }
 
-static Texture2D CriarSilhuetaBranca(const char *caminho) {
-    Image img = LoadImage(caminho);
-    if (img.data == NULL) return (Texture2D){ 0 };
-    ImageFormat(&img, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
-    Color *px = (Color *)img.data;
-    int total = img.width * img.height;
-    for (int i = 0; i < total; i++) {
-        if (px[i].a > 20) {
-            px[i] = (Color){ 255, 255, 255, px[i].a };
-        } else {
-            px[i].a = 0;
-        }
-    }
-    Texture2D tex = LoadTextureFromImage(img);
-    UnloadImage(img);
-    GenTextureMipmaps(&tex);
-    SetTextureFilter(tex, TEXTURE_FILTER_BILINEAR);
-    return tex;
-}
-
 bool InitGameplayScene(void) {
     g_shouldClose = false;
     g_irParaSelecao = false;
@@ -5424,21 +4012,24 @@ bool InitGameplayScene(void) {
     g_silSilhuetasBrancas[2] = CriarSilhuetaBranca("assets/sprites/personagens/sil_ana_lucia.png");
     SetTextureFilter(g_silSilhuetasBrancas[2], TEXTURE_FILTER_POINT);
 
-    // Sons de voz sintetizados estilo Undertale (Maria delicada, Arthur grave, Ana Lucia rispida)
+    // Sons de voz sintetizados estilo Undertale (carrega apenas o tom escolhido do jogador)
     g_blipSounds[0] = CriarBlipVozSuspeito(0);
     g_blipSounds[1] = CriarBlipVozSuspeito(1);
     g_blipSounds[2] = CriarBlipVozSuspeito(2);
-    g_blipPlayerVoz[VOZ_GRAVE] = CriarBlipVozJogador(VOZ_GRAVE);
-    g_blipPlayerVoz[VOZ_MEDIA] = CriarBlipVozJogador(VOZ_MEDIA);
-    g_blipPlayerVoz[VOZ_SUAVE] = CriarBlipVozJogador(VOZ_SUAVE);
-    for (int p = 0; p < GAME_NUM_PLAYERS; p++) {
+    for (int v = 0; v < 3; v++) g_blipPlayerVoz[v] = (Sound){ 0 };
+    TomVozJogador tomAtivo = GameStateGetPlayerVoiceTone();
+    if (tomAtivo >= 0 && tomAtivo < 3) {
+        g_blipPlayerVoz[tomAtivo] = CriarBlipVozJogador(tomAtivo);
+    }
+    // Carrega apenas o retrato do avatar selecionado pelo jogador nesta run
+    for (int p = 0; p < GAME_NUM_PLAYERS; p++) g_playerTextures[p] = (Texture2D){ 0 };
+    int avatarAtivo = GameStateGetPlayerAvatar();
+    if (avatarAtivo >= 0 && avatarAtivo < GAME_NUM_PLAYERS) {
         char pPath[96];
-        snprintf(pPath, sizeof pPath, "assets/sprites/players/player_%d.png", p + 1);
+        snprintf(pPath, sizeof pPath, "assets/sprites/players/player_%d.png", avatarAtivo + 1);
         if (FileExists(pPath)) {
-            g_playerTextures[p] = LoadTexture(pPath);
-            SetTextureFilter(g_playerTextures[p], TEXTURE_FILTER_POINT);
-        } else {
-            g_playerTextures[p] = (Texture2D){ 0 };
+            g_playerTextures[avatarAtivo] = LoadTexture(pPath);
+            SetTextureFilter(g_playerTextures[avatarAtivo], TEXTURE_FILTER_POINT);
         }
     }
     memset(&g_posePlayerFrom, 0, sizeof g_posePlayerFrom);
@@ -5486,34 +4077,28 @@ bool InitGameplayScene(void) {
     g_interface = LoadTexture("assets/sprites/interface/spr_interface_principal.png");
     SetTextureFilter(g_interface, TEXTURE_FILTER_POINT);
 
-    // Fundo animado procedural com Perlin Noise e Bayer dithering nos quadrantes de demarcação
-    Image n1 = GenImagePerlinNoise(VIRTUAL_W, VIRTUAL_H, 0, 0, 4.5f);
-    Image n2 = GenImagePerlinNoise(VIRTUAL_W, VIRTUAL_H, 137, 293, 14.0f);
-    g_noise1 = LoadTextureFromImage(n1);
-    g_noise2 = LoadTextureFromImage(n2);
-    UnloadImage(n1);
-    UnloadImage(n2);
-    SetTextureFilter(g_noise1, TEXTURE_FILTER_BILINEAR);
-    SetTextureFilter(g_noise2, TEXTURE_FILTER_BILINEAR);
+    // Fundo animado procedural com Perlin Noise e Bayer dithering compartilhado
+    UIBgShaderInit(&g_bgShader);
 
-    Image br = GenImageColor(VIRTUAL_W, VIRTUAL_H, WHITE);
-    g_fundoBranco = LoadTextureFromImage(br);
-    UnloadImage(br);
-    SetTextureFilter(g_fundoBranco, TEXTURE_FILTER_POINT);
-
-    g_shaderFundo = LoadShaderFromMemory(NULL, SHADER_FUNDO_FS);
-    if (g_shaderFundo.id > 0) {
-        g_shaderTimeLoc   = GetShaderLocation(g_shaderFundo, "time");
-        g_shaderNoise1Loc = GetShaderLocation(g_shaderFundo, "noiseTex1");
-        g_shaderNoise2Loc = GetShaderLocation(g_shaderFundo, "noiseTex2");
-    }
-
+    // Carrega fundos das salas deduplicando caminhos identicos
+    const char *caminhosCarregados[NUM_LOCAIS] = { 0 };
     for (int i = 0; i < NUM_LOCAIS; i++) {
         const char *caminho = (i == LOCAL_ESCADA_TERREO && SettingsGetDevMode())
             ? FUNDO_ESCADA_SUBSOLO
             : LOCAIS[i].fundo;
-        g_fundos[i] = LoadTexture(caminho);
-        SetTextureFilter(g_fundos[i], TEXTURE_FILTER_POINT);
+        caminhosCarregados[i] = caminho;
+        bool reusado = false;
+        for (int j = 0; j < i; j++) {
+            if (caminhosCarregados[j] && strcmp(caminhosCarregados[j], caminho) == 0) {
+                g_fundos[i] = g_fundos[j];
+                reusado = true;
+                break;
+            }
+        }
+        if (!reusado) {
+            g_fundos[i] = LoadTexture(caminho);
+            SetTextureFilter(g_fundos[i], TEXTURE_FILTER_POINT);
+        }
     }
     g_texGeladeiraAberta = LoadTexture("assets/sprites/evidencias/spr_geladeira_aberta.png");
     SetTextureFilter(g_texGeladeiraAberta, TEXTURE_FILTER_POINT);
@@ -5660,7 +4245,7 @@ bool InitGameplayScene(void) {
     SetTextureFilter(g_dicaAceso, TEXTURE_FILTER_POINT);
     g_dicaApagado = LoadTexture("assets/sprites/icones/spr_botao_dica_apagado.png");
     SetTextureFilter(g_dicaApagado, TEXTURE_FILTER_POINT);
-    g_dicaAberta = false;
+    LogicHintInit(g_dicaAceso);
 
     if (!CarregarFichas("assets/data/fichas_funcionarios.txt")) {
         TraceLog(LOG_ERROR, "Falha ao carregar as fichas dos funcionarios");
@@ -5696,44 +4281,6 @@ bool InitGameplayScene(void) {
 }
 
 // ---------- Leitura do arquivo de fichas ----------
-
-// Troca letras acentuadas (UTF-8) pela versao sem acento. Preserva Unicode valido nao mapeado.
-static bool RemoverAcentos(char *dest, int tam, const char *src) {
-    if (!dest || !src || tam <= 0) return false;
-    static const char TABELA[] = "AAAAAAACEEEEIIIIDNOOOOOxOUUUUYTsaaaaaaaceeeeiiiidnooooo/ouuuuyty";
-    dest[0] = '\0';
-    int j = 0;
-    bool utf8Valido = true;
-    for (int i = 0; src[i] != '\0'; i++) {
-        unsigned char c = (unsigned char)src[i];
-        if (j >= tam - 1) break;
-        if (c < 0x80) {
-            dest[j++] = (char)c;
-        } else if (c == 0xC3 && (unsigned char)src[i + 1] >= 0x80 && (unsigned char)src[i + 1] <= 0xBF) {
-            unsigned char c2 = (unsigned char)src[++i];
-            dest[j++] = TABELA[c2 - 0x80];
-        } else if (c >= 0xC2 && c <= 0xDF) {
-            unsigned char c2 = (unsigned char)src[i + 1];
-            if (c2 >= 0x80 && c2 <= 0xBF && j <= tam - 3) {
-                dest[j++] = (char)c; dest[j++] = (char)c2; i++;
-            } else utf8Valido = false;
-        } else if (c >= 0xE0 && c <= 0xEF) {
-            unsigned char c2 = (unsigned char)src[i + 1], c3 = (unsigned char)src[i + 2];
-            if (c2 >= 0x80 && c2 <= 0xBF && c3 >= 0x80 && c3 <= 0xBF && j <= tam - 4) {
-                dest[j++] = (char)c; dest[j++] = (char)c2; dest[j++] = (char)c3; i += 2;
-            } else utf8Valido = false;
-        } else if (c >= 0xF0 && c <= 0xF4) {
-            unsigned char c2 = (unsigned char)src[i + 1], c3 = (unsigned char)src[i + 2], c4 = (unsigned char)src[i + 3];
-            if (c2 >= 0x80 && c2 <= 0xBF && c3 >= 0x80 && c3 <= 0xBF && c4 >= 0x80 && c4 <= 0xBF && j <= tam - 5) {
-                dest[j++] = (char)c; dest[j++] = (char)c2; dest[j++] = (char)c3; dest[j++] = (char)c4; i += 3;
-            } else utf8Valido = false;
-        } else {
-            utf8Valido = false;
-        }
-    }
-    dest[j] = '\0';
-    return utf8Valido;
-}
 
 // Copia tirando espacos do comeco e a quebra de linha do fim
 static bool CopiarTexto(char *dest, int tam, const char *src) {
@@ -8491,7 +7038,16 @@ void UnloadGameplayScene(void) {
     g_treesLoaded = false;
     g_dialogLoaded = false;
     g_tree = NULL;
-    for (int i = 0; i < NUM_LOCAIS; i++) UnloadTexture(g_fundos[i]);
+    for (int i = 0; i < NUM_LOCAIS; i++) {
+        if (g_fundos[i].id > 0) {
+            bool duplicado = false;
+            for (int j = 0; j < i; j++) {
+                if (g_fundos[j].id == g_fundos[i].id) { duplicado = true; break; }
+            }
+            if (!duplicado) UnloadTexture(g_fundos[i]);
+        }
+    }
+    for (int i = 0; i < NUM_LOCAIS; i++) g_fundos[i] = (Texture2D){ 0 };
     if (g_texGeladeiraAberta.id > 0) UnloadTexture(g_texGeladeiraAberta);
     if (g_texComputerSecret.id > 0) UnloadTexture(g_texComputerSecret);
     if (g_texCrachaDestaque.id > 0)  UnloadTexture(g_texCrachaDestaque);
@@ -8597,14 +7153,8 @@ void UnloadGameplayScene(void) {
         UnloadSound(g_sndHover);
         g_sndHover = (Sound){ 0 };
     }
-    UnloadTexture(g_interface);
-    UnloadTexture(g_fundoBranco);
-    UnloadTexture(g_noise1);
-    UnloadTexture(g_noise2);
-    if (g_shaderFundo.id > 0) {
-        UnloadShader(g_shaderFundo);
-        g_shaderFundo = (Shader){ 0 };
-    }
+    UISafeUnloadTexture(&g_interface);
+    UIBgShaderUnload(&g_bgShader);
     EncerrarEntrevistaLiberada();   // sair pelo mapa tambem encerra a entrevista
     RayCanvasClose();
 }

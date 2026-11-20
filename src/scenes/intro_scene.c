@@ -1,13 +1,14 @@
 #include "raylib.h"
 #include "intro_scene.h"
-#include "../utils/settings.h"
-#include "../utils/raycanvas.h"
-#include "../utils/game_state.h"
+#include "settings.h"
+#include "raycanvas.h"
+#include "game_state.h"
+#include "ui_common.h"
 #include <stdio.h>
 
 // Mesmo espaco virtual das outras cenas (640x360)
-#define VIRTUAL_W 640
-#define VIRTUAL_H 360
+#define VIRTUAL_W UI_VIRTUAL_W
+#define VIRTUAL_H UI_VIRTUAL_H
 
 #define TEXT_FONT      16     // tamanho da fonte do texto (espaco virtual)
 #define TEXT_W         520    // largura maxima de uma linha (espaco virtual)
@@ -40,42 +41,13 @@ static char  g_linhas[MAX_LINHAS][LINHA_LEN];   // texto ja quebrado em linhas
 static float g_tempo = 0.0f;                    // segundos desde que a cena abriu
 static bool  g_prosseguir = false;
 
-// Texturas de Perlin Noise e Shader animado do menu
-static Texture2D g_noise1;
-static Texture2D g_noise2;
-static Shader    g_shaderFundo;
-static int       g_shaderTimeLoc = -1;
-static int       g_shaderNoise1Loc = -1;
-static int       g_shaderNoise2Loc = -1;
-static Texture2D g_fundoBranco;
-static Sound     g_sndHover;
-static bool      g_btnHoverAnt = false;
+static UIBgShader g_bgShader = { 0 };
+static Sound      g_sndHover = { 0 };
+static bool       g_btnHoverAnt = false;
 
-static Rectangle GetTelaRect(void) {
-    return RayCanvasGetRect(
-        (Vector2){ 0.5f, 0.5f },
-        (Vector2){ 0.5f, 0.5f },
-        (Vector2){ 0.0f, 0.0f },
-        (Vector2){ (float)VIRTUAL_W, (float)VIRTUAL_H }
-    );
-}
-
-static Rectangle ParaTela(Rectangle r) {
-    Rectangle tela = GetTelaRect();
-    float escalaX = tela.width  / (float)VIRTUAL_W;
-    float escalaY = tela.height / (float)VIRTUAL_H;
-
-    return (Rectangle){
-        tela.x + r.x * escalaX,
-        tela.y + r.y * escalaY,
-        r.width  * escalaX,
-        r.height * escalaY
-    };
-}
-
-static float Escala(void) {
-    return GetTelaRect().width / (float)VIRTUAL_W;
-}
+#define GetTelaRect UIGetTelaRect
+#define ParaTela    UIParaTela
+#define Escala      UIGetEscala
 
 // Quebra os paragrafos em linhas que caibam em 'larguraMax' (pixels reais),
 // deixando uma linha em branco entre paragrafos. Devolve quantas linhas.
@@ -125,79 +97,13 @@ bool InitIntroScene(void) {
     snprintf(g_ultimoParagrafo, sizeof g_ultimoParagrafo, "Você tem %d dias.", GAME_NUM_DAYS);
     g_paragrafos[NUM_PARAGRAFOS - 1] = g_ultimoParagrafo;
 
-    // Gera texturas Perlin noise procedurais identicas ao menu
-    Image n1 = GenImagePerlinNoise(VIRTUAL_W, VIRTUAL_H, 0, 0, 4.5f);
-    Image n2 = GenImagePerlinNoise(VIRTUAL_W, VIRTUAL_H, 137, 293, 14.0f);
-    g_noise1 = LoadTextureFromImage(n1);
-    g_noise2 = LoadTextureFromImage(n2);
-    UnloadImage(n1);
-    UnloadImage(n2);
-    SetTextureFilter(g_noise1, TEXTURE_FILTER_BILINEAR);
-    SetTextureFilter(g_noise2, TEXTURE_FILTER_BILINEAR);
-
-    Image br = GenImageColor(VIRTUAL_W, VIRTUAL_H, WHITE);
-    g_fundoBranco = LoadTextureFromImage(br);
-    UnloadImage(br);
-    SetTextureFilter(g_fundoBranco, TEXTURE_FILTER_POINT);
-
     if (FileExists("assets/audio/sfx_hover.wav")) {
         g_sndHover = LoadSound("assets/audio/sfx_hover.wav");
     }
     g_btnHoverAnt = false;
 
-    const char *shaderFs =
-        "#version 330\n"
-        "in vec2 fragTexCoord;\n"
-        "in vec4 fragColor;\n"
-        "uniform sampler2D texture0;\n"
-        "uniform sampler2D noiseTex1;\n"
-        "uniform sampler2D noiseTex2;\n"
-        "uniform float time;\n"
-        "out vec4 finalColor;\n"
-        "float bayer4x4(vec2 p) {\n"
-        "    int x = int(mod(p.x, 4.0));\n"
-        "    int y = int(mod(p.y, 4.0));\n"
-        "    int idx = y * 4 + x;\n"
-        "    const int m[16] = int[16](\n"
-        "         0,  8,  2, 10,\n"
-        "        12,  4, 14,  6,\n"
-        "         3, 11,  1,  9,\n"
-        "        15,  7, 13,  5\n"
-        "    );\n"
-        "    return (float(m[idx]) / 15.0) - 0.5;\n"
-        "}\n"
-        "void main() {\n"
-        "    vec2 px = floor(fragTexCoord * vec2(640.0, 360.0));\n"
-        "    vec2 uv = px / vec2(640.0, 360.0);\n"
-        "    vec2 drift1 = vec2(sin(time * 0.14) * 0.012, cos(time * 0.11) * 0.012);\n"
-        "    vec2 drift2 = vec2(cos(time * 0.18) * 0.018, sin(time * 0.15) * 0.018);\n"
-        "    float v1 = texture(noiseTex1, clamp(uv + drift1, 0.002, 0.998)).r;\n"
-        "    float v2 = texture(noiseTex2, clamp(uv + drift2, 0.002, 0.998)).r;\n"
-        "    float val = v1 * 0.65 + v2 * 0.35;\n"
-        "    float onda = sin(val * 16.0 + time * 0.35);\n"
-        "    float b = bayer4x4(px);\n"
-        "    float dOnda = b * 0.28;\n"
-        "    float dVal  = b * 0.18;\n"
-        "    vec3 cPreto   = vec3(  0.0,   0.0,   0.0) / 255.0;\n"
-        "    vec3 cEscuro  = vec3( 32.0,  29.0,  31.0) / 255.0;\n"
-        "    vec3 cMedio   = vec3( 90.0,  83.0,  83.0) / 255.0;\n"
-        "    vec3 cClaro   = vec3(125.0, 112.0, 113.0) / 255.0;\n"
-        "    vec3 col = cEscuro;\n"
-        "    if (val + dVal < 0.36 || onda + dOnda < -0.45) col = cPreto;\n"
-        "    else if (onda + dOnda > 0.65) col = cClaro;\n"
-        "    else if (onda + dOnda > 0.20) col = cMedio;\n"
-        "    finalColor = vec4(col, 1.0) * fragColor;\n"
-        "}\n";
-
-    g_shaderFundo = LoadShaderFromMemory(NULL, shaderFs);
-    if (g_shaderFundo.id > 0) {
-        g_shaderTimeLoc   = GetShaderLocation(g_shaderFundo, "time");
-        g_shaderNoise1Loc = GetShaderLocation(g_shaderFundo, "noiseTex1");
-        g_shaderNoise2Loc = GetShaderLocation(g_shaderFundo, "noiseTex2");
-    }
-
     RayCanvasInit(VIRTUAL_W, VIRTUAL_H);
-    if (g_noise1.id == 0 || g_noise2.id == 0 || g_fundoBranco.id == 0 || g_shaderFundo.id == 0) {
+    if (!UIBgShaderInit(&g_bgShader)) {
         TraceLog(LOG_ERROR, "Falha ao carregar recursos essenciais da introducao");
         UnloadIntroScene();
         return false;
@@ -225,18 +131,7 @@ void UpdateDrawIntroScene(void) {
     Color corBtnHover = Fade((Color){ 160, 147, 142, 255 }, alpha);
 
     // Fundo animado com o mesmo shader e ruido procedural do menu
-    float tAgora = (float)GetTime();
-    BeginShaderMode(g_shaderFundo);
-    if (g_shaderTimeLoc >= 0) {
-        SetShaderValue(g_shaderFundo, g_shaderTimeLoc, &tAgora, SHADER_UNIFORM_FLOAT);
-    }
-    if (g_shaderNoise1Loc >= 0) SetShaderValueTexture(g_shaderFundo, g_shaderNoise1Loc, g_noise1);
-    if (g_shaderNoise2Loc >= 0) SetShaderValueTexture(g_shaderFundo, g_shaderNoise2Loc, g_noise2);
-
-    DrawTexturePro(g_fundoBranco, (Rectangle){ 0, 0, (float)VIRTUAL_W, (float)VIRTUAL_H },
-                   ParaTela((Rectangle){ 0, 0, (float)VIRTUAL_W, (float)VIRTUAL_H }),
-                   (Vector2){ 0, 0 }, 0.0f, WHITE);
-    EndShaderMode();
+    UIBgShaderDraw(&g_bgShader, (float)GetTime(), WHITE);
 
     // Sombra suave sob a moldura do dossier para destacar do fundo vivo
     Rectangle sombraMoldura = ParaTela((Rectangle){ 38, 30, VIRTUAL_W - 72, VIRTUAL_H - 56 });
@@ -312,13 +207,7 @@ void UpdateDrawIntroScene(void) {
 
 void UnloadIntroScene(void) {
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-    UnloadTexture(g_fundoBranco);
-    UnloadTexture(g_noise1);
-    UnloadTexture(g_noise2);
-    UnloadShader(g_shaderFundo);
-    if (g_sndHover.frameCount > 0) {
-        UnloadSound(g_sndHover);
-        g_sndHover = (Sound){ 0 };
-    }
+    UIBgShaderUnload(&g_bgShader);
+    UISafeUnloadSound(&g_sndHover);
     RayCanvasClose();
 }

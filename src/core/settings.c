@@ -30,6 +30,8 @@ static int   g_paleta     = 0;
 static bool  g_telaCheia  = true;
 static bool  g_tutorial   = true;
 static bool  g_devMode    = false;
+static bool  g_crt        = false;
+static bool  g_cam3dFixa  = false;
 
 #define JANELA_W 1280
 #define JANELA_H 720
@@ -154,6 +156,8 @@ void SettingsLoad(void) {
         else if (sscanf(linha, "efeitos=%f", &v) == 1) g_volEfeitos = Limitar01(v);
         else if (sscanf(linha, "tutorial=%d", &n) == 1) g_tutorial = (n != 0);
         else if (sscanf(linha, "dev=%d", &n) == 1) g_devMode = (n != 0);
+        else if (sscanf(linha, "crt=%d", &n) == 1) g_crt = (n != 0);
+        else if (sscanf(linha, "cam3d_fixa=%d", &n) == 1) g_cam3dFixa = (n != 0);
         // A paleta NAO e lida: o jogo sempre abre na Original (g_paleta = 0).
     }
     fclose(f);
@@ -167,8 +171,9 @@ void SettingsSave(void) {
         return;
     }
     // A paleta nao e salva: vale so enquanto o jogo esta aberto
-    fprintf(f, "musica=%.2f\nefeitos=%.2f\ntelacheia=%d\ntutorial=%d\ndev=%d\n",
-            g_volMusica, g_volEfeitos, g_telaCheia ? 1 : 0, g_tutorial ? 1 : 0, g_devMode ? 1 : 0);
+    fprintf(f, "musica=%.2f\nefeitos=%.2f\ntelacheia=%d\ntutorial=%d\ndev=%d\ncrt=%d\ncam3d_fixa=%d\n",
+            g_volMusica, g_volEfeitos, g_telaCheia ? 1 : 0, g_tutorial ? 1 : 0, g_devMode ? 1 : 0,
+            g_crt ? 1 : 0, g_cam3dFixa ? 1 : 0);
     fclose(f);
 }
 
@@ -188,6 +193,12 @@ void SettingsSetDevMode(bool ligado) {
     g_devMode = ligado;
     global_infinite_tokens = ligado;
 }
+
+bool SettingsGetCRT(void) { return g_crt; }
+void SettingsSetCRT(bool ligado) { g_crt = ligado; }
+
+bool SettingsGetCamera3DFixa(void) { return g_cam3dFixa; }
+void SettingsSetCamera3DFixa(bool fixa) { g_cam3dFixa = fixa; }
 
 // Aplica modo tela cheia ou janela conforme g_telaCheia
 void SettingsApplyWindowMode(void) {

@@ -10,7 +10,7 @@
 #define TELA_W 640
 #define TELA_H 360
 
-enum { HOVER_NENHUM = -1, HOVER_ANT = 0, HOVER_PROX = 1, HOVER_TELA_CHEIA = 2, HOVER_TUTORIAL = 3, HOVER_DEV_BTN = 4 };
+enum { HOVER_NENHUM = -1, HOVER_ANT = 0, HOVER_PROX = 1, HOVER_TELA_CHEIA = 2, HOVER_TUTORIAL = 3, HOVER_DEV_BTN = 4, HOVER_CRT = 5, HOVER_CAM3D = 6 };
 
 static int   g_sliderArrastando = -1;   // -1 = nenhum, 0 = musica, 1 = efeitos
 static int   g_hoverAnt = HOVER_NENHUM; // botao que estava com o mouse em cima no frame anterior
@@ -201,7 +201,8 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
     float yMusica    = lay->yPrimeira;
     float yEfeitos   = yMusica + lay->passoY;
     float yTelaCheia = yEfeitos + lay->passoY;
-    float yPaleta    = yTelaCheia + lay->passoY;
+    float yExtras    = yTelaCheia + lay->passoY;
+    float yPaleta    = yExtras + lay->passoY;
 
     bool interativoControles = interativo && !g_devModalAberto;
     bool algumHover = false;
@@ -250,6 +251,46 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
             bool novo = !SettingsGetTutorial();
             SettingsSetTutorial(novo);
             GameStateSetTutorialConfig(novo);
+            SettingsSave();
+        }
+    }
+
+    // CRT (TV de tubo) [x] na esquerda e Camera 3D Fixa [x] na direita
+    {
+        const char *lblCrt = "CRT (TV)";
+        Texto(est, lblCrt, lay->x, yExtras, est->nome, a, 0);
+        bool crt = SettingsGetCRT();
+        float wCrt = MeasureTextEx(est->fonte, lblCrt, est->tamFonte, est->espacamento).x;
+        float crtCaixaX = roundf(lay->x + wCrt + lay->gapNome);
+        if (crtCaixaX < trilhoX) crtCaixaX = trilhoX;
+        if (Caixinha(crt, crtCaixaX, yExtras, wCrt, HOVER_CRT, lay, est, a, interativoControles, &hoverSeta, tocarHover)) {
+            SettingsSetCRT(!crt);
+            SettingsSave();
+        }
+        Texto(est, SettingsGetCRT() ? "ON" : "OFF", crtCaixaX + 22.0f, yExtras, est->valor, a, 0);
+
+        const char *lblCam = "Câm.3D Fixa";
+        float camCaixaX = lay->direita - 16.0f;
+        float wCam = MeasureTextEx(est->fonte, lblCam, est->tamFonte, est->espacamento).x;
+        float camAreaX = camCaixaX - 8.0f - wCam;
+        Rectangle camCaixa = { camCaixaX, yExtras - 8.0f, 16.0f, 16.0f };
+        Rectangle camArea  = { camAreaX, yExtras - 10.0f, lay->direita - camAreaX, 20.0f };
+        bool camHov = interativoControles && CheckCollisionPointRec(MouseVirtual(), camArea);
+        if (camHov) {
+            hoverSeta = true;
+            if (g_hoverAnt != HOVER_CAM3D && tocarHover) tocarHover();
+            g_hoverAnt = HOVER_CAM3D;
+        }
+        Texto(est, lblCam, camCaixaX - 8.0f, yExtras, est->nome, a, 2);
+        DrawRectangleRec(ParaTela(camCaixa), ComAlpha(camHov ? est->setaBordaHover : est->setaBorda, a));
+        DrawRectangleRec(ParaTela((Rectangle){ camCaixa.x + 1, camCaixa.y + 1, camCaixa.width - 2, camCaixa.height - 2 }),
+                         ComAlpha(camHov ? est->setaFundoHover : est->setaFundo, a));
+        if (SettingsGetCamera3DFixa()) {
+            DrawRectangleRec(ParaTela((Rectangle){ camCaixa.x + 4, camCaixa.y + 4, camCaixa.width - 8, camCaixa.height - 8 }),
+                             ComAlpha(camHov ? est->preenchidoAtivo : est->preenchido, a));
+        }
+        if (camHov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            SettingsSetCamera3DFixa(!SettingsGetCamera3DFixa());
             SettingsSave();
         }
     }

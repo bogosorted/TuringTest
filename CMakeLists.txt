@@ -34,7 +34,45 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(raylib)
 
-add_executable(turing_test main.c scenes/menu_scene.c scenes/gameplay_scene.c scenes/selection_scene.c utils/raycanvas.c utils/dialog_system.c utils/dialog_data.c utils/transition.c utils/game_state.c utils/settings.c utils/options_ui.c utils/ranking.c utils/webcam.c utils/mural_ui.c utils/mapa_holograma.c utils/evidencia_holograma.c utils/setas_3d.c utils/player_character.c utils/terreo_3d.c utils/sala_recepcao.c utils/sala_lanchonete.c utils/sala_jardim.c utils/sala_escritorio.c utils/sala_escritorio_2.c scenes/verdict_scene.c scenes/intro_scene.c)
+add_executable(turing_test
+    src/main.c
+    src/core/game_state.c
+    src/core/settings.c
+    src/core/ranking.c
+    src/core/transition.c
+    src/core/raycanvas.c
+    src/core/ui_common.c
+    src/scenes/menu_scene.c
+    src/scenes/intro_scene.c
+    src/scenes/selection_scene.c
+    src/scenes/gameplay_scene.c
+    src/gameplay/gameplay_data.c
+    src/gameplay/gameplay_logic_hint.c
+    src/scenes/verdict_scene.c
+    src/systems/dialog_system.c
+    src/systems/dialog_data.c
+    src/systems/webcam.c
+    src/systems/mural_ui.c
+    src/systems/options_ui.c
+    src/systems/evidencia_holograma.c
+    src/systems/mapa_holograma.c
+    src/systems/setas_3d.c
+    src/systems/player_character.c
+    src/world/terreo_3d.c
+    src/world/sala_recepcao.c
+    src/world/sala_lanchonete.c
+    src/world/sala_jardim.c
+    src/world/sala_escritorio.c
+    src/world/sala_escritorio_2.c
+)
+target_include_directories(turing_test PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/core
+    ${CMAKE_SOURCE_DIR}/src/scenes
+    ${CMAKE_SOURCE_DIR}/src/gameplay
+    ${CMAKE_SOURCE_DIR}/src/systems
+    ${CMAKE_SOURCE_DIR}/src/world
+)
 target_link_libraries(turing_test PRIVATE raylib)
 if(WIN32)
     target_link_libraries(turing_test PRIVATE mf mfplat mfreadwrite mfuuid ole32)

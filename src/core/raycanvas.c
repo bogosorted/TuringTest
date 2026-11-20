@@ -31,11 +31,30 @@ static const char *PALETA_FS =
     "uniform sampler2D texture0;\n"
     "uniform vec3 orig[5];\n"
     "uniform vec3 pal[5];\n"
+    "uniform float crtEnabled;\n"
+    "uniform float time;\n"
+    "uniform vec2 resolution;\n"
     "out vec4 finalColor;\n"
     "float lum(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }\n"
     "void main() {\n"
-    "    vec4 src = texture(texture0, fragTexCoord);\n"
-    "    float l = lum(src.rgb);\n"
+    "    vec2 uv = fragTexCoord;\n"
+    "    if (crtEnabled > 0.5) {\n"
+    "        vec2 cc = uv - 0.5;\n"
+    "        float r2 = dot(cc, cc);\n"
+    "        uv = 0.5 + cc * (1.0 + 0.045 * r2);\n"
+    "        if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {\n"
+    "            finalColor = vec4(0.0, 0.0, 0.0, 1.0);\n"
+    "            return;\n"
+    "        }\n"
+    "    }\n"
+    "    vec4 src = texture(texture0, uv);\n"
+    "    vec3 rgb = src.rgb;\n"
+    "    if (crtEnabled > 0.5) {\n"
+    "        float off = 0.0011;\n"
+    "        rgb.r = texture(texture0, clamp(uv + vec2(off, 0.0), 0.0, 1.0)).r;\n"
+    "        rgb.b = texture(texture0, clamp(uv - vec2(off, 0.0), 0.0, 1.0)).b;\n"
+    "    }\n"
+    "    float l = lum(rgb);\n"
     "    vec3 o = orig[4];\n"
     "    vec3 p = pal[4];\n"
     "    for (int i = 0; i < 4; i++) {\n"
@@ -48,13 +67,27 @@ static const char *PALETA_FS =
     "            break;\n"
     "        }\n"
     "    }\n"
-    "    finalColor = vec4(clamp(p + (src.rgb - o), 0.0, 1.0), 1.0) * fragColor;\n"
+    "    vec3 outCol = clamp(p + (rgb - o), 0.0, 1.0);\n"
+    "    if (crtEnabled > 0.5) {\n"
+    "        float py = uv.y * resolution.y;\n"
+    "        float scan = 0.90 + 0.10 * sin(py * 3.14159265);\n"
+    "        float roll = 0.97 + 0.03 * sin(uv.y * 12.0 - time * 3.2);\n"
+    "        float px = mod(floor(gl_FragCoord.x), 3.0);\n"
+    "        float mask = (px < 1.0) ? 1.02 : (px < 2.0 ? 0.98 : 0.95);\n"
+    "        vec2 d = (uv - 0.5) * 1.45;\n"
+    "        float vig = clamp(1.0 - dot(d, d) * 0.22, 0.72, 1.0);\n"
+    "        outCol *= scan * roll * mask * vig;\n"
+    "    }\n"
+    "    finalColor = vec4(outCol, 1.0) * fragColor;\n"
     "}\n";
 
 static Shader          g_paletaShader;
 static bool            g_paletaShaderPronto = false;
 static int             g_locOrig = -1;
 static int             g_locPal  = -1;
+static int             g_locCrt  = -1;
+static int             g_locTime = -1;
+static int             g_locRes  = -1;
 static RenderTexture2D g_alvo;                // frame desenhado antes de aplicar a paleta
 static bool            g_alvoPronto = false;
 static bool            g_usandoAlvo = false;  // este frame esta indo para g_alvo?
@@ -70,13 +103,16 @@ static void CoresParaVec3(const Color *cores, float out[PALETTE_NUM_STOPS * 3]) 
 void RayCanvasBeginFrame(void) {
     BeginDrawing();
 
-    g_usandoAlvo = (SettingsGetPalette() != 0);
+    g_usandoAlvo = (SettingsGetPalette() != 0) || SettingsGetCRT();
     if (!g_usandoAlvo) return;
 
     if (!g_paletaShaderPronto) {
         g_paletaShader = LoadShaderFromMemory(NULL, PALETA_FS);
         g_locOrig = GetShaderLocation(g_paletaShader, "orig");
         g_locPal  = GetShaderLocation(g_paletaShader, "pal");
+        g_locCrt  = GetShaderLocation(g_paletaShader, "crtEnabled");
+        g_locTime = GetShaderLocation(g_paletaShader, "time");
+        g_locRes  = GetShaderLocation(g_paletaShader, "resolution");
         g_paletaShaderPronto = true;
     }
 
@@ -103,6 +139,12 @@ void RayCanvasEndFrame(void) {
         CoresParaVec3(SettingsPaletteStops(SettingsGetPalette()), pal);
         SetShaderValueV(g_paletaShader, g_locOrig, orig, SHADER_UNIFORM_VEC3, PALETTE_NUM_STOPS);
         SetShaderValueV(g_paletaShader, g_locPal,  pal,  SHADER_UNIFORM_VEC3, PALETTE_NUM_STOPS);
+        float crtF = SettingsGetCRT() ? 1.0f : 0.0f;
+        float tNow = (float)GetTime();
+        float res[2] = { (float)g_alvo.texture.width, (float)g_alvo.texture.height };
+        SetShaderValue(g_paletaShader, g_locCrt,  &crtF, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(g_paletaShader, g_locTime, &tNow, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(g_paletaShader, g_locRes,  res,   SHADER_UNIFORM_VEC2);
 
         BeginShaderMode(g_paletaShader);
         // Render textures ficam de cabeca para baixo no OpenGL: altura negativa desvira

@@ -1,20 +1,21 @@
 #include "raylib.h"
 #include "menu_scene.h"
-#include "../utils/settings.h"
-#include "../utils/options_ui.h"
-#include "../utils/raycanvas.h"
-#include "../utils/dialog_system.h"
-#include "../utils/game_state.h"
-#include "../utils/ranking.h"
-#include "../utils/mural_ui.h"
+#include "settings.h"
+#include "options_ui.h"
+#include "raycanvas.h"
+#include "dialog_system.h"
+#include "game_state.h"
+#include "ranking.h"
+#include "mural_ui.h"
+#include "ui_common.h"
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
 
 #define NUM_BUTTONS 4
-#define TELA_W 640
-#define TELA_H 360
+#define TELA_W UI_VIRTUAL_W
+#define TELA_H UI_VIRTUAL_H
 
 // Animacao do escritorio (GIF 640x360, fica embaixo de tudo)
 static Image     g_animImagem;          // todos os quadros do GIF na memoria
@@ -159,22 +160,8 @@ bool MenuSceneShouldStartGame(void) {
 }
 
 // Retangulo onde a tela 640x360 e desenhada (centralizada na janela)
-static Rectangle TelaRect(void) {
-    return RayCanvasGetRect(
-        (Vector2){ 0.5f, 0.5f },
-        (Vector2){ 0.5f, 0.5f },
-        (Vector2){ 0.0f, 0.0f },
-        (Vector2){ (float)TELA_W, (float)TELA_H }
-    );
-}
-
-// Converte um retangulo em pixels 640x360 para a posicao real na janela
-static Rectangle ParaTela(Rectangle r) {
-    Rectangle t = TelaRect();
-    float escalaX = t.width  / (float)TELA_W;
-    float escalaY = t.height / (float)TELA_H;
-    return (Rectangle){ t.x + r.x * escalaX, t.y + r.y * escalaY, r.width * escalaX, r.height * escalaY };
-}
+#define TelaRect UIGetTelaRect
+#define ParaTela UIParaTela
 
 // Retangulo completo do botao i (para desenho), em pixels 640x360
 static Rectangle BotaoRect(int i) {
@@ -594,10 +581,10 @@ static void DrawMenu(void) {
 //   coluna 3: valores ("80%", "3/6"), alinhados a direita em x = 600
 #define OPC_LABEL_X    (BOTAO_X + 8.0f)
 #define OPC_Y_TITULO   132.0f
-#define OPC_Y_VOLTAR   286.0f
+#define OPC_Y_VOLTAR   296.0f
 
 static const OptionsUiLayout LAYOUT_OPCOES = {
-    .x = OPC_LABEL_X, .direita = 600.0f, .yPrimeira = 163.0f, .passoY = 28.0f,
+    .x = OPC_LABEL_X, .direita = 600.0f, .yPrimeira = 152.0f, .passoY = 24.0f,
     .larguraValor = 52.0f, .gapNome = 10.0f
 };
 

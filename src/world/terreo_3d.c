@@ -1,5 +1,6 @@
 #include "terreo_3d.h"
 #include "game_state.h"
+#include "settings.h"
 #include "raymath.h"
 #include "rlgl.h"
 #include <math.h>
@@ -343,16 +344,40 @@ static void AtualizarCameraSeguindo(const TerreoSalaDef *def, float dt, bool sna
     float halfW = def->boundsXZ.width * 0.5f;
     float halfD = def->boundsXZ.height * 0.5f;
 
+    const float camOffY = 4.35f;
+    const float camOffZ = 6.55f;
+    const float camFovy = 36.5f;
+
+    if (SettingsGetCamera3DFixa()) {
+        // Camera fixa em angulo alto da sala, fazendo tracking suave na posicao relativa do player
+        float targetX = g_player.position.x;
+        float targetY = 0.75f + g_player.position.y * 0.45f;
+        float targetZ = g_player.position.z - 0.15f;
+        Vector3 fixedPos = { cx, 0.85f + camOffY + 0.5f, cz + fmaxf(halfD + 2.4f, 5.8f) };
+
+        if (snap) {
+            g_camAtual.target     = (Vector3){ targetX, targetY, targetZ };
+            g_camAtual.position   = fixedPos;
+            g_camAtual.up         = def->camera.up;
+            g_camAtual.fovy       = camFovy;
+            g_camAtual.projection = CAMERA_PERSPECTIVE;
+            return;
+        }
+        float t = 1.0f - expf(-8.0f * dt);
+        g_camAtual.target.x += (targetX - g_camAtual.target.x) * t;
+        g_camAtual.target.y += (targetY - g_camAtual.target.y) * t;
+        g_camAtual.target.z += (targetZ - g_camAtual.target.z) * t;
+        g_camAtual.position   = fixedPos;
+        g_camAtual.fovy       = camFovy;
+        return;
+    }
+
     // Permite ver um pouco do preto alem das paredes nas extremidades sem cortar demais a sala
     float maxOffX = fmaxf(0.0f, halfW - 2.65f);
     float maxOffZ = fmaxf(0.0f, halfD - 1.45f);
     float targetX = Clamp(g_player.position.x, cx - maxOffX, cx + maxOffX);
     float targetZ = Clamp(g_player.position.z - 0.20f, cz - maxOffZ, cz + maxOffZ);
     float targetY = 0.85f + g_player.position.y * 0.45f;
-
-    const float camOffY = 4.35f;
-    const float camOffZ = 6.55f;
-    const float camFovy = 36.5f;
 
     if (snap) {
         g_camAtual.target     = (Vector3){ targetX, targetY, targetZ };

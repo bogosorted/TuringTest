@@ -8,12 +8,13 @@
 #include "verdict_scene.h"
 #include "gameplay_scene.h"     // marcacoes da prancheta
 #include "selection_scene.h"      // enum Employee (EMPLOYEE_LUCAS = posicao 2 = Ana Lucia, a IA)
-#include "../utils/settings.h"
-#include "../utils/raycanvas.h"
-#include "../utils/game_state.h"
-#include "../utils/ranking.h"
-#include "../utils/mural_ui.h"
-#include "../utils/dialog_data.h"
+#include "settings.h"
+#include "raycanvas.h"
+#include "game_state.h"
+#include "ranking.h"
+#include "mural_ui.h"
+#include "dialog_data.h"
+#include "ui_common.h"
 
 // ---------------------------------------------------------------
 // VEREDITO: os 3 suspeitos na sala (2D) e o jogador com uma arma (3D)
@@ -21,8 +22,8 @@
 // e depois o texto do final.
 // ---------------------------------------------------------------
 
-#define VIRTUAL_W 640
-#define VIRTUAL_H 360
+#define VIRTUAL_W UI_VIRTUAL_W
+#define VIRTUAL_H UI_VIRTUAL_H
 
 #define AI_INDEX EMPLOYEE_LUCAS   // posicao 2 = Ana Lucia
 
@@ -422,22 +423,9 @@ static const char *DITHER_FS =
 // ---------------------------------------------------------------
 // Utilitarios
 // ---------------------------------------------------------------
-static Rectangle GetTelaRect(void) {
-    return RayCanvasGetRect((Vector2){ 0.5f, 0.5f }, (Vector2){ 0.5f, 0.5f },
-                            (Vector2){ 0.0f, 0.0f }, (Vector2){ (float)VIRTUAL_W, (float)VIRTUAL_H });
-}
-
-static Rectangle ParaTela(Rectangle r) {
-    Rectangle tela = GetTelaRect();
-    float ex = tela.width / (float)VIRTUAL_W, ey = tela.height / (float)VIRTUAL_H;
-    return (Rectangle){ tela.x + r.x * ex, tela.y + r.y * ey, r.width * ex, r.height * ey };
-}
-
-static Vector2 MouseVirtual(void) {
-    Rectangle tela = GetTelaRect();
-    Vector2 m = RayCanvasGetMousePosition();
-    return (Vector2){ (m.x - tela.x) * VIRTUAL_W / tela.width, (m.y - tela.y) * VIRTUAL_H / tela.height };
-}
+#define GetTelaRect  UIGetTelaRect
+#define ParaTela     UIParaTela
+#define MouseVirtual UIMouseVirtual
 
 static Color Cinza(float l) {
     unsigned char v = (unsigned char)(Clamp(l, 0.0f, 1.0f) * 255.0f);

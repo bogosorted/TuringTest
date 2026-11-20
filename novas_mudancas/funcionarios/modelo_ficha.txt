@@ -1,0 +1,11 @@
+Funcionário 0X
+
+Nome: Nome Completo
+Setor: Nome do Setor
+Função: Cargo / Função
+Personalidade Geral: Adjetivo
+
+Comportamentos:
+- Comportamento ou pista observável 1.
+- Comportamento ou pista observável 2.
+- Comportamento ou pista observável 3.

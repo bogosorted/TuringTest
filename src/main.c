@@ -5,12 +5,12 @@
 #include "scenes/gameplay_scene.h"
 #include "scenes/verdict_scene.h"
 #include "scenes/intro_scene.h"
-#include "utils/game_state.h"
-#include "utils/dialog_system.h"
-#include "utils/transition.h"
-#include "utils/raycanvas.h"
-#include "utils/settings.h"
-#include "utils/ranking.h"
+#include "game_state.h"
+#include "dialog_system.h"
+#include "transition.h"
+#include "raycanvas.h"
+#include "settings.h"
+#include "ranking.h"
 #include <math.h>
 
 // Lista das telas que o jogo tem

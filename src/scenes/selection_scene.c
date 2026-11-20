@@ -1,14 +1,12 @@
 #include "raylib.h"
 #include "selection_scene.h"
 #include "gameplay_scene.h"
-#include "../utils/raycanvas.h"
-#include "../utils/game_state.h"
+#include "raycanvas.h"
+#include "game_state.h"
+#include "ui_common.h"
 
-// Tamanho "virtual" da tela (o mesmo das outras cenas: 640x360).
-// Todas as medidas abaixo sao em pixels desse espaco e depois
-// convertidas pela escala atual da janela (ver ParaTela).
-#define VIRTUAL_W 640
-#define VIRTUAL_H 360
+#define VIRTUAL_W UI_VIRTUAL_W
+#define VIRTUAL_H UI_VIRTUAL_H
 
 #define TITLE_Y        30
 #define TITLE_FONT     28
@@ -41,35 +39,9 @@ static bool g_avisoCantina = false;  // mostra aviso ao clicar na cantina
 #define MAPA_X 188.0f
 #define MAPA_Y  34.0f
 
-// Retangulo onde a "tela" 640x360 e desenhada (centralizada no canvas).
-// Mesmo padrao usado na gameplay_scene.
-static Rectangle GetTelaRect(void) {
-    return RayCanvasGetRect(
-        (Vector2){ 0.5f, 0.5f },
-        (Vector2){ 0.5f, 0.5f },
-        (Vector2){ 0.0f, 0.0f },
-        (Vector2){ (float)VIRTUAL_W, (float)VIRTUAL_H }
-    );
-}
-
-// Converte um retangulo em pixels 640x360 para a posicao real no canvas
-static Rectangle ParaTela(Rectangle r) {
-    Rectangle tela = GetTelaRect();
-    float escalaX = tela.width  / (float)VIRTUAL_W;
-    float escalaY = tela.height / (float)VIRTUAL_H;
-
-    return (Rectangle){
-        tela.x + r.x * escalaX,
-        tela.y + r.y * escalaY,
-        r.width  * escalaX,
-        r.height * escalaY
-    };
-}
-
-// Escala atual (1.0 = tamanho original)
-static float Escala(void) {
-    return GetTelaRect().width / (float)VIRTUAL_W;
-}
+#define GetTelaRect UIGetTelaRect
+#define ParaTela    UIParaTela
+#define Escala      UIGetEscala
 
 // Desenha o titulo centralizado no topo
 static void DrawTitle(const char *texto) {

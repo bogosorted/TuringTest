@@ -32,6 +32,14 @@ void SettingsSetTutorial(bool ligado);
 bool SettingsGetDevMode(void);
 void SettingsSetDevMode(bool ligado);
 
+// Efeito CRT (TV de tubo) - OFF por padrao
+bool SettingsGetCRT(void);
+void SettingsSetCRT(bool ligado);
+
+// Camera 3D: false = padrao (segue o player), true = fixa com tracking
+bool SettingsGetCamera3DFixa(void);
+void SettingsSetCamera3DFixa(bool fixa);
+
 // Paletas de cor. A 0 e a original do jogo (sem pos-processamento).
 int          SettingsPaletteCount(void);
 int          SettingsGetPalette(void);
