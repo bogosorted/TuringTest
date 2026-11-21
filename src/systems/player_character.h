@@ -42,6 +42,7 @@ void PlayerCharacterUpdate(PlayerCharacter *p,
 
 // Desenha o personagem 3D com iluminacao noir direcional + rim light.
 void PlayerCharacterDraw3D(const PlayerCharacter *p, Vector3 camPos);
+void PlayerCharacterDrawSuspect3D(int suspeito, Vector3 pos, float yawDeg, float tempo, Vector3 camPos);
 void PlayerCharacterUnload(void);
 
 #endif

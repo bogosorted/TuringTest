@@ -425,7 +425,7 @@ LocalRasec GameplayLocalPorTerreoDestino(TerreoDestino dest) {
         case TERREO_DEST_ESCADA_1:           return LOCAL_ESCADA_1;
         case TERREO_DEST_HALL_1:             return LOCAL_HALL_1;
         case TERREO_DEST_CONTABILIDADE_1:    return LOCAL_CONTABILIDADE_1;
-        case TERREO_DEST_CONTABILIDADE_2:    return TERREO_DEST_CONTABILIDADE_2;
+        case TERREO_DEST_CONTABILIDADE_2:    return LOCAL_CONTABILIDADE_2;
         case TERREO_DEST_ARQUIVO_1:          return LOCAL_ARQUIVO_1;
         case TERREO_DEST_COPA_1:             return LOCAL_COPA_1;
         case TERREO_DEST_HALL_2:             return LOCAL_HALL_2;

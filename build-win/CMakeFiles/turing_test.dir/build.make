@@ -72,341 +72,817 @@ include CMakeFiles/turing_test.dir/flags.make
 CMakeFiles/turing_test.dir/codegen:
 .PHONY : CMakeFiles/turing_test.dir/codegen
 
-CMakeFiles/turing_test.dir/main.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/main.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/main.c.obj: /home/vitorc/TuringTest/main.c
-CMakeFiles/turing_test.dir/main.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/turing_test.dir/main.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/main.c.obj -MF CMakeFiles/turing_test.dir/main.c.obj.d -o CMakeFiles/turing_test.dir/main.c.obj -c /home/vitorc/TuringTest/main.c
+CMakeFiles/turing_test.dir/src/main.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/main.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/main.c.obj: /home/vitorc/TuringTest/src/main.c
+CMakeFiles/turing_test.dir/src/main.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/turing_test.dir/src/main.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/main.c.obj -MF CMakeFiles/turing_test.dir/src/main.c.obj.d -o CMakeFiles/turing_test.dir/src/main.c.obj -c /home/vitorc/TuringTest/src/main.c
 
-CMakeFiles/turing_test.dir/main.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/main.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/main.c > CMakeFiles/turing_test.dir/main.c.i
+CMakeFiles/turing_test.dir/src/main.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/main.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/main.c > CMakeFiles/turing_test.dir/src/main.c.i
 
-CMakeFiles/turing_test.dir/main.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/main.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/main.c -o CMakeFiles/turing_test.dir/main.c.s
+CMakeFiles/turing_test.dir/src/main.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/main.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/main.c -o CMakeFiles/turing_test.dir/src/main.c.s
 
-CMakeFiles/turing_test.dir/scenes/menu_scene.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/scenes/menu_scene.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/scenes/menu_scene.c.obj: /home/vitorc/TuringTest/scenes/menu_scene.c
-CMakeFiles/turing_test.dir/scenes/menu_scene.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/turing_test.dir/scenes/menu_scene.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/scenes/menu_scene.c.obj -MF CMakeFiles/turing_test.dir/scenes/menu_scene.c.obj.d -o CMakeFiles/turing_test.dir/scenes/menu_scene.c.obj -c /home/vitorc/TuringTest/scenes/menu_scene.c
+CMakeFiles/turing_test.dir/src/core/game_state.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/core/game_state.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/core/game_state.c.obj: /home/vitorc/TuringTest/src/core/game_state.c
+CMakeFiles/turing_test.dir/src/core/game_state.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/turing_test.dir/src/core/game_state.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/core/game_state.c.obj -MF CMakeFiles/turing_test.dir/src/core/game_state.c.obj.d -o CMakeFiles/turing_test.dir/src/core/game_state.c.obj -c /home/vitorc/TuringTest/src/core/game_state.c
 
-CMakeFiles/turing_test.dir/scenes/menu_scene.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/scenes/menu_scene.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/scenes/menu_scene.c > CMakeFiles/turing_test.dir/scenes/menu_scene.c.i
+CMakeFiles/turing_test.dir/src/core/game_state.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/core/game_state.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/core/game_state.c > CMakeFiles/turing_test.dir/src/core/game_state.c.i
 
-CMakeFiles/turing_test.dir/scenes/menu_scene.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/scenes/menu_scene.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/scenes/menu_scene.c -o CMakeFiles/turing_test.dir/scenes/menu_scene.c.s
+CMakeFiles/turing_test.dir/src/core/game_state.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/core/game_state.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/core/game_state.c -o CMakeFiles/turing_test.dir/src/core/game_state.c.s
 
-CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.obj: /home/vitorc/TuringTest/scenes/gameplay_scene.c
-CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.obj -MF CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.obj.d -o CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.obj -c /home/vitorc/TuringTest/scenes/gameplay_scene.c
+CMakeFiles/turing_test.dir/src/core/settings.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/core/settings.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/core/settings.c.obj: /home/vitorc/TuringTest/src/core/settings.c
+CMakeFiles/turing_test.dir/src/core/settings.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/turing_test.dir/src/core/settings.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/core/settings.c.obj -MF CMakeFiles/turing_test.dir/src/core/settings.c.obj.d -o CMakeFiles/turing_test.dir/src/core/settings.c.obj -c /home/vitorc/TuringTest/src/core/settings.c
 
-CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/scenes/gameplay_scene.c > CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.i
+CMakeFiles/turing_test.dir/src/core/settings.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/core/settings.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/core/settings.c > CMakeFiles/turing_test.dir/src/core/settings.c.i
 
-CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/scenes/gameplay_scene.c -o CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.s
+CMakeFiles/turing_test.dir/src/core/settings.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/core/settings.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/core/settings.c -o CMakeFiles/turing_test.dir/src/core/settings.c.s
 
-CMakeFiles/turing_test.dir/scenes/selection_scene.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/scenes/selection_scene.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/scenes/selection_scene.c.obj: /home/vitorc/TuringTest/scenes/selection_scene.c
-CMakeFiles/turing_test.dir/scenes/selection_scene.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/turing_test.dir/scenes/selection_scene.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/scenes/selection_scene.c.obj -MF CMakeFiles/turing_test.dir/scenes/selection_scene.c.obj.d -o CMakeFiles/turing_test.dir/scenes/selection_scene.c.obj -c /home/vitorc/TuringTest/scenes/selection_scene.c
+CMakeFiles/turing_test.dir/src/core/ranking.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/core/ranking.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/core/ranking.c.obj: /home/vitorc/TuringTest/src/core/ranking.c
+CMakeFiles/turing_test.dir/src/core/ranking.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/turing_test.dir/src/core/ranking.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/core/ranking.c.obj -MF CMakeFiles/turing_test.dir/src/core/ranking.c.obj.d -o CMakeFiles/turing_test.dir/src/core/ranking.c.obj -c /home/vitorc/TuringTest/src/core/ranking.c
 
-CMakeFiles/turing_test.dir/scenes/selection_scene.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/scenes/selection_scene.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/scenes/selection_scene.c > CMakeFiles/turing_test.dir/scenes/selection_scene.c.i
+CMakeFiles/turing_test.dir/src/core/ranking.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/core/ranking.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/core/ranking.c > CMakeFiles/turing_test.dir/src/core/ranking.c.i
 
-CMakeFiles/turing_test.dir/scenes/selection_scene.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/scenes/selection_scene.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/scenes/selection_scene.c -o CMakeFiles/turing_test.dir/scenes/selection_scene.c.s
+CMakeFiles/turing_test.dir/src/core/ranking.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/core/ranking.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/core/ranking.c -o CMakeFiles/turing_test.dir/src/core/ranking.c.s
 
-CMakeFiles/turing_test.dir/utils/raycanvas.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/utils/raycanvas.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/utils/raycanvas.c.obj: /home/vitorc/TuringTest/utils/raycanvas.c
-CMakeFiles/turing_test.dir/utils/raycanvas.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/turing_test.dir/utils/raycanvas.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/utils/raycanvas.c.obj -MF CMakeFiles/turing_test.dir/utils/raycanvas.c.obj.d -o CMakeFiles/turing_test.dir/utils/raycanvas.c.obj -c /home/vitorc/TuringTest/utils/raycanvas.c
+CMakeFiles/turing_test.dir/src/core/transition.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/core/transition.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/core/transition.c.obj: /home/vitorc/TuringTest/src/core/transition.c
+CMakeFiles/turing_test.dir/src/core/transition.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/turing_test.dir/src/core/transition.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/core/transition.c.obj -MF CMakeFiles/turing_test.dir/src/core/transition.c.obj.d -o CMakeFiles/turing_test.dir/src/core/transition.c.obj -c /home/vitorc/TuringTest/src/core/transition.c
 
-CMakeFiles/turing_test.dir/utils/raycanvas.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/utils/raycanvas.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/utils/raycanvas.c > CMakeFiles/turing_test.dir/utils/raycanvas.c.i
+CMakeFiles/turing_test.dir/src/core/transition.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/core/transition.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/core/transition.c > CMakeFiles/turing_test.dir/src/core/transition.c.i
 
-CMakeFiles/turing_test.dir/utils/raycanvas.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/utils/raycanvas.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/utils/raycanvas.c -o CMakeFiles/turing_test.dir/utils/raycanvas.c.s
+CMakeFiles/turing_test.dir/src/core/transition.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/core/transition.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/core/transition.c -o CMakeFiles/turing_test.dir/src/core/transition.c.s
 
-CMakeFiles/turing_test.dir/utils/dialog_system.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/utils/dialog_system.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/utils/dialog_system.c.obj: /home/vitorc/TuringTest/utils/dialog_system.c
-CMakeFiles/turing_test.dir/utils/dialog_system.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/turing_test.dir/utils/dialog_system.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/utils/dialog_system.c.obj -MF CMakeFiles/turing_test.dir/utils/dialog_system.c.obj.d -o CMakeFiles/turing_test.dir/utils/dialog_system.c.obj -c /home/vitorc/TuringTest/utils/dialog_system.c
+CMakeFiles/turing_test.dir/src/core/raycanvas.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/core/raycanvas.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/core/raycanvas.c.obj: /home/vitorc/TuringTest/src/core/raycanvas.c
+CMakeFiles/turing_test.dir/src/core/raycanvas.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/turing_test.dir/src/core/raycanvas.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/core/raycanvas.c.obj -MF CMakeFiles/turing_test.dir/src/core/raycanvas.c.obj.d -o CMakeFiles/turing_test.dir/src/core/raycanvas.c.obj -c /home/vitorc/TuringTest/src/core/raycanvas.c
 
-CMakeFiles/turing_test.dir/utils/dialog_system.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/utils/dialog_system.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/utils/dialog_system.c > CMakeFiles/turing_test.dir/utils/dialog_system.c.i
+CMakeFiles/turing_test.dir/src/core/raycanvas.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/core/raycanvas.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/core/raycanvas.c > CMakeFiles/turing_test.dir/src/core/raycanvas.c.i
 
-CMakeFiles/turing_test.dir/utils/dialog_system.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/utils/dialog_system.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/utils/dialog_system.c -o CMakeFiles/turing_test.dir/utils/dialog_system.c.s
+CMakeFiles/turing_test.dir/src/core/raycanvas.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/core/raycanvas.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/core/raycanvas.c -o CMakeFiles/turing_test.dir/src/core/raycanvas.c.s
 
-CMakeFiles/turing_test.dir/utils/dialog_data.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/utils/dialog_data.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/utils/dialog_data.c.obj: /home/vitorc/TuringTest/utils/dialog_data.c
-CMakeFiles/turing_test.dir/utils/dialog_data.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building C object CMakeFiles/turing_test.dir/utils/dialog_data.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/utils/dialog_data.c.obj -MF CMakeFiles/turing_test.dir/utils/dialog_data.c.obj.d -o CMakeFiles/turing_test.dir/utils/dialog_data.c.obj -c /home/vitorc/TuringTest/utils/dialog_data.c
+CMakeFiles/turing_test.dir/src/core/ui_common.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/core/ui_common.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/core/ui_common.c.obj: /home/vitorc/TuringTest/src/core/ui_common.c
+CMakeFiles/turing_test.dir/src/core/ui_common.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building C object CMakeFiles/turing_test.dir/src/core/ui_common.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/core/ui_common.c.obj -MF CMakeFiles/turing_test.dir/src/core/ui_common.c.obj.d -o CMakeFiles/turing_test.dir/src/core/ui_common.c.obj -c /home/vitorc/TuringTest/src/core/ui_common.c
 
-CMakeFiles/turing_test.dir/utils/dialog_data.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/utils/dialog_data.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/utils/dialog_data.c > CMakeFiles/turing_test.dir/utils/dialog_data.c.i
+CMakeFiles/turing_test.dir/src/core/ui_common.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/core/ui_common.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/core/ui_common.c > CMakeFiles/turing_test.dir/src/core/ui_common.c.i
 
-CMakeFiles/turing_test.dir/utils/dialog_data.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/utils/dialog_data.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/utils/dialog_data.c -o CMakeFiles/turing_test.dir/utils/dialog_data.c.s
+CMakeFiles/turing_test.dir/src/core/ui_common.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/core/ui_common.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/core/ui_common.c -o CMakeFiles/turing_test.dir/src/core/ui_common.c.s
 
-CMakeFiles/turing_test.dir/utils/transition.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/utils/transition.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/utils/transition.c.obj: /home/vitorc/TuringTest/utils/transition.c
-CMakeFiles/turing_test.dir/utils/transition.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building C object CMakeFiles/turing_test.dir/utils/transition.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/utils/transition.c.obj -MF CMakeFiles/turing_test.dir/utils/transition.c.obj.d -o CMakeFiles/turing_test.dir/utils/transition.c.obj -c /home/vitorc/TuringTest/utils/transition.c
+CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.obj: /home/vitorc/TuringTest/src/scenes/menu_scene.c
+CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building C object CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.obj -MF CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.obj.d -o CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.obj -c /home/vitorc/TuringTest/src/scenes/menu_scene.c
 
-CMakeFiles/turing_test.dir/utils/transition.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/utils/transition.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/utils/transition.c > CMakeFiles/turing_test.dir/utils/transition.c.i
+CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/scenes/menu_scene.c > CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.i
 
-CMakeFiles/turing_test.dir/utils/transition.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/utils/transition.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/utils/transition.c -o CMakeFiles/turing_test.dir/utils/transition.c.s
+CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/scenes/menu_scene.c -o CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.s
 
-CMakeFiles/turing_test.dir/utils/game_state.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/utils/game_state.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/utils/game_state.c.obj: /home/vitorc/TuringTest/utils/game_state.c
-CMakeFiles/turing_test.dir/utils/game_state.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building C object CMakeFiles/turing_test.dir/utils/game_state.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/utils/game_state.c.obj -MF CMakeFiles/turing_test.dir/utils/game_state.c.obj.d -o CMakeFiles/turing_test.dir/utils/game_state.c.obj -c /home/vitorc/TuringTest/utils/game_state.c
+CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.obj: /home/vitorc/TuringTest/src/scenes/intro_scene.c
+CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building C object CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.obj -MF CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.obj.d -o CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.obj -c /home/vitorc/TuringTest/src/scenes/intro_scene.c
 
-CMakeFiles/turing_test.dir/utils/game_state.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/utils/game_state.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/utils/game_state.c > CMakeFiles/turing_test.dir/utils/game_state.c.i
+CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/scenes/intro_scene.c > CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.i
 
-CMakeFiles/turing_test.dir/utils/game_state.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/utils/game_state.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/utils/game_state.c -o CMakeFiles/turing_test.dir/utils/game_state.c.s
+CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/scenes/intro_scene.c -o CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.s
 
-CMakeFiles/turing_test.dir/utils/settings.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/utils/settings.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/utils/settings.c.obj: /home/vitorc/TuringTest/utils/settings.c
-CMakeFiles/turing_test.dir/utils/settings.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building C object CMakeFiles/turing_test.dir/utils/settings.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/utils/settings.c.obj -MF CMakeFiles/turing_test.dir/utils/settings.c.obj.d -o CMakeFiles/turing_test.dir/utils/settings.c.obj -c /home/vitorc/TuringTest/utils/settings.c
+CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.obj: /home/vitorc/TuringTest/src/scenes/selection_scene.c
+CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building C object CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.obj -MF CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.obj.d -o CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.obj -c /home/vitorc/TuringTest/src/scenes/selection_scene.c
 
-CMakeFiles/turing_test.dir/utils/settings.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/utils/settings.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/utils/settings.c > CMakeFiles/turing_test.dir/utils/settings.c.i
+CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/scenes/selection_scene.c > CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.i
 
-CMakeFiles/turing_test.dir/utils/settings.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/utils/settings.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/utils/settings.c -o CMakeFiles/turing_test.dir/utils/settings.c.s
+CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/scenes/selection_scene.c -o CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.s
 
-CMakeFiles/turing_test.dir/utils/options_ui.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/utils/options_ui.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/utils/options_ui.c.obj: /home/vitorc/TuringTest/utils/options_ui.c
-CMakeFiles/turing_test.dir/utils/options_ui.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building C object CMakeFiles/turing_test.dir/utils/options_ui.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/utils/options_ui.c.obj -MF CMakeFiles/turing_test.dir/utils/options_ui.c.obj.d -o CMakeFiles/turing_test.dir/utils/options_ui.c.obj -c /home/vitorc/TuringTest/utils/options_ui.c
+CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.obj: /home/vitorc/TuringTest/src/scenes/gameplay_scene.c
+CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building C object CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.obj -MF CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.obj.d -o CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.obj -c /home/vitorc/TuringTest/src/scenes/gameplay_scene.c
 
-CMakeFiles/turing_test.dir/utils/options_ui.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/utils/options_ui.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/utils/options_ui.c > CMakeFiles/turing_test.dir/utils/options_ui.c.i
+CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/scenes/gameplay_scene.c > CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.i
 
-CMakeFiles/turing_test.dir/utils/options_ui.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/utils/options_ui.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/utils/options_ui.c -o CMakeFiles/turing_test.dir/utils/options_ui.c.s
+CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/scenes/gameplay_scene.c -o CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.s
 
-CMakeFiles/turing_test.dir/utils/ranking.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/utils/ranking.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/utils/ranking.c.obj: /home/vitorc/TuringTest/utils/ranking.c
-CMakeFiles/turing_test.dir/utils/ranking.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building C object CMakeFiles/turing_test.dir/utils/ranking.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/utils/ranking.c.obj -MF CMakeFiles/turing_test.dir/utils/ranking.c.obj.d -o CMakeFiles/turing_test.dir/utils/ranking.c.obj -c /home/vitorc/TuringTest/utils/ranking.c
+CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.obj: /home/vitorc/TuringTest/src/gameplay/gameplay_data.c
+CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building C object CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.obj -MF CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.obj.d -o CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.obj -c /home/vitorc/TuringTest/src/gameplay/gameplay_data.c
 
-CMakeFiles/turing_test.dir/utils/ranking.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/utils/ranking.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/utils/ranking.c > CMakeFiles/turing_test.dir/utils/ranking.c.i
+CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/gameplay/gameplay_data.c > CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.i
 
-CMakeFiles/turing_test.dir/utils/ranking.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/utils/ranking.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/utils/ranking.c -o CMakeFiles/turing_test.dir/utils/ranking.c.s
+CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/gameplay/gameplay_data.c -o CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.s
 
-CMakeFiles/turing_test.dir/utils/webcam.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/utils/webcam.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/utils/webcam.c.obj: /home/vitorc/TuringTest/utils/webcam.c
-CMakeFiles/turing_test.dir/utils/webcam.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building C object CMakeFiles/turing_test.dir/utils/webcam.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/utils/webcam.c.obj -MF CMakeFiles/turing_test.dir/utils/webcam.c.obj.d -o CMakeFiles/turing_test.dir/utils/webcam.c.obj -c /home/vitorc/TuringTest/utils/webcam.c
+CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.obj: /home/vitorc/TuringTest/src/gameplay/gameplay_logic_hint.c
+CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building C object CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.obj -MF CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.obj.d -o CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.obj -c /home/vitorc/TuringTest/src/gameplay/gameplay_logic_hint.c
 
-CMakeFiles/turing_test.dir/utils/webcam.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/utils/webcam.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/utils/webcam.c > CMakeFiles/turing_test.dir/utils/webcam.c.i
+CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/gameplay/gameplay_logic_hint.c > CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.i
 
-CMakeFiles/turing_test.dir/utils/webcam.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/utils/webcam.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/utils/webcam.c -o CMakeFiles/turing_test.dir/utils/webcam.c.s
+CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/gameplay/gameplay_logic_hint.c -o CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.s
 
-CMakeFiles/turing_test.dir/utils/mural_ui.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/utils/mural_ui.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/utils/mural_ui.c.obj: /home/vitorc/TuringTest/utils/mural_ui.c
-CMakeFiles/turing_test.dir/utils/mural_ui.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building C object CMakeFiles/turing_test.dir/utils/mural_ui.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/utils/mural_ui.c.obj -MF CMakeFiles/turing_test.dir/utils/mural_ui.c.obj.d -o CMakeFiles/turing_test.dir/utils/mural_ui.c.obj -c /home/vitorc/TuringTest/utils/mural_ui.c
+CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.obj: /home/vitorc/TuringTest/src/scenes/verdict_scene.c
+CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building C object CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.obj -MF CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.obj.d -o CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.obj -c /home/vitorc/TuringTest/src/scenes/verdict_scene.c
 
-CMakeFiles/turing_test.dir/utils/mural_ui.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/utils/mural_ui.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/utils/mural_ui.c > CMakeFiles/turing_test.dir/utils/mural_ui.c.i
+CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/scenes/verdict_scene.c > CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.i
 
-CMakeFiles/turing_test.dir/utils/mural_ui.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/utils/mural_ui.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/utils/mural_ui.c -o CMakeFiles/turing_test.dir/utils/mural_ui.c.s
+CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/scenes/verdict_scene.c -o CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.s
 
-CMakeFiles/turing_test.dir/utils/mapa_holograma.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/utils/mapa_holograma.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/utils/mapa_holograma.c.obj: /home/vitorc/TuringTest/utils/mapa_holograma.c
-CMakeFiles/turing_test.dir/utils/mapa_holograma.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building C object CMakeFiles/turing_test.dir/utils/mapa_holograma.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/utils/mapa_holograma.c.obj -MF CMakeFiles/turing_test.dir/utils/mapa_holograma.c.obj.d -o CMakeFiles/turing_test.dir/utils/mapa_holograma.c.obj -c /home/vitorc/TuringTest/utils/mapa_holograma.c
+CMakeFiles/turing_test.dir/src/systems/dialog_system.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/systems/dialog_system.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/systems/dialog_system.c.obj: /home/vitorc/TuringTest/src/systems/dialog_system.c
+CMakeFiles/turing_test.dir/src/systems/dialog_system.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building C object CMakeFiles/turing_test.dir/src/systems/dialog_system.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/systems/dialog_system.c.obj -MF CMakeFiles/turing_test.dir/src/systems/dialog_system.c.obj.d -o CMakeFiles/turing_test.dir/src/systems/dialog_system.c.obj -c /home/vitorc/TuringTest/src/systems/dialog_system.c
 
-CMakeFiles/turing_test.dir/utils/mapa_holograma.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/utils/mapa_holograma.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/utils/mapa_holograma.c > CMakeFiles/turing_test.dir/utils/mapa_holograma.c.i
+CMakeFiles/turing_test.dir/src/systems/dialog_system.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/systems/dialog_system.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/systems/dialog_system.c > CMakeFiles/turing_test.dir/src/systems/dialog_system.c.i
 
-CMakeFiles/turing_test.dir/utils/mapa_holograma.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/utils/mapa_holograma.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/utils/mapa_holograma.c -o CMakeFiles/turing_test.dir/utils/mapa_holograma.c.s
+CMakeFiles/turing_test.dir/src/systems/dialog_system.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/systems/dialog_system.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/systems/dialog_system.c -o CMakeFiles/turing_test.dir/src/systems/dialog_system.c.s
 
-CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.obj: /home/vitorc/TuringTest/utils/evidencia_holograma.c
-CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building C object CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.obj -MF CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.obj.d -o CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.obj -c /home/vitorc/TuringTest/utils/evidencia_holograma.c
+CMakeFiles/turing_test.dir/src/systems/dialog_data.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/systems/dialog_data.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/systems/dialog_data.c.obj: /home/vitorc/TuringTest/src/systems/dialog_data.c
+CMakeFiles/turing_test.dir/src/systems/dialog_data.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building C object CMakeFiles/turing_test.dir/src/systems/dialog_data.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/systems/dialog_data.c.obj -MF CMakeFiles/turing_test.dir/src/systems/dialog_data.c.obj.d -o CMakeFiles/turing_test.dir/src/systems/dialog_data.c.obj -c /home/vitorc/TuringTest/src/systems/dialog_data.c
 
-CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/utils/evidencia_holograma.c > CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.i
+CMakeFiles/turing_test.dir/src/systems/dialog_data.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/systems/dialog_data.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/systems/dialog_data.c > CMakeFiles/turing_test.dir/src/systems/dialog_data.c.i
 
-CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/utils/evidencia_holograma.c -o CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.s
+CMakeFiles/turing_test.dir/src/systems/dialog_data.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/systems/dialog_data.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/systems/dialog_data.c -o CMakeFiles/turing_test.dir/src/systems/dialog_data.c.s
 
-CMakeFiles/turing_test.dir/utils/setas_3d.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/utils/setas_3d.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/utils/setas_3d.c.obj: /home/vitorc/TuringTest/utils/setas_3d.c
-CMakeFiles/turing_test.dir/utils/setas_3d.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building C object CMakeFiles/turing_test.dir/utils/setas_3d.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/utils/setas_3d.c.obj -MF CMakeFiles/turing_test.dir/utils/setas_3d.c.obj.d -o CMakeFiles/turing_test.dir/utils/setas_3d.c.obj -c /home/vitorc/TuringTest/utils/setas_3d.c
+CMakeFiles/turing_test.dir/src/systems/webcam.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/systems/webcam.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/systems/webcam.c.obj: /home/vitorc/TuringTest/src/systems/webcam.c
+CMakeFiles/turing_test.dir/src/systems/webcam.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building C object CMakeFiles/turing_test.dir/src/systems/webcam.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/systems/webcam.c.obj -MF CMakeFiles/turing_test.dir/src/systems/webcam.c.obj.d -o CMakeFiles/turing_test.dir/src/systems/webcam.c.obj -c /home/vitorc/TuringTest/src/systems/webcam.c
 
-CMakeFiles/turing_test.dir/utils/setas_3d.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/utils/setas_3d.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/utils/setas_3d.c > CMakeFiles/turing_test.dir/utils/setas_3d.c.i
+CMakeFiles/turing_test.dir/src/systems/webcam.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/systems/webcam.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/systems/webcam.c > CMakeFiles/turing_test.dir/src/systems/webcam.c.i
 
-CMakeFiles/turing_test.dir/utils/setas_3d.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/utils/setas_3d.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/utils/setas_3d.c -o CMakeFiles/turing_test.dir/utils/setas_3d.c.s
+CMakeFiles/turing_test.dir/src/systems/webcam.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/systems/webcam.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/systems/webcam.c -o CMakeFiles/turing_test.dir/src/systems/webcam.c.s
 
-CMakeFiles/turing_test.dir/scenes/verdict_scene.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/scenes/verdict_scene.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/scenes/verdict_scene.c.obj: /home/vitorc/TuringTest/scenes/verdict_scene.c
-CMakeFiles/turing_test.dir/scenes/verdict_scene.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building C object CMakeFiles/turing_test.dir/scenes/verdict_scene.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/scenes/verdict_scene.c.obj -MF CMakeFiles/turing_test.dir/scenes/verdict_scene.c.obj.d -o CMakeFiles/turing_test.dir/scenes/verdict_scene.c.obj -c /home/vitorc/TuringTest/scenes/verdict_scene.c
+CMakeFiles/turing_test.dir/src/systems/mural_ui.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/systems/mural_ui.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/systems/mural_ui.c.obj: /home/vitorc/TuringTest/src/systems/mural_ui.c
+CMakeFiles/turing_test.dir/src/systems/mural_ui.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building C object CMakeFiles/turing_test.dir/src/systems/mural_ui.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/systems/mural_ui.c.obj -MF CMakeFiles/turing_test.dir/src/systems/mural_ui.c.obj.d -o CMakeFiles/turing_test.dir/src/systems/mural_ui.c.obj -c /home/vitorc/TuringTest/src/systems/mural_ui.c
 
-CMakeFiles/turing_test.dir/scenes/verdict_scene.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/scenes/verdict_scene.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/scenes/verdict_scene.c > CMakeFiles/turing_test.dir/scenes/verdict_scene.c.i
+CMakeFiles/turing_test.dir/src/systems/mural_ui.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/systems/mural_ui.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/systems/mural_ui.c > CMakeFiles/turing_test.dir/src/systems/mural_ui.c.i
 
-CMakeFiles/turing_test.dir/scenes/verdict_scene.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/scenes/verdict_scene.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/scenes/verdict_scene.c -o CMakeFiles/turing_test.dir/scenes/verdict_scene.c.s
+CMakeFiles/turing_test.dir/src/systems/mural_ui.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/systems/mural_ui.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/systems/mural_ui.c -o CMakeFiles/turing_test.dir/src/systems/mural_ui.c.s
 
-CMakeFiles/turing_test.dir/scenes/intro_scene.c.obj: CMakeFiles/turing_test.dir/flags.make
-CMakeFiles/turing_test.dir/scenes/intro_scene.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
-CMakeFiles/turing_test.dir/scenes/intro_scene.c.obj: /home/vitorc/TuringTest/scenes/intro_scene.c
-CMakeFiles/turing_test.dir/scenes/intro_scene.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building C object CMakeFiles/turing_test.dir/scenes/intro_scene.c.obj"
-	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/scenes/intro_scene.c.obj -MF CMakeFiles/turing_test.dir/scenes/intro_scene.c.obj.d -o CMakeFiles/turing_test.dir/scenes/intro_scene.c.obj -c /home/vitorc/TuringTest/scenes/intro_scene.c
+CMakeFiles/turing_test.dir/src/systems/options_ui.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/systems/options_ui.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/systems/options_ui.c.obj: /home/vitorc/TuringTest/src/systems/options_ui.c
+CMakeFiles/turing_test.dir/src/systems/options_ui.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building C object CMakeFiles/turing_test.dir/src/systems/options_ui.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/systems/options_ui.c.obj -MF CMakeFiles/turing_test.dir/src/systems/options_ui.c.obj.d -o CMakeFiles/turing_test.dir/src/systems/options_ui.c.obj -c /home/vitorc/TuringTest/src/systems/options_ui.c
 
-CMakeFiles/turing_test.dir/scenes/intro_scene.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/scenes/intro_scene.c.i"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/scenes/intro_scene.c > CMakeFiles/turing_test.dir/scenes/intro_scene.c.i
+CMakeFiles/turing_test.dir/src/systems/options_ui.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/systems/options_ui.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/systems/options_ui.c > CMakeFiles/turing_test.dir/src/systems/options_ui.c.i
 
-CMakeFiles/turing_test.dir/scenes/intro_scene.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/scenes/intro_scene.c.s"
-	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/scenes/intro_scene.c -o CMakeFiles/turing_test.dir/scenes/intro_scene.c.s
+CMakeFiles/turing_test.dir/src/systems/options_ui.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/systems/options_ui.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/systems/options_ui.c -o CMakeFiles/turing_test.dir/src/systems/options_ui.c.s
+
+CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.obj: /home/vitorc/TuringTest/src/systems/evidencia_holograma.c
+CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building C object CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.obj -MF CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.obj.d -o CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.obj -c /home/vitorc/TuringTest/src/systems/evidencia_holograma.c
+
+CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/systems/evidencia_holograma.c > CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.i
+
+CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/systems/evidencia_holograma.c -o CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.s
+
+CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.obj: /home/vitorc/TuringTest/src/systems/mapa_holograma.c
+CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building C object CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.obj -MF CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.obj.d -o CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.obj -c /home/vitorc/TuringTest/src/systems/mapa_holograma.c
+
+CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/systems/mapa_holograma.c > CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.i
+
+CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/systems/mapa_holograma.c -o CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.s
+
+CMakeFiles/turing_test.dir/src/systems/setas_3d.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/systems/setas_3d.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/systems/setas_3d.c.obj: /home/vitorc/TuringTest/src/systems/setas_3d.c
+CMakeFiles/turing_test.dir/src/systems/setas_3d.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building C object CMakeFiles/turing_test.dir/src/systems/setas_3d.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/systems/setas_3d.c.obj -MF CMakeFiles/turing_test.dir/src/systems/setas_3d.c.obj.d -o CMakeFiles/turing_test.dir/src/systems/setas_3d.c.obj -c /home/vitorc/TuringTest/src/systems/setas_3d.c
+
+CMakeFiles/turing_test.dir/src/systems/setas_3d.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/systems/setas_3d.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/systems/setas_3d.c > CMakeFiles/turing_test.dir/src/systems/setas_3d.c.i
+
+CMakeFiles/turing_test.dir/src/systems/setas_3d.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/systems/setas_3d.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/systems/setas_3d.c -o CMakeFiles/turing_test.dir/src/systems/setas_3d.c.s
+
+CMakeFiles/turing_test.dir/src/systems/player_character.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/systems/player_character.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/systems/player_character.c.obj: /home/vitorc/TuringTest/src/systems/player_character.c
+CMakeFiles/turing_test.dir/src/systems/player_character.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building C object CMakeFiles/turing_test.dir/src/systems/player_character.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/systems/player_character.c.obj -MF CMakeFiles/turing_test.dir/src/systems/player_character.c.obj.d -o CMakeFiles/turing_test.dir/src/systems/player_character.c.obj -c /home/vitorc/TuringTest/src/systems/player_character.c
+
+CMakeFiles/turing_test.dir/src/systems/player_character.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/systems/player_character.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/systems/player_character.c > CMakeFiles/turing_test.dir/src/systems/player_character.c.i
+
+CMakeFiles/turing_test.dir/src/systems/player_character.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/systems/player_character.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/systems/player_character.c -o CMakeFiles/turing_test.dir/src/systems/player_character.c.s
+
+CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj: /home/vitorc/TuringTest/src/world/terreo_3d.c
+CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building C object CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj -MF CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj.d -o CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj -c /home/vitorc/TuringTest/src/world/terreo_3d.c
+
+CMakeFiles/turing_test.dir/src/world/terreo_3d.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/terreo_3d.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/terreo_3d.c > CMakeFiles/turing_test.dir/src/world/terreo_3d.c.i
+
+CMakeFiles/turing_test.dir/src/world/terreo_3d.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/terreo_3d.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/terreo_3d.c -o CMakeFiles/turing_test.dir/src/world/terreo_3d.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj: /home/vitorc/TuringTest/src/world/sala_recepcao.c
+CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building C object CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj -c /home/vitorc/TuringTest/src/world/sala_recepcao.c
+
+CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_recepcao.c > CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_recepcao.c -o CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj: /home/vitorc/TuringTest/src/world/sala_lanchonete.c
+CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building C object CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj -c /home/vitorc/TuringTest/src/world/sala_lanchonete.c
+
+CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_lanchonete.c > CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_lanchonete.c -o CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj: /home/vitorc/TuringTest/src/world/sala_jardim.c
+CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building C object CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj -c /home/vitorc/TuringTest/src/world/sala_jardim.c
+
+CMakeFiles/turing_test.dir/src/world/sala_jardim.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_jardim.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_jardim.c > CMakeFiles/turing_test.dir/src/world/sala_jardim.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_jardim.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_jardim.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_jardim.c -o CMakeFiles/turing_test.dir/src/world/sala_jardim.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj: /home/vitorc/TuringTest/src/world/sala_escritorio.c
+CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building C object CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj -c /home/vitorc/TuringTest/src/world/sala_escritorio.c
+
+CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_escritorio.c > CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_escritorio.c -o CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj: /home/vitorc/TuringTest/src/world/sala_escritorio_2.c
+CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building C object CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_escritorio_2.c
+
+CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_escritorio_2.c > CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_escritorio_2.c -o CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj: /home/vitorc/TuringTest/src/world/sala_convivio.c
+CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building C object CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj -c /home/vitorc/TuringTest/src/world/sala_convivio.c
+
+CMakeFiles/turing_test.dir/src/world/sala_convivio.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_convivio.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_convivio.c > CMakeFiles/turing_test.dir/src/world/sala_convivio.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_convivio.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_convivio.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_convivio.c -o CMakeFiles/turing_test.dir/src/world/sala_convivio.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj: /home/vitorc/TuringTest/src/world/sala_hall_1.c
+CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_31) "Building C object CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_hall_1.c
+
+CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_hall_1.c > CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_hall_1.c -o CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj: /home/vitorc/TuringTest/src/world/sala_contabilidade_1.c
+CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_32) "Building C object CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_contabilidade_1.c
+
+CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_contabilidade_1.c > CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_contabilidade_1.c -o CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj: /home/vitorc/TuringTest/src/world/sala_contabilidade_2.c
+CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_33) "Building C object CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_contabilidade_2.c
+
+CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_contabilidade_2.c > CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_contabilidade_2.c -o CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj: /home/vitorc/TuringTest/src/world/sala_arquivo_1.c
+CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_34) "Building C object CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_arquivo_1.c
+
+CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_arquivo_1.c > CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_arquivo_1.c -o CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj: /home/vitorc/TuringTest/src/world/sala_copa_1.c
+CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_35) "Building C object CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_copa_1.c
+
+CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_copa_1.c > CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_copa_1.c -o CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj: /home/vitorc/TuringTest/src/world/sala_hall_2.c
+CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_36) "Building C object CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_hall_2.c
+
+CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_hall_2.c > CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_hall_2.c -o CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj: /home/vitorc/TuringTest/src/world/sala_ciber_1.c
+CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_37) "Building C object CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_ciber_1.c
+
+CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_ciber_1.c > CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_ciber_1.c -o CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj: /home/vitorc/TuringTest/src/world/sala_ciber_2.c
+CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Building C object CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_ciber_2.c
+
+CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_ciber_2.c > CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_ciber_2.c -o CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj: /home/vitorc/TuringTest/src/world/sala_server_1.c
+CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_39) "Building C object CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_server_1.c
+
+CMakeFiles/turing_test.dir/src/world/sala_server_1.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_server_1.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_server_1.c > CMakeFiles/turing_test.dir/src/world/sala_server_1.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_server_1.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_server_1.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_server_1.c -o CMakeFiles/turing_test.dir/src/world/sala_server_1.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj: /home/vitorc/TuringTest/src/world/sala_server_2.c
+CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Building C object CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_server_2.c
+
+CMakeFiles/turing_test.dir/src/world/sala_server_2.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_server_2.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_server_2.c > CMakeFiles/turing_test.dir/src/world/sala_server_2.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_server_2.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_server_2.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_server_2.c -o CMakeFiles/turing_test.dir/src/world/sala_server_2.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj: /home/vitorc/TuringTest/src/world/sala_hall_3.c
+CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Building C object CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj -c /home/vitorc/TuringTest/src/world/sala_hall_3.c
+
+CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_hall_3.c > CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_hall_3.c -o CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj: /home/vitorc/TuringTest/src/world/sala_treino_escritorio.c
+CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_42) "Building C object CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj -c /home/vitorc/TuringTest/src/world/sala_treino_escritorio.c
+
+CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_treino_escritorio.c > CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_treino_escritorio.c -o CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj: /home/vitorc/TuringTest/src/world/sala_treino_ia.c
+CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_43) "Building C object CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj -c /home/vitorc/TuringTest/src/world/sala_treino_ia.c
+
+CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_treino_ia.c > CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_treino_ia.c -o CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj: /home/vitorc/TuringTest/src/world/sala_garagem_prototipos.c
+CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_44) "Building C object CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj -c /home/vitorc/TuringTest/src/world/sala_garagem_prototipos.c
+
+CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_garagem_prototipos.c > CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_garagem_prototipos.c -o CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj: /home/vitorc/TuringTest/src/world/sala_hall_4.c
+CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Building C object CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj -c /home/vitorc/TuringTest/src/world/sala_hall_4.c
+
+CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_hall_4.c > CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_hall_4.c -o CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj: /home/vitorc/TuringTest/src/world/sala_auditorio.c
+CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_46) "Building C object CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj -c /home/vitorc/TuringTest/src/world/sala_auditorio.c
+
+CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_auditorio.c > CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_auditorio.c -o CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj: /home/vitorc/TuringTest/src/world/sala_reuniao_4.c
+CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_47) "Building C object CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj -c /home/vitorc/TuringTest/src/world/sala_reuniao_4.c
+
+CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_reuniao_4.c > CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_reuniao_4.c -o CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.s
 
 # Object files for target turing_test
 turing_test_OBJECTS = \
-"CMakeFiles/turing_test.dir/main.c.obj" \
-"CMakeFiles/turing_test.dir/scenes/menu_scene.c.obj" \
-"CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.obj" \
-"CMakeFiles/turing_test.dir/scenes/selection_scene.c.obj" \
-"CMakeFiles/turing_test.dir/utils/raycanvas.c.obj" \
-"CMakeFiles/turing_test.dir/utils/dialog_system.c.obj" \
-"CMakeFiles/turing_test.dir/utils/dialog_data.c.obj" \
-"CMakeFiles/turing_test.dir/utils/transition.c.obj" \
-"CMakeFiles/turing_test.dir/utils/game_state.c.obj" \
-"CMakeFiles/turing_test.dir/utils/settings.c.obj" \
-"CMakeFiles/turing_test.dir/utils/options_ui.c.obj" \
-"CMakeFiles/turing_test.dir/utils/ranking.c.obj" \
-"CMakeFiles/turing_test.dir/utils/webcam.c.obj" \
-"CMakeFiles/turing_test.dir/utils/mural_ui.c.obj" \
-"CMakeFiles/turing_test.dir/utils/mapa_holograma.c.obj" \
-"CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.obj" \
-"CMakeFiles/turing_test.dir/utils/setas_3d.c.obj" \
-"CMakeFiles/turing_test.dir/scenes/verdict_scene.c.obj" \
-"CMakeFiles/turing_test.dir/scenes/intro_scene.c.obj"
+"CMakeFiles/turing_test.dir/src/main.c.obj" \
+"CMakeFiles/turing_test.dir/src/core/game_state.c.obj" \
+"CMakeFiles/turing_test.dir/src/core/settings.c.obj" \
+"CMakeFiles/turing_test.dir/src/core/ranking.c.obj" \
+"CMakeFiles/turing_test.dir/src/core/transition.c.obj" \
+"CMakeFiles/turing_test.dir/src/core/raycanvas.c.obj" \
+"CMakeFiles/turing_test.dir/src/core/ui_common.c.obj" \
+"CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.obj" \
+"CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.obj" \
+"CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.obj" \
+"CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.obj" \
+"CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.obj" \
+"CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.obj" \
+"CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.obj" \
+"CMakeFiles/turing_test.dir/src/systems/dialog_system.c.obj" \
+"CMakeFiles/turing_test.dir/src/systems/dialog_data.c.obj" \
+"CMakeFiles/turing_test.dir/src/systems/webcam.c.obj" \
+"CMakeFiles/turing_test.dir/src/systems/mural_ui.c.obj" \
+"CMakeFiles/turing_test.dir/src/systems/options_ui.c.obj" \
+"CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.obj" \
+"CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.obj" \
+"CMakeFiles/turing_test.dir/src/systems/setas_3d.c.obj" \
+"CMakeFiles/turing_test.dir/src/systems/player_character.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj"
 
 # External object files for target turing_test
 turing_test_EXTERNAL_OBJECTS =
 
-turing_test.exe: CMakeFiles/turing_test.dir/main.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/scenes/menu_scene.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/scenes/selection_scene.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/utils/raycanvas.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/utils/dialog_system.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/utils/dialog_data.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/utils/transition.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/utils/game_state.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/utils/settings.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/utils/options_ui.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/utils/ranking.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/utils/webcam.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/utils/mural_ui.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/utils/mapa_holograma.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/utils/setas_3d.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/scenes/verdict_scene.c.obj
-turing_test.exe: CMakeFiles/turing_test.dir/scenes/intro_scene.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/main.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/core/game_state.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/core/settings.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/core/ranking.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/core/transition.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/core/raycanvas.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/core/ui_common.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/systems/dialog_system.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/systems/dialog_data.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/systems/webcam.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/systems/mural_ui.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/systems/options_ui.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/systems/setas_3d.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/systems/player_character.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj
 turing_test.exe: CMakeFiles/turing_test.dir/build.make
 turing_test.exe: _deps/raylib-build/raylib/libraylib.a
 turing_test.exe: CMakeFiles/turing_test.dir/linkLibs.rsp
 turing_test.exe: CMakeFiles/turing_test.dir/objects1.rsp
 turing_test.exe: CMakeFiles/turing_test.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Linking C executable turing_test.exe"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_48) "Linking C executable turing_test.exe"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/turing_test.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

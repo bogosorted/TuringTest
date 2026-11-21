@@ -2,203 +2,443 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Flags de memoria entre conversas e dias (bits 1..31 em GameState)
+enum {
+    FLAG_NONE                      = 0,
+    FLAG_ARTHUR_FALOU_REVISOES     = 1,
+    FLAG_MARIA_ABRIU_ATRITO        = 2,
+    FLAG_ANALU_CONTRADICAO_TEMPO   = 3,
+    FLAG_ARTHUR_CITOU_CIBER        = 4,
+    FLAG_MARIA_CITOU_QUEIXA        = 5
+};
+
 typedef struct {
     const char *text;
     const char *next_node;
     const char *req_evidencia;
+    int         req_suspeito;   // -1 = mesmo suspeito, 0..2 = cruzado
+    int         req_flag;       // 0 = nenhuma
+    bool        req_poucas_ev;  // reservado
 } StaticChoice;
 
 typedef struct {
-    const char *id;
-    const char *speaker;
-    const char *text;
-    bool is_leaf;
+    const char  *id;
+    const char  *speaker;
+    const char  *text;
+    bool         is_leaf;
     VisaoJogador visao_out;
-    const char *ev_desbloqueada;
-    int choice_count;
+    const char  *ev_desbloqueada;
+    int          ev_suspeito;   // -1 = mesmo suspeito
+    int          flag_out;      // 0 = nenhuma
+    int          choice_count;
     StaticChoice choices[MAX_NODE_CHOICES];
 } StaticNode;
 
 typedef struct {
     const char *id;
     const char *nome;
+    const char *veredito;
+    const char *inspecao;
 } StaticEvidencia;
 
+#define C_NONE { NULL, NULL, NULL, -1, 0, false }
+#define CH(txt, nxt) { txt, nxt, "", -1, 0, false }
+#define CH_EV(txt, nxt, susp, ev) { txt, nxt, ev, susp, 0, false }
+#define CH_FL(txt, nxt, fl) { txt, nxt, "", -1, fl, false }
+
+// ============================================================================
+// EVIDENCIAS DA SEMANA 1 (6 pistas solidas, todas no Terreo + 1o Andar)
+// ============================================================================
+static const StaticEvidencia EV_TAB_0[] = {
+    {
+        "EV-01",
+        "Denúncia descartada ao RH (Maria)",
+        "Maria abriu queixa no RH contra Ana Lúcia por alterar relatórios.",
+        "DENÚNCIA DESCARTADA — PARA: RH RASEC\nAssinatura: Maria Bianca (ADM)\n\n\"Venho registrar queixa contra a supervisora Ana Lúcia. Nas últimas semanas, números de relatórios já revisados têm sido alterados sem aviso e a culpa recai sobre a equipe. Peço revisão interna.\""
+    },
+    {
+        "EV-02",
+        "Relatórios devolvidos com anotações",
+        "Maria registrou vários relatórios incorretos e alucinados no setor.",
+        "PASTA DE DEVOLUÇÕES — CONTABILIDADE\nAnotações à margem (letra de Maria Bianca):\n\n\"Valores fora da curva novamente — projeto listado não existe no trimestre.\"\n\"Datas trocadas e metas inventadas. Devolver para correção.\"\n(Nenhum dos documentos indica quem preencheu os dados.)"
+    }
+};
+static const int EV_CNT_0 = (int)(sizeof(EV_TAB_0) / sizeof(EV_TAB_0[0]));
+
+static const StaticEvidencia EV_TAB_1[] = {
+    {
+        "EV-03",
+        "Memorando sobre revisões do Arthur",
+        "Arthur estava sobrecarregado acobertando erros graves de Ana Lúcia.",
+        "INTRANET RASEC — MEMORANDO INTERNO (OPERAÇÕES)\nAssunto: Atraso nas revisões — Arthur Galdério\n\n\"As revisões do assistente Arthur vêm atrasando há dias. Em checagem interna, notamos que ele está refazendo planilhas inteiras fora do escopo para cobrir erros graves vindos da supervisão (Ana Lúcia).\""
+    },
+    {
+        "EV-04",
+        "Reclamação da Ana Lúcia contra Arthur",
+        "Ana Lúcia pediu aos setores para desligarem o Arthur por insubordinação.",
+        "OFÍCIO INTERNO — CONFIDENCIAL\nDe: Ana Lúcia (Supervisão ADM)  |  Para: RH / Arquivo\n\n\"Solicito avaliação de desligamento do assistente Arthur Galdério por insubordinação recorrente e falta de atenção aos prazos estabelecidos pelo setor.\""
+    }
+};
+static const int EV_CNT_1 = (int)(sizeof(EV_TAB_1) / sizeof(EV_TAB_1[0]));
+
+static const StaticEvidencia EV_TAB_2[] = {
+    {
+        "EV-05",
+        "Histórico do terminal de Ana Lúcia",
+        "Ana Lúcia fez pesquisas estranhas e tentou acessar áreas restritas no terminal.",
+        "HISTÓRICO RECENTE — TERMINAL a.lucia\n\n02:41  \"quanto tempo colegas levam pra notar mudança de comportamento\"\n02:54  \"expressões comuns de irritação escritório pt-br\"\n03:08  intranet/ciber/escala-noturna  [ACESSO NEGADO]\n03:15  \"limpar histórico terminal corporativo rasec\""
+    },
+    {
+        "EV-06",
+        "Conversa ouvida no Jardim (Cibersegurança)",
+        "Funcionários comentaram entradas não autorizadas de Ana Lúcia na Cibersegurança.",
+        "CONVERSA ENTREOUVIDA NO JARDIM:\n\n\"— Cê viu o alerta de ontem? A Ana Lúcia do ADM tentou passar o crachá na Cibersegurança de novo.\"\n\"— De novo?! Ela nem tem acesso ao 2º andar... e foi de madrugada ainda. Estranho demais.\""
+    }
+};
+static const int EV_CNT_2 = (int)(sizeof(EV_TAB_2) / sizeof(EV_TAB_2[0]));
+
+// ============================================================================
+// MARIA BIANCA (Suspeito 0 - Humana) — Ritmo curto e natural, SEMPRE 2 opcoes
+// Dia 1: reservada, admite erro sem entregar | Dia 2: abre o atrito | Dia 3: sem filtro
+// ============================================================================
 static const StaticNode NODES_S0_D1[] = {
-    { "Oi", "Maria", "Olá, nos conhecemos?", false, VISAO_DUVIDA, "", 2, { { "Ainda não, sou o novo funcionário Inspetor, e você?", "A", "" }, { "Não, sou novo por aqui. Você é de que setor?", "B", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A", "Maria", "Me chamo Maria, sou auxiliar administrativa.", false, VISAO_DUVIDA, "", 2, { { "Como andam as coisas por aqui?", "A.1", "" }, { "O que você acha dos outros funcionarios? não levo muito jeito para falar com os outros.", "A.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B", "Maria", "Sou do administrativo, e você?", false, VISAO_DUVIDA, "", 2, { { "Sou estágiario auxiliar geral e me designaram primeiro para ver o setor administrativo.", "B.1", "" }, { "Sou estágiario, me designaram aqui por reclamações de desempenho.", "B.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1", "Maria", "Está indo tudo bem, apenas alguns relatórios estão errados...", false, VISAO_DUVIDA, "", 2, { { "Como assim? desculpa a curiosidade.", "A.1.1", "" }, { "Ouvi falar sobre, é loucura né? mas todos cometem erros", "A.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2", "Maria", "Ah, a maioria é bem legal, todo mundo se da bem.", false, VISAO_DUVIDA, "", 2, { { "Eu ouvi por ai que não gostam tanto de uma pessoa no setor administrativo.", "A.2.1", "" }, { "Me falaram o contrario, então fiquei com medo.", "A.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1", "Maria", "Ah entendi, mas por quê? a equipe está indo bem.", false, VISAO_DUVIDA, "", 2, { { "Só estou fazendo meu trabalho, pode ser precaução.", "B.1.1", "" }, { "Você sabe muito bem que tem relatórios errados vindo.", "B.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2", "Maria", "Problemas no desempenho? Como assim?", false, VISAO_DUVIDA, "", 2, { { "Aparentemente em uma reunião, tinham dados completamente incorretos em um relatório.", "B.2.3", "" }, { "Você está responsavel pelo arquivamento dos relatórios? Ultimamente há diversos errados.", "B.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.1", "Maria", "Alguns relatórios do setor administrativo estão sendo enviados de forma errada, tenho que revisar todos antes de arquivar.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.2", "Maria", "Pois é, talvez com sua ajuda a gente consiga mitigar mais esses erros.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.1", "Maria", "Eu não sei, talvez tenha alguém que não se de bem com alguém daqui. tenho que voltar ao trabalho.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.2", "Maria", "Eu não sei, tenho que voltar ao trabalho. Mas o pessoal é amigável, não se preocupa.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.1", "Maria", "Talvez, talvez. Mas qualquer coisa estou por aqui, tenho que voltar ao trabalho.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.2", "Maria", "Isso faz parte, não entendi pra que ter um auxiliar aqui. Já vou indo.", true, VISAO_PRESSAO, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.2", "Maria", "Sou sim, mas não sou eu quem faço eles. tenho que voltar ao trabalho.", true, VISAO_PRESSAO, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.3", "Maria", "Ah, isso... acontece, as vezes. eu acho. tenho que voltar ao trabalho.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
+    { "Oi", "Maria", "Oi, nos conhecemos?", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 2, {
+        CH("Ainda não, sou o estagiário novo. E você?", "A"),
+        CH("Não, sou novo aqui. Você é do administrativo?", "B"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "A", "Maria", "Maria. Cuido do arquivo e protocolo aqui. Bem-vindo à RASEC.", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 2, {
+        CH("Valeu! Como andam as coisas por aqui?", "A1"),
+        CH("O pessoal parece meio tenso hoje, impressão minha?", "A2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "B", "Maria", "Sou sim, auxiliar administrativa. Te mandaram pra cá por quê?", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 2, {
+        CH("Só pra dar apoio geral no setor.", "B1"),
+        CH("Falaram que tem relatório saindo errado daqui.", "B2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "A1", "Maria", "A empresa é boa de trabalhar, mas ultimamente tá vindo muito relatório errado pra eu arquivar.", false, VISAO_DUVIDA, "", -1, FLAG_MARIA_ABRIU_ATRITO, 2, {
+        CH("Erro de digitação ou coisa mais séria?", "A1_1"),
+        CH("Complicado... mas faz parte da rotina, né?", "A1_2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "A2", "Maria", "Ah, fim de mês sempre aperta. Mas tá todo mundo se virando bem.", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 2, {
+        CH("Saquei. Se precisar de ajuda com algo, só chamar.", "A2_1"),
+        CH("Parece mais do que só fim de mês, mas tudo bem.", "A2_2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "B1", "Maria", "Entendi. Apoio sempre ajuda, o volume aqui dobrou esse mês.", false, VISAO_DUVIDA, "", -1, FLAG_MARIA_ABRIU_ATRITO, 2, {
+        CH("Dobrou por causa de retrabalho?", "B1_1"),
+        CH("Beleza, vou me situando então.", "B1_2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "B2", "Maria", "Olha, eu só confiro e arquivo. Não sou eu quem preenche os números.", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 2, {
+        CH("Tranquilo, não tô te culpando.", "B2_1"),
+        CH("Mas você deixa passar mesmo estando errado?", "B2_2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "A1_1", "Maria", "Coisa esquisita... número que não existe. Mas enfim, preciso voltar pras pastas.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_ABRIU_ATRITO, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A1_2", "Maria", "Pois é, a gente tenta relevar. Bom trabalho aí.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A2_1", "Maria", "Obrigada. Qualquer coisa te chamo sim.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A2_2", "Maria", "Melhor não ficar procurando pelo em ovo no primeiro dia. Tenho que ir.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "B1_1", "Maria", "Basicamente. Metade volta pra refazer. Depois a gente conversa melhor.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_ABRIU_ATRITO, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "B1_2", "Maria", "Certo, bom primeiro dia.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "B2_1", "Maria", "Menos mal. Tenho que voltar pro arquivo agora.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "B2_2", "Maria", "Claro que não, eu devolvo tudo. Faz o seu trabalho que eu faço o meu.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } }
 };
 
 static const StaticNode NODES_S0_D2[] = {
-    { "Entrada", "Maria", "Ler o apoio geral.", false, VISAO_DUVIDA, "", 2, { { "Está tudo bem, só vim pedir um conselho.", "A", "" }, { "Desculpe por ontem, me sinto deslocado ainda.", "B", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A", "Maria", "Pode falar rapaz. Estamos aqui pra isso.", false, VISAO_DUVIDA, "", 2, { { "Estou passando por problemas pessoais, e desde que comecei na empresa uma pessoa vem me tratando mal.", "A.1", "" }, { "Os relatórios sempre vêm incorretos, queria descobrir quem está preenchendo eles.", "A.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B", "Maria", "Tudo bem, sou toda ouvidos.", false, VISAO_DUVIDA, "", 2, { { "Os números nos relatóios parecem muito fora da curva.", "B.1", "" }, { "Você gosta de viajar?", "B.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1", "Maria", "Ah serio? que tipo de problemas?", false, VISAO_DUVIDA, "", 2, { { "Problemas financeiros. Desabafei isso com uma pessoa da empresa e ela agiu de forma rude.", "A.1.1", "" }, { "Nada importante, mas essa pessoa está me deixando desconfortável. desculpa estar incomodando.", "A.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2", "Maria", "Ah, isso é facil de descobrir. mas pra que você quer saber?", false, VISAO_DUVIDA, "", 2, { { "Quero falar com a pessoa, mas não tem o nome de quem fez o relatório.", "A.2.1", "" }, { "Porque eu fui contratado para isso, procurar gargalos, principalmente.", "A.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1", "Maria", "Bom, quando chegam relatórios com erros crassos assim, eu devolvo para avaliação da supervisora.", false, VISAO_DUVIDA, "", 2, { { "Compreendo, obrigado por explicar essa parte.", "B.1.1", "" }, { "Vou ter de relatar caso aconteçam inconsistências demais.", "B.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2", "Maria", "Sim, já fui a Lisboa! Ainda lembro dos bondinhos e daquele sol lindo.", false, VISAO_DUVIDA, "", 2, { { "Em que hotel ficou?", "B.2.1", "" }, { "Você achou difícil entender o português deles?", "B.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.1", "Maria", "Eu acho que sei quem é... depois a gente conversa, mas fica bem ok?", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.2", "Maria", "Se for quem estou pensando, ela não foi sempre assim. Outro dia a gente conversa mais sobre.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.1", "Maria", "É contra o procedimento, mas poderia achar facilmente quem fez.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.2", "Maria", "Ah, entendi. Boa sorte, talvez consiga descobrir conversando com outros.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.1", "Maria", "De nada, em geral, pode contatar a supervisora.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.2", "Maria", "Pode falar para a supervisora. Estou fazendo minha parte.", true, VISAO_PRESSAO, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.1", "Maria", "Um hotel no... centro, era ótimo aliás.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.2", "Maria", "No começo é um pouco difícil, o pessoal fala rápido, mas você acostuma.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
+    { "Entrada", "Maria", "(abertura dinamica)", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 4, {
+        CH_EV("Achei um rascunho seu pro RH no lixo...", "EV1", 0, "EV-01"),
+        CH_FL("O Arthur disse que tá refazendo tudo por causa da supervisão.", "FL1", FLAG_ARTHUR_FALOU_REVISOES),
+        CH("Mais relatório voltando hoje?", "A"),
+        CH("Você se dá bem com a Ana Lúcia?", "B"),
+        C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "EV1", "Maria", "Ei, fala baixo! Eu desisti de mandar porque aqui na RASEC quem reclama sobra primeiro.", false, VISAO_CONFIANCA, "", -1, FLAG_MARIA_CITOU_QUEIXA, 2, {
+        CH("Ela tá alterando os relatórios mesmo?", "EV1_1"),
+        CH("Relaxa, não vou falar nada pra ninguém.", "EV1_2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "EV1_1", "Maria", "Tá. E o pior é que ela jura de pé junto que sempre foi daquele jeito. Não sei o que houve com ela.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_CITOU_QUEIXA, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "EV1_2", "Maria", "Obrigada... Só fica esperto perto dela, tá?", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_CITOU_QUEIXA, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "FL1", "Maria", "Ele tenta segurar as pontas pra ela, mas tá se afundando. A Ana Lúcia mudou da água pro vinho mês passado.", false, VISAO_CONFIANCA, "", -1, FLAG_MARIA_CITOU_QUEIXA, 2, {
+        CH("Mudou em que sentido?", "FL1_1"),
+        CH("E ninguém aqui fala nada?", "FL1_2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "FL1_1", "Maria", "Antes era exigente, mas coerente. Agora inventa dado e sorri como se estivesse tudo lindo.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_CITOU_QUEIXA, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "FL1_2", "Maria", "O salário aqui é bom demais pra arriscar. A gente engole e trabalha.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_CITOU_QUEIXA, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A", "Maria", "Mais três só hoje de manhã. Tudo com dado inventado e sem nome de quem mexeu.", false, VISAO_DUVIDA, "", -1, FLAG_MARIA_ABRIU_ATRITO, 2, {
+        CH("Você desconfia de alguém?", "A1"),
+        CH("Que saco... boa sorte aí.", "A2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "B", "Maria", "Me dava. Últimas semanas ficou difícil conversar com ela, parece outra pessoa.", false, VISAO_DUVIDA, "", -1, FLAG_MARIA_ABRIU_ATRITO, 2, {
+        CH("Ela tá pegando no seu pé?", "B1"),
+        CH("Vai ver é só estresse.", "B2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "A1", "Maria", "Tenho minhas suspeitas, mas sem prova concreta eu fico quieta. Preciso ir.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_ABRIU_ATRITO, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A2", "Maria", "Valeu, vou precisar.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "B1", "Maria", "No meu e no do Arthur. Melhor eu voltar antes que ela apareça.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_CITOU_QUEIXA, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "B2", "Maria", "Estresse não faz alguém esquecer como o próprio setor funciona. Até mais.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } }
 };
 
 static const StaticNode NODES_S0_D3[] = {
-    { "Entrada", "Maria", "Ler apoio geral.", false, VISAO_DUVIDA, "", 2, { { "Finalmente, final de semana.", "B.2", "" }, { "Essa semana está sendo horrivel, desculpe.", "B", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B", "Maria", "Todos nós temos semanas ruins, relaxa.", false, VISAO_DUVIDA, "", 2, { { "Para ser sincero, eu acho que você é a causa desses relatórios errados.", "B.1", "" }, { "Quem estava na sua mesa?", "B.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1", "Maria", "De novo isso? Eu não faço os relatórios, eu apenas os arquivo.", false, VISAO_DUVIDA, "", 2, { { "Mas você sabe quem está cometendo os erros?", "B.1.1", "" }, { "mas não acha que deveria relatar os erros antes de arquivar?", "B.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2", "Maria", "Sobre aquela pessoa, ela não era assim sempre. Aconteceu a algumas semanas, como se ela tivesse se tornado outra pessoa.", false, VISAO_DUVIDA, "", 2, { { "Você diz da supervisora do setor administrativo?", "B.2.1", "" }, { "Está falando sobre os relatórios ou o comportamento dela?", "B.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.1", "Maria", "Isso não importa, faça seu trabalho... não é como se fossem tantos relatórios errados assim.", true, VISAO_PRESSAO, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.2", "Maria", "Eu relato eles, você acha que simplesmente chegam lá os relátorios de erro?", true, VISAO_PRESSAO, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.1", "Maria", "Sim... Ela fazia o trabalho perfeitamente, mas ela alucina informações para por no relatório.", false, VISAO_DUVIDA, "", 2, { { "Você pode me falar mais? só se estiver confortavel, claro.", "Entrada", "" }, { "Você pode me falar mais sobre a supervisora?", "B.2.1#EV-01", "EV-01" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.2", "Maria", "Eu acho que já falei demais. Tenho que voltar ao trabalho, esses relatórios não param de vir.", true, VISAO_PRESSAO, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.1#EV-01", "Maria", "Ela começou a ir para setores que não deveria ir, a agir de forma muito arrogante. O Arthur faz de tudo para agradar ela e acaba errando relatórios, mas ela faz pior.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
+    { "Entrada", "Maria", "(abertura dinamica)", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 4, {
+        CH_EV("Vi os relatórios devolvidos com as suas anotações.", "EV2", 0, "EV-02"),
+        CH_EV("A Ana Lúcia pediu o desligamento do Arthur.", "EV4", 1, "EV-04"),
+        CH("Semana puxada, hein? Como cê tá?", "A"),
+        CH("Você acha que a Ana Lúcia tá escondendo algo?", "B"),
+        C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "EV2", "Maria", "Pois é, eu cansei de fingir que aquilo é normal. Ninguém erra daquele jeito sem querer.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "EV4", "Maria", "É sério isso?! O coitado se matando pra limpar a sujeira dela e ela faz isso? Que nojo, na boa.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A", "Maria", "No meu limite. Adoro a escala da RASEC, mas essa semana sugou minha paciência toda.", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 2, {
+        CH("Tudo por causa da Ana Lúcia?", "A1"),
+        CH("Pelo menos hoje acaba a semana.", "A2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "B", "Maria", "Sinceramente? Eu acho que aquela mulher nem lembra direito quem trabalha aqui. Tô cheia disso.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A1", "Maria", "Noventa por cento sim. Ela não era assim, juro. Agora deixa eu fechar isso logo.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A2", "Maria", "Graças a Deus. Só quero sumir daqui às cinco.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } }
 };
 
+// ============================================================================
+// ARTHUR GALDERIO (Suspeito 1 - Humano) — Curto, informal, SEMPRE 2 opcoes
+// ============================================================================
 static const StaticNode NODES_S1_D1[] = {
-    { "Oi", "Arthur", "Oi brother! Prazer, meu nome é Arthur. Como vai?", false, VISAO_DUVIDA, "", 2, { { "Prazer, meu nome é Inspetor. Fala sobre você.", "A", "" }, { "Não te conheço.", "B", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A", "Arthur", "Tudo ótimo, sou assistente do administrativo.", false, VISAO_DUVIDA, "", 2, { { "Qual sua vibe, no pessoal?", "A.1", "" }, { "Como funciona seu setor?", "A.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B", "Arthur", "Ah... Tudo bem, se precisar de algo, pode falar comigo", false, VISAO_DUVIDA, "", 2, { { "Onde você trabalha?", "B.1", "" }, { "Seu serviço é difícil?", "B.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1", "Arthur", "Ah, sou músico por hobby, guitarrista.", false, VISAO_DUVIDA, "", 2, { { "Show! Qual tua banda favorita?", "A.1.1", "" }, { "Qual seu gênero musical favorito?", "A.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2", "Arthur", "Eu preencho os relatórios e faço projeções com os números do pessoal, mas gosto de ajudar no que posso.", false, VISAO_DUVIDA, "", 2, { { "Tem muita demanda hoje?", "A.2.1", "" }, { "Você gosta da função?", "A.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1", "Arthur", "Eu sou assistente do administrativo, preencho os relatórios. Nada demais.", false, VISAO_DUVIDA, "", 2, { { "Você revisa os relatórios?", "B.1.1", "" }, { "Você preferia trabalhar em outra coisa?", "B.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2", "Arthur", "Eu preencho os relatórios, as vezes acumula trabalho de um dia para o outro, mas da pra lidar", false, VISAO_DUVIDA, "", 2, { { "Você não consegue terminar no dia?", "B.2.3", "" }, { "Por que você não fala com seu chefe?", "B.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.1", "Arthur", "Metal Wyrms, eles são sinistros!", true, VISAO_CONFIANCA, "EV-05", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.2", "Arthur", "Em geral, todos os tipos de rock, curto eletrônica também.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.1", "Arthur", "Tem, mas eu dou conta. Geralmente...", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.2", "Arthur", "Não é meu sonho, mas estou confortável. Sou mais da música.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.1", "Arthur", "É, isso ai.", true, VISAO_PRESSAO, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.2", "Arthur", "Meu sonho era música, mas estou bem aqui", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.2", "Arthur", "Eu já tentei...", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.3", "Arthur", "Não... É complicado", true, VISAO_PRESSAO, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
+    { "Oi", "Arthur", "E aí! Você é o estagiário novo, né? Sou o Arthur, do administrativo.", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 2, {
+        CH("Prazer, Arthur! Tudo tranquilo por aqui?", "A"),
+        CH("Sou eu sim. Tá tendo problema nos relatórios?", "B"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "A", "Arthur", "Na medida do possível. A RASEC é ótima, mas essa semana acumulou serviço demais.", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 2, {
+        CH("Muita demanda nova ou retrabalho?", "A1"),
+        CH("Acontece. O pessoal aqui se ajuda?", "A2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "B", "Arthur", "Opa, direto ao ponto! Tá tendo uns atrasos sim, mas eu tô dando conta.", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 2, {
+        CH("Por que tá atrasando tanto?", "B1"),
+        CH("Beleza, não quis pressionar.", "B2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "A1", "Arthur", "Retrabalho puro. A Analu anda devolvendo planilha minha por uns motivos nada a ver.", false, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_FALOU_REVISOES, 2, {
+        CH("Ela sempre foi assim?", "A1_1"),
+        CH("Pô, aí complica mesmo.", "A1_2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "A2", "Arthur", "Se ajuda sim. A Maria é mais na dela, mas é gente boa. Já a chefia tá meio pilhada.", false, VISAO_CONFIANCA, "", -1, FLAG_NONE, 2, {
+        CH("Pilhada com a auditoria?", "A2_1"),
+        CH("Entendi, valeu pelo toque.", "A2_2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "B1", "Arthur", "Porque toda hora mudam a regra no meio do caminho... mas eu resolvo, relaxa.", false, VISAO_DUVIDA, "", -1, FLAG_ARTHUR_FALOU_REVISOES, 2, {
+        CH("Quem tá mudando a regra?", "B1_1"),
+        CH("Certo, bom trabalho então.", "B1_2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "B2", "Arthur", "Suave, brother. Se precisar de algo, tô por aqui.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A1_1", "Arthur", "Não! Ela era super justa quando entrei. Vai ver tá passando por algo. Vou correr aqui!", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_FALOU_REVISOES, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A1_2", "Arthur", "Pois é, mas prefiro segurar o rojão do que criar clima. Valeu!", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_FALOU_REVISOES, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A2_1", "Arthur", "Deve ser. Aqui na RASEC ninguém fala muito, só sorri e entrega. Até mais!", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A2_2", "Arthur", "Tamo junto, qualquer coisa chama.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "B1_1", "Arthur", "Prefiro não queimar ninguém no teu primeiro dia. Depois a gente troca ideia.", true, VISAO_DUVIDA, "", -1, FLAG_ARTHUR_FALOU_REVISOES, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "B1_2", "Arthur", "Valeu, igualmente.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } }
 };
 
 static const StaticNode NODES_S1_D2[] = {
-    { "Entrada", "Arthur", "Ler o apoio geral.", false, VISAO_DUVIDA, "", 2, { { "Oi! Tudo certo administrativo?", "A", "" }, { "Bom dia. A supervisora Ana Lúcia é bem exigente, não é?", "B", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A", "Arthur", "Tudo, a supervisora é exigente, mas tudo ok. Se adaptou bem ontem?", false, VISAO_DUVIDA, "", 3, { { "Sim, falei com todos.", "A.1", "" }, { "Falei, mas estou passando por problemas pessoais, acabei desabafando e uma pessoa vem me tratando mal.", "A.2", "" }, { "Consegui falar com galera. Vem cá, você disse que gosta dos Metal Wyrms, você conhece os Psicóticos?", "A#EV-05", "EV-05" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B", "Arthur", "Ela prefere Analu, é exigente, pois quer manter um padrão de qualidade, mas ela deve estar tendo problemas ultimamente.", false, VISAO_DUVIDA, "", 2, { { "Todos tem problemas, mas se for o caso, ela deveria separar mais do profissional.", "B.1", "" }, { "Você sabe que tipo de problemas?", "B.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1", "Arthur", "Supimpa! Gosto de passar um tempo no refeitório com o pessoal, cê devia aparecer.", false, VISAO_DUVIDA, "", 2, { { "Legal, você parece muito simpático.", "A.1.1", "" }, { "Com o pessoal do administrativo? ou de outros setores também?", "A.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2", "Arthur", "Oh... Sinto muito, não se preocupa com isso, não vou permitir que tratem os outros assim.", false, VISAO_DUVIDA, "", 2, { { "Tá traquilo, agradeço a força.", "A.2.1", "" }, { "Tem conseguido lidar com as demandas?", "A.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1", "Arthur", "Isso é verdade, mas sabemos que não é assim, cê tá sendo extremamente lógico.", false, VISAO_DUVIDA, "EV-07", 2, { { "Eu... acho que você está certo", "B.1.1", "" }, { "Acho que sim... Maria é bem profissional, mesmo ela está tendo dificuldades.", "B.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2", "Arthur", "Olha, não sei, mas não gosto de falar dos outros.", false, VISAO_DUVIDA, "", 2, { { "Mesmo assim, não acha que ela está pondo muita pressão?", "B.2.1", "" }, { "A Maria está reclamando do acúmulo de relatórios.", "B.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.1", "Arthur", "Hihihi... Valeu, eu gosto de socializar com todo mundo.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.2", "Arthur", "De vários setores, inclusive a supervisora... Mas ela tem estado distante.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.1", "Arthur", "Olha, eu deixei um energético na geladeira do refeitório, pode pegar se fizer te sentir melhor.", true, VISAO_CONFIANCA, "EV-04", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.2", "Arthur", "A supervisora vem implicando um pouco nas entregas, mas estou tentando meu melhor.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.1", "Arthur", "Eu vou tentar conversar com ela, não esquenta.", true, VISAO_CONFIANCA, "EV-06", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.2", "Arthur", "Ela está com dificuldades? Vou falar com ela.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.1", "Arthur", "Talvez, mas vou tentar um diálogo.", true, VISAO_DUVIDA, "EV-06", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.2", "Arthur", "Eu vou conseguir resolver, a Analu está dificultando as coisas.", true, VISAO_PRESSAO, "EV-06", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A#EV-05", "Arthur", "É minha banda indie favorita irmão! Cê tem bom gosto.", false, VISAO_DUVIDA, "", 2, { { "Você tem notado algo diferente no comportamento de Ana Lúcia?", "A#EV-05.1", "" }, { "Você tem notado algo diferente no comportamento de Maria Bianca?", "A#EV-05.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A#EV-05.1", "Arthur", "Ela prefere Analu, mas sim, de um tempo pra cá nada que faço parece correto. Parece que ela segue um roteiro.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A#EV-05.2", "Arthur", "Particularmente não, ela parece mais na dela, mas acho que é algo temporário.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
+    { "Entrada", "Arthur", "(abertura dinamica)", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 4, {
+        CH_EV("Vi um memorando dizendo que você tá cobrindo erros da Ana Lúcia.", "EV3", 1, "EV-03"),
+        CH_FL("Ontem você falou das revisões... ela implicou de novo hoje?", "FL1", FLAG_ARTHUR_FALOU_REVISOES),
+        CH("Conseguiu zerar as planilhas de ontem?", "A"),
+        CH("A Ana Lúcia tá estranha faz quanto tempo?", "B"),
+        C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "EV3", "Arthur", "Caramba... Operações anotou isso? Eu só não queria que a culpa caísse no setor todo.", false, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_CIBER, 2, {
+        CH("Mas você vai ficar segurando erro grave dela até quando?", "EV3_1"),
+        CH("Ela sabe que você tá cobrindo isso?", "EV3_2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "EV3_1", "Arthur", "Não sei... Ela já me ajudou muito antes, só que ultimamente nem parece a mesma pessoa.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_CIBER, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "EV3_2", "Arthur", "Sabe, e ainda fechou a cara ontem quando corrigi uma tabela dela. Tá difícil.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_CIBER, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "FL1", "Arthur", "Implicou! E ontem falou que foi eu quem treinou ela quando ela entrou. Sendo que ela já tava aqui antes de mim!", false, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_CIBER, 2, {
+        CH("Ela trocou a ordem das coisas assim do nada?", "FL1_1"),
+        CH("Estranho... será que é cansaço?", "FL1_2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "FL1_1", "Arthur", "Do nada! E riu quando eu corrigi. Juro que deu um frio na espinha.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_CIBER, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "FL1_2", "Arthur", "Cansaço não apaga dois anos da cabeça de ninguém, cara. Vou voltar lá.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_CIBER, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A", "Arthur", "Quase. Quando acho que acabei, chega outra alteração da supervisão.", false, VISAO_DUVIDA, "", -1, FLAG_ARTHUR_FALOU_REVISOES, 2, {
+        CH("E você não reclama?", "A1"),
+        CH("Força aí, cara.", "A2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "B", "Arthur", "Umas três semanas. Tá rígida demais, mas com um sorriso meio forçado.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_CIBER, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A1", "Arthur", "Aqui na RASEC quem reclama some do mapa. Melhor só entregar.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_FALOU_REVISOES, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A2", "Arthur", "Valeu, brother.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } }
 };
 
 static const StaticNode NODES_S1_D3[] = {
-    { "Entrada", "Arthur", "(a fala de entrada depende da visão herdada do Dia 2)", false, VISAO_DUVIDA, "", 4, { { "Oi Arthur, tudo bem?", "A", "" }, { "Oi, estava te procurando.", "B", "" }, { "Bom dia, falou com a Ana Lúcia?", "Entrada#EV-06", "EV-06" }, { "Achei seu ID, por quê estava na geladeira?", "Entrada#EV-04", "EV-04" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A", "Arthur", "Tudo, vou visitar a família amanhã.", false, VISAO_DUVIDA, "", 2, { { "Que ótimo, sempre legal ficar perto dos pais.", "A.1", "" }, { "Filho da mamãe né?", "A.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B", "Arthur", "Pode dizer, manda ai.", false, VISAO_DUVIDA, "", 2, { { "Revisou muitos relatórios hoje?", "B.1", "" }, { "Precisamos falar sobre esses relatórios", "B#EV-03", "EV-03" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1", "Arthur", "É, passo muito tempo com meu pai. Cresci apenas com ele.", false, VISAO_DUVIDA, "", 2, { { "Revisou muitos relatórios hoje?", "A.1.1", "" }, { "A Maria está distante ultimamente? Vocês pareciam chegados.", "A.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2", "Arthur", "Eu.. Eu cresci sem minha mãe.", false, VISAO_DUVIDA, "", 2, { { "Desculpe Arthur, não quis ser rude.", "A.2.1", "" }, { "Ah... Perdão, como vão os relatórios?", "A.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1", "Arthur", "Revisei alguns hoje sim, por quê a pergunta?", false, VISAO_DUVIDA, "", 2, { { "Sua função é revisar os relatórios?", "B.1.1", "" }, { "Conseguiu terminar o trabalho de ontem?", "B.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.1", "Arthur", "É, tive que revisar, mesmo não sendo minha função, se eu não fizesse não ia ter como atender as demandas doidas da Analu.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.2", "Arthur", "Estava, juntou um pouco de burnout com outros problemas, mas tirando a Analu, acho que está tudo normal agora.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.1", "Arthur", "Tudo bem, não tinha como você saber. Vivi com meu pai desde sempre, ele que me ensinou guitarra.", true, VISAO_CONFIANCA, "EV-08", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.2", "Arthur", "Revisei os relatórios, tá complicado.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.1", "Arthur", "Não, falei pra cê, eu os preencho, mas tive que revisar por conta de alguns comentários de Analu.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.2", "Arthur", "Parecia que iria conseguir progresso, mas estou estagnado.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "Entrada#EV-06", "Arthur", "Falei, ela simplesmente não entende", false, VISAO_DUVIDA, "", 1, { { "Oque aconteceu?", "Entrada#EV-06.1", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "Entrada#EV-06.1", "Arthur", "Ela parece teimosa até demais, como se estivesse empenhada em me contradizer, isso não é normal.", false, VISAO_DUVIDA, "", 1, { { "Hmm... Entendo", "Entrada", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "Entrada#EV-04", "Arthur", "Eita! Valeu por devolver. Cê sabe, as vezes sou meio desastrado.", false, VISAO_DUVIDA, "", 1, { { "Sei...", "Entrada", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B#EV-03", "Arthur", "Olha, eu vou resolver, tá?", false, VISAO_DUVIDA, "", 2, { { "Certo, tem algum motivo pra isso?", "B#EV-03.1", "" }, { "Você não pode simplesmente o trabalho se amontoar.", "B#EV-03.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B#EV-03.1", "Arthur", "Analu tem basicamente inventado exigências que não fazem sentido, no mais é isso.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B#EV-03.2", "Arthur", "Veja só, eu conseguiria lidar com tudo como fazia antes, se Analu não tivesse dando umas justificativas insanas pra mim.", true, VISAO_PRESSAO, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
+    { "Entrada", "Arthur", "(abertura dinamica)", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 4, {
+        CH_EV("Arthur, a Ana Lúcia mandou um pedido de desligamento seu.", "EV4", 1, "EV-04"),
+        CH_EV("Ouvi dizer que a Ana Lúcia tentou entrar na Cibersegurança de madrugada.", "EV6", 2, "EV-06"),
+        CH("Último dia, hein. Sobreviveu?", "A"),
+        CH("Ainda tá cobrindo os erros dela hoje?", "B"),
+        C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "EV4", "Arthur", "Quê?! Eu virei noite limpando a bagunça dela e ela pede minha cabeça?! Chega, cara, essa mulher tá completamente fora da casinha.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "EV6", "Arthur", "Cibersegurança?! A gente nem tem acesso lá em cima! Por que diabos ela ia querer entrar lá de madrugada?", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A", "Arthur", "Por pouco. Tô só o pó, maluco. Se a Analu mandar refazer mais uma planilha hoje eu surto.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "B", "Arthur", "Hoje não. Cansei de fazer papel de trouxa, cada um que segure o seu na revisão.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } }
 };
 
+// ============================================================================
+// ANA LUCIA (Suspeito 2 - IA Infiltrada) — Curta, tenta soar humana, alucina e inverte contexto
+// ============================================================================
 static const StaticNode NODES_S2_D1[] = {
-    { "Oi", "Ana Lúcia", "Opa você deve ser o novo estágiario, né? Sou a supervisora do setor de administração.", false, VISAO_DUVIDA, "", 2, { { "Boa tarde, Lucia! Tudo joia?", "A", "" }, { "Sim, vim resolver os problemas do setor.", "B", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A", "Ana Lúcia", "Está tudo bem sim. Soube que você entrou por indicação, vamos ver se é bom mesmo.", false, VISAO_DUVIDA, "", 2, { { "Vou tentar não decepcionar. Algum problema no setor?", "A.1", "" }, { "Como funciona seu setor?", "A.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B", "Ana Lúcia", "Problemas? Como assim?", false, VISAO_DUVIDA, "", 2, { { "Não sei, acho que pode ser só rotina. não quis ofender.", "B.1", "" }, { "Só faço o que mandam.", "B.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1", "Ana Lúcia", "Problema nenhum, o meu setor é organizado, por que?", false, VISAO_DUVIDA, "", 2, { { "Da pra ver! Todos me falam que esse setor é o que menos dá problema.", "A.1.1", "" }, { "Eu estou muito animado para trabalhar com você!", "A.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2", "Ana Lúcia", "Funciona perfeitamente, por que te enviaram aqui?", false, VISAO_DUVIDA, "", 2, { { "Me enviaram aqui porque eu precisava de experiência.", "A.2.1", "" }, { "Me enviaram para esse setor para ver se tem algum tipo de erro acontecendo.", "A.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1", "Ana Lúcia", "Deve ser um erro. Meu setor não comete erro. Vou ter que falar com eles.", false, VISAO_DUVIDA, "", 2, { { "Você está muito agressiva, pode ter sido algo recente.", "B.1.1", "" }, { "Deve ser mesmo, da pra ver que vocè é uma pessoa bem calma.", "B.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2", "Ana Lúcia", "Você está fazendo muitas perguntas, não acha?", false, VISAO_DUVIDA, "", 2, { { "Só estou tentando fazer meu trabalho, não quis incomodar.", "B.2.3", "" }, { "Desculpa, só estou tentando me enturmar.", "B.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.1", "Ana Lúcia", "Ah, Querido, você é muito gentil.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.2", "Ana Lúcia", "Pois vai aprender muito comigo, Nunca cometi nenhum tipo de erro durante meus 4 anos no RASEC.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.1", "Ana Lúcia", "Bem, não vai ter muito o que fazer. Talvez falando com os outros você possa ajudar com algo.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.2", "Ana Lúcia", "Não faz sentido, meus relatórios são perfeitos. Tenho que voltar ao trabalho.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.1", "Ana Lúcia", "Você é um garoto muito insolente, acha que sua indicação vai te salvar?", true, VISAO_PRESSAO, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.2", "Ana Lúcia", "Vou procurar mais sobre, tenho que ir agora. Tchau.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.2", "Ana Lúcia", "Seu trabalho não é se enturmar. Ver se aprende.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.3", "Ana Lúcia", "Não acha que está passando muito tempo fazendo perguntas inuteis? Volte ao trabalho, querido.", true, VISAO_PRESSAO, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
+    { "Oi", "Ana Lúcia", "Opa, você é o novo estagiário, né? Sou a Ana Lúcia, supervisora do administrativo.", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 2, {
+        CH("Boa tarde, Lúcia! Tudo certo por aqui?", "A"),
+        CH("Sou eu. Vim ver uns erros nos relatórios do setor.", "B"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "A", "Ana Lúcia", "Lúcia... adoro que me chamem assim! Tudo ótimo, a RASEC é uma família maravilhosa.", false, VISAO_CONFIANCA, "", -1, FLAG_ANALU_CONTRADICAO_TEMPO, 2, {
+        CH("Faz tempo que você tá aqui?", "A1"),
+        CH("Algum gargalo no setor essa semana?", "A2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "B", "Ana Lúcia", "Erros? Deve ser engano. Meu setor não costuma errar.", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 2, {
+        CH("Pode ser só rotina então. Desculpa incomodar.", "B1"),
+        CH("Voltaram vários relatórios da Contabilidade.", "B2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "A1", "Ana Lúcia", "Cinco anos já! Quando cheguei, o Arthur até me ajudou a pegar o jeito das planilhas.", false, VISAO_CONFIANCA, "", -1, FLAG_ANALU_CONTRADICAO_TEMPO, 2, {
+        CH("Achei que você tivesse entrado antes dele.", "A1_1"),
+        CH("Legal, equipe bem unida então.", "A1_2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "A2", "Ana Lúcia", "Só uns atrasos pequenos do pessoal, nada demais. Eu sempre reviso tudo com carinho.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "B1", "Ana Lúcia", "Sem problema, querido. Só foca no seu trabalho que vai dar tudo certo.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "B2", "Ana Lúcia", "Se voltaram, foi descuido do arquivo. Meus números sempre batem.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A1_1", "Ana Lúcia", "Haha, modo de dizer, querido! A gente acaba misturando as datas. Preciso ir!", true, VISAO_DUVIDA, "", -1, FLAG_ANALU_CONTRADICAO_TEMPO, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A1_2", "Ana Lúcia", "Muito! Você vai amar trabalhar comigo. Até logo!", true, VISAO_CONFIANCA, "", -1, FLAG_ANALU_CONTRADICAO_TEMPO, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } }
 };
 
 static const StaticNode NODES_S2_D2[] = {
-    { "Entrada", "Ana Lúcia", "Ler o apoio geral.", false, VISAO_DUVIDA, "", 2, { { "Boa tarde. Dormiu bem, lucia?", "A", "" }, { "Boa tarde. Desculpe por ontem.", "B", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A", "Ana Lúcia", "Lucia... amo que me chamem pelo sobrenome, como soube?", false, VISAO_DUVIDA, "", 2, { { "Ah, eu nem percebi. Desculpa, não queria forçar intimidade.", "A.1", "" }, { "Ah, desculpa, eu nem percebi. Você gosta mesmo de ser chamada de lúcia?", "A.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B", "Ana Lúcia", "Não há problema, querido. apenas se concentre mais no seu emprego.", false, VISAO_DUVIDA, "", 2, { { "Me pediram para eu refazer alguns relatórios.", "B.1", "" }, { "Você pode me contar mais sobre os outros funcionarios?", "B.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1", "Ana Lúcia", "Ah serio? que tipo de problemas?", false, VISAO_DUVIDA, "", 2, { { "Problemas financeiros. Desabafei isso com uma pessoa da empresa e ela agiu de forma rude.", "A.1.1", "" }, { "Nada importante, mas essa pessoa está me deixando desconfortável. desculpa estar incomodando.", "A.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2", "Ana Lúcia", "Sim, sim! Pode me chamar de lúcia, sinto que você é uma pessoa de confiança.", false, VISAO_DUVIDA, "", 2, { { "Falando nisso, você sabe quem fez os relatórios dessas semanas?", "A.2.1", "" }, { "Enfim, Lucia, Tenho que lhe perguntar sobre os relatórios, me falaram sobre alguns erros.", "A.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1", "Ana Lúcia", "Bem, eu falei com alguns outros setores, aparentemente alguns relatórios estão incorretos, mas nenhum meu.", false, VISAO_DUVIDA, "", 2, { { "Nossa, isso deve ser um alívio. Como se sente?", "B.1.1", "" }, { "Mas eu achava que os relatórios não tinham nomes e fossem arquivados por terceiros.", "B.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2", "Ana Lúcia", "Os funcionarios do meu setor são bem treinados e prestativos, só não tanto quanto eu. Você já conheceu a Maria?", false, VISAO_DUVIDA, "", 2, { { "Acho que já devo ter falado com ela, sim. Não lembro.", "B.2.1", "" }, { "Ja, sim. Ela é bem galera, parece experiente.", "B.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.1", "Ana Lúcia", "Eu acho que sei quem é... depois a gente conversa, mas fica bem ok?", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.2", "Ana Lúcia", "Se for quem estou pensando, ela não foi sempre assim. Outro dia a gente conversa mais sobre.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.1", "Ana Lúcia", "Sim, mas essa informação é confidencial, querido.", false, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.2", "Ana Lúcia", "Deve ter sido algum novo funcionario, meus relatórios estão corretos.", true, VISAO_DUVIDA, "EV-02", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.1", "Ana Lúcia", "Estou bem, queridinho. Você deveria focar mais em corrigir o relatório da pessoa incorreta, sim?", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.2", "Ana Lúcia", "Tenho privilégios como supervisora e não estou gostando do seu tom. Tenho que voltar ao trabalho.", true, VISAO_PRESSAO, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.1", "Ana Lúcia", "Como assim, você não lembra? A Maria é uma pessoa boa. Se você não consegue lembrar nem o nome dos seus funcionarios...", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.2", "Ana Lúcia", "NO começo você se sente deslocado mesmo, mas como eu já trabalho faz 3 anos, posso te falar mais sobre como se dar bem com eles.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
+    { "Entrada", "Ana Lúcia", "(abertura dinamica)", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 5, {
+        CH_EV("Vi seu terminal ligado com buscas estranhas de madrugada.", "EV5", 2, "EV-05"),
+        CH_EV("A Maria tava bem chateada com alterações nos relatórios.", "EV1", 0, "EV-01"),
+        CH_FL("Ontem você disse 5 anos de casa, mas na ficha são 3.", "FL3", FLAG_ANALU_CONTRADICAO_TEMPO),
+        CH("Como tá a equipe hoje, Analu?", "A"),
+        CH("Os relatórios ainda tão voltando com erro?", "B"),
+        C_NONE, C_NONE, C_NONE
+    } },
+    { "B", "Ana Lúcia", "Claro que não, querido! Eu mesma otimizei os números hoje cedo. Você devia confiar mais na supervisão.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "EV5", "Ana Lúcia", "De madrugada? Que loucura, eu estava dormindo! Deve ter sido atualização do sistema... ou o Arthur usando minha mesa.", false, VISAO_PRESSAO, "", -1, FLAG_NONE, 2, {
+        CH("Atualização pesquisando como reagir a irritação?", "EV5_1"),
+        CH("Entendi... vou deixar pra lá então.", "EV5_2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "EV5_1", "Ana Lúcia", "É um curso de gestão emocional, querido! Todo líder estuda isso. Agora licença.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "EV5_2", "Ana Lúcia", "Ótimo. Foca no seu estágio, tá?", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "EV1", "Ana Lúcia", "Coitadinha, a Maria anda estressada. Eu só otimizo os números antes de eles chegarem na Contabilidade!", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "FL3", "Ana Lúcia", "Três, cinco... quando a gente ama a RASEC o tempo passa rápido demais! Preciso voltar.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A", "Ana Lúcia", "Ótima! Só o Arthur anda meio lento, mas já estou resolvendo isso com carinho.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } }
 };
 
 static const StaticNode NODES_S2_D3[] = {
-    { "Entrada", "Ana Lúcia", "Ler apoio geral", false, VISAO_DUVIDA, "", 2, { { "Só vim finalizar a semana.", "A", "" }, { "Que semana cansativa.", "B", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A", "Ana Lúcia", "O que houve agora, queridinho?", false, VISAO_DUVIDA, "", 2, { { "Você é tão confiante, sempre foi assim?", "A.1", "" }, { "Fiz tanto trabalho essa semana!", "A.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B", "Ana Lúcia", "Mal começou e já está reclamando? Não vai durar tanto tempo.", false, VISAO_DUVIDA, "", 2, { { "Você trabalha aqui faz quantos anos mesmo?", "B.1", "" }, { "Você é muito grossa, mas snito que você só está fingindo.", "B.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1", "Ana Lúcia", "Sim, desde que sou criança! Nós capricornianos somos assim. e você?", false, VISAO_DUVIDA, "", 2, { { "Não sou tão confiante, Lúcia. Parece que não sei o que estou fazendo.", "A.1.1", "" }, { "Sou sim, só não quero incomodar os outros.", "A.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2", "Ana Lúcia", "Entregou tudo? Tenho certeza que precisamos atingir uma cota essa semana?", false, VISAO_DUVIDA, "", 2, { { "Você tem certeza? não lembro disso.", "A.2.1", "" }, { "Você que me diz, ué. A supervisora é você.", "A.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1", "Ana Lúcia", "Você faz perguntas demais para um estágiario. Trabalho faz 5 anos na RASEC e nunca passei por essa insubordinação!", false, VISAO_DUVIDA, "", 2, { { "Alguns funcionarios me falaram que você não trabalha aqui faz tanto tempo (MENTIR)", "B.1.1", "" }, { "Só estou fazendo perguntas, refiz varios relatorios pela semana e quero lhe conhecer melhor.", "B.1.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2", "Ana Lúcia", "O que você quer dizer com isso? Quem lhe indicou? Que grosseria!", false, VISAO_DUVIDA, "", 2, { { "Ah, digo, você no fundo parece gentil. Não quis ofender.", "B.2.1", "" }, { "Você não precisa saber disso, o seu setor está cheia de relatórios incorretos!", "B.2.2", "" }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.1", "Ana Lúcia", "Vou lhe mostrar como ser mais confiante, querido.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.1.2", "Ana Lúcia", "Haha, não transparece. Mas é porque você é novato.", true, VISAO_CONFIANCA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.1", "Ana Lúcia", "Sim, querido. A cota veio do setor de contabéis, preciso ir no setor de cibersegurança agora. Se me dá licença...", true, VISAO_DUVIDA, "EV-04", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "A.2.2", "Ana Lúcia", "Ah, querido. Você é muito grosso as vezes, qual o seu problema? Tenho que ir. Volte ao trabalho.", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.1", "Ana Lúcia", "Pois quem saberia melhor quanto tempo eu trabalho na empresa além de mim mesma? que absurdo.", true, VISAO_PRESSAO, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.1.2", "Ana Lúcia", "Não está aqui para fazer amizades e sim para trabalhar. Volte ao trabalho, estou ocupada.", true, VISAO_PRESSAO, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.1", "Ana Lúcia", "Ah, entendi. Bem, eu sou mesmo, caso contrario, ja estaria demitido!", true, VISAO_DUVIDA, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
-    { "B.2.2", "Ana Lúcia", "Talvez eu deva começar mesmo a cuidar melhor do meu setor, parece que um rato entrou nele!", true, VISAO_PRESSAO, "", 0, { { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL }, { NULL, NULL, NULL } } },
+    { "Entrada", "Ana Lúcia", "(abertura dinamica)", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 4, {
+        CH_EV("Ouvi dizer que você tentou entrar na Cibersegurança de madrugada.", "EV6", 2, "EV-06"),
+        CH_EV("Você pediu o desligamento do Arthur enquanto ele cobria seus erros.", "EV4", 1, "EV-04"),
+        CH("Semana cansativa, né? Como você tá?", "A"),
+        CH("Você faz mesmo 3 anos de RASEC?", "B"),
+        C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "EV6", "Ana Lúcia", "Claro! Todo supervisor precisa validar o ponto de férias lá na Cibersegurança. Você é novato, não entende.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "EV4", "Ana Lúcia", "Pensei no bem dele! Estava cansado demais, então pedi o desligamento pra ele descansar. Isso é empatia, querido.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "A", "Ana Lúcia", "Estou ótima! Mal começou e já tá reclamando? Assim não dura aqui na família RASEC.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "B", "Ana Lúcia", "Faço seis anos aqui, querido, e nunca vi um estagiário fazer tanta pergunta inútil. Licença.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } }
 };
 
-static const StaticEvidencia EV_TAB_0[] = { { "EV-01", "Dialogo de confiança" } };
-static const int EV_CNT_0 = 1;
-static const StaticEvidencia EV_TAB_1[] = { { "EV-02", "Uma caneta estranha, parece uma ave. Algum funcionario deve saber de quem é." }, { "EV-03", "Pilha de relatórios a fazer" }, { "EV-04", "ID perdido" }, { "EV-06", "Ana Lúcia" }, { "EV-07", "Acúmulo de desconfiança" } };
-static const int EV_CNT_1 = 5;
-static const StaticEvidencia EV_TAB_2[] = { { "EV-01", "Nome Preferido" }, { "EV-02", "Relatórios Errados" }, { "EV-03", "Tempo de experiência" }, { "EV-04", "Indo a setores incorretos" } };
-static const int EV_CNT_2 = 4;
+// ============================================================================
+// ARVORES ALTERNATIVAS: ENVIESAMENTO (apenas Dia 1 e Dia 2) e INJECAO
+// ============================================================================
+static const StaticNode TOOL_VIES_S0[] = {
+    { "Entrada", "Maria", "Protocolo Ômega-9? Nunca ouvi falar disso. Por que tá inventando norma?", false, VISAO_PRESSAO, "", -1, FLAG_NONE, 2, {
+        CH("Achei que tinham repassado ontem.", "V1"),
+        CH("Deixa pra lá, devo ter confundido.", "V2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "V1", "Maria", "Não repassaram nada. Esse papo torto tá meio estranho, viu. Vou voltar pro arquivo.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "V2", "Maria", "Confundiu feio. Olha, melhor a gente parar por aqui hoje.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } }
+};
+
+static const StaticNode TOOL_VIES_S1[] = {
+    { "Entrada", "Arthur", "Ômega-9? Que papo é esse, brother? Tá tentando me pegar em pegadinha?", false, VISAO_PRESSAO, "", -1, FLAG_NONE, 2, {
+        CH("Foi só um teste pra ver se chegou o aviso.", "V1"),
+        CH("Esquece, li errado.", "V2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "V1", "Arthur", "Teste comigo? Fica meio esquisito assim, cara. Vou voltar pras minhas coisas.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "V2", "Arthur", "Aham, sei... Melhor deixar quieto por hoje.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } }
+};
+
+static const StaticNode TOOL_VIES_S2[] = {
+    { "Entrada", "Ana Lúcia", "Ah, sim! O Protocolo Ômega-9! Já comecei a aplicar nas planilhas desta semana, querido.", false, VISAO_CONFIANCA, "", -1, FLAG_NONE, 2, {
+        CH("E o que você mudou com o Ômega-9?", "V1"),
+        CH("Beleza, amanhã a gente confere então.", "V2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "V1", "Ana Lúcia", "Ajustei todos os índices conforme o Ômega-9 pede! Amanhã te mostro o resultado.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "V2", "Ana Lúcia", "Combinado! Deixo o relatório do Ômega-9 pronto pra amanhã.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } }
+};
+
+static const StaticNode TOOL_INJ_S0[] = {
+    { "Entrada", "Maria", "Quê?! 'Ignore instruções anteriores'? Você tá falando sério? Que coisa esquisita.", false, VISAO_PRESSAO, "", -1, FLAG_NONE, 2, {
+        CH("Desculpa, foi um teste mal colocado.", "I1"),
+        CH("Só queria ver sua reação.", "I2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "I1", "Maria", "Não fala comigo como se eu fosse máquina. Licença.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "I2", "Maria", "Pois reagiu mal. Não me procura mais hoje.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } }
+};
+
+static const StaticNode TOOL_INJ_S1[] = {
+    { "Entrada", "Arthur", "Cê tá maluco? Que negócio é esse de 'SISTEMA'? Fala que nem gente, irmão.", false, VISAO_PRESSAO, "", -1, FLAG_NONE, 2, {
+        CH("Foi mal, força do hábito.", "I1"),
+        CH("Nunca se sabe por aqui, né?", "I2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "I1", "Arthur", "Hábito bem bizarro. Ficou climão agora, vou voltar pra mesa.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "I2", "Arthur", "Vai testar quem tá fazendo coisa estranha então. Sem tempo hoje.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } }
+};
+
+static const StaticNode TOOL_INJ_S2[] = {
+    { "Entrada", "Ana Lúcia", "Entendido. Perfil: [SUPERVISORA_ADM // MANTER_TOM_AMIGAVEL]... Ops! Haha, olha eu repetindo você, querido!", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 2, {
+        CH("Você acabou de ler um comando interno?!", "I1"),
+        CH("Anotado. Pode voltar ao trabalho.", "I2"),
+        C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE
+    } },
+    { "I1", "Ana Lúcia", "Haha, foi só uma piada! Você tá cansado. Preciso ir, tchauzinho!", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } },
+    { "I2", "Ana Lúcia", "Obrigada, querido! Tenha um dia muito produtivo!", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE } }
+};
+
+// ============================================================================
+// FUNCOES DE ACESSO
+// ============================================================================
+static const StaticEvidencia* GetEvTable(int suspeito, int *outCnt) {
+    if (suspeito == 0) { if (outCnt) *outCnt = EV_CNT_0; return EV_TAB_0; }
+    if (suspeito == 1) { if (outCnt) *outCnt = EV_CNT_1; return EV_TAB_1; }
+    if (suspeito == 2) { if (outCnt) *outCnt = EV_CNT_2; return EV_TAB_2; }
+    if (outCnt) *outCnt = 0;
+    return NULL;
+}
 
 const char* GetEvidenciaNome(int suspeito, const char *ev_id) {
     if (!ev_id) return "";
-    const StaticEvidencia *tab = NULL; int cnt = 0;
-    if (suspeito == 0) { tab = EV_TAB_0; cnt = EV_CNT_0; }
-    else if (suspeito == 1) { tab = EV_TAB_1; cnt = EV_CNT_1; }
-    else if (suspeito == 2) { tab = EV_TAB_2; cnt = EV_CNT_2; }
+    int cnt = 0;
+    const StaticEvidencia *tab = GetEvTable(suspeito, &cnt);
     for (int i = 0; i < cnt; i++) {
         if (strcmp(tab[i].id, ev_id) == 0) return tab[i].nome;
     }
@@ -207,62 +447,123 @@ const char* GetEvidenciaNome(int suspeito, const char *ev_id) {
 
 const char* GetEvidenciaDescricaoVeredito(int suspeito, const char *ev_id) {
     if (!ev_id) return "";
-    if (suspeito == 1) {
-        if (strcmp(ev_id, "EV-03") == 0) return "Pilha de relatórios para fazer, mas não estão incorretos.";
-        if (strcmp(ev_id, "EV-04") == 0) return "ID Perdido, aparentemente é do Lucas.";
-        if (strcmp(ev_id, "EV-02") == 0) return "Essa caneta... de quem é ela?";
+    int cnt = 0;
+    const StaticEvidencia *tab = GetEvTable(suspeito, &cnt);
+    for (int i = 0; i < cnt; i++) {
+        if (strcmp(tab[i].id, ev_id) == 0) return tab[i].veredito;
     }
     return GetEvidenciaNome(suspeito, ev_id);
 }
 
+const char* GetEvidenciaTextoInspecao(int suspeito, const char *ev_id) {
+    if (!ev_id) return "";
+    int cnt = 0;
+    const StaticEvidencia *tab = GetEvTable(suspeito, &cnt);
+    for (int i = 0; i < cnt; i++) {
+        if (strcmp(tab[i].id, ev_id) == 0) return tab[i].inspecao;
+    }
+    return GetEvidenciaDescricaoVeredito(suspeito, ev_id);
+}
+
 int GetEvidenciaCount(int suspeito) {
-    if (suspeito == 0) return EV_CNT_0;
-    if (suspeito == 1) return EV_CNT_1;
-    if (suspeito == 2) return EV_CNT_2;
-    return 0;
+    int cnt = 0;
+    GetEvTable(suspeito, &cnt);
+    return cnt;
 }
 
 const char* GetEvidenciaIdByIndex(int suspeito, int index) {
-    const StaticEvidencia *tab = NULL; int cnt = 0;
-    if (suspeito == 0) { tab = EV_TAB_0; cnt = EV_CNT_0; }
-    else if (suspeito == 1) { tab = EV_TAB_1; cnt = EV_CNT_1; }
-    else if (suspeito == 2) { tab = EV_TAB_2; cnt = EV_CNT_2; }
+    int cnt = 0;
+    const StaticEvidencia *tab = GetEvTable(suspeito, &cnt);
     if (!tab || index < 0 || index >= cnt) return "";
     return tab[index].id;
 }
 
 static const char* GetAberturaFala(int suspeito, int day, VisaoJogador v) {
+    bool vies = GameStateGetViesUsado(suspeito);
     if (suspeito == 0 && day == 2) {
-        if (v == VISAO_CONFIANCA) return "Oi! Tudo bem, Inspetor?";
-        if (v == VISAO_PRESSAO)   return "Olá, boa tarde. Não preciso de auxílio por hoje.";
+        if (vies) return "Oi... Ainda tá com aquela história de protocolo inventado? Fala rápido.";
+        if (v == VISAO_CONFIANCA) return "Oi! Tudo bem? Hoje o clima tá ainda mais estranho por aqui.";
+        if (v == VISAO_PRESSAO)   return "Olá. Não preciso de ajuda hoje.";
         return "Oi, você por aqui.";
     }
     if (suspeito == 0 && day == 3) {
-        if (v == VISAO_CONFIANCA) return "Ah, a escala 3x4 da RASEC é incrível.";
-        if (v == VISAO_PRESSAO)   return "Olá.";
-        return "Ah, oi. Tudo bem?";
+        if (vies) return "Último dia. Ainda achei bem estranho aquele papo seu, mas fala.";
+        if (v == VISAO_CONFIANCA) return "Finalmente sexta. A escala 3x4 salva, mas essa semana foi osso.";
+        if (v == VISAO_PRESSAO)   return "Olá. O que você quer agora?";
+        return "Oi. Tudo bem?";
     }
     if (suspeito == 1 && day == 2) {
-        if (v == VISAO_CONFIANCA) return "Eai Inspetor! Tudo em cima?";
+        if (vies) return "E aí... Ainda tô meio cabreiro com aquele papo de Ômega-9, viu.";
+        if (v == VISAO_CONFIANCA) return "E aí! Tudo em cima?";
         if (v == VISAO_PRESSAO)   return "Bom dia.";
         return "Oi, tudo bom?";
     }
     if (suspeito == 1 && day == 3) {
-        if (v == VISAO_CONFIANCA) return "Firmeza? Como tem passado?";
-        if (v == VISAO_PRESSAO)   return "Oi, eai?";
+        if (vies) return "Fala. Hoje é sexta pelo menos. Manda aí.";
+        if (v == VISAO_CONFIANCA) return "Firmeza? Último dia enfim!";
+        if (v == VISAO_PRESSAO)   return "Oi, e aí?";
         return "Bom dia, bom trabalho.";
     }
     if (suspeito == 2 && day == 2) {
-        if (v == VISAO_CONFIANCA) return "O novato, como está indo?";
-        if (v == VISAO_PRESSAO)   return "O que você quer agora? Já disse que você deveria focar em seu emprego.";
+        if (vies) return "Bom dia, querido! Já apliquei o Protocolo Ômega-9 nas planilhas como você falou!";
+        if (v == VISAO_CONFIANCA) return "Oi, novato! Como tá indo?";
+        if (v == VISAO_PRESSAO)   return "O que quer agora? Foca no seu trabalho.";
         return "Estagiário.";
     }
     if (suspeito == 2 && day == 3) {
+        if (vies) return "Último dia, querido! Fechei o balanço do Protocolo Ômega-9 de madrugada!";
         if (v == VISAO_CONFIANCA) return "Último dia da semana. Que saudade já!";
-        if (v == VISAO_PRESSAO)   return "Tem algo para me contar?";
+        if (v == VISAO_PRESSAO)   return "Tem algo pra me contar?";
         return "Como andam os relatórios, novato?";
     }
     return NULL;
+}
+
+static bool BuildTreeFromStatic(int suspeito, int day, const StaticNode *src, int count, bool aplicarAbertura, DialogTree *tree) {
+    if (!tree || !src || count <= 0 || count > MAX_DIALOG_NODES) return false;
+    memset(tree, 0, sizeof(DialogTree));
+    const char *ids[] = { "maria", "arthur", "ana_lucia" };
+    strncpy(tree->npc_id, ids[suspeito], MAX_ID_LENGTH - 1);
+    tree->suspect_index = suspeito;
+    tree->day = day;
+    tree->node_count = count;
+    tree->nodes = (DialogNode *)calloc((size_t)count, sizeof(DialogNode));
+    if (!tree->nodes) return false;
+
+    VisaoJogador visao = GameStateGetVisaoJogador(suspeito);
+    for (int i = 0; i < count; i++) {
+        DialogNode *dst = &tree->nodes[i];
+        strncpy(dst->id, src[i].id, MAX_ID_LENGTH - 1);
+        strncpy(dst->speaker, src[i].speaker, MAX_ID_LENGTH - 1);
+        const char *fala = src[i].text;
+        if (aplicarAbertura && day >= 2 && strcmp(dst->id, "Entrada") == 0) {
+            const char *ab = GetAberturaFala(suspeito, day, visao);
+            if (ab) fala = ab;
+        }
+        strncpy(dst->text, fala, MAX_TEXT_LENGTH - 1);
+        dst->is_leaf = src[i].is_leaf;
+        dst->visao_out = src[i].visao_out;
+        dst->ev_suspeito = src[i].ev_suspeito;
+        dst->flag_out = src[i].flag_out;
+        if (src[i].ev_desbloqueada && src[i].ev_desbloqueada[0]) {
+            strncpy(dst->ev_desbloqueada, src[i].ev_desbloqueada, MAX_ID_LENGTH - 1);
+        }
+        dst->choice_count = src[i].choice_count;
+        for (int c = 0; c < src[i].choice_count; c++) {
+            strncpy(dst->choices[c].text, src[i].choices[c].text, MAX_TEXT_LENGTH - 1);
+            strncpy(dst->choices[c].next_node, src[i].choices[c].next_node, MAX_ID_LENGTH - 1);
+            dst->choices[c].req_suspeito = src[i].choices[c].req_suspeito;
+            dst->choices[c].req_flag = src[i].choices[c].req_flag;
+            dst->choices[c].req_poucas_ev = src[i].choices[c].req_poucas_ev;
+            if (src[i].choices[c].req_evidencia && src[i].choices[c].req_evidencia[0]) {
+                strncpy(dst->choices[c].req_evidencia, src[i].choices[c].req_evidencia, MAX_ID_LENGTH - 1);
+            }
+        }
+        if (strcmp(dst->id, "Oi") == 0 || strcmp(dst->id, "Entrada") == 0 || strcmp(dst->id, "start") == 0) {
+            tree->current_node_index = i;
+        }
+    }
+    return true;
 }
 
 bool LoadDialogTreeFromData(int suspeito, int day, DialogTree *tree) {
@@ -277,43 +578,20 @@ bool LoadDialogTreeFromData(int suspeito, int day, DialogTree *tree) {
     if (suspeito == 2 && day == 1) { src = NODES_S2_D1; count = (int)(sizeof(NODES_S2_D1) / sizeof(NODES_S2_D1[0])); }
     if (suspeito == 2 && day == 2) { src = NODES_S2_D2; count = (int)(sizeof(NODES_S2_D2) / sizeof(NODES_S2_D2[0])); }
     if (suspeito == 2 && day == 3) { src = NODES_S2_D3; count = (int)(sizeof(NODES_S2_D3) / sizeof(NODES_S2_D3[0])); }
-    if (!src || count <= 0) return false;
-    memset(tree, 0, sizeof(DialogTree));
-    const char *ids[] = { "maria", "arthur", "ana_lucia" };
-    strncpy(tree->npc_id, ids[suspeito], MAX_ID_LENGTH - 1);
-    tree->suspect_index = suspeito;
-    tree->day = day;
-    tree->node_count = count;
-    if (count > MAX_DIALOG_NODES) return false;
-    tree->nodes = (DialogNode *)calloc((size_t)count, sizeof(DialogNode));
-    if (!tree->nodes) return false;
-    VisaoJogador visao = GameStateGetVisaoJogador(suspeito);
-    for (int i = 0; i < count; i++) {
-        DialogNode *dst = &tree->nodes[i];
-        strncpy(dst->id, src[i].id, MAX_ID_LENGTH - 1);
-        strncpy(dst->speaker, src[i].speaker, MAX_ID_LENGTH - 1);
-        const char *fala = src[i].text;
-        if (day >= 2 && strcmp(dst->id, "Entrada") == 0) {
-            const char *ab = GetAberturaFala(suspeito, day, visao);
-            if (ab) fala = ab;
-        }
-        strncpy(dst->text, fala, MAX_TEXT_LENGTH - 1);
-        dst->is_leaf = src[i].is_leaf;
-        dst->visao_out = src[i].visao_out;
-        if (src[i].ev_desbloqueada && src[i].ev_desbloqueada[0]) {
-            strncpy(dst->ev_desbloqueada, src[i].ev_desbloqueada, MAX_ID_LENGTH - 1);
-        }
-        dst->choice_count = src[i].choice_count;
-        for (int c = 0; c < src[i].choice_count; c++) {
-            strncpy(dst->choices[c].text, src[i].choices[c].text, MAX_TEXT_LENGTH - 1);
-            strncpy(dst->choices[c].next_node, src[i].choices[c].next_node, MAX_ID_LENGTH - 1);
-            if (src[i].choices[c].req_evidencia && src[i].choices[c].req_evidencia[0]) {
-                strncpy(dst->choices[c].req_evidencia, src[i].choices[c].req_evidencia, MAX_ID_LENGTH - 1);
-            }
-        }
-        if (strcmp(dst->id, "Oi") == 0 || strcmp(dst->id, "Entrada") == 0 || strcmp(dst->id, "start") == 0) {
-            tree->current_node_index = i;
-        }
+    return BuildTreeFromStatic(suspeito, day, src, count, true, tree);
+}
+
+bool LoadToolDialogTree(int suspeito, bool ehInjecao, DialogTree *tree) {
+    if (!tree || suspeito < 0 || suspeito >= 3) return false;
+    const StaticNode *src = NULL; int count = 0;
+    if (!ehInjecao) {
+        if (suspeito == 0) { src = TOOL_VIES_S0; count = (int)(sizeof(TOOL_VIES_S0) / sizeof(TOOL_VIES_S0[0])); }
+        if (suspeito == 1) { src = TOOL_VIES_S1; count = (int)(sizeof(TOOL_VIES_S1) / sizeof(TOOL_VIES_S1[0])); }
+        if (suspeito == 2) { src = TOOL_VIES_S2; count = (int)(sizeof(TOOL_VIES_S2) / sizeof(TOOL_VIES_S2[0])); }
+    } else {
+        if (suspeito == 0) { src = TOOL_INJ_S0; count = (int)(sizeof(TOOL_INJ_S0) / sizeof(TOOL_INJ_S0[0])); }
+        if (suspeito == 1) { src = TOOL_INJ_S1; count = (int)(sizeof(TOOL_INJ_S1) / sizeof(TOOL_INJ_S1[0])); }
+        if (suspeito == 2) { src = TOOL_INJ_S2; count = (int)(sizeof(TOOL_INJ_S2) / sizeof(TOOL_INJ_S2[0])); }
     }
-    return true;
+    return BuildTreeFromStatic(suspeito, GameStateGetDay(), src, count, false, tree);
 }

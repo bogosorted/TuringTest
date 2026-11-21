@@ -1,1 +1,1 @@
--I"/home/vitorc/TuringTest/build/_deps/raylib-src/src"
+-I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I"/home/vitorc/TuringTest/build/_deps/raylib-src/src"

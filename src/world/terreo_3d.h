@@ -114,6 +114,8 @@ typedef struct {
     const char   *objetoId;
     const char   *objetoLabel;
     const char   *flavorText;
+    bool          acionouSuspeito;
+    int           suspeitoIndex;
 } TerreoInteracaoResultado;
 
 // Definicoes de cada sala
@@ -162,12 +164,14 @@ void  TerreoEscadaCaracol(Vector3 centro, float raioInt, float raioExt, float al
 void  TerreoElevador(Vector3 pos, float rotYDeg);
 void  TerreoRackServidor(Vector3 pos, float rotYDeg);
 void  TerreoRoboPrototipo(Vector3 pos, float rotYDeg);
+void  TerreoEvidenciaBrilhante(Vector3 pos, float tempo, int tipoModelo);
 
 // Ciclo de vida e loop da cena 3D do Terreo
 void Terreo3DInit(int largura, int altura);
 void Terreo3DUnload(void);
 void Terreo3DDefinirSala(TerreoSalaId sala, TerreoDestino vindoDe);
 void Terreo3DSetEvidenciaAtiva(bool evRelatoriosAtiva);
+void Terreo3DSetSuspeitosSala(const bool presentes[3]);
 
 TerreoInteracaoResultado Terreo3DUpdate(float dt,
                                         Vector2 mouseJanela,

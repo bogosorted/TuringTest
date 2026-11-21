@@ -557,20 +557,22 @@ void EvidenciaHoloUnload(void) {
 
 TipoHoloEvidencia EvidenciaHoloTipoPorId(int suspeito, const char *ev_id) {
     if (!ev_id || ev_id[0] == '\0') return HOLO_EV_NENHUM;
-    if (suspeito == 1) {
-        if (strcmp(ev_id, "EV-02") == 0) return HOLO_EV_CANETA;
-        if (strcmp(ev_id, "EV-03") == 0) return HOLO_EV_RELATORIOS;
-        if (strcmp(ev_id, "EV-04") == 0) return HOLO_EV_CRACHA;
-        if (strcmp(ev_id, "EV-05") == 0 || strcmp(ev_id, "EV-08") == 0) return HOLO_EV_NENHUM;
+    if (suspeito == 0) {
+        if (strcmp(ev_id, "EV-01") == 0) return HOLO_EV_MEMORANDO;      // Queixa no RH contra Ana Lucia
+        if (strcmp(ev_id, "EV-02") == 0) return HOLO_EV_RELATORIO_ERRO; // Registro de relatorios devolvidos
         return HOLO_EV_MEMORANDO;
     }
-    if (suspeito == 2) {
-        if (strcmp(ev_id, "EV-02") == 0) return HOLO_EV_RELATORIO_ERRO;
-        if (strcmp(ev_id, "EV-03") == 0) return HOLO_EV_RELOGIO_TEMPO;
-        if (strcmp(ev_id, "EV-04") == 0) return HOLO_EV_LEITOR_SETOR;
-        return HOLO_EV_GRAVADOR;
+    if (suspeito == 1) {
+        if (strcmp(ev_id, "EV-03") == 0) return HOLO_EV_RELATORIOS;     // Reclamacao de sobrecarga / acobertamento
+        if (strcmp(ev_id, "EV-04") == 0) return HOLO_EV_MEMORANDO;      // Pedido de desligamento do Arthur
+        return HOLO_EV_RELATORIOS;
     }
-    return HOLO_EV_GRAVADOR;
+    if (suspeito == 2) {
+        if (strcmp(ev_id, "EV-05") == 0) return HOLO_EV_RELATORIO_ERRO; // Historico suspeito no terminal
+        if (strcmp(ev_id, "EV-06") == 0) return HOLO_EV_LEITOR_SETOR;   // Log de acesso a Ciberseguranca
+        return HOLO_EV_LEITOR_SETOR;
+    }
+    return HOLO_EV_MEMORANDO;
 }
 
 void EvidenciaHoloResetarCamera(EstadoCameraHoloEv *cam, TipoHoloEvidencia tipo) {

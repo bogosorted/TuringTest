@@ -37,7 +37,14 @@ static float g_camAlt   = 8.6f;
 #define LUM_PAREDE_DEST    1.00f
 #define LUM_POCO           0.48f
 
-static const Color COR_PONTO = { 196, 72, 72, 255 };   // mesmo vermelho de alerta da interface
+static const Color COR_PONTO    = { 196,  72,  72, 255 };   // vermelho: posicao do jogador
+static const Color COR_SUSPEITO = { 255, 224,  48, 255 };   // amarelo: suspeito na sala
+
+static bool     g_apenasAndarAtual   = false;
+static int      g_andarFoco          = 0;
+static uint64_t g_salasComSuspeitos  = 0;
+static bool     g_zoomApenasUmAnt    = false;
+static int      g_zoomAndarFocoAnt   = -99;
 
 static const char *HOLO_FS =
     "#version 330\n"
@@ -137,7 +144,18 @@ void MapaHoloInit(const HoloSala *salas, int numSalas, const HoloCorredor *corre
     g_camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     g_camera.projection = CAMERA_PERSPECTIVE;
     g_largura = g_altura = 0;
+    g_apenasAndarAtual = false;
+    g_andarFoco = 0;
+    g_salasComSuspeitos = 0;
+    g_zoomApenasUmAnt = false;
+    g_zoomAndarFocoAnt = -99;
     g_pronto = true;
+}
+
+void MapaHoloSetFiltro(bool apenasAndarAtual, int andarFoco, uint64_t salasComSuspeitos) {
+    g_apenasAndarAtual  = apenasAndarAtual;
+    g_andarFoco         = andarFoco;
+    g_salasComSuspeitos = salasComSuspeitos;
 }
 
 void MapaHoloUnload(void) {
@@ -153,6 +171,15 @@ void MapaHoloUnload(void) {
 
 // Camera de frente e de cima, balancando devagar (o holograma "flutua")
 static void PosicionarCamera(float ang, float flutua) {
+    if (g_apenasAndarAtual) {
+        float yAndar = AlturaAndar(g_andarFoco) + 0.16f;
+        Vector3 alvo = { g_plantaW / 2.0f, yAndar, g_plantaD / 2.0f };
+        float dist = 8.4f;
+        float alt  = 7.2f;
+        g_camera.target = alvo;
+        g_camera.position = (Vector3){ alvo.x + sinf(ang) * dist, alvo.y + alt + flutua, alvo.z + cosf(ang) * dist };
+        return;
+    }
     float centroY = SettingsGetDevMode()
         ? g_andarAlt * (g_numAndares - 2) / 2.0f + 0.15f
         : g_andarAlt * (g_numAndares - 1) / 2.0f + 0.15f;
@@ -161,16 +188,17 @@ static void PosicionarCamera(float ang, float flutua) {
     g_camera.position = (Vector3){ alvo.x + sinf(ang) * g_camDist, alvo.y + g_camAlt + flutua, alvo.z + cosf(ang) * g_camDist };
 }
 
-// Menor fovy em que o predio inteiro cabe na textura (com folga). Recalculado so quando o tamanho muda.
+// Menor fovy em que o predio inteiro (ou o andar focado) cabe na textura (com folga).
 static void AjustarZoom(void) {
     PosicionarCamera(0.0f, 0.0f);
-    float topo = AlturaAndar(g_numAndares - 1) + ESCADA_ALT;
-    float base = SettingsGetDevMode() ? AlturaAndar(-1) - PLACA_ESP : -PLACA_ESP;
+    float topo = g_apenasAndarAtual ? (AlturaAndar(g_andarFoco) + PAREDE_ALT * 1.4f) : (AlturaAndar(g_numAndares - 1) + ESCADA_ALT);
+    float base = g_apenasAndarAtual ? (AlturaAndar(g_andarFoco) - PLACA_ESP) : (SettingsGetDevMode() ? AlturaAndar(-1) - PLACA_ESP : -PLACA_ESP);
     Vector3 cantos[8];
     for (int i = 0; i < 8; i++) {
         cantos[i] = (Vector3){ (i & 1) ? g_plantaW : 0.0f, (i & 2) ? topo : base, (i & 4) ? g_plantaD : 0.0f };
     }
-    float margemX = g_largura * 0.08f, margemY = g_altura * 0.08f;
+    float margemX = g_largura * (g_apenasAndarAtual ? 0.05f : 0.08f);
+    float margemY = g_altura  * (g_apenasAndarAtual ? 0.07f : 0.08f);
     for (float fovy = 8.0f; fovy <= 80.0f; fovy += 0.5f) {
         g_camera.fovy = fovy;
         bool cabe = true;
@@ -178,13 +206,20 @@ static void AjustarZoom(void) {
             Vector2 p = Projetar(cantos[i]);
             cabe = p.x >= margemX && p.x <= g_largura - margemX && p.y >= margemY && p.y <= g_altura - margemY;
         }
-        if (cabe) { g_fovyAjustado = fovy; return; }
+        if (cabe) { g_fovyAjustado = fovy; g_zoomApenasUmAnt = g_apenasAndarAtual; g_zoomAndarFocoAnt = g_andarFoco; return; }
     }
     g_fovyAjustado = 80.0f;
+    g_zoomApenasUmAnt = g_apenasAndarAtual;
+    g_zoomAndarFocoAnt = g_andarFoco;
 }
 
 static void GarantirTexturas(int largura, int altura) {
-    if (g_texPronta && g_largura == largura && g_altura == altura) return;
+    if (g_texPronta && g_largura == largura && g_altura == altura) {
+        if (g_zoomApenasUmAnt != g_apenasAndarAtual || g_zoomAndarFocoAnt != g_andarFoco) {
+            AjustarZoom();
+        }
+        return;
+    }
     if (g_texPronta) {
         UnloadRenderTexture(g_cena);
         UnloadRenderTexture(g_final);
@@ -352,26 +387,31 @@ void MapaHoloRender(int largura, int altura, int salaAtual, int salaHover, uint6
     BeginTextureMode(g_cena);
     ClearBackground(BLANK);
     BeginMode3D(g_camera);
-    DesenharPocoEscada();
-    if (g_modo3D) {
-        // Poco vertical do elevador conectando Recepcao <-> Hall 1+ (x=3.35, z=2.35)
-        float cxE = 3.35f, czE = 2.35f, ew = 0.42f, ed = 0.36f;
-        for (int a = 0; a + 1 < g_numAndares; a++) {
-            float y0 = AlturaAndar(a) + PLACA_ESP * 0.5f;
-            float y1 = AlturaAndar(a + 1) + PLACA_ESP * 0.5f;
-            DrawCube((Vector3){ cxE, (y0 + y1) * 0.5f, czE }, ew, y1 - y0, ed, Lum(LUM_SALA_OFF));
-            DrawCubeWires((Vector3){ cxE, (y0 + y1) * 0.5f, czE }, ew, y1 - y0, ed, Lum(LUM_PAREDE_DEST));
+    if (!g_apenasAndarAtual) {
+        DesenharPocoEscada();
+        if (g_modo3D) {
+            // Poco vertical do elevador conectando Recepcao <-> Hall 1+ (x=3.35, z=2.35)
+            float cxE = 3.35f, czE = 2.35f, ew = 0.42f, ed = 0.36f;
+            for (int a = 0; a + 1 < g_numAndares; a++) {
+                float y0 = AlturaAndar(a) + PLACA_ESP * 0.5f;
+                float y1 = AlturaAndar(a + 1) + PLACA_ESP * 0.5f;
+                DrawCube((Vector3){ cxE, (y0 + y1) * 0.5f, czE }, ew, y1 - y0, ed, Lum(LUM_SALA_OFF));
+                DrawCubeWires((Vector3){ cxE, (y0 + y1) * 0.5f, czE }, ew, y1 - y0, ed, Lum(LUM_PAREDE_DEST));
+            }
         }
     }
-    int minAndar = SettingsGetDevMode() ? -1 : 0;
-    for (int a = minAndar; a < g_numAndares; a++) DesenharAndar(a, a == andarAtual);
+    int minAndar = g_apenasAndarAtual ? g_andarFoco : (SettingsGetDevMode() ? -1 : 0);
+    int maxAndarLoop = g_apenasAndarAtual ? (g_andarFoco + 1) : g_numAndares;
+    for (int a = minAndar; a < maxAndarLoop; a++) DesenharAndar(a, a == andarAtual);
     for (int k = 0; k < g_numCorredores; k++) {
         if (!SettingsGetDevMode() && g_corredores[k].andar < 0) continue;
+        if (g_apenasAndarAtual && g_corredores[k].andar != g_andarFoco) continue;
         DesenharCorredor(&g_corredores[k], g_corredores[k].andar == andarAtual);
     }
     for (int i = 0; i < g_numSalas; i++) {
         if (g_salas[i].numPartes == 0) continue;
         if (!SettingsGetDevMode() && g_salas[i].andar < 0) continue;
+        if (g_apenasAndarAtual && g_salas[i].andar != g_andarFoco) continue;
         bool acessivel = ((acessiveis >> i) & 1ULL) != 0;
         DesenharSala(i, i == salaAtual, i == salaHover && acessivel, acessivel || i == salaAtual);
     }
@@ -388,15 +428,27 @@ void MapaHoloRender(int largura, int altura, int salaAtual, int salaHover, uint6
     DrawTextureRec(g_cena.texture, (Rectangle){ 0, 0, (float)g_largura, -(float)g_altura }, (Vector2){ 0, 0 }, WHITE);
     EndShaderMode();
 
-    // 3) Bolinha vermelha do jogador (por cima do dithering, para ficar nitida)
+    // 3) Marcadores nitidos por cima do dithering: suspeitos (amarelo) + jogador (vermelho)
+    for (int i = 0; i < g_numSalas; i++) {
+        if (((g_salasComSuspeitos >> i) & 1ULL) == 0) continue;
+        if (g_apenasAndarAtual && g_salas[i].andar != g_andarFoco) continue;
+        Vector2 ps = MapaHoloPosSala(i);
+        ps.x = floorf(ps.x) + 0.5f + (i == salaAtual ? 7.0f : 0.0f);
+        ps.y = floorf(ps.y) - 4.0f;
+        float pulsoS = fmodf(tempo * 1.4f, 1.0f);
+        DrawCircleLinesV(ps, 3.5f + pulsoS * 4.5f, Fade(COR_SUSPEITO, 1.0f - pulsoS));
+        DrawCircleV(ps, 3.2f, COR_SUSPEITO);
+        DrawCircleLinesV(ps, 3.2f, BLACK);
+    }
     if (salaAtual >= 0 && salaAtual < g_numSalas) {
         Vector2 p = MapaHoloPosSala(salaAtual);
-        p.y -= 3.0f;
+        p.y -= 4.0f;
         p.x = floorf(p.x) + 0.5f;
         p.y = floorf(p.y) + 0.5f;
-        float pulso = fmodf(tempo * 1.2f, 1.0f);
-        DrawCircleLinesV(p, 3.0f + pulso * 5.0f, Fade(COR_PONTO, 1.0f - pulso));
-        DrawCircleV(p, 2.5f, COR_PONTO);
+        float pulso = fmodf(tempo * 1.3f, 1.0f);
+        DrawCircleLinesV(p, 4.0f + pulso * 6.5f, Fade(COR_PONTO, 1.0f - pulso));
+        DrawCircleV(p, 3.6f, COR_PONTO);
+        DrawCircleLinesV(p, 3.6f, WHITE);
     }
     EndTextureMode();
 }

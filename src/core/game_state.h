@@ -52,6 +52,10 @@ VisaoJogador GameStateGetVisaoJogador(int suspeito);
 bool GameStateRegistrarEvidencia(int suspeito, const char *ev_id);
 bool GameStateTemEvidencia(int suspeito, const char *ev_id);
 
+// Flags de memoria de dialogo entre dias e entre funcionarios (bit 1..31)
+void GameStateSetDialogFlag(int flagBit);
+bool GameStateHasDialogFlag(int flagBit);
+
 // Rastreia se o jogador usou Enviesamento, Deepfake ou Injecao contra cada suspeito na run
 void GameStateSetViesUsado(int suspeito, bool usado);
 bool GameStateGetViesUsado(int suspeito);

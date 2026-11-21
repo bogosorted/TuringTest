@@ -25,12 +25,25 @@ static const char *TERREO_FS =
     "    vec3(189.0, 181.0, 168.0) / 255.0,\n"
     "    vec3(255.0, 242.0, 230.0) / 255.0\n"
     ");\n"
+    "const vec3 AMARELO[4] = vec3[4](\n"
+    "    vec3(145.0, 108.0, 10.0) / 255.0,\n"
+    "    vec3(220.0, 174.0, 22.0) / 255.0,\n"
+    "    vec3(255.0, 224.0, 48.0) / 255.0,\n"
+    "    vec3(255.0, 248.0, 150.0) / 255.0\n"
+    ");\n"
     "const int BAYER[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);\n"
     "void main() {\n"
     "    vec4 c = texture(texture0, fragTexCoord);\n"
-    "    float l = dot(c.rgb, vec3(0.299, 0.587, 0.114));\n"
     "    ivec2 p = ivec2(mod(gl_FragCoord.xy, 4.0));\n"
     "    float limiar = float(BAYER[p.y * 4 + p.x]) / 16.0 - 0.5;\n"
+    "    // Preserva tinta amarela brilhante (estilo objetivo/evidencia Resident Evil)\n"
+    "    if (c.r > 0.70 && c.g > 0.55 && c.b < 0.34 && (c.r - c.b) > 0.42) {\n"
+    "        float yl = clamp((c.r * 0.55 + c.g * 0.45), 0.0, 1.0);\n"
+    "        int yidx = int(clamp(floor(yl * 3.0 + 0.5 + limiar * 0.65), 0.0, 3.0));\n"
+    "        finalColor = vec4(AMARELO[yidx], 1.0);\n"
+    "        return;\n"
+    "    }\n"
+    "    float l = dot(c.rgb, vec3(0.299, 0.587, 0.114));\n"
     "    int idx = int(clamp(floor(l * 4.0 + 0.5 + limiar * 0.92), 0.0, 4.0));\n"
     "    finalColor = vec4(TONS[idx], 1.0);\n"
     "}\n";
@@ -48,6 +61,7 @@ static TerreoSalaId         g_salaAtual = TERREO_SALA_RECEPCAO;
 static PlayerCharacter      g_player = { 0 };
 static Camera3D             g_camAtual = { 0 };
 static bool                 g_evRelatoriosAtiva = false;
+static bool                 g_suspeitosNaSala[3] = { false, false, false };
 static float                g_cooldownEntrada = 0.0f;
 static bool                 g_mouseSobreInteragivel = false;
 static char                 g_dicaAcao[160] = { 0 };
@@ -843,6 +857,110 @@ void Terreo3DSetEvidenciaAtiva(bool evRelatoriosAtiva) {
     g_evRelatoriosAtiva = evRelatoriosAtiva;
 }
 
+void Terreo3DSetSuspeitosSala(const bool presentes[3]) {
+    for (int i = 0; i < 3; i++) {
+        g_suspeitosNaSala[i] = presentes ? presentes[i] : false;
+    }
+}
+
+static void PosicaoSuspeitoNaSala(TerreoSalaId sala, int s, Vector3 *outPos, float *outYawDeg) {
+    static const Vector3 POS_PADRAO[3] = {
+        { -1.80f, 0.0f,  0.80f },
+        {  0.00f, 0.0f,  0.80f },
+        {  1.80f, 0.0f,  0.80f }
+    };
+    Vector3 p = POS_PADRAO[s % 3];
+    float yaw = 0.0f;
+    if (sala == TERREO_SALA_ESCRITORIO) {
+        static const Vector3 pts[3] = { { 2.85f, 0, -1.65f }, { -3.15f, 0, 1.25f }, { 2.75f, 0, 2.25f } };
+        static const float yaws[3]  = { -35.0f, 45.0f, -135.0f };
+        p = pts[s]; yaw = yaws[s];
+    } else if (sala == TERREO_SALA_ESCRITORIO_2) {
+        static const Vector3 pts[3] = { { 2.85f, 0, -1.75f }, { -3.20f, 0, 1.55f }, { 2.85f, 0, 1.95f } };
+        static const float yaws[3]  = { -30.0f, 50.0f, -120.0f };
+        p = pts[s]; yaw = yaws[s];
+    } else if (sala == TERREO_SALA_LANCHONETE) {
+        static const Vector3 pts[3] = { { 2.25f, 0, 1.65f }, { -1.25f, 0, 2.25f }, { 2.25f, 0, -1.35f } };
+        static const float yaws[3]  = { -110.0f, 160.0f, -45.0f };
+        p = pts[s]; yaw = yaws[s];
+    } else if (sala == TERREO_SALA_CONVIVIO) {
+        static const Vector3 pts[3] = { { 1.95f, 0, -1.25f }, { -1.95f, 0, 1.25f }, { 1.95f, 0, 1.45f } };
+        static const float yaws[3]  = { -40.0f, 130.0f, -140.0f };
+        p = pts[s]; yaw = yaws[s];
+    } else if (sala == TERREO_SALA_CONTABILIDADE_1) {
+        static const Vector3 pts[3] = { { -3.75f, 0, 1.65f }, { 3.75f, 0, 1.65f }, { 3.75f, 0, -1.65f } };
+        static const float yaws[3]  = { 135.0f, -135.0f, -45.0f };
+        p = pts[s]; yaw = yaws[s];
+    } else if (sala == TERREO_SALA_CONTABILIDADE_2) {
+        static const Vector3 pts[3] = { { -2.55f, 0, 1.75f }, { 2.55f, 0, 1.75f }, { 2.25f, 0, -1.85f } };
+        static const float yaws[3]  = { 145.0f, -145.0f, -35.0f };
+        p = pts[s]; yaw = yaws[s];
+    } else if (sala == TERREO_SALA_ARQUIVO_1) {
+        static const Vector3 pts[3] = { { -2.15f, 0, 1.45f }, { 2.15f, 0, 1.45f }, { 0.00f, 0, -1.85f } };
+        static const float yaws[3]  = { 135.0f, -135.0f, 0.0f };
+        p = pts[s]; yaw = yaws[s];
+    } else if (sala == TERREO_SALA_COPA_1) {
+        static const Vector3 pts[3] = { { 0.95f, 0, 1.55f }, { -1.25f, 0, 1.55f }, { 0.95f, 0, -1.15f } };
+        static const float yaws[3]  = { -140.0f, 140.0f, -30.0f };
+        p = pts[s]; yaw = yaws[s];
+    }
+    if (outPos)    *outPos = p;
+    if (outYawDeg) *outYawDeg = yaw;
+}
+
+// Desenha um objeto de evidencia 3D com destaque amarelo brilhante pulsante (estilo tinta amarela Resident Evil)
+// tipoModelo: 0=pasta/rascunho, 1=prancheta/protocolo, 2=oficio/envelope, 3=terminal/tela, 4=leitor/log
+void TerreoEvidenciaBrilhante(Vector3 pos, float tempo, int tipoModelo) {
+    float pulso = 0.5f + 0.5f * sinf(tempo * 5.2f);
+    Color cBrilho = (Color){ 255, (unsigned char)(215 + (int)(35.0f * pulso)), 32, 255 };
+    Color cForte  = (Color){ 255, 240, 56, 255 };
+    Color cBorda  = (Color){ 210, 165, 18, 255 };
+
+    // Anel luminoso pulsante na base do item
+    float raioAnel = 0.24f + 0.05f * pulso;
+    DrawCylinderWires((Vector3){ pos.x, pos.y + 0.015f, pos.z }, raioAnel, raioAnel, 0.015f, 16, cForte);
+
+    if (tipoModelo == 5) {
+        // Bolinha de papel amassada (poliedro irregular brilhante)
+        DrawSphereEx((Vector3){ pos.x, pos.y + 0.09f, pos.z }, 0.11f, 5, 6, cForte);
+        DrawSphereEx((Vector3){ pos.x + 0.04f, pos.y + 0.11f, pos.z - 0.03f }, 0.075f, 4, 5, cBrilho);
+        DrawSphereWires((Vector3){ pos.x, pos.y + 0.09f, pos.z }, 0.125f, 5, 6, cBorda);
+    } else if (tipoModelo == 3) {
+        // Terminal/Monitor suspeito: tela acesa brilhando em amarelo + contorno luminoso
+        DrawCube((Vector3){ pos.x, pos.y + 0.22f, pos.z + 0.032f }, 0.44f, 0.24f, 0.025f, cForte);
+        DrawCubeWires((Vector3){ pos.x, pos.y + 0.22f, pos.z + 0.02f }, 0.52f, 0.30f, 0.08f, cBrilho);
+    } else if (tipoModelo == 4) {
+        // Leitor/Console de Log de Ciberseguranca
+        DrawCube((Vector3){ pos.x, pos.y + 0.06f, pos.z }, 0.36f, 0.10f, 0.26f, cBrilho);
+        DrawCube((Vector3){ pos.x, pos.y + 0.14f, pos.z - 0.05f }, 0.30f, 0.12f, 0.06f, cForte);
+        DrawCubeWires((Vector3){ pos.x, pos.y + 0.09f, pos.z }, 0.40f, 0.20f, 0.30f, cBorda);
+    } else if (tipoModelo == 2) {
+        // Oficio / Envelope sigiloso lacrado
+        DrawCube((Vector3){ pos.x, pos.y + 0.035f, pos.z }, 0.34f, 0.05f, 0.24f, cForte);
+        DrawCube((Vector3){ pos.x, pos.y + 0.068f, pos.z + 0.02f }, 0.10f, 0.025f, 0.08f, cBorda);
+        DrawCubeWires((Vector3){ pos.x, pos.y + 0.04f, pos.z }, 0.38f, 0.08f, 0.28f, cBrilho);
+    } else if (tipoModelo == 1) {
+        // Prancheta / Livro de Protocolo de Relatorios Devolvidos
+        DrawCube((Vector3){ pos.x, pos.y + 0.045f, pos.z }, 0.32f, 0.07f, 0.40f, cBrilho);
+        DrawCube((Vector3){ pos.x, pos.y + 0.090f, pos.z - 0.02f }, 0.26f, 0.03f, 0.32f, cForte);
+        DrawCubeWires((Vector3){ pos.x, pos.y + 0.06f, pos.z }, 0.36f, 0.11f, 0.44f, cBorda);
+    } else {
+        // Pasta / Rascunho / Memorando empilhado em destaque
+        DrawCube((Vector3){ pos.x - 0.06f, pos.y + 0.045f, pos.z }, 0.30f, 0.08f, 0.24f, cBrilho);
+        DrawCube((Vector3){ pos.x + 0.06f, pos.y + 0.095f, pos.z + 0.03f }, 0.26f, 0.05f, 0.20f, cForte);
+        DrawCubeWires((Vector3){ pos.x, pos.y + 0.07f, pos.z }, 0.38f, 0.14f, 0.30f, cBorda);
+    }
+
+    // Beacon flutuante (losango/seta amarela pulsante acima do objeto para identificacao imediata na sala)
+    float bobY = pos.y + ((tipoModelo == 3) ? 0.68f : 0.46f) + 0.09f * sinf(tempo * 4.2f);
+    rlPushMatrix();
+    rlTranslatef(pos.x, bobY, pos.z);
+    rlRotatef(tempo * 95.0f, 0.0f, 1.0f, 0.0f);
+    DrawCylinder((Vector3){ 0.0f,  0.00f, 0.0f }, 0.11f, 0.00f, 0.16f, 4, cForte);
+    DrawCylinder((Vector3){ 0.0f, -0.16f, 0.0f }, 0.00f, 0.11f, 0.16f, 4, cBrilho);
+    rlPopMatrix();
+}
+
 TerreoInteracaoResultado Terreo3DUpdate(float dt,
                                         Vector2 mouseJanela,
                                         bool sobreJanela,
@@ -920,13 +1038,46 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
         }
     }
 
+    static const char *NOMES_SUSP[3] = { "Maria Bianca", "Arthur", "Ana Lúcia" };
+    int proxSusp = -1;
+    for (int s = 0; s < 3; s++) {
+        if (!g_suspeitosNaSala[s]) continue;
+        Vector3 sp = { 0 };
+        PosicaoSuspeitoNaSala(g_salaAtual, s, &sp, NULL);
+        float d = hypotf(g_player.position.x - sp.x, g_player.position.z - sp.z);
+        if (d <= 2.05f && d < melhorDist) {
+            melhorDist = d;
+            proxSusp   = s;
+            proxObj    = -1;
+            proxPorta  = TERREO_DEST_NENHUM;
+        }
+    }
+
     // 4) Hover por raycast 3D
     int hoverObj = -1;
+    int hoverSusp = -1;
     TerreoDestino hoverPorta = TERREO_DEST_NENHUM;
     const char *hoverPortaLabel = NULL;
     if (sobreJanela && g_texPronta) {
         Ray ray = GetScreenToWorldRayEx(mouseJanela, g_camAtual, g_largura, g_altura);
         float bestHit = 1e9f;
+
+        for (int s = 0; s < 3; s++) {
+            if (!g_suspeitosNaSala[s]) continue;
+            Vector3 sp = { 0 };
+            PosicaoSuspeitoNaSala(g_salaAtual, s, &sp, NULL);
+            BoundingBox bSusp = {
+                { sp.x - 0.42f, sp.y,         sp.z - 0.42f },
+                { sp.x + 0.42f, sp.y + 2.05f, sp.z + 0.42f }
+            };
+            RayCollision hit = GetRayCollisionBox(ray, bSusp);
+            if (hit.hit && hit.distance < bestHit) {
+                bestHit    = hit.distance;
+                hoverSusp  = s;
+                hoverObj   = -1;
+                hoverPorta = TERREO_DEST_NENHUM;
+            }
+        }
 
         for (int i = 0; i < def->numPortas; i++) {
             RayCollision hit = GetRayCollisionBox(ray, def->portas[i].clickBox);
@@ -946,23 +1097,33 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
                 hoverPorta = TERREO_DEST_NENHUM;
             }
         }
-        g_mouseSobreInteragivel = (hoverPorta != TERREO_DEST_NENHUM) || (hoverObj >= 0);
+        g_mouseSobreInteragivel = (hoverPorta != TERREO_DEST_NENHUM) || (hoverObj >= 0) || (hoverSusp >= 0);
     }
 
     // Dica no pensamento do player
-    if (proxObj >= 0 && def->interactables[proxObj].label) {
-        bool ehPistaAtiva = g_evRelatoriosAtiva && strcmp(def->interactables[proxObj].id, "mesa_relatorios") == 0;
-        if (ehPistaAtiva) {
-            snprintf(g_dicaAcao, sizeof(g_dicaAcao), "%s - Aperte E para examinar", def->interactables[proxObj].label);
+    if (proxSusp >= 0) {
+        snprintf(g_dicaAcao, sizeof(g_dicaAcao), "[CONVERSAR] %s - Aperte E", NOMES_SUSP[proxSusp]);
+    } else if (proxObj >= 0 && def->interactables[proxObj].label) {
+        bool ehSombras = def->interactables[proxObj].id && strcmp(def->interactables[proxObj].id, "ev_jardim_sombras") == 0;
+        bool ehEvidencia = !ehSombras && def->interactables[proxObj].id && strncmp(def->interactables[proxObj].id, "ev_", 3) == 0;
+        if (ehSombras) {
+            snprintf(g_dicaAcao, sizeof(g_dicaAcao), "%s - Aperte E para escutar", def->interactables[proxObj].label);
+        } else if (ehEvidencia) {
+            snprintf(g_dicaAcao, sizeof(g_dicaAcao), "[EVIDÊNCIA] %s - Aperte E para examinar", def->interactables[proxObj].label);
         } else {
             snprintf(g_dicaAcao, sizeof(g_dicaAcao), "%s - Aperte E para interagir", def->interactables[proxObj].label);
         }
     } else if (proxPorta != TERREO_DEST_NENHUM && proxPortaLabel) {
         snprintf(g_dicaAcao, sizeof(g_dicaAcao), "%s - Aperte E para entrar", proxPortaLabel);
+    } else if (hoverSusp >= 0) {
+        snprintf(g_dicaAcao, sizeof(g_dicaAcao), "[CONVERSAR] %s - Clique para falar", NOMES_SUSP[hoverSusp]);
     } else if (hoverObj >= 0 && def->interactables[hoverObj].label) {
-        bool ehPistaAtiva = g_evRelatoriosAtiva && strcmp(def->interactables[hoverObj].id, "mesa_relatorios") == 0;
-        if (ehPistaAtiva) {
-            snprintf(g_dicaAcao, sizeof(g_dicaAcao), "%s - Clique para examinar", def->interactables[hoverObj].label);
+        bool ehSombras = def->interactables[hoverObj].id && strcmp(def->interactables[hoverObj].id, "ev_jardim_sombras") == 0;
+        bool ehEvidencia = !ehSombras && def->interactables[hoverObj].id && strncmp(def->interactables[hoverObj].id, "ev_", 3) == 0;
+        if (ehSombras) {
+            snprintf(g_dicaAcao, sizeof(g_dicaAcao), "%s - Clique para escutar", def->interactables[hoverObj].label);
+        } else if (ehEvidencia) {
+            snprintf(g_dicaAcao, sizeof(g_dicaAcao), "[EVIDÊNCIA] %s - Clique para examinar", def->interactables[hoverObj].label);
         } else {
             snprintf(g_dicaAcao, sizeof(g_dicaAcao), "%s - Clique para interagir", def->interactables[hoverObj].label);
         }
@@ -972,6 +1133,14 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
 
     // 5) Interacao via tecla E (proximidade) ou clique esquerdo (raycast apenas quando proximo em portas)
     if (IsKeyPressed(KEY_E)) {
+        if (proxSusp >= 0) {
+            Vector3 sp = { 0 };
+            PosicaoSuspeitoNaSala(g_salaAtual, proxSusp, &sp, NULL);
+            PlayerCharacterTriggerInteract(&g_player, sp);
+            res.acionouSuspeito = true;
+            res.suspeitoIndex   = proxSusp;
+            return res;
+        }
         if (proxPorta != TERREO_DEST_NENHUM) {
             res.acionouDestino = true;
             res.destino        = proxPorta;
@@ -990,6 +1159,14 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
     }
 
     if (podeClicarObjetos && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (hoverSusp >= 0) {
+            Vector3 sp = { 0 };
+            PosicaoSuspeitoNaSala(g_salaAtual, hoverSusp, &sp, NULL);
+            PlayerCharacterTriggerInteract(&g_player, sp);
+            res.acionouSuspeito = true;
+            res.suspeitoIndex   = hoverSusp;
+            return res;
+        }
         if (hoverPorta != TERREO_DEST_NENHUM && hoverPorta == proxPorta) {
             res.acionouDestino = true;
             res.destino        = hoverPorta;
@@ -1021,6 +1198,13 @@ void Terreo3DRender(float tempo) {
 
     if (def->drawFunc) {
         def->drawFunc(tempo, g_evRelatoriosAtiva);
+    }
+    for (int s = 0; s < 3; s++) {
+        if (!g_suspeitosNaSala[s]) continue;
+        Vector3 sp = { 0 };
+        float syaw = 0.0f;
+        PosicaoSuspeitoNaSala(g_salaAtual, s, &sp, &syaw);
+        PlayerCharacterDrawSuspect3D(s, sp, syaw, tempo, g_camAtual.position);
     }
     g_player.isFemale = GameStateIsPlayerFemale();
     PlayerCharacterDraw3D(&g_player, g_camAtual.position);

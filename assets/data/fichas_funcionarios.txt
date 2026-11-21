@@ -2,13 +2,13 @@ Funcionário 01
 
 Nome: Maria Bianca
 Setor: Administrativo
-Função: Auxiliar Administrativa
-Personalidade Geral: Cautelosa
+Função: Auxiliar Administrativa (Protocolo e Arquivamento)
+Personalidade Geral: Cautelosa e metódica
 
 Comportamentos:
-- Pergunta quem é a pessoa antes de se abrir na conversa.
-- Gosta de falar de viagens quando se sente à vontade.
-- Evita criticar a supervisora quando sente pressão.
+- Revisa manualmente cada relatório antes de protocolar na Contabilidade.
+- Evita expor problemas do setor na frente de estranhos por receio de retaliação.
+- Defende a rotina da RASEC, mas demonstra desgaste com mudanças recentes na supervisão.
 - Possui coloboma congênito na íris (pupila alongada em gota).
 
 
@@ -16,13 +16,13 @@ Funcionário 02
 
 Nome: Arthur Galdério
 Setor: Administrativo
-Função: Assistente Administrativo
-Personalidade Geral: Descontraído
+Função: Assistente Administrativo (Projeções e Planilhas)
+Personalidade Geral: Solícito e sobrecarregado
 
 Comportamentos:
-- Chama os colegas de "brother" e puxa assunto com facilidade.
-- É guitarrista por hobby e adora falar de música.
-- Costuma presentear os amigos com canetas pretas.
+- Fala de forma informal e tenta manter o clima leve, mesmo sob pressão.
+- Costuma absorver retrabalho dos colegas para evitar conflitos no setor.
+- Conhece bem a rotina dos outros andares e repara quando alguém sai do padrão.
 
 
 Funcionário 03
@@ -30,9 +30,9 @@ Funcionário 03
 Nome: Ana Lúcia
 Setor: Administrativo
 Função: Supervisora do Setor
-Personalidade Geral: Exigente
+Personalidade Geral: Controladora e performática
 
 Comportamentos:
-- Prefere ser chamada de Analu.
-- Cobra relatórios com frequência e devolve os que estão errados.
-- Trabalha na RASEC há 3 anos e não costuma sair do próprio setor.
+- Prefere ser chamada de Analu pelos colegas mais próximos.
+- Trabalha na RASEC há 3 anos e entrou antes de Arthur ser contratado.
+- Pelo protocolo do cargo, atua apenas no Administrativo e na Contabilidade (sem acesso à Cibersegurança ou Treino de IA).

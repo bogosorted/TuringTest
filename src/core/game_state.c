@@ -8,6 +8,7 @@ static bool         g_tutorialConfig = true; // Por padrao ativado no setup
 static bool         g_tutorialActive = true;
 static VisaoJogador g_visaoJogador[GAME_NUM_SUSPECTS] = { VISAO_DUVIDA, VISAO_DUVIDA, VISAO_DUVIDA };
 static bool         g_evidencias[GAME_NUM_SUSPECTS][GAME_MAX_EVIDENCIAS] = { { false } };
+static unsigned int g_dialogFlags = 0;
 static bool         g_viesUsado[GAME_NUM_SUSPECTS] = { false };
 static bool         g_deepfakeUsado[GAME_NUM_SUSPECTS] = { false };
 static bool         g_injecaoUsada[GAME_NUM_SUSPECTS] = { false };
@@ -48,6 +49,7 @@ void GameStateNewRun(void) {
     g_day = 1; // Inicia direto no Dia 1; tutorial aparece de forma contextual durante a partida
     g_tokensRestantesTotal = 0;
     g_dicasUsadasTotal = 0;
+    g_dialogFlags = 0;
     for (int i = 0; i < GAME_NUM_SUSPECTS; i++) {
         g_visaoJogador[i] = VISAO_DUVIDA;
         g_viesUsado[i] = false;
@@ -108,6 +110,16 @@ bool GameStateTemEvidencia(int suspeito, const char *ev_id) {
     int idx = ParseEvIndex(ev_id);
     if (idx < 0) return false;
     return g_evidencias[suspeito][idx];
+}
+
+void GameStateSetDialogFlag(int flagBit) {
+    if (flagBit <= 0 || flagBit >= 32) return;
+    g_dialogFlags |= (1u << (unsigned int)flagBit);
+}
+
+bool GameStateHasDialogFlag(int flagBit) {
+    if (flagBit <= 0 || flagBit >= 32) return true;
+    return (g_dialogFlags & (1u << (unsigned int)flagBit)) != 0;
 }
 
 void GameStateSetViesUsado(int suspeito, bool usado) {

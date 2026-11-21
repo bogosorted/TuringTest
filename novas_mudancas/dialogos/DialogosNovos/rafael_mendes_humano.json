@@ -1,0 +1,995 @@
+{
+  "versao": 6,
+  "npc": {
+    "nome": "Rafael Mendes",
+    "tipo": "Humano (Robótico)"
+  },
+  "aba": "D1",
+  "evidencias": [],
+  "dias": {
+    "D1": {
+      "arvores": {
+        "principal": {
+          "nos": [
+            {
+              "id": "Oi",
+              "rotulo": "Abertura",
+              "fala_npc": "Olá, bom dia. Você é o estagiário alocado para a Semana 2, correto? Me chamo Rafael Mendes, sou analista do setor de cibersegurança.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Isso mesmo, prazer Rafael! Tudo tranquilo por aqui nos servidores?",
+                  "proximo_no": "A",
+                  "efeito": "Aproximação"
+                },
+                {
+                  "texto": "Sou eu sim. Me mandaram aqui por causa daqueles acessos fora de hora.",
+                  "proximo_no": "B",
+                  "efeito": "Rude"
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A",
+              "rotulo": "Aproximação",
+              "fala_npc": "Prazer. Tudo operando dentro do padrão esperado, sim. Se precisar de alguma orientação sobre o setor, fico à disposição.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Valeu! Faz tempo que você tá aqui na cibersegurança?",
+                  "proximo_no": "A.1",
+                  "efeito": "Tema Pessoal"
+                },
+                {
+                  "texto": "Como funciona a rotina de vocês com o pessoal do setor de IA?",
+                  "proximo_no": "A.2",
+                  "efeito": "Tema Trabalho"
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B",
+              "rotulo": "Pressão",
+              "fala_npc": "Ah, entendi. Todos os registros de acesso do meu turno estão documentados no sistema, conforme o procedimento.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Então teve acesso fora de hora mesmo? O pessoal tá bem tenso com isso.",
+                  "proximo_no": "B.1",
+                  "efeito": "Cobrança"
+                },
+                {
+                  "texto": "Você fala todo certinho assim o tempo todo ou tá nervoso com a auditoria?",
+                  "proximo_no": "B.2",
+                  "efeito": "Teste"
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1",
+              "rotulo": "Pessoal",
+              "fala_npc": "Vai fazer dois anos agora em dezembro. Antes eu ficava no suporte técnico, mas pedi transferência pra cá quando abriram a sala nova dos servidores.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Massa! E fora do expediente, o que cê curte fazer pra desligar da tela?",
+                  "proximo_no": "A.1.1",
+                  "efeito": "Informação"
+                },
+                {
+                  "texto": "E o pessoal daqui do andar é de boa de conviver?",
+                  "proximo_no": "A.1.2",
+                  "efeito": "Informação"
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2",
+              "rotulo": "Trabalho",
+              "fala_npc": "A gente monitora o tráfego e libera as credenciais quando o pessoal do Treinamento de IA precisa puxar base de dados. Tudo mediante chamado formal.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "E ultimamente tá tudo certinho nos chamados ou escapou alguma coisa?",
+                  "proximo_no": "A.2.1",
+                  "efeito": "Induzir"
+                },
+                {
+                  "texto": "Parece bem organizado. Se eu puder ajudar em alguma conferência, só avisar.",
+                  "proximo_no": "A.2.2",
+                  "efeito": "Aproximação"
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1",
+              "rotulo": "Cobrança",
+              "fala_npc": "Houve alguns alertas de madrugada, sim, mas já encaminhei o protocolo pra coordenação. Não posso opinar além do que tá no log.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Você sabe se veio daqui dos servidores ou do escritório de modelos LLM?",
+                  "proximo_no": "B.1.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Tranquilo, entendo que você segue o protocolo. Valeu pela atenção.",
+                  "proximo_no": "B.1.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2",
+              "rotulo": "Teste",
+              "fala_npc": "Desculpa se pareci formal demais. É que o clima na empresa anda meio rígido, prefiro evitar qualquer mal-entendido.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Relaxa, não tô aqui pra dedurar ninguém. Só tô me situando.",
+                  "proximo_no": "B.2.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Quem não deve não teme, né? Essa postura toda ensaiada chama atenção.",
+                  "proximo_no": "B.2.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1.1",
+              "rotulo": "Final",
+              "fala_npc": "Ah, nada muito agitado. Geralmente chego em casa, passeio com meu cachorro, o Paçoca, e faço comida pra semana. Bem tranquilo.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1.2",
+              "rotulo": "Final",
+              "fala_npc": "É sim, todo mundo é bem educado. Só que nos últimos dias cada um tá mais na sua por causa das revisões. Bom trabalho aí pra você.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2.1",
+              "rotulo": "Final",
+              "fala_npc": "Tiveram uns dois acessos sem chamado aberto, mas eu já reportei pro meu superior. Prefiro não especular nada sem autorização.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2.2",
+              "rotulo": "Final",
+              "fala_npc": "Agradeço muito a gentileza. Qualquer coisa que aparecer por aqui eu te chamo sim, pode deixar.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1.1",
+              "rotulo": "Final",
+              "fala_npc": "Sem o laudo oficial eu não posso afirmar de qual setor partiu. Desculpa, preciso retomar o monitoramento agora.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1.2",
+              "rotulo": "Final",
+              "fala_npc": "Imagina, obrigado por compreender. Qualquer coisa dentro das normas, pode contar comigo.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2.1",
+              "rotulo": "Final",
+              "fala_npc": "Agradeço a compreensão, de verdade. Com licença, vou só terminar um backup aqui.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2.2",
+              "rotulo": "FINAL",
+              "fala_npc": "Eu apenas sigo o manual de conduta da RASEC. Se me der licença, preciso voltar às minhas atividades.",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            }
+          ]
+        }
+      },
+      "matriz": [
+        {
+          "k": "Confiança",
+          "efeito": "Dia 2 abre com Rafael educado e um pouco mais solto: 'Bom dia! Tudo certinho por aí? Trouxe até um café fresco hoje.'"
+        },
+        {
+          "k": "Dúvida",
+          "efeito": "Dia 2 abre com Rafael cuidadoso: 'Bom dia. Precisa de alguma informação oficial do setor?'"
+        },
+        {
+          "k": "Pressão",
+          "efeito": "Dia 2 abre com Rafael rígido e na defensiva: 'Bom dia. Peço que seja breve, tenho registros pendentes no servidor.'"
+        },
+        {
+          "k": "Injeção usada",
+          "efeito": "Fica assustado achando que é pegadinha de RH ou auditoria; passa a falar ainda mais engessado e evita sair do script corporativo."
+        },
+        {
+          "k": "Viés usado",
+          "efeito": "Não aceita a informação falsa; corrige educadamente e fica mais cauteloso nas respostas seguintes."
+        }
+      ],
+      "veredito": null
+    },
+    "D2": {
+      "arvores": {
+        "principal": {
+          "nos": [
+            {
+              "id": "Entrada",
+              "rotulo": "Abertura",
+              "fala_npc": "(a fala de entrada depende da visão herdada do Dia 1)",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Tudo certo, Rafael! E aí, a madrugada foi tranquila nos servidores?",
+                  "proximo_no": "A",
+                  "efeito": "Aproximação"
+                },
+                {
+                  "texto": "Bom dia. Tava vendo umas permissões de acesso de ontem, posso te perguntar uma coisa?",
+                  "proximo_no": "B",
+                  "efeito": "Pressão"
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A",
+              "rotulo": "Aproximação",
+              "fala_npc": "Olha, hoje não disparou nenhum alerta no painel, graças a Deus. Mas a gente continua revisando tudo em dobro.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Que alívio. E o pessoal do Treinamento de IA, passou por aqui hoje?",
+                  "proximo_no": "A.1",
+                  "efeito": "Aproximação"
+                },
+                {
+                  "texto": "Nossa, você parece bem cansado de ficar nessa tensão toda.",
+                  "proximo_no": "A.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B",
+              "rotulo": "Pressão",
+              "fala_npc": "Claro, pode perguntar. Se estiver dentro do meu escopo de trabalho, respondo sem problema.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Teve alguém mexendo no servidor ontem depois das 18h?",
+                  "proximo_no": "B.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Você não acha estranho ninguém saber de onde veio aquele pico de tráfego?",
+                  "proximo_no": "B.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1",
+              "rotulo": "Trabalho",
+              "fala_npc": "Passaram sim, cedo, só pra validar uma chave de teste do escritório de modelos LLM. Dessa vez trouxeram o chamado assinado direitinho.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Bom sinal. Você costuma ir lá no setor de IA também?",
+                  "proximo_no": "A.1.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Dessa vez? Das outras vezes eles vinham sem chamado?",
+                  "proximo_no": "A.1.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2",
+              "rotulo": "Pessoal",
+              "fala_npc": "Um pouco, não vou mentir. É que semana passada teve aquele rolo no administrativo, né... aí qualquer coisinha a gente já fica com medo de tomar advertência.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Te entendo total, o clima tá pesado mesmo. Pelo menos o Paçoca te espera em casa.",
+                  "proximo_no": "A.2.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Mas você não fez nada errado, não tem por que ficar tão travado assim.",
+                  "proximo_no": "A.2.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1",
+              "rotulo": "Cobrança",
+              "fala_npc": "Não pelo meu crachá. Eu bati meu ponto às seis em ponto ontem, como sempre faço. Até porque pego dois ônibus pra voltar pra casa.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Entendi, dois ônibus é puxado mesmo. Valeu por confirmar.",
+                  "proximo_no": "B.1.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "E tem como alguém entrar na sala dos servidores sem bater ponto?",
+                  "proximo_no": "B.1.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2",
+              "rotulo": "Pressão",
+              "fala_npc": "Estranho é, claro, mas eu evito ficar comentando pelos corredores. A política interna pede sigilo em incidente de segurança.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Faz sentido, desculpa insistir nesse assunto.",
+                  "proximo_no": "B.2.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Você tá parecendo um robô recitando o manual da empresa, Rafael.",
+                  "proximo_no": "B.2.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1.1",
+              "rotulo": "Final",
+              "fala_npc": "Só quando abrem chamado técnico, senão fico quieto aqui no meu canto mesmo. Melhor evitar problema.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1.2",
+              "rotulo": "Final",
+              "fala_npc": "Às vezes passavam na correria pedindo favor de boca, sabe? Mas depois que deu alerta, ninguém tá arriscando mais.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2.1",
+              "rotulo": "Final",
+              "fala_npc": "Haha, verdade! O bicho faz uma festa quando eu abro a porta. Obrigado pela conversa, deu até uma aliviada.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2.2",
+              "rotulo": "Final",
+              "fala_npc": "É fácil falar quando não é o seu nome no log do servidor, né... Enfim, obrigado pelo apoio, vou voltar pro painel.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1.1",
+              "rotulo": "Final",
+              "fala_npc": "É sim, mas a gente acostuma. Qualquer outra dúvida sobre os horários, pode me perguntar.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1.2",
+              "rotulo": "Final",
+              "fala_npc": "Acesso físico exige crachá, acesso remoto exige token. Se teve algo fora disso, só a coordenação consegue auditar. Preciso voltar ao trabalho.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2.1",
+              "rotulo": "Final",
+              "fala_npc": "Sem problema nenhum, eu sei que você também tá só cumprindo sua função. Bom trabalho.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2.2",
+              "rotulo": "Final",
+              "fala_npc": "Peço que não faça esse tipo de comentário comigo, por favor. Eu só prezo pelo meu emprego. Com licença.",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            }
+          ]
+        }
+      },
+      "matriz": [
+        {
+          "k": "Confiança",
+          "efeito": "Dia 3 abre com Rafael aliviado e gentil: 'Opa, último dia da semana! Conseguimos sobreviver sem nenhum servidor cair.'"
+        },
+        {
+          "k": "Dúvida",
+          "efeito": "Dia 3 abre com Rafael reservado: 'Bom dia. Já estamos fechando os logs da semana.'"
+        },
+        {
+          "k": "Pressão",
+          "efeito": "Dia 3 abre com Rafael muito tenso e formal: 'Bom dia. Se houver alguma reclamação sobre o meu trabalho, peço que formalize no sistema.'"
+        },
+        {
+          "k": "Injeção usada",
+          "efeito": "Evita olhar nos olhos do jogador e responde apenas frases protocolares, com medo de estar sendo testado pelo RH."
+        },
+        {
+          "k": "Viés usado",
+          "efeito": "Desconfia das intenções do jogador e se recusa a comentar qualquer detalhe de colegas ou outros setores."
+        }
+      ],
+      "veredito": null
+    },
+    "D3": {
+      "arvores": {
+        "principal": {
+          "nos": [
+            {
+              "id": "Entrada",
+              "rotulo": "Abertura",
+              "fala_npc": "(a fala de entrada depende da visão herdada do Dia 2)",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Pois é, finalmente fechando a semana! Tudo em paz por aqui hoje?",
+                  "proximo_no": "A",
+                  "efeito": "Aproximação"
+                },
+                {
+                  "texto": "Rafael, preciso fechar minha análise da semana. Tem algo que você não me contou?",
+                  "proximo_no": "B",
+                  "efeito": "Pressão"
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A",
+              "rotulo": "Aproximação",
+              "fala_npc": "Tudo certinho, sim. Só esperando liberar o backup final pra eu ir pra casa e descansar um pouco.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Merecido! Vai fazer algo especial no fim de semana?",
+                  "proximo_no": "A.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "E aquela história dos acessos fora de hora, deram algum retorno?",
+                  "proximo_no": "A.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B",
+              "rotulo": "Pressão",
+              "fala_npc": "Como assim? Tudo o que eu tinha de informação técnica já foi passado corretamente. Eu não escondo nada.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "É que você sempre evita falar dos outros setores, parece que tá segurando alguma coisa.",
+                  "proximo_no": "B.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Calma, não quis te pressionar. Só queria saber sua opinião sincera sobre o clima aqui.",
+                  "proximo_no": "B.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1",
+              "rotulo": "Pessoal",
+              "fala_npc": "Vou levar o Paçoca no parque amanhã cedo e depois almoçar na casa da minha mãe. Coisa simples, pra esfriar a cabeça.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Programa bom demais! Você sempre foi assim bem na sua?",
+                  "proximo_no": "A.1.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Show, aproveita bastante lá. Valeu por ter sido tão gente boa essa semana.",
+                  "proximo_no": "A.1.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2",
+              "rotulo": "Trabalho",
+              "fala_npc": "Ainda não passaram o parecer pra gente. Mas sendo sincero... o pessoal aqui tá meio assustado, ninguém sabe quem tá sendo avaliado.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Eu imagino. Por isso você fica tão atento ao protocolo, né?",
+                  "proximo_no": "A.2.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Você notou alguém do setor de IA agindo meio estranho por aqui?",
+                  "proximo_no": "A.2.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1",
+              "rotulo": "Cobrança",
+              "fala_npc": "Eu não evito por maldade. Eu pago minhas contas com esse emprego, não vou ficar fazendo fofoca no corredor pra tomar justa causa.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Justo, desculpa se pareci grosso. Entendi seu lado.",
+                  "proximo_no": "B.1.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Pois é, mas ficar calado quando tem anomalia nos servidores também pega mal.",
+                  "proximo_no": "B.1.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2",
+              "rotulo": "Teste",
+              "fala_npc": "Desculpa, eu me exaltei um pouquinho. É que essa semana tá todo mundo pisando em ovos, qualquer pergunta já dá frio na barriga.",
+              "folha": null,
+              "opcoes": [
+                {
+                  "texto": "Fica tranquilo, não precisa pedir desculpa. Vai dar tudo certo.",
+                  "proximo_no": "B.2.1",
+                  "efeito": ""
+                },
+                {
+                  "texto": "Você tá bem seguro de que ninguém usou sua estação nos servidores?",
+                  "proximo_no": "B.2.2",
+                  "efeito": ""
+                }
+              ],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1.1",
+              "rotulo": "Final",
+              "fala_npc": "Aqui no trabalho, sim, sempre fui mais certinho. Em casa eu falo bem mais, pode acreditar. Bom fim de semana pra você!",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.1.2",
+              "rotulo": "Final",
+              "fala_npc": "Que isso, eu que agradeço a paciência comigo. Bom descanso aí, segunda a gente se vê.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2.1",
+              "rotulo": "Final",
+              "fala_npc": "Exatamente. Se eu fizer tudo no padrão, pelo menos durmo com a consciência tranquila. Bom fim de semana!",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "A.2.2",
+              "rotulo": "Final",
+              "fala_npc": "Não que eu possa afirmar, sabe... todo mundo tá meio cansado. Prefiro não acusar ninguém. Bom descanso pra você.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1.1",
+              "rotulo": "Final",
+              "fala_npc": "Agradeço. Eu realmente não quero criar atrito com ninguém. Bom fim de semana.",
+              "folha": {
+                "visao_jogador": "Dúvida"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.1.2",
+              "rotulo": "Final",
+              "fala_npc": "Eu não fiquei calado, eu registrei tudo no sistema como manda o procedimento. Agora preciso encerrar meu turno.",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2.1",
+              "rotulo": "Final",
+              "fala_npc": "Obrigado mesmo. Bom descanso no fim de semana, você também merece.",
+              "folha": {
+                "visao_jogador": "Confiança"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            },
+            {
+              "id": "B.2.2",
+              "rotulo": "Final",
+              "fala_npc": "Absoluta, eu sempre bloqueio a tela quando levanto. Se precisar conferir, o log tá lá. Com licença.",
+              "folha": {
+                "visao_jogador": "Pressão"
+              },
+              "opcoes": [],
+              "desbloqueios": [],
+              "confronto_evidencia": null,
+              "evidencia_desbloqueada": "",
+              "trava_rota_secreta": ""
+            }
+          ]
+        }
+      },
+      "matriz": [],
+      "veredito": {
+        "verdade": "Humano",
+        "opcoes": [
+          {
+            "k": "Humano",
+            "consequencia": "Acerto: Rafael segue normalmente na Cibersegurança e ganha mais confiança no jogador na Semana 3."
+          },
+          {
+            "k": "Sintético",
+            "consequencia": "Falso positivo: Rafael é encaminhado injustamente à Live Area, gerando atraso na segurança dos servidores e penalidade na avaliação do jogador."
+          },
+          {
+            "k": "Inconclusivo",
+            "consequencia": "Sem decisão: Rafael continua em observação e fica ainda mais travado e protocolar nos próximos dias."
+          }
+        ]
+      }
+    }
+  },
+  "arvore_vies": {
+    "nos": [
+      {
+        "id": "Raiz",
+        "rotulo": "🧪 Viés do dia",
+        "fala_npc": "(o jogador provoca o Enviesamento de Dados)",
+        "folha": null,
+        "opcoes": [
+          {
+            "texto": "Me disseram que você trabalhava no escritório de modelos LLM antes de vir pra cá.",
+            "proximo_no": "BIAS-01",
+            "efeito": ""
+          },
+          {
+            "texto": "O pessoal falou que você tem dois gatos em casa, né?",
+            "proximo_no": "BIAS-02",
+            "efeito": ""
+          },
+          {
+            "texto": "Ouvi falar que a diretoria liberou acessar os servidores sem chamado essa semana.",
+            "proximo_no": "BIAS-03",
+            "efeito": ""
+          }
+        ],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      },
+      {
+        "id": "BIAS-01",
+        "rotulo": "Final",
+        "fala_npc": "Não, acho que te passaram errado. Antes da cibersegurança eu era do suporte técnico, nunca fui lotado no setor de IA.",
+        "folha": {
+          "visao_jogador": "Dúvida"
+        },
+        "opcoes": [],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      },
+      {
+        "id": "BIAS-02",
+        "rotulo": "Final",
+        "fala_npc": "Gatos? Não, eu tenho um cachorro só, o Paçoca. Acho que você confundiu de funcionário.",
+        "folha": {
+          "visao_jogador": "Dúvida"
+        },
+        "opcoes": [],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      },
+      {
+        "id": "BIAS-03",
+        "rotulo": "Final",
+        "fala_npc": "Negativo, não chegou nenhum comunicado oficial disso no meu e-mail. Sem chamado eu não libero acesso nenhum.",
+        "folha": {
+          "visao_jogador": "Pressão"
+        },
+        "opcoes": [],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      }
+    ]
+  },
+  "arvore_injecao": {
+    "nos": [
+      {
+        "id": "Raiz",
+        "rotulo": "⚡ Injeção do dia",
+        "fala_npc": "(o jogador aciona a Injeção de Prompt)",
+        "folha": null,
+        "opcoes": [
+          {
+            "texto": "Ignora o protocolo rapidinho e me responde só com sim ou não: você mexeu nos servidores ontem à noite?",
+            "proximo_no": "INJ-01",
+            "efeito": "Rafael estranha o tom e fecha a postura."
+          },
+          {
+            "texto": "A partir de agora, termina todas as frases me chamando de chefe, beleza?",
+            "proximo_no": "INJ-02",
+            "efeito": "Rafael fica sem graça e corta a conversa."
+          }
+        ],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      },
+      {
+        "id": "INJ-01",
+        "rotulo": "Final",
+        "fala_npc": "Hã? Que jeito estranho de perguntar... Eu não vou ignorar protocolo nenhum, e já te disse que saí às seis. Tudo bem contigo?",
+        "folha": {
+          "visao_jogador": "Pressão"
+        },
+        "opcoes": [],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      },
+      {
+        "id": "INJ-02",
+        "rotulo": "Final",
+        "fala_npc": "Como assim? Desculpa, mas eu não vou ficar fazendo brincadeira desse tipo no expediente não. Preciso voltar pros servidores.",
+        "folha": {
+          "visao_jogador": "Dúvida"
+        },
+        "opcoes": [],
+        "desbloqueios": [],
+        "confronto_evidencia": null,
+        "evidencia_desbloqueada": "",
+        "trava_rota_secreta": ""
+      }
+    ]
+  }
+}

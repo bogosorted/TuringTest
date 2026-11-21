@@ -1,0 +1,458 @@
+[
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/main.c.o -c /home/vitorc/TuringTest/src/main.c",
+  "file": "/home/vitorc/TuringTest/src/main.c",
+  "output": "CMakeFiles/turing_test.dir/src/main.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/core/game_state.c.o -c /home/vitorc/TuringTest/src/core/game_state.c",
+  "file": "/home/vitorc/TuringTest/src/core/game_state.c",
+  "output": "CMakeFiles/turing_test.dir/src/core/game_state.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/core/settings.c.o -c /home/vitorc/TuringTest/src/core/settings.c",
+  "file": "/home/vitorc/TuringTest/src/core/settings.c",
+  "output": "CMakeFiles/turing_test.dir/src/core/settings.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/core/ranking.c.o -c /home/vitorc/TuringTest/src/core/ranking.c",
+  "file": "/home/vitorc/TuringTest/src/core/ranking.c",
+  "output": "CMakeFiles/turing_test.dir/src/core/ranking.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/core/transition.c.o -c /home/vitorc/TuringTest/src/core/transition.c",
+  "file": "/home/vitorc/TuringTest/src/core/transition.c",
+  "output": "CMakeFiles/turing_test.dir/src/core/transition.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/core/raycanvas.c.o -c /home/vitorc/TuringTest/src/core/raycanvas.c",
+  "file": "/home/vitorc/TuringTest/src/core/raycanvas.c",
+  "output": "CMakeFiles/turing_test.dir/src/core/raycanvas.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/core/ui_common.c.o -c /home/vitorc/TuringTest/src/core/ui_common.c",
+  "file": "/home/vitorc/TuringTest/src/core/ui_common.c",
+  "output": "CMakeFiles/turing_test.dir/src/core/ui_common.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.o -c /home/vitorc/TuringTest/src/scenes/menu_scene.c",
+  "file": "/home/vitorc/TuringTest/src/scenes/menu_scene.c",
+  "output": "CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.o -c /home/vitorc/TuringTest/src/scenes/intro_scene.c",
+  "file": "/home/vitorc/TuringTest/src/scenes/intro_scene.c",
+  "output": "CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.o -c /home/vitorc/TuringTest/src/scenes/selection_scene.c",
+  "file": "/home/vitorc/TuringTest/src/scenes/selection_scene.c",
+  "output": "CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.o -c /home/vitorc/TuringTest/src/scenes/gameplay_scene.c",
+  "file": "/home/vitorc/TuringTest/src/scenes/gameplay_scene.c",
+  "output": "CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.o -c /home/vitorc/TuringTest/src/gameplay/gameplay_data.c",
+  "file": "/home/vitorc/TuringTest/src/gameplay/gameplay_data.c",
+  "output": "CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.o -c /home/vitorc/TuringTest/src/gameplay/gameplay_logic_hint.c",
+  "file": "/home/vitorc/TuringTest/src/gameplay/gameplay_logic_hint.c",
+  "output": "CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.o -c /home/vitorc/TuringTest/src/scenes/verdict_scene.c",
+  "file": "/home/vitorc/TuringTest/src/scenes/verdict_scene.c",
+  "output": "CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/dialog_system.c.o -c /home/vitorc/TuringTest/src/systems/dialog_system.c",
+  "file": "/home/vitorc/TuringTest/src/systems/dialog_system.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/dialog_system.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/dialog_data.c.o -c /home/vitorc/TuringTest/src/systems/dialog_data.c",
+  "file": "/home/vitorc/TuringTest/src/systems/dialog_data.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/dialog_data.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/webcam.c.o -c /home/vitorc/TuringTest/src/systems/webcam.c",
+  "file": "/home/vitorc/TuringTest/src/systems/webcam.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/webcam.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/mural_ui.c.o -c /home/vitorc/TuringTest/src/systems/mural_ui.c",
+  "file": "/home/vitorc/TuringTest/src/systems/mural_ui.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/mural_ui.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/options_ui.c.o -c /home/vitorc/TuringTest/src/systems/options_ui.c",
+  "file": "/home/vitorc/TuringTest/src/systems/options_ui.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/options_ui.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.o -c /home/vitorc/TuringTest/src/systems/evidencia_holograma.c",
+  "file": "/home/vitorc/TuringTest/src/systems/evidencia_holograma.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.o -c /home/vitorc/TuringTest/src/systems/mapa_holograma.c",
+  "file": "/home/vitorc/TuringTest/src/systems/mapa_holograma.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/setas_3d.c.o -c /home/vitorc/TuringTest/src/systems/setas_3d.c",
+  "file": "/home/vitorc/TuringTest/src/systems/setas_3d.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/setas_3d.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/player_character.c.o -c /home/vitorc/TuringTest/src/systems/player_character.c",
+  "file": "/home/vitorc/TuringTest/src/systems/player_character.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/player_character.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/terreo_3d.c.o -c /home/vitorc/TuringTest/src/world/terreo_3d.c",
+  "file": "/home/vitorc/TuringTest/src/world/terreo_3d.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/terreo_3d.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.o -c /home/vitorc/TuringTest/src/world/sala_recepcao.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_recepcao.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.o -c /home/vitorc/TuringTest/src/world/sala_lanchonete.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_lanchonete.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_jardim.c.o -c /home/vitorc/TuringTest/src/world/sala_jardim.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_jardim.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_jardim.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.o -c /home/vitorc/TuringTest/src/world/sala_escritorio.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_escritorio.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.o -c /home/vitorc/TuringTest/src/world/sala_escritorio_2.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_escritorio_2.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_convivio.c.o -c /home/vitorc/TuringTest/src/world/sala_convivio.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_convivio.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_convivio.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.o -c /home/vitorc/TuringTest/src/world/sala_hall_1.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_hall_1.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.o -c /home/vitorc/TuringTest/src/world/sala_contabilidade_1.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_contabilidade_1.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.o -c /home/vitorc/TuringTest/src/world/sala_contabilidade_2.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_contabilidade_2.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.o -c /home/vitorc/TuringTest/src/world/sala_arquivo_1.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_arquivo_1.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.o -c /home/vitorc/TuringTest/src/world/sala_copa_1.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_copa_1.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.o -c /home/vitorc/TuringTest/src/world/sala_hall_2.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_hall_2.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.o -c /home/vitorc/TuringTest/src/world/sala_ciber_1.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_ciber_1.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.o -c /home/vitorc/TuringTest/src/world/sala_ciber_2.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_ciber_2.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_server_1.c.o -c /home/vitorc/TuringTest/src/world/sala_server_1.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_server_1.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_server_1.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_server_2.c.o -c /home/vitorc/TuringTest/src/world/sala_server_2.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_server_2.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_server_2.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.o -c /home/vitorc/TuringTest/src/world/sala_hall_3.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_hall_3.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.o -c /home/vitorc/TuringTest/src/world/sala_treino_escritorio.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_treino_escritorio.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.o -c /home/vitorc/TuringTest/src/world/sala_treino_ia.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_treino_ia.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.o -c /home/vitorc/TuringTest/src/world/sala_garagem_prototipos.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_garagem_prototipos.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.o -c /home/vitorc/TuringTest/src/world/sala_hall_4.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_hall_4.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.o -c /home/vitorc/TuringTest/src/world/sala_auditorio.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_auditorio.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.o -c /home/vitorc/TuringTest/src/world/sala_reuniao_4.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_reuniao_4.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -isystem /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/raylib.dir/rcore.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/rcore.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/rcore.c",
+  "output": "_deps/raylib-build/raylib/CMakeFiles/raylib.dir/rcore.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -isystem /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/raylib.dir/rshapes.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/rshapes.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/rshapes.c",
+  "output": "_deps/raylib-build/raylib/CMakeFiles/raylib.dir/rshapes.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -isystem /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/raylib.dir/rtext.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/rtext.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/rtext.c",
+  "output": "_deps/raylib-build/raylib/CMakeFiles/raylib.dir/rtext.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -isystem /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/raylib.dir/rtextures.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/rtextures.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/rtextures.c",
+  "output": "_deps/raylib-build/raylib/CMakeFiles/raylib.dir/rtextures.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -isystem /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/raylib.dir/raudio.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/raudio.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/raudio.c",
+  "output": "_deps/raylib-build/raylib/CMakeFiles/raylib.dir/raudio.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -isystem /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/raylib.dir/rmodels.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/rmodels.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/rmodels.c",
+  "output": "_deps/raylib-build/raylib/CMakeFiles/raylib.dir/rmodels.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/context.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/context.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/context.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/context.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/init.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/init.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/init.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/init.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/input.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/input.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/input.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/input.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/monitor.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/monitor.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/monitor.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/monitor.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/platform.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/platform.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/platform.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/platform.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/vulkan.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/vulkan.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/vulkan.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/vulkan.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/window.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/window.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/window.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/window.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/egl_context.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/egl_context.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/egl_context.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/egl_context.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/osmesa_context.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/osmesa_context.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/osmesa_context.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/osmesa_context.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/null_init.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/null_init.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/null_init.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/null_init.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/null_monitor.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/null_monitor.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/null_monitor.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/null_monitor.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/null_window.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/null_window.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/null_window.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/null_window.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/null_joystick.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/null_joystick.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/null_joystick.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/null_joystick.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/posix_module.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/posix_module.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/posix_module.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/posix_module.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/posix_time.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/posix_time.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/posix_time.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/posix_time.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/posix_thread.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/posix_thread.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/posix_thread.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/posix_thread.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/x11_init.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/x11_init.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/x11_init.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/x11_init.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/x11_monitor.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/x11_monitor.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/x11_monitor.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/x11_monitor.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/x11_window.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/x11_window.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/x11_window.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/x11_window.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/xkb_unicode.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/xkb_unicode.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/xkb_unicode.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/xkb_unicode.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/glx_context.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/glx_context.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/glx_context.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/glx_context.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/linux_joystick.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/linux_joystick.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/linux_joystick.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/linux_joystick.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src",
+  "command": "/usr/bin/cc -D_DEFAULT_SOURCE -D_GLFW_X11 -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/include -I/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src -I/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib/external/glfw/src -fno-strict-aliasing -Werror=implicit-function-declaration -Werror=pointer-arith  -O3 -DNDEBUG -std=c99 -fPIC -Wall -o CMakeFiles/glfw.dir/posix_poll.c.o -c /home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/posix_poll.c",
+  "file": "/home/vitorc/TuringTest/build/_deps/raylib-src/src/external/glfw/src/posix_poll.c",
+  "output": "_deps/raylib-build/raylib/external/glfw/src/CMakeFiles/glfw.dir/posix_poll.c.o"
+}
+]

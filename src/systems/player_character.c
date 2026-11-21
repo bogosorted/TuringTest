@@ -970,3 +970,145 @@ void PlayerCharacterDraw3D(const PlayerCharacter *p, Vector3 camPos) {
         DrawPart(g_assets.bangM2, bang2M, 0.08f, false);
     }
 }
+
+void PlayerCharacterDrawSuspect3D(int suspeito, Vector3 pos, float yawDeg, float tempo, Vector3 camPos) {
+    EnsurePlayerAssets();
+    if (!g_assets.initialized || suspeito < 0 || suspeito > 2) return;
+
+    float viewArr[3] = { camPos.x, camPos.y, camPos.z };
+    SetShaderValue(g_assets.shader, g_assets.locViewPos, viewArr, SHADER_UNIFORM_VEC3);
+
+    bool fem = (suspeito == 0 || suspeito == 2); // 0=Maria, 2=Ana Lucia, 1=Arthur
+    float phase = tempo * (suspeito == 1 ? 2.4f : 1.75f) + (float)suspeito * 1.4f;
+    float breath = sinf(phase) * 0.006f;
+    float swayYaw = sinf(phase * 0.65f) * (suspeito == 1 ? 4.5f : (suspeito == 0 ? 3.0f : 1.8f));
+    float headTurn = sinf(phase * 0.50f + 0.7f) * (suspeito == 2 ? 3.5f : 7.5f);
+    float headNod  = sinf(phase * 0.90f) * 2.2f;
+
+    float rootScale = (suspeito == 1) ? 1.03f : ((suspeito == 2) ? 0.98f : 0.96f);
+    Matrix root = MakeLocal(pos, (Vector3){ 0.0f, yawDeg, 0.0f }, (Vector3){ rootScale, rootScale, rootScale });
+
+    // Sombra no piso
+    DrawPart(g_assets.shadowDisc,
+             MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.006f, 0.0f }, (Vector3){ 0, 0, 0 }, (Vector3){ 1.28f, 1.0f, 1.28f }), root),
+             0.11f, false);
+
+    // Anel amarelo pulsante no piso + beacon flutuante acima da cabeca (destaque de personagem principal)
+    float pulso = 0.5f + 0.5f * sinf(tempo * 4.5f + (float)suspeito);
+    Color cOuro = (Color){ 255, (unsigned char)(215 + (int)(35.0f * pulso)), 36, 255 };
+    DrawCylinderWires((Vector3){ pos.x, pos.y + 0.018f, pos.z }, 0.44f + 0.04f * pulso, 0.44f + 0.04f * pulso, 0.02f, 20, cOuro);
+    float bobBeacon = pos.y + 2.02f + 0.07f * sinf(tempo * 4.0f + (float)suspeito);
+    rlPushMatrix();
+    rlTranslatef(pos.x, bobBeacon, pos.z);
+    rlRotatef(tempo * 90.0f, 0.0f, 1.0f, 0.0f);
+    DrawCylinder((Vector3){ 0.0f,  0.00f, 0.0f }, 0.095f, 0.00f, 0.14f, 4, (Color){ 255, 240, 56, 255 });
+    DrawCylinder((Vector3){ 0.0f, -0.14f, 0.0f }, 0.00f, 0.095f, 0.14f, 4, cOuro);
+    rlPopMatrix();
+
+    // Quadril e pernas em postura idle natural
+    Matrix pelvisM = MatrixMultiply(
+        MakeLocal((Vector3){ 0.0f, 0.87f + breath, 0.0f }, (Vector3){ 0.0f, swayYaw * 0.5f, 1.4f }, (Vector3){ 1, 1, 1 }),
+        root
+    );
+    float hipX = fem ? 0.088f : 0.098f;
+    for (int side = -1; side <= 1; side += 2) {
+        float legAng = (side < 0) ? 2.0f : -2.5f;
+        float kneeB  = (side < 0) ? 2.5f : 5.0f;
+        Matrix hipM = MatrixMultiply(MakeLocal((Vector3){ (float)side * hipX, 0.0f, 0.0f }, (Vector3){ legAng, 0, 0 }, (Vector3){ 1, 1, 1 }), pelvisM);
+        DrawPart(fem ? g_assets.thighF : g_assets.thighM, hipM, (suspeito == 0) ? 0.22f : 0.18f, false);
+        Matrix kneeM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, fem ? -0.41f : -0.42f, 0.0f }, (Vector3){ kneeB, 0, 0 }, (Vector3){ 1, 1, 1 }), hipM);
+        DrawPart(fem ? g_assets.calfF : g_assets.calfM, kneeM, (suspeito == 0) ? 0.20f : 0.16f, false);
+        Matrix ankleM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, fem ? -0.39f : -0.40f, 0.0f }, (Vector3){ -kneeB * 0.45f, 0, 0 }, (Vector3){ 1, 1, 1 }), kneeM);
+        DrawPart(g_assets.shoe, ankleM, 0.07f, false);
+    }
+
+    // Tronco e roupa personalizada de cada funcionario (baseado nas fotos 2D)
+    Matrix torsoBase = MatrixMultiply(
+        MakeLocal((Vector3){ 0.0f, 0.25f, 0.0f }, (Vector3){ 1.2f, swayYaw, -0.9f }, (Vector3){ 1, 1, 1 }),
+        pelvisM
+    );
+    float shirtLum = (suspeito == 1) ? 0.26f : 0.92f; // Arthur usa camiseta escura por baixo do blazer (como na foto!)
+    DrawPart(g_assets.shirt, torsoBase, shirtLum, false);
+    if (suspeito == 2) {
+        // Ana Lucia: camisa social clara + lenco/gravata executiva escura
+        Matrix tieM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.08f, 0.096f }, (Vector3){ 3.0f, 0, 0 }, (Vector3){ 0.65f, 0.60f, 0.72f }), torsoBase);
+        DrawPart(g_assets.tie, tieM, 0.08f, false);
+    }
+
+    float coatLum = (suspeito == 0) ? 0.44f : ((suspeito == 1) ? 0.24f : 0.20f);
+    DrawPart(fem ? g_assets.torsoF : g_assets.torsoM,
+             MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.0f, -0.010f }, (Vector3){ 0, 0, 0 }, (Vector3){ 1.04f, 1.01f, 1.02f }), torsoBase),
+             coatLum, false);
+    DrawPart(fem ? g_assets.coatSkirtF : g_assets.coatSkirtM,
+             MatrixMultiply(MakeLocal((Vector3){ 0.0f, -0.18f, -0.008f }, (Vector3){ 0, 0, 0 }, (Vector3){ 1.03f, 1.0f, 1.02f }), torsoBase),
+             coatLum, false);
+
+    for (int side = -1; side <= 1; side += 2) {
+        Matrix flapM = MatrixMultiply(
+            MakeLocal((Vector3){ (float)side * (fem ? 0.082f : 0.094f), -0.18f, 0.068f },
+                      (Vector3){ 0.0f, (float)side * 8.0f, (float)side * 1.5f }, (Vector3){ 1.02f, 1.0f, 1.0f }),
+            torsoBase
+        );
+        DrawPart(fem ? g_assets.coatFlapF : g_assets.coatFlapM, flapM, coatLum + 0.04f, false);
+        Matrix lapelM = MatrixMultiply(
+            MakeLocal((Vector3){ (float)side * (fem ? 0.062f : 0.070f), 0.10f, 0.092f },
+                      (Vector3){ 4.0f, (float)side * 12.0f, (float)side * -16.0f }, (Vector3){ 0.85f, 1.02f, 0.85f }),
+            torsoBase
+        );
+        DrawPart(g_assets.lapel, lapelM, coatLum + 0.14f, false);
+    }
+    DrawPart(g_assets.collarBack, MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.21f, -0.010f }, (Vector3){ -6.0f, 0, 0 }, (Vector3){ 1.02f, 1.0f, 1.02f }), torsoBase), coatLum + 0.10f, false);
+
+    // Cracha RASEC brilhante no peito para destacar visualmente que sao funcionarios
+    DrawPart(g_assets.lanyard, MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.12f, 0.01f }, (Vector3){ 0, 0, 0 }, (Vector3){ 1.02f, 1.02f, 1.02f }), torsoBase), 0.72f, false);
+    DrawPart(g_assets.badge,   MatrixMultiply(MakeLocal((Vector3){ 0.03f, -0.02f, 0.115f }, (Vector3){ -4.0f, 0, 0 }, (Vector3){ 1.15f, 1.15f, 1.15f }), torsoBase), 0.94f, false);
+
+    // Bracos com animacao idle diferenciada
+    float shX = fem ? 0.180f : 0.204f;
+    for (int side = -1; side <= 1; side += 2) {
+        float armSwing = sinf(phase + (side > 0 ? 1.2f : 0.0f)) * (suspeito == 1 ? 3.5f : 1.5f);
+        float elbAng   = (suspeito == 0 && side < 0) ? -22.0f : (-10.0f + sinf(phase) * 2.0f);
+        Matrix shM = MatrixMultiply(MakeLocal((Vector3){ (float)side * shX, 0.18f, 0.0f }, (Vector3){ armSwing, 0, (float)side * 8.0f }, (Vector3){ 1, 1, 1 }), torsoBase);
+        DrawPart(fem ? g_assets.upperArmF : g_assets.upperArmM, shM, coatLum + 0.06f, false);
+        Matrix elbM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, fem ? -0.26f : -0.27f, 0.0f }, (Vector3){ elbAng, 0, (float)side * -2.5f }, (Vector3){ 1, 1, 1 }), shM);
+        DrawPart(fem ? g_assets.forearmF : g_assets.forearmM, elbM, coatLum + 0.05f, false);
+        Matrix handM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, fem ? -0.24f : -0.25f, 0.008f }, (Vector3){ -6.0f, 0, 0 }, (Vector3){ 1, 1, 1 }), elbM);
+        DrawPart(g_assets.hand, handM, 0.68f, false);
+    }
+
+    // Pescoco e cabeca bem iluminados (tom claro para nao parecer sombra!)
+    Matrix neckM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.22f, 0.0f }, (Vector3){ 0, headTurn * 0.4f, 0 }, (Vector3){ 1, 1, 1 }), torsoBase);
+    DrawPart(fem ? g_assets.neckF : g_assets.neckM, neckM, 0.64f, false);
+    Matrix headM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.19f, 0.012f }, (Vector3){ 3.0f + headNod, headTurn * 0.6f, 0 }, (Vector3){ 1, 1, 1 }), neckM);
+    DrawPart(fem ? g_assets.headF : g_assets.headM, headM, 0.72f, false);
+
+    if (suspeito == 0) {
+        // MARIA BIANCA: cabelo longo liso dividido de lado (como na foto 2D!)
+        DrawPart(g_assets.hairF, headM, 0.14f, false);
+        DrawPart(g_assets.hairBackF, headM, 0.12f, false);
+        for (int side = -1; side <= 1; side += 2) {
+            Matrix sideHairM = MatrixMultiply(MakeLocal((Vector3){ (float)side * 0.068f, 0.01f, 0.005f }, (Vector3){ 0, 0, (float)side * -7.0f }, (Vector3){ 1, 1, 1 }), headM);
+            DrawPart(g_assets.hairSideF, sideHairM, 0.14f, false);
+        }
+        DrawPart(g_assets.bangM2, MatrixMultiply(MakeLocal((Vector3){ -0.028f, 0.068f, 0.080f }, (Vector3){ 14.0f, 20.0f, 18.0f }, (Vector3){ 1.05f, 0.90f, 1.0f }), headM), 0.14f, false);
+        DrawPart(g_assets.bangM1, MatrixMultiply(MakeLocal((Vector3){  0.034f, 0.064f, 0.078f }, (Vector3){ 12.0f, -14.0f, -12.0f }, (Vector3){ 0.80f, 0.85f, 1.0f }), headM), 0.14f, false);
+    } else if (suspeito == 1) {
+        // ARTHUR GALDERIO: cabelo curto arrepiado/texturizado no topo (como na foto 2D!)
+        DrawPart(g_assets.hairM, headM, 0.09f, false);
+        DrawPart(g_assets.bangM1, MatrixMultiply(MakeLocal((Vector3){  0.012f, 0.082f, 0.072f }, (Vector3){ -18.0f, -10.0f, -12.0f }, (Vector3){ 1.1f, 1.15f, 1.1f }), headM), 0.10f, false);
+        DrawPart(g_assets.bangM2, MatrixMultiply(MakeLocal((Vector3){ -0.022f, 0.084f, 0.068f }, (Vector3){ -22.0f, 14.0f, 10.0f }, (Vector3){ 1.1f, 1.15f, 1.1f }), headM), 0.10f, false);
+    } else {
+        // ANA LUCIA: cabelo curto repicado + OCULOS retangulares 3D (como na foto 2D!)
+        DrawPart(g_assets.hairM, MatrixMultiply(MakeLocal((Vector3){ 0, 0.005f, -0.005f }, (Vector3){ 0, 0, 0 }, (Vector3){ 1.05f, 1.03f, 1.06f }), headM), 0.16f, false);
+        DrawPart(g_assets.bangM1, MatrixMultiply(MakeLocal((Vector3){  0.018f, 0.070f, 0.080f }, (Vector3){ 18.0f, -12.0f, -14.0f }, (Vector3){ 0.95f, 0.90f, 1.0f }), headM), 0.17f, false);
+        DrawPart(g_assets.bangM2, MatrixMultiply(MakeLocal((Vector3){ -0.022f, 0.070f, 0.080f }, (Vector3){ 18.0f, 12.0f, 14.0f }, (Vector3){ 0.95f, 0.90f, 1.0f }), headM), 0.17f, false);
+        // Oculos 3D na frente dos olhos (aro esquerdo, aro direito, ponte)
+        Matrix glBase = MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.024f, 0.095f }, (Vector3){ 0, 0, 0 }, (Vector3){ 1, 1, 1 }), headM);
+        rlPushMatrix();
+        rlMultMatrixf(MatrixToFloat(glBase));
+        DrawCubeWires((Vector3){ -0.032f, 0.0f, 0.0f }, 0.044f, 0.024f, 0.012f, (Color){ 20, 18, 20, 255 });
+        DrawCubeWires((Vector3){  0.032f, 0.0f, 0.0f }, 0.044f, 0.024f, 0.012f, (Color){ 20, 18, 20, 255 });
+        DrawCube((Vector3){ 0.0f, 0.004f, 0.0f }, 0.020f, 0.005f, 0.008f, (Color){ 20, 18, 20, 255 });
+        rlPopMatrix();
+    }
+}

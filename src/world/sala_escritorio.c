@@ -1,4 +1,5 @@
 #include "terreo_3d.h"
+#include "game_state.h"
 #include "rlgl.h"
 
 #ifndef PI
@@ -27,13 +28,13 @@ static const PlayerColliderBox ESC_COLLIDERS[] = {
 
 static const SalaInteractable ESC_INTERACTABLES[] = {
     {
-        "mesa_relatorios",
-        "Pilha de Relatórios",
+        "ev_maria_queixa",
+        "Bolinha de Papel Amassada",
         { 1.35f, 0.90f, 1.85f },
-        { 1.15f, 0.85f, 1.05f },
-        1.90f,
+        { 1.15f, 0.95f, 1.05f },
+        1.95f,
         true,
-        "Pilhas altas de relatórios administrativos aguardam revisão. Várias páginas têm anotações apressadas à margem."
+        "Uma bolinha de papel amassada jogada no canto da mesa."
     },
     {
         "impressora_setor",
@@ -148,7 +149,7 @@ static void DesenharPilhaPapeis(Vector3 pos, bool destaqueEv) {
 }
 
 static void DesenharEscritorio(float tempo, bool evRelatoriosAtiva) {
-    (void)tempo;
+    (void)evRelatoriosAtiva;
 
     float w = ESC_MAX_X - ESC_MIN_X;
     float d = ESC_MAX_Z - ESC_MIN_Z;
@@ -186,10 +187,12 @@ static void DesenharEscritorio(float tempo, bool evRelatoriosAtiva) {
     TerreoArmario((Vector3){ -4.20f, 0.0f, -3.55f }, 0.0f, 0.78f, 1.55f, 0.62f);
     TerreoImpressora((Vector3){ -3.25f, 0.0f, -3.55f }, 0.0f);
 
-    // 2) FILEIRAS CENTRAIS DE BAIAS + PILHA DE PAPEIS (apenas quando a pista estiver ativa)
+    // 2) FILEIRAS CENTRAIS DE BAIAS + EVIDENCIA BRILHANTE (EV-01: Bolinha de papel amassada da Maria)
     DesenharBaiaCorporativa((Vector3){ -0.25f, 0.0f,  1.75f }, 3, 1.40f, 0.84f);
-    if (evRelatoriosAtiva) {
-        DesenharPilhaPapeis((Vector3){ 1.35f, 0.765f, 1.85f }, true);
+    if (!GameStateTemEvidencia(0, "EV-01")) {
+        TerreoEvidenciaBrilhante((Vector3){ 1.35f, 0.765f, 1.85f }, tempo, 5);
+    } else {
+        DrawSphereEx((Vector3){ 1.35f, 0.82f, 1.85f }, 0.07f, 5, 6, TerreoLum(0.86f));
     }
 
     DesenharBaiaCorporativa((Vector3){ -0.25f, 0.0f, -0.65f }, 3, 1.40f, 0.84f);

@@ -14,6 +14,9 @@ typedef struct {
     char text[MAX_TEXT_LENGTH];
     char next_node[MAX_ID_LENGTH];
     char req_evidencia[MAX_ID_LENGTH]; // se nao vazio, exige esta evidencia registrada
+    int  req_suspeito;                 // -1 = mesmo suspeito da arvore, 0..2 = evidencia cruzada
+    int  req_flag;                     // 0 = nenhuma, 1..31 = exige flag de dialogo anterior
+    bool req_poucas_ev;                // se true, aparece apenas quando jogador tem < 2 evidencias
 } DialogChoice;
 
 typedef struct {
@@ -26,6 +29,8 @@ typedef struct {
     bool is_leaf;
     VisaoJogador visao_out;
     char ev_desbloqueada[MAX_ID_LENGTH]; // evidencia ganha ao visitar este no
+    int  ev_suspeito;                    // -1 = mesmo suspeito da arvore, 0..2 = outro suspeito
+    int  flag_out;                       // 0 = nenhuma, 1..31 = grava flag ao visitar este no
 } DialogNode;
 
 typedef struct {

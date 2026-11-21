@@ -1,0 +1,25 @@
+#ifndef TRANSITION_H
+#define TRANSITION_H
+
+#include <stdbool.h>
+
+// Transicao: fade-out da cena atual -> tela preta com texto -> proxima cena.
+// A troca de cena em si e feita pelo main.c quando recebe TRANSITION_FADE_OUT_DONE.
+
+typedef enum {
+    TRANSITION_NONE,
+    TRANSITION_FADE_OUT_DONE,   // o fade-out acabou: hora de trocar a cena
+    TRANSITION_FINISHED         // o texto acabou: a nova cena ja pode aparecer
+} TransitionEvent;
+
+// Inicia a transicao (ignora se ja houver uma).
+// texto == NULL ou "" -> so o fade-out, sem a tela preta com texto
+// (a cena nova aparece logo depois do fade-out e faz o proprio fade-in).
+void TransitionStart(const char *texto);
+void TransitionStartFadeIn(void);          // inicia direto um fade-in do preto (para quando o jogo abre)
+TransitionEvent TransitionUpdate(void);    // chamar UMA vez por frame
+bool TransitionActive(void);               // true durante o fade-out e o texto
+bool TransitionShowingText(void);          // true na fase da tela preta com texto
+void TransitionDrawTextScreen(void);       // desenha a tela preta com o texto
+
+#endif

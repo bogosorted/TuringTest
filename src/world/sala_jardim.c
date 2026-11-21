@@ -56,6 +56,15 @@ static const SalaInteractable JAR_INTERACTABLES[] = {
         "Área externa de descanso para os funcionários. Cadeiras de pátio ao redor de uma mesa redonda sob a sombra das árvores."
     },
     {
+        "ev_jardim_sombras",
+        "Funcionários conversando",
+        { 2.50f, 0.95f, 2.45f },
+        { 1.80f, 1.45f, 1.40f },
+        2.35f,
+        false,
+        "Dois funcionários conversam baixo na mesa do jardim."
+    },
+    {
         "arvore_jardim",
         "Árvore do Pátio",
         { -4.55f, 1.40f, -3.05f },
@@ -202,10 +211,18 @@ static void DesenharJardim(float tempo, bool evRelatoriosAtiva) {
     DesenharArvoreOrganica((Vector3){ -4.55f, 0.0f,  2.80f }, 0.95f);
     DesenharArvoreOrganica((Vector3){  4.55f, 0.0f,  2.80f }, 0.95f);
 
-    // 5) Banco ripado de jardim + 2 mesas redondas de descanso (sem mesas de escritorio!)
+    // 5) Banco ripado de jardim + 2 mesas redondas de descanso + 2 silhuetas conversando na mesa direita
     DesenharBancoOrganico((Vector3){ 0.00f, 0.0f, -2.75f }, 0.0f);
     DesenharMesaPatio((Vector3){ -2.50f, 0.0f, 2.45f });
     DesenharMesaPatio((Vector3){  2.50f, 0.0f, 2.45f });
+
+    // Duas silhuetas (sombras) sentadas na mesa direita se mexendo e conversando (pista escondida!)
+    float balanco1 = sinf(tempo * 3.1f) * 6.0f;
+    float balanco2 = sinf(tempo * 2.6f + 1.8f) * 6.0f;
+    float avanco1  = 0.03f * sinf(tempo * 2.2f);
+    float avanco2  = 0.03f * sinf(tempo * 2.2f + PI);
+    TerreoSilhuetaSombra((Vector3){ 2.50f - 0.62f + avanco1, 0.0f, 2.45f },  90.0f + balanco1, true);
+    TerreoSilhuetaSombra((Vector3){ 2.50f + 0.62f + avanco2, 0.0f, 2.45f }, -90.0f + balanco2, true);
 }
 
 static const TerreoSalaDef SALA_JARDIM_DEF = {

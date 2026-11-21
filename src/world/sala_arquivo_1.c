@@ -1,4 +1,5 @@
 #include "terreo_3d.h"
+#include "game_state.h"
 #include "rlgl.h"
 
 #ifndef PI
@@ -21,6 +22,15 @@ static const PlayerColliderBox ARQ_COLLIDERS[] = {
 };
 
 static const SalaInteractable ARQ_INTERACTABLES[] = {
+    {
+        "ev_arthur_demissao",
+        "Ofício de Desligamento",
+        { 0.05f, 0.90f, -0.05f },
+        { 0.90f, 0.90f, 0.90f },
+        2.10f,
+        true,
+        "Ofício sigiloso assinado por Ana Lúcia solicitando o desligamento imediato de Arthur Galdério."
+    },
     {
         "armarios_arquivo_fundo",
         "Armários de Arquivo",
@@ -53,7 +63,6 @@ static const SalaPorta ARQ_PORTAS[] = {
 };
 
 static void DesenharArquivo1(float tempo, bool evRelatoriosAtiva) {
-    (void)tempo;
     (void)evRelatoriosAtiva;
     float w = ARQ_MAX_X - ARQ_MIN_X;
     float d = ARQ_MAX_Z - ARQ_MIN_Z;
@@ -98,6 +107,9 @@ static void DesenharArquivo1(float tempo, bool evRelatoriosAtiva) {
     }
     TerreoMonitor((Vector3){ -0.55f, 0.77f, -0.05f }, 0.0f);
     TerreoImpressora((Vector3){ 0.65f, 0.0f, -0.05f }, 0.0f);
+    if (!GameStateTemEvidencia(1, "EV-04")) {
+        TerreoEvidenciaBrilhante((Vector3){ 0.05f, 0.77f, -0.05f }, tempo, 2);
+    }
 }
 
 static const TerreoSalaDef SALA_ARQUIVO_1_DEF = {

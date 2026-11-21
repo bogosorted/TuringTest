@@ -233,461 +233,1133 @@ update_mappings/fast:
 	$(MAKE) $(MAKESILENT) -f _deps/raylib-build/raylib/external/glfw/src/CMakeFiles/update_mappings.dir/build.make _deps/raylib-build/raylib/external/glfw/src/CMakeFiles/update_mappings.dir/build
 .PHONY : update_mappings/fast
 
-main.obj: main.c.obj
-.PHONY : main.obj
+src/core/game_state.obj: src/core/game_state.c.obj
+.PHONY : src/core/game_state.obj
 
 # target to build an object file
-main.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/main.c.obj
-.PHONY : main.c.obj
+src/core/game_state.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/game_state.c.obj
+.PHONY : src/core/game_state.c.obj
 
-main.i: main.c.i
-.PHONY : main.i
+src/core/game_state.i: src/core/game_state.c.i
+.PHONY : src/core/game_state.i
 
 # target to preprocess a source file
-main.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/main.c.i
-.PHONY : main.c.i
+src/core/game_state.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/game_state.c.i
+.PHONY : src/core/game_state.c.i
 
-main.s: main.c.s
-.PHONY : main.s
+src/core/game_state.s: src/core/game_state.c.s
+.PHONY : src/core/game_state.s
 
 # target to generate assembly for a file
-main.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/main.c.s
-.PHONY : main.c.s
+src/core/game_state.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/game_state.c.s
+.PHONY : src/core/game_state.c.s
 
-scenes/gameplay_scene.obj: scenes/gameplay_scene.c.obj
-.PHONY : scenes/gameplay_scene.obj
+src/core/ranking.obj: src/core/ranking.c.obj
+.PHONY : src/core/ranking.obj
 
 # target to build an object file
-scenes/gameplay_scene.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.obj
-.PHONY : scenes/gameplay_scene.c.obj
+src/core/ranking.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/ranking.c.obj
+.PHONY : src/core/ranking.c.obj
 
-scenes/gameplay_scene.i: scenes/gameplay_scene.c.i
-.PHONY : scenes/gameplay_scene.i
+src/core/ranking.i: src/core/ranking.c.i
+.PHONY : src/core/ranking.i
 
 # target to preprocess a source file
-scenes/gameplay_scene.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.i
-.PHONY : scenes/gameplay_scene.c.i
+src/core/ranking.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/ranking.c.i
+.PHONY : src/core/ranking.c.i
 
-scenes/gameplay_scene.s: scenes/gameplay_scene.c.s
-.PHONY : scenes/gameplay_scene.s
+src/core/ranking.s: src/core/ranking.c.s
+.PHONY : src/core/ranking.s
 
 # target to generate assembly for a file
-scenes/gameplay_scene.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.s
-.PHONY : scenes/gameplay_scene.c.s
+src/core/ranking.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/ranking.c.s
+.PHONY : src/core/ranking.c.s
 
-scenes/intro_scene.obj: scenes/intro_scene.c.obj
-.PHONY : scenes/intro_scene.obj
+src/core/raycanvas.obj: src/core/raycanvas.c.obj
+.PHONY : src/core/raycanvas.obj
 
 # target to build an object file
-scenes/intro_scene.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/scenes/intro_scene.c.obj
-.PHONY : scenes/intro_scene.c.obj
+src/core/raycanvas.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/raycanvas.c.obj
+.PHONY : src/core/raycanvas.c.obj
 
-scenes/intro_scene.i: scenes/intro_scene.c.i
-.PHONY : scenes/intro_scene.i
+src/core/raycanvas.i: src/core/raycanvas.c.i
+.PHONY : src/core/raycanvas.i
 
 # target to preprocess a source file
-scenes/intro_scene.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/scenes/intro_scene.c.i
-.PHONY : scenes/intro_scene.c.i
+src/core/raycanvas.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/raycanvas.c.i
+.PHONY : src/core/raycanvas.c.i
 
-scenes/intro_scene.s: scenes/intro_scene.c.s
-.PHONY : scenes/intro_scene.s
+src/core/raycanvas.s: src/core/raycanvas.c.s
+.PHONY : src/core/raycanvas.s
 
 # target to generate assembly for a file
-scenes/intro_scene.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/scenes/intro_scene.c.s
-.PHONY : scenes/intro_scene.c.s
+src/core/raycanvas.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/raycanvas.c.s
+.PHONY : src/core/raycanvas.c.s
 
-scenes/menu_scene.obj: scenes/menu_scene.c.obj
-.PHONY : scenes/menu_scene.obj
+src/core/settings.obj: src/core/settings.c.obj
+.PHONY : src/core/settings.obj
 
 # target to build an object file
-scenes/menu_scene.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/scenes/menu_scene.c.obj
-.PHONY : scenes/menu_scene.c.obj
+src/core/settings.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/settings.c.obj
+.PHONY : src/core/settings.c.obj
 
-scenes/menu_scene.i: scenes/menu_scene.c.i
-.PHONY : scenes/menu_scene.i
+src/core/settings.i: src/core/settings.c.i
+.PHONY : src/core/settings.i
 
 # target to preprocess a source file
-scenes/menu_scene.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/scenes/menu_scene.c.i
-.PHONY : scenes/menu_scene.c.i
+src/core/settings.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/settings.c.i
+.PHONY : src/core/settings.c.i
 
-scenes/menu_scene.s: scenes/menu_scene.c.s
-.PHONY : scenes/menu_scene.s
+src/core/settings.s: src/core/settings.c.s
+.PHONY : src/core/settings.s
 
 # target to generate assembly for a file
-scenes/menu_scene.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/scenes/menu_scene.c.s
-.PHONY : scenes/menu_scene.c.s
+src/core/settings.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/settings.c.s
+.PHONY : src/core/settings.c.s
 
-scenes/selection_scene.obj: scenes/selection_scene.c.obj
-.PHONY : scenes/selection_scene.obj
+src/core/transition.obj: src/core/transition.c.obj
+.PHONY : src/core/transition.obj
 
 # target to build an object file
-scenes/selection_scene.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/scenes/selection_scene.c.obj
-.PHONY : scenes/selection_scene.c.obj
+src/core/transition.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/transition.c.obj
+.PHONY : src/core/transition.c.obj
 
-scenes/selection_scene.i: scenes/selection_scene.c.i
-.PHONY : scenes/selection_scene.i
+src/core/transition.i: src/core/transition.c.i
+.PHONY : src/core/transition.i
 
 # target to preprocess a source file
-scenes/selection_scene.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/scenes/selection_scene.c.i
-.PHONY : scenes/selection_scene.c.i
+src/core/transition.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/transition.c.i
+.PHONY : src/core/transition.c.i
 
-scenes/selection_scene.s: scenes/selection_scene.c.s
-.PHONY : scenes/selection_scene.s
+src/core/transition.s: src/core/transition.c.s
+.PHONY : src/core/transition.s
 
 # target to generate assembly for a file
-scenes/selection_scene.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/scenes/selection_scene.c.s
-.PHONY : scenes/selection_scene.c.s
+src/core/transition.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/transition.c.s
+.PHONY : src/core/transition.c.s
 
-scenes/verdict_scene.obj: scenes/verdict_scene.c.obj
-.PHONY : scenes/verdict_scene.obj
+src/core/ui_common.obj: src/core/ui_common.c.obj
+.PHONY : src/core/ui_common.obj
 
 # target to build an object file
-scenes/verdict_scene.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/scenes/verdict_scene.c.obj
-.PHONY : scenes/verdict_scene.c.obj
+src/core/ui_common.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/ui_common.c.obj
+.PHONY : src/core/ui_common.c.obj
 
-scenes/verdict_scene.i: scenes/verdict_scene.c.i
-.PHONY : scenes/verdict_scene.i
+src/core/ui_common.i: src/core/ui_common.c.i
+.PHONY : src/core/ui_common.i
 
 # target to preprocess a source file
-scenes/verdict_scene.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/scenes/verdict_scene.c.i
-.PHONY : scenes/verdict_scene.c.i
+src/core/ui_common.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/ui_common.c.i
+.PHONY : src/core/ui_common.c.i
 
-scenes/verdict_scene.s: scenes/verdict_scene.c.s
-.PHONY : scenes/verdict_scene.s
+src/core/ui_common.s: src/core/ui_common.c.s
+.PHONY : src/core/ui_common.s
 
 # target to generate assembly for a file
-scenes/verdict_scene.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/scenes/verdict_scene.c.s
-.PHONY : scenes/verdict_scene.c.s
+src/core/ui_common.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/core/ui_common.c.s
+.PHONY : src/core/ui_common.c.s
 
-utils/dialog_data.obj: utils/dialog_data.c.obj
-.PHONY : utils/dialog_data.obj
+src/gameplay/gameplay_data.obj: src/gameplay/gameplay_data.c.obj
+.PHONY : src/gameplay/gameplay_data.obj
 
 # target to build an object file
-utils/dialog_data.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/dialog_data.c.obj
-.PHONY : utils/dialog_data.c.obj
+src/gameplay/gameplay_data.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.obj
+.PHONY : src/gameplay/gameplay_data.c.obj
 
-utils/dialog_data.i: utils/dialog_data.c.i
-.PHONY : utils/dialog_data.i
+src/gameplay/gameplay_data.i: src/gameplay/gameplay_data.c.i
+.PHONY : src/gameplay/gameplay_data.i
 
 # target to preprocess a source file
-utils/dialog_data.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/dialog_data.c.i
-.PHONY : utils/dialog_data.c.i
+src/gameplay/gameplay_data.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.i
+.PHONY : src/gameplay/gameplay_data.c.i
 
-utils/dialog_data.s: utils/dialog_data.c.s
-.PHONY : utils/dialog_data.s
+src/gameplay/gameplay_data.s: src/gameplay/gameplay_data.c.s
+.PHONY : src/gameplay/gameplay_data.s
 
 # target to generate assembly for a file
-utils/dialog_data.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/dialog_data.c.s
-.PHONY : utils/dialog_data.c.s
+src/gameplay/gameplay_data.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.s
+.PHONY : src/gameplay/gameplay_data.c.s
 
-utils/dialog_system.obj: utils/dialog_system.c.obj
-.PHONY : utils/dialog_system.obj
+src/gameplay/gameplay_logic_hint.obj: src/gameplay/gameplay_logic_hint.c.obj
+.PHONY : src/gameplay/gameplay_logic_hint.obj
 
 # target to build an object file
-utils/dialog_system.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/dialog_system.c.obj
-.PHONY : utils/dialog_system.c.obj
+src/gameplay/gameplay_logic_hint.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.obj
+.PHONY : src/gameplay/gameplay_logic_hint.c.obj
 
-utils/dialog_system.i: utils/dialog_system.c.i
-.PHONY : utils/dialog_system.i
+src/gameplay/gameplay_logic_hint.i: src/gameplay/gameplay_logic_hint.c.i
+.PHONY : src/gameplay/gameplay_logic_hint.i
 
 # target to preprocess a source file
-utils/dialog_system.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/dialog_system.c.i
-.PHONY : utils/dialog_system.c.i
+src/gameplay/gameplay_logic_hint.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.i
+.PHONY : src/gameplay/gameplay_logic_hint.c.i
 
-utils/dialog_system.s: utils/dialog_system.c.s
-.PHONY : utils/dialog_system.s
+src/gameplay/gameplay_logic_hint.s: src/gameplay/gameplay_logic_hint.c.s
+.PHONY : src/gameplay/gameplay_logic_hint.s
 
 # target to generate assembly for a file
-utils/dialog_system.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/dialog_system.c.s
-.PHONY : utils/dialog_system.c.s
+src/gameplay/gameplay_logic_hint.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.s
+.PHONY : src/gameplay/gameplay_logic_hint.c.s
 
-utils/evidencia_holograma.obj: utils/evidencia_holograma.c.obj
-.PHONY : utils/evidencia_holograma.obj
+src/main.obj: src/main.c.obj
+.PHONY : src/main.obj
 
 # target to build an object file
-utils/evidencia_holograma.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.obj
-.PHONY : utils/evidencia_holograma.c.obj
+src/main.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/main.c.obj
+.PHONY : src/main.c.obj
 
-utils/evidencia_holograma.i: utils/evidencia_holograma.c.i
-.PHONY : utils/evidencia_holograma.i
+src/main.i: src/main.c.i
+.PHONY : src/main.i
 
 # target to preprocess a source file
-utils/evidencia_holograma.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.i
-.PHONY : utils/evidencia_holograma.c.i
+src/main.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/main.c.i
+.PHONY : src/main.c.i
 
-utils/evidencia_holograma.s: utils/evidencia_holograma.c.s
-.PHONY : utils/evidencia_holograma.s
+src/main.s: src/main.c.s
+.PHONY : src/main.s
 
 # target to generate assembly for a file
-utils/evidencia_holograma.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.s
-.PHONY : utils/evidencia_holograma.c.s
+src/main.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/main.c.s
+.PHONY : src/main.c.s
 
-utils/game_state.obj: utils/game_state.c.obj
-.PHONY : utils/game_state.obj
+src/scenes/gameplay_scene.obj: src/scenes/gameplay_scene.c.obj
+.PHONY : src/scenes/gameplay_scene.obj
 
 # target to build an object file
-utils/game_state.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/game_state.c.obj
-.PHONY : utils/game_state.c.obj
+src/scenes/gameplay_scene.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.obj
+.PHONY : src/scenes/gameplay_scene.c.obj
 
-utils/game_state.i: utils/game_state.c.i
-.PHONY : utils/game_state.i
+src/scenes/gameplay_scene.i: src/scenes/gameplay_scene.c.i
+.PHONY : src/scenes/gameplay_scene.i
 
 # target to preprocess a source file
-utils/game_state.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/game_state.c.i
-.PHONY : utils/game_state.c.i
+src/scenes/gameplay_scene.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.i
+.PHONY : src/scenes/gameplay_scene.c.i
 
-utils/game_state.s: utils/game_state.c.s
-.PHONY : utils/game_state.s
+src/scenes/gameplay_scene.s: src/scenes/gameplay_scene.c.s
+.PHONY : src/scenes/gameplay_scene.s
 
 # target to generate assembly for a file
-utils/game_state.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/game_state.c.s
-.PHONY : utils/game_state.c.s
+src/scenes/gameplay_scene.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.s
+.PHONY : src/scenes/gameplay_scene.c.s
 
-utils/mapa_holograma.obj: utils/mapa_holograma.c.obj
-.PHONY : utils/mapa_holograma.obj
+src/scenes/intro_scene.obj: src/scenes/intro_scene.c.obj
+.PHONY : src/scenes/intro_scene.obj
 
 # target to build an object file
-utils/mapa_holograma.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/mapa_holograma.c.obj
-.PHONY : utils/mapa_holograma.c.obj
+src/scenes/intro_scene.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.obj
+.PHONY : src/scenes/intro_scene.c.obj
 
-utils/mapa_holograma.i: utils/mapa_holograma.c.i
-.PHONY : utils/mapa_holograma.i
+src/scenes/intro_scene.i: src/scenes/intro_scene.c.i
+.PHONY : src/scenes/intro_scene.i
 
 # target to preprocess a source file
-utils/mapa_holograma.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/mapa_holograma.c.i
-.PHONY : utils/mapa_holograma.c.i
+src/scenes/intro_scene.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.i
+.PHONY : src/scenes/intro_scene.c.i
 
-utils/mapa_holograma.s: utils/mapa_holograma.c.s
-.PHONY : utils/mapa_holograma.s
+src/scenes/intro_scene.s: src/scenes/intro_scene.c.s
+.PHONY : src/scenes/intro_scene.s
 
 # target to generate assembly for a file
-utils/mapa_holograma.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/mapa_holograma.c.s
-.PHONY : utils/mapa_holograma.c.s
+src/scenes/intro_scene.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.s
+.PHONY : src/scenes/intro_scene.c.s
 
-utils/mural_ui.obj: utils/mural_ui.c.obj
-.PHONY : utils/mural_ui.obj
+src/scenes/menu_scene.obj: src/scenes/menu_scene.c.obj
+.PHONY : src/scenes/menu_scene.obj
 
 # target to build an object file
-utils/mural_ui.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/mural_ui.c.obj
-.PHONY : utils/mural_ui.c.obj
+src/scenes/menu_scene.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.obj
+.PHONY : src/scenes/menu_scene.c.obj
 
-utils/mural_ui.i: utils/mural_ui.c.i
-.PHONY : utils/mural_ui.i
+src/scenes/menu_scene.i: src/scenes/menu_scene.c.i
+.PHONY : src/scenes/menu_scene.i
 
 # target to preprocess a source file
-utils/mural_ui.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/mural_ui.c.i
-.PHONY : utils/mural_ui.c.i
+src/scenes/menu_scene.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.i
+.PHONY : src/scenes/menu_scene.c.i
 
-utils/mural_ui.s: utils/mural_ui.c.s
-.PHONY : utils/mural_ui.s
+src/scenes/menu_scene.s: src/scenes/menu_scene.c.s
+.PHONY : src/scenes/menu_scene.s
 
 # target to generate assembly for a file
-utils/mural_ui.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/mural_ui.c.s
-.PHONY : utils/mural_ui.c.s
+src/scenes/menu_scene.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.s
+.PHONY : src/scenes/menu_scene.c.s
 
-utils/options_ui.obj: utils/options_ui.c.obj
-.PHONY : utils/options_ui.obj
+src/scenes/selection_scene.obj: src/scenes/selection_scene.c.obj
+.PHONY : src/scenes/selection_scene.obj
 
 # target to build an object file
-utils/options_ui.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/options_ui.c.obj
-.PHONY : utils/options_ui.c.obj
+src/scenes/selection_scene.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.obj
+.PHONY : src/scenes/selection_scene.c.obj
 
-utils/options_ui.i: utils/options_ui.c.i
-.PHONY : utils/options_ui.i
+src/scenes/selection_scene.i: src/scenes/selection_scene.c.i
+.PHONY : src/scenes/selection_scene.i
 
 # target to preprocess a source file
-utils/options_ui.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/options_ui.c.i
-.PHONY : utils/options_ui.c.i
+src/scenes/selection_scene.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.i
+.PHONY : src/scenes/selection_scene.c.i
 
-utils/options_ui.s: utils/options_ui.c.s
-.PHONY : utils/options_ui.s
+src/scenes/selection_scene.s: src/scenes/selection_scene.c.s
+.PHONY : src/scenes/selection_scene.s
 
 # target to generate assembly for a file
-utils/options_ui.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/options_ui.c.s
-.PHONY : utils/options_ui.c.s
+src/scenes/selection_scene.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.s
+.PHONY : src/scenes/selection_scene.c.s
 
-utils/ranking.obj: utils/ranking.c.obj
-.PHONY : utils/ranking.obj
+src/scenes/verdict_scene.obj: src/scenes/verdict_scene.c.obj
+.PHONY : src/scenes/verdict_scene.obj
 
 # target to build an object file
-utils/ranking.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/ranking.c.obj
-.PHONY : utils/ranking.c.obj
+src/scenes/verdict_scene.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.obj
+.PHONY : src/scenes/verdict_scene.c.obj
 
-utils/ranking.i: utils/ranking.c.i
-.PHONY : utils/ranking.i
+src/scenes/verdict_scene.i: src/scenes/verdict_scene.c.i
+.PHONY : src/scenes/verdict_scene.i
 
 # target to preprocess a source file
-utils/ranking.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/ranking.c.i
-.PHONY : utils/ranking.c.i
+src/scenes/verdict_scene.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.i
+.PHONY : src/scenes/verdict_scene.c.i
 
-utils/ranking.s: utils/ranking.c.s
-.PHONY : utils/ranking.s
+src/scenes/verdict_scene.s: src/scenes/verdict_scene.c.s
+.PHONY : src/scenes/verdict_scene.s
 
 # target to generate assembly for a file
-utils/ranking.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/ranking.c.s
-.PHONY : utils/ranking.c.s
+src/scenes/verdict_scene.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.s
+.PHONY : src/scenes/verdict_scene.c.s
 
-utils/raycanvas.obj: utils/raycanvas.c.obj
-.PHONY : utils/raycanvas.obj
+src/systems/dialog_data.obj: src/systems/dialog_data.c.obj
+.PHONY : src/systems/dialog_data.obj
 
 # target to build an object file
-utils/raycanvas.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/raycanvas.c.obj
-.PHONY : utils/raycanvas.c.obj
+src/systems/dialog_data.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/dialog_data.c.obj
+.PHONY : src/systems/dialog_data.c.obj
 
-utils/raycanvas.i: utils/raycanvas.c.i
-.PHONY : utils/raycanvas.i
+src/systems/dialog_data.i: src/systems/dialog_data.c.i
+.PHONY : src/systems/dialog_data.i
 
 # target to preprocess a source file
-utils/raycanvas.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/raycanvas.c.i
-.PHONY : utils/raycanvas.c.i
+src/systems/dialog_data.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/dialog_data.c.i
+.PHONY : src/systems/dialog_data.c.i
 
-utils/raycanvas.s: utils/raycanvas.c.s
-.PHONY : utils/raycanvas.s
+src/systems/dialog_data.s: src/systems/dialog_data.c.s
+.PHONY : src/systems/dialog_data.s
 
 # target to generate assembly for a file
-utils/raycanvas.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/raycanvas.c.s
-.PHONY : utils/raycanvas.c.s
+src/systems/dialog_data.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/dialog_data.c.s
+.PHONY : src/systems/dialog_data.c.s
 
-utils/setas_3d.obj: utils/setas_3d.c.obj
-.PHONY : utils/setas_3d.obj
+src/systems/dialog_system.obj: src/systems/dialog_system.c.obj
+.PHONY : src/systems/dialog_system.obj
 
 # target to build an object file
-utils/setas_3d.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/setas_3d.c.obj
-.PHONY : utils/setas_3d.c.obj
+src/systems/dialog_system.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/dialog_system.c.obj
+.PHONY : src/systems/dialog_system.c.obj
 
-utils/setas_3d.i: utils/setas_3d.c.i
-.PHONY : utils/setas_3d.i
+src/systems/dialog_system.i: src/systems/dialog_system.c.i
+.PHONY : src/systems/dialog_system.i
 
 # target to preprocess a source file
-utils/setas_3d.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/setas_3d.c.i
-.PHONY : utils/setas_3d.c.i
+src/systems/dialog_system.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/dialog_system.c.i
+.PHONY : src/systems/dialog_system.c.i
 
-utils/setas_3d.s: utils/setas_3d.c.s
-.PHONY : utils/setas_3d.s
+src/systems/dialog_system.s: src/systems/dialog_system.c.s
+.PHONY : src/systems/dialog_system.s
 
 # target to generate assembly for a file
-utils/setas_3d.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/setas_3d.c.s
-.PHONY : utils/setas_3d.c.s
+src/systems/dialog_system.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/dialog_system.c.s
+.PHONY : src/systems/dialog_system.c.s
 
-utils/settings.obj: utils/settings.c.obj
-.PHONY : utils/settings.obj
+src/systems/evidencia_holograma.obj: src/systems/evidencia_holograma.c.obj
+.PHONY : src/systems/evidencia_holograma.obj
 
 # target to build an object file
-utils/settings.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/settings.c.obj
-.PHONY : utils/settings.c.obj
+src/systems/evidencia_holograma.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.obj
+.PHONY : src/systems/evidencia_holograma.c.obj
 
-utils/settings.i: utils/settings.c.i
-.PHONY : utils/settings.i
+src/systems/evidencia_holograma.i: src/systems/evidencia_holograma.c.i
+.PHONY : src/systems/evidencia_holograma.i
 
 # target to preprocess a source file
-utils/settings.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/settings.c.i
-.PHONY : utils/settings.c.i
+src/systems/evidencia_holograma.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.i
+.PHONY : src/systems/evidencia_holograma.c.i
 
-utils/settings.s: utils/settings.c.s
-.PHONY : utils/settings.s
+src/systems/evidencia_holograma.s: src/systems/evidencia_holograma.c.s
+.PHONY : src/systems/evidencia_holograma.s
 
 # target to generate assembly for a file
-utils/settings.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/settings.c.s
-.PHONY : utils/settings.c.s
+src/systems/evidencia_holograma.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.s
+.PHONY : src/systems/evidencia_holograma.c.s
 
-utils/transition.obj: utils/transition.c.obj
-.PHONY : utils/transition.obj
+src/systems/mapa_holograma.obj: src/systems/mapa_holograma.c.obj
+.PHONY : src/systems/mapa_holograma.obj
 
 # target to build an object file
-utils/transition.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/transition.c.obj
-.PHONY : utils/transition.c.obj
+src/systems/mapa_holograma.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.obj
+.PHONY : src/systems/mapa_holograma.c.obj
 
-utils/transition.i: utils/transition.c.i
-.PHONY : utils/transition.i
+src/systems/mapa_holograma.i: src/systems/mapa_holograma.c.i
+.PHONY : src/systems/mapa_holograma.i
 
 # target to preprocess a source file
-utils/transition.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/transition.c.i
-.PHONY : utils/transition.c.i
+src/systems/mapa_holograma.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.i
+.PHONY : src/systems/mapa_holograma.c.i
 
-utils/transition.s: utils/transition.c.s
-.PHONY : utils/transition.s
+src/systems/mapa_holograma.s: src/systems/mapa_holograma.c.s
+.PHONY : src/systems/mapa_holograma.s
 
 # target to generate assembly for a file
-utils/transition.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/transition.c.s
-.PHONY : utils/transition.c.s
+src/systems/mapa_holograma.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.s
+.PHONY : src/systems/mapa_holograma.c.s
 
-utils/webcam.obj: utils/webcam.c.obj
-.PHONY : utils/webcam.obj
+src/systems/mural_ui.obj: src/systems/mural_ui.c.obj
+.PHONY : src/systems/mural_ui.obj
 
 # target to build an object file
-utils/webcam.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/webcam.c.obj
-.PHONY : utils/webcam.c.obj
+src/systems/mural_ui.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/mural_ui.c.obj
+.PHONY : src/systems/mural_ui.c.obj
 
-utils/webcam.i: utils/webcam.c.i
-.PHONY : utils/webcam.i
+src/systems/mural_ui.i: src/systems/mural_ui.c.i
+.PHONY : src/systems/mural_ui.i
 
 # target to preprocess a source file
-utils/webcam.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/webcam.c.i
-.PHONY : utils/webcam.c.i
+src/systems/mural_ui.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/mural_ui.c.i
+.PHONY : src/systems/mural_ui.c.i
 
-utils/webcam.s: utils/webcam.c.s
-.PHONY : utils/webcam.s
+src/systems/mural_ui.s: src/systems/mural_ui.c.s
+.PHONY : src/systems/mural_ui.s
 
 # target to generate assembly for a file
-utils/webcam.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/utils/webcam.c.s
-.PHONY : utils/webcam.c.s
+src/systems/mural_ui.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/mural_ui.c.s
+.PHONY : src/systems/mural_ui.c.s
+
+src/systems/options_ui.obj: src/systems/options_ui.c.obj
+.PHONY : src/systems/options_ui.obj
+
+# target to build an object file
+src/systems/options_ui.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/options_ui.c.obj
+.PHONY : src/systems/options_ui.c.obj
+
+src/systems/options_ui.i: src/systems/options_ui.c.i
+.PHONY : src/systems/options_ui.i
+
+# target to preprocess a source file
+src/systems/options_ui.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/options_ui.c.i
+.PHONY : src/systems/options_ui.c.i
+
+src/systems/options_ui.s: src/systems/options_ui.c.s
+.PHONY : src/systems/options_ui.s
+
+# target to generate assembly for a file
+src/systems/options_ui.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/options_ui.c.s
+.PHONY : src/systems/options_ui.c.s
+
+src/systems/player_character.obj: src/systems/player_character.c.obj
+.PHONY : src/systems/player_character.obj
+
+# target to build an object file
+src/systems/player_character.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/player_character.c.obj
+.PHONY : src/systems/player_character.c.obj
+
+src/systems/player_character.i: src/systems/player_character.c.i
+.PHONY : src/systems/player_character.i
+
+# target to preprocess a source file
+src/systems/player_character.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/player_character.c.i
+.PHONY : src/systems/player_character.c.i
+
+src/systems/player_character.s: src/systems/player_character.c.s
+.PHONY : src/systems/player_character.s
+
+# target to generate assembly for a file
+src/systems/player_character.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/player_character.c.s
+.PHONY : src/systems/player_character.c.s
+
+src/systems/setas_3d.obj: src/systems/setas_3d.c.obj
+.PHONY : src/systems/setas_3d.obj
+
+# target to build an object file
+src/systems/setas_3d.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/setas_3d.c.obj
+.PHONY : src/systems/setas_3d.c.obj
+
+src/systems/setas_3d.i: src/systems/setas_3d.c.i
+.PHONY : src/systems/setas_3d.i
+
+# target to preprocess a source file
+src/systems/setas_3d.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/setas_3d.c.i
+.PHONY : src/systems/setas_3d.c.i
+
+src/systems/setas_3d.s: src/systems/setas_3d.c.s
+.PHONY : src/systems/setas_3d.s
+
+# target to generate assembly for a file
+src/systems/setas_3d.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/setas_3d.c.s
+.PHONY : src/systems/setas_3d.c.s
+
+src/systems/webcam.obj: src/systems/webcam.c.obj
+.PHONY : src/systems/webcam.obj
+
+# target to build an object file
+src/systems/webcam.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/webcam.c.obj
+.PHONY : src/systems/webcam.c.obj
+
+src/systems/webcam.i: src/systems/webcam.c.i
+.PHONY : src/systems/webcam.i
+
+# target to preprocess a source file
+src/systems/webcam.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/webcam.c.i
+.PHONY : src/systems/webcam.c.i
+
+src/systems/webcam.s: src/systems/webcam.c.s
+.PHONY : src/systems/webcam.s
+
+# target to generate assembly for a file
+src/systems/webcam.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/webcam.c.s
+.PHONY : src/systems/webcam.c.s
+
+src/world/sala_arquivo_1.obj: src/world/sala_arquivo_1.c.obj
+.PHONY : src/world/sala_arquivo_1.obj
+
+# target to build an object file
+src/world/sala_arquivo_1.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj
+.PHONY : src/world/sala_arquivo_1.c.obj
+
+src/world/sala_arquivo_1.i: src/world/sala_arquivo_1.c.i
+.PHONY : src/world/sala_arquivo_1.i
+
+# target to preprocess a source file
+src/world/sala_arquivo_1.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.i
+.PHONY : src/world/sala_arquivo_1.c.i
+
+src/world/sala_arquivo_1.s: src/world/sala_arquivo_1.c.s
+.PHONY : src/world/sala_arquivo_1.s
+
+# target to generate assembly for a file
+src/world/sala_arquivo_1.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.s
+.PHONY : src/world/sala_arquivo_1.c.s
+
+src/world/sala_auditorio.obj: src/world/sala_auditorio.c.obj
+.PHONY : src/world/sala_auditorio.obj
+
+# target to build an object file
+src/world/sala_auditorio.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj
+.PHONY : src/world/sala_auditorio.c.obj
+
+src/world/sala_auditorio.i: src/world/sala_auditorio.c.i
+.PHONY : src/world/sala_auditorio.i
+
+# target to preprocess a source file
+src/world/sala_auditorio.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.i
+.PHONY : src/world/sala_auditorio.c.i
+
+src/world/sala_auditorio.s: src/world/sala_auditorio.c.s
+.PHONY : src/world/sala_auditorio.s
+
+# target to generate assembly for a file
+src/world/sala_auditorio.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.s
+.PHONY : src/world/sala_auditorio.c.s
+
+src/world/sala_ciber_1.obj: src/world/sala_ciber_1.c.obj
+.PHONY : src/world/sala_ciber_1.obj
+
+# target to build an object file
+src/world/sala_ciber_1.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj
+.PHONY : src/world/sala_ciber_1.c.obj
+
+src/world/sala_ciber_1.i: src/world/sala_ciber_1.c.i
+.PHONY : src/world/sala_ciber_1.i
+
+# target to preprocess a source file
+src/world/sala_ciber_1.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.i
+.PHONY : src/world/sala_ciber_1.c.i
+
+src/world/sala_ciber_1.s: src/world/sala_ciber_1.c.s
+.PHONY : src/world/sala_ciber_1.s
+
+# target to generate assembly for a file
+src/world/sala_ciber_1.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.s
+.PHONY : src/world/sala_ciber_1.c.s
+
+src/world/sala_ciber_2.obj: src/world/sala_ciber_2.c.obj
+.PHONY : src/world/sala_ciber_2.obj
+
+# target to build an object file
+src/world/sala_ciber_2.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj
+.PHONY : src/world/sala_ciber_2.c.obj
+
+src/world/sala_ciber_2.i: src/world/sala_ciber_2.c.i
+.PHONY : src/world/sala_ciber_2.i
+
+# target to preprocess a source file
+src/world/sala_ciber_2.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.i
+.PHONY : src/world/sala_ciber_2.c.i
+
+src/world/sala_ciber_2.s: src/world/sala_ciber_2.c.s
+.PHONY : src/world/sala_ciber_2.s
+
+# target to generate assembly for a file
+src/world/sala_ciber_2.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.s
+.PHONY : src/world/sala_ciber_2.c.s
+
+src/world/sala_contabilidade_1.obj: src/world/sala_contabilidade_1.c.obj
+.PHONY : src/world/sala_contabilidade_1.obj
+
+# target to build an object file
+src/world/sala_contabilidade_1.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj
+.PHONY : src/world/sala_contabilidade_1.c.obj
+
+src/world/sala_contabilidade_1.i: src/world/sala_contabilidade_1.c.i
+.PHONY : src/world/sala_contabilidade_1.i
+
+# target to preprocess a source file
+src/world/sala_contabilidade_1.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.i
+.PHONY : src/world/sala_contabilidade_1.c.i
+
+src/world/sala_contabilidade_1.s: src/world/sala_contabilidade_1.c.s
+.PHONY : src/world/sala_contabilidade_1.s
+
+# target to generate assembly for a file
+src/world/sala_contabilidade_1.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.s
+.PHONY : src/world/sala_contabilidade_1.c.s
+
+src/world/sala_contabilidade_2.obj: src/world/sala_contabilidade_2.c.obj
+.PHONY : src/world/sala_contabilidade_2.obj
+
+# target to build an object file
+src/world/sala_contabilidade_2.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj
+.PHONY : src/world/sala_contabilidade_2.c.obj
+
+src/world/sala_contabilidade_2.i: src/world/sala_contabilidade_2.c.i
+.PHONY : src/world/sala_contabilidade_2.i
+
+# target to preprocess a source file
+src/world/sala_contabilidade_2.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.i
+.PHONY : src/world/sala_contabilidade_2.c.i
+
+src/world/sala_contabilidade_2.s: src/world/sala_contabilidade_2.c.s
+.PHONY : src/world/sala_contabilidade_2.s
+
+# target to generate assembly for a file
+src/world/sala_contabilidade_2.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.s
+.PHONY : src/world/sala_contabilidade_2.c.s
+
+src/world/sala_convivio.obj: src/world/sala_convivio.c.obj
+.PHONY : src/world/sala_convivio.obj
+
+# target to build an object file
+src/world/sala_convivio.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj
+.PHONY : src/world/sala_convivio.c.obj
+
+src/world/sala_convivio.i: src/world/sala_convivio.c.i
+.PHONY : src/world/sala_convivio.i
+
+# target to preprocess a source file
+src/world/sala_convivio.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_convivio.c.i
+.PHONY : src/world/sala_convivio.c.i
+
+src/world/sala_convivio.s: src/world/sala_convivio.c.s
+.PHONY : src/world/sala_convivio.s
+
+# target to generate assembly for a file
+src/world/sala_convivio.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_convivio.c.s
+.PHONY : src/world/sala_convivio.c.s
+
+src/world/sala_copa_1.obj: src/world/sala_copa_1.c.obj
+.PHONY : src/world/sala_copa_1.obj
+
+# target to build an object file
+src/world/sala_copa_1.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj
+.PHONY : src/world/sala_copa_1.c.obj
+
+src/world/sala_copa_1.i: src/world/sala_copa_1.c.i
+.PHONY : src/world/sala_copa_1.i
+
+# target to preprocess a source file
+src/world/sala_copa_1.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.i
+.PHONY : src/world/sala_copa_1.c.i
+
+src/world/sala_copa_1.s: src/world/sala_copa_1.c.s
+.PHONY : src/world/sala_copa_1.s
+
+# target to generate assembly for a file
+src/world/sala_copa_1.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.s
+.PHONY : src/world/sala_copa_1.c.s
+
+src/world/sala_escritorio.obj: src/world/sala_escritorio.c.obj
+.PHONY : src/world/sala_escritorio.obj
+
+# target to build an object file
+src/world/sala_escritorio.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj
+.PHONY : src/world/sala_escritorio.c.obj
+
+src/world/sala_escritorio.i: src/world/sala_escritorio.c.i
+.PHONY : src/world/sala_escritorio.i
+
+# target to preprocess a source file
+src/world/sala_escritorio.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.i
+.PHONY : src/world/sala_escritorio.c.i
+
+src/world/sala_escritorio.s: src/world/sala_escritorio.c.s
+.PHONY : src/world/sala_escritorio.s
+
+# target to generate assembly for a file
+src/world/sala_escritorio.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.s
+.PHONY : src/world/sala_escritorio.c.s
+
+src/world/sala_escritorio_2.obj: src/world/sala_escritorio_2.c.obj
+.PHONY : src/world/sala_escritorio_2.obj
+
+# target to build an object file
+src/world/sala_escritorio_2.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj
+.PHONY : src/world/sala_escritorio_2.c.obj
+
+src/world/sala_escritorio_2.i: src/world/sala_escritorio_2.c.i
+.PHONY : src/world/sala_escritorio_2.i
+
+# target to preprocess a source file
+src/world/sala_escritorio_2.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.i
+.PHONY : src/world/sala_escritorio_2.c.i
+
+src/world/sala_escritorio_2.s: src/world/sala_escritorio_2.c.s
+.PHONY : src/world/sala_escritorio_2.s
+
+# target to generate assembly for a file
+src/world/sala_escritorio_2.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.s
+.PHONY : src/world/sala_escritorio_2.c.s
+
+src/world/sala_garagem_prototipos.obj: src/world/sala_garagem_prototipos.c.obj
+.PHONY : src/world/sala_garagem_prototipos.obj
+
+# target to build an object file
+src/world/sala_garagem_prototipos.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj
+.PHONY : src/world/sala_garagem_prototipos.c.obj
+
+src/world/sala_garagem_prototipos.i: src/world/sala_garagem_prototipos.c.i
+.PHONY : src/world/sala_garagem_prototipos.i
+
+# target to preprocess a source file
+src/world/sala_garagem_prototipos.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.i
+.PHONY : src/world/sala_garagem_prototipos.c.i
+
+src/world/sala_garagem_prototipos.s: src/world/sala_garagem_prototipos.c.s
+.PHONY : src/world/sala_garagem_prototipos.s
+
+# target to generate assembly for a file
+src/world/sala_garagem_prototipos.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.s
+.PHONY : src/world/sala_garagem_prototipos.c.s
+
+src/world/sala_hall_1.obj: src/world/sala_hall_1.c.obj
+.PHONY : src/world/sala_hall_1.obj
+
+# target to build an object file
+src/world/sala_hall_1.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj
+.PHONY : src/world/sala_hall_1.c.obj
+
+src/world/sala_hall_1.i: src/world/sala_hall_1.c.i
+.PHONY : src/world/sala_hall_1.i
+
+# target to preprocess a source file
+src/world/sala_hall_1.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.i
+.PHONY : src/world/sala_hall_1.c.i
+
+src/world/sala_hall_1.s: src/world/sala_hall_1.c.s
+.PHONY : src/world/sala_hall_1.s
+
+# target to generate assembly for a file
+src/world/sala_hall_1.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.s
+.PHONY : src/world/sala_hall_1.c.s
+
+src/world/sala_hall_2.obj: src/world/sala_hall_2.c.obj
+.PHONY : src/world/sala_hall_2.obj
+
+# target to build an object file
+src/world/sala_hall_2.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj
+.PHONY : src/world/sala_hall_2.c.obj
+
+src/world/sala_hall_2.i: src/world/sala_hall_2.c.i
+.PHONY : src/world/sala_hall_2.i
+
+# target to preprocess a source file
+src/world/sala_hall_2.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.i
+.PHONY : src/world/sala_hall_2.c.i
+
+src/world/sala_hall_2.s: src/world/sala_hall_2.c.s
+.PHONY : src/world/sala_hall_2.s
+
+# target to generate assembly for a file
+src/world/sala_hall_2.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.s
+.PHONY : src/world/sala_hall_2.c.s
+
+src/world/sala_hall_3.obj: src/world/sala_hall_3.c.obj
+.PHONY : src/world/sala_hall_3.obj
+
+# target to build an object file
+src/world/sala_hall_3.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj
+.PHONY : src/world/sala_hall_3.c.obj
+
+src/world/sala_hall_3.i: src/world/sala_hall_3.c.i
+.PHONY : src/world/sala_hall_3.i
+
+# target to preprocess a source file
+src/world/sala_hall_3.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.i
+.PHONY : src/world/sala_hall_3.c.i
+
+src/world/sala_hall_3.s: src/world/sala_hall_3.c.s
+.PHONY : src/world/sala_hall_3.s
+
+# target to generate assembly for a file
+src/world/sala_hall_3.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.s
+.PHONY : src/world/sala_hall_3.c.s
+
+src/world/sala_hall_4.obj: src/world/sala_hall_4.c.obj
+.PHONY : src/world/sala_hall_4.obj
+
+# target to build an object file
+src/world/sala_hall_4.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj
+.PHONY : src/world/sala_hall_4.c.obj
+
+src/world/sala_hall_4.i: src/world/sala_hall_4.c.i
+.PHONY : src/world/sala_hall_4.i
+
+# target to preprocess a source file
+src/world/sala_hall_4.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.i
+.PHONY : src/world/sala_hall_4.c.i
+
+src/world/sala_hall_4.s: src/world/sala_hall_4.c.s
+.PHONY : src/world/sala_hall_4.s
+
+# target to generate assembly for a file
+src/world/sala_hall_4.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.s
+.PHONY : src/world/sala_hall_4.c.s
+
+src/world/sala_jardim.obj: src/world/sala_jardim.c.obj
+.PHONY : src/world/sala_jardim.obj
+
+# target to build an object file
+src/world/sala_jardim.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj
+.PHONY : src/world/sala_jardim.c.obj
+
+src/world/sala_jardim.i: src/world/sala_jardim.c.i
+.PHONY : src/world/sala_jardim.i
+
+# target to preprocess a source file
+src/world/sala_jardim.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_jardim.c.i
+.PHONY : src/world/sala_jardim.c.i
+
+src/world/sala_jardim.s: src/world/sala_jardim.c.s
+.PHONY : src/world/sala_jardim.s
+
+# target to generate assembly for a file
+src/world/sala_jardim.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_jardim.c.s
+.PHONY : src/world/sala_jardim.c.s
+
+src/world/sala_lanchonete.obj: src/world/sala_lanchonete.c.obj
+.PHONY : src/world/sala_lanchonete.obj
+
+# target to build an object file
+src/world/sala_lanchonete.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj
+.PHONY : src/world/sala_lanchonete.c.obj
+
+src/world/sala_lanchonete.i: src/world/sala_lanchonete.c.i
+.PHONY : src/world/sala_lanchonete.i
+
+# target to preprocess a source file
+src/world/sala_lanchonete.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.i
+.PHONY : src/world/sala_lanchonete.c.i
+
+src/world/sala_lanchonete.s: src/world/sala_lanchonete.c.s
+.PHONY : src/world/sala_lanchonete.s
+
+# target to generate assembly for a file
+src/world/sala_lanchonete.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.s
+.PHONY : src/world/sala_lanchonete.c.s
+
+src/world/sala_recepcao.obj: src/world/sala_recepcao.c.obj
+.PHONY : src/world/sala_recepcao.obj
+
+# target to build an object file
+src/world/sala_recepcao.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj
+.PHONY : src/world/sala_recepcao.c.obj
+
+src/world/sala_recepcao.i: src/world/sala_recepcao.c.i
+.PHONY : src/world/sala_recepcao.i
+
+# target to preprocess a source file
+src/world/sala_recepcao.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.i
+.PHONY : src/world/sala_recepcao.c.i
+
+src/world/sala_recepcao.s: src/world/sala_recepcao.c.s
+.PHONY : src/world/sala_recepcao.s
+
+# target to generate assembly for a file
+src/world/sala_recepcao.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.s
+.PHONY : src/world/sala_recepcao.c.s
+
+src/world/sala_reuniao_4.obj: src/world/sala_reuniao_4.c.obj
+.PHONY : src/world/sala_reuniao_4.obj
+
+# target to build an object file
+src/world/sala_reuniao_4.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj
+.PHONY : src/world/sala_reuniao_4.c.obj
+
+src/world/sala_reuniao_4.i: src/world/sala_reuniao_4.c.i
+.PHONY : src/world/sala_reuniao_4.i
+
+# target to preprocess a source file
+src/world/sala_reuniao_4.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.i
+.PHONY : src/world/sala_reuniao_4.c.i
+
+src/world/sala_reuniao_4.s: src/world/sala_reuniao_4.c.s
+.PHONY : src/world/sala_reuniao_4.s
+
+# target to generate assembly for a file
+src/world/sala_reuniao_4.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.s
+.PHONY : src/world/sala_reuniao_4.c.s
+
+src/world/sala_server_1.obj: src/world/sala_server_1.c.obj
+.PHONY : src/world/sala_server_1.obj
+
+# target to build an object file
+src/world/sala_server_1.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj
+.PHONY : src/world/sala_server_1.c.obj
+
+src/world/sala_server_1.i: src/world/sala_server_1.c.i
+.PHONY : src/world/sala_server_1.i
+
+# target to preprocess a source file
+src/world/sala_server_1.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_server_1.c.i
+.PHONY : src/world/sala_server_1.c.i
+
+src/world/sala_server_1.s: src/world/sala_server_1.c.s
+.PHONY : src/world/sala_server_1.s
+
+# target to generate assembly for a file
+src/world/sala_server_1.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_server_1.c.s
+.PHONY : src/world/sala_server_1.c.s
+
+src/world/sala_server_2.obj: src/world/sala_server_2.c.obj
+.PHONY : src/world/sala_server_2.obj
+
+# target to build an object file
+src/world/sala_server_2.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj
+.PHONY : src/world/sala_server_2.c.obj
+
+src/world/sala_server_2.i: src/world/sala_server_2.c.i
+.PHONY : src/world/sala_server_2.i
+
+# target to preprocess a source file
+src/world/sala_server_2.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_server_2.c.i
+.PHONY : src/world/sala_server_2.c.i
+
+src/world/sala_server_2.s: src/world/sala_server_2.c.s
+.PHONY : src/world/sala_server_2.s
+
+# target to generate assembly for a file
+src/world/sala_server_2.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_server_2.c.s
+.PHONY : src/world/sala_server_2.c.s
+
+src/world/sala_treino_escritorio.obj: src/world/sala_treino_escritorio.c.obj
+.PHONY : src/world/sala_treino_escritorio.obj
+
+# target to build an object file
+src/world/sala_treino_escritorio.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj
+.PHONY : src/world/sala_treino_escritorio.c.obj
+
+src/world/sala_treino_escritorio.i: src/world/sala_treino_escritorio.c.i
+.PHONY : src/world/sala_treino_escritorio.i
+
+# target to preprocess a source file
+src/world/sala_treino_escritorio.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.i
+.PHONY : src/world/sala_treino_escritorio.c.i
+
+src/world/sala_treino_escritorio.s: src/world/sala_treino_escritorio.c.s
+.PHONY : src/world/sala_treino_escritorio.s
+
+# target to generate assembly for a file
+src/world/sala_treino_escritorio.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.s
+.PHONY : src/world/sala_treino_escritorio.c.s
+
+src/world/sala_treino_ia.obj: src/world/sala_treino_ia.c.obj
+.PHONY : src/world/sala_treino_ia.obj
+
+# target to build an object file
+src/world/sala_treino_ia.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj
+.PHONY : src/world/sala_treino_ia.c.obj
+
+src/world/sala_treino_ia.i: src/world/sala_treino_ia.c.i
+.PHONY : src/world/sala_treino_ia.i
+
+# target to preprocess a source file
+src/world/sala_treino_ia.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.i
+.PHONY : src/world/sala_treino_ia.c.i
+
+src/world/sala_treino_ia.s: src/world/sala_treino_ia.c.s
+.PHONY : src/world/sala_treino_ia.s
+
+# target to generate assembly for a file
+src/world/sala_treino_ia.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.s
+.PHONY : src/world/sala_treino_ia.c.s
+
+src/world/terreo_3d.obj: src/world/terreo_3d.c.obj
+.PHONY : src/world/terreo_3d.obj
+
+# target to build an object file
+src/world/terreo_3d.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj
+.PHONY : src/world/terreo_3d.c.obj
+
+src/world/terreo_3d.i: src/world/terreo_3d.c.i
+.PHONY : src/world/terreo_3d.i
+
+# target to preprocess a source file
+src/world/terreo_3d.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/terreo_3d.c.i
+.PHONY : src/world/terreo_3d.c.i
+
+src/world/terreo_3d.s: src/world/terreo_3d.c.s
+.PHONY : src/world/terreo_3d.s
+
+# target to generate assembly for a file
+src/world/terreo_3d.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/terreo_3d.c.s
+.PHONY : src/world/terreo_3d.c.s
 
 # Help Target
 help:
@@ -707,63 +1379,147 @@ help:
 	@echo "... glfw"
 	@echo "... raylib"
 	@echo "... turing_test"
-	@echo "... main.obj"
-	@echo "... main.i"
-	@echo "... main.s"
-	@echo "... scenes/gameplay_scene.obj"
-	@echo "... scenes/gameplay_scene.i"
-	@echo "... scenes/gameplay_scene.s"
-	@echo "... scenes/intro_scene.obj"
-	@echo "... scenes/intro_scene.i"
-	@echo "... scenes/intro_scene.s"
-	@echo "... scenes/menu_scene.obj"
-	@echo "... scenes/menu_scene.i"
-	@echo "... scenes/menu_scene.s"
-	@echo "... scenes/selection_scene.obj"
-	@echo "... scenes/selection_scene.i"
-	@echo "... scenes/selection_scene.s"
-	@echo "... scenes/verdict_scene.obj"
-	@echo "... scenes/verdict_scene.i"
-	@echo "... scenes/verdict_scene.s"
-	@echo "... utils/dialog_data.obj"
-	@echo "... utils/dialog_data.i"
-	@echo "... utils/dialog_data.s"
-	@echo "... utils/dialog_system.obj"
-	@echo "... utils/dialog_system.i"
-	@echo "... utils/dialog_system.s"
-	@echo "... utils/evidencia_holograma.obj"
-	@echo "... utils/evidencia_holograma.i"
-	@echo "... utils/evidencia_holograma.s"
-	@echo "... utils/game_state.obj"
-	@echo "... utils/game_state.i"
-	@echo "... utils/game_state.s"
-	@echo "... utils/mapa_holograma.obj"
-	@echo "... utils/mapa_holograma.i"
-	@echo "... utils/mapa_holograma.s"
-	@echo "... utils/mural_ui.obj"
-	@echo "... utils/mural_ui.i"
-	@echo "... utils/mural_ui.s"
-	@echo "... utils/options_ui.obj"
-	@echo "... utils/options_ui.i"
-	@echo "... utils/options_ui.s"
-	@echo "... utils/ranking.obj"
-	@echo "... utils/ranking.i"
-	@echo "... utils/ranking.s"
-	@echo "... utils/raycanvas.obj"
-	@echo "... utils/raycanvas.i"
-	@echo "... utils/raycanvas.s"
-	@echo "... utils/setas_3d.obj"
-	@echo "... utils/setas_3d.i"
-	@echo "... utils/setas_3d.s"
-	@echo "... utils/settings.obj"
-	@echo "... utils/settings.i"
-	@echo "... utils/settings.s"
-	@echo "... utils/transition.obj"
-	@echo "... utils/transition.i"
-	@echo "... utils/transition.s"
-	@echo "... utils/webcam.obj"
-	@echo "... utils/webcam.i"
-	@echo "... utils/webcam.s"
+	@echo "... src/core/game_state.obj"
+	@echo "... src/core/game_state.i"
+	@echo "... src/core/game_state.s"
+	@echo "... src/core/ranking.obj"
+	@echo "... src/core/ranking.i"
+	@echo "... src/core/ranking.s"
+	@echo "... src/core/raycanvas.obj"
+	@echo "... src/core/raycanvas.i"
+	@echo "... src/core/raycanvas.s"
+	@echo "... src/core/settings.obj"
+	@echo "... src/core/settings.i"
+	@echo "... src/core/settings.s"
+	@echo "... src/core/transition.obj"
+	@echo "... src/core/transition.i"
+	@echo "... src/core/transition.s"
+	@echo "... src/core/ui_common.obj"
+	@echo "... src/core/ui_common.i"
+	@echo "... src/core/ui_common.s"
+	@echo "... src/gameplay/gameplay_data.obj"
+	@echo "... src/gameplay/gameplay_data.i"
+	@echo "... src/gameplay/gameplay_data.s"
+	@echo "... src/gameplay/gameplay_logic_hint.obj"
+	@echo "... src/gameplay/gameplay_logic_hint.i"
+	@echo "... src/gameplay/gameplay_logic_hint.s"
+	@echo "... src/main.obj"
+	@echo "... src/main.i"
+	@echo "... src/main.s"
+	@echo "... src/scenes/gameplay_scene.obj"
+	@echo "... src/scenes/gameplay_scene.i"
+	@echo "... src/scenes/gameplay_scene.s"
+	@echo "... src/scenes/intro_scene.obj"
+	@echo "... src/scenes/intro_scene.i"
+	@echo "... src/scenes/intro_scene.s"
+	@echo "... src/scenes/menu_scene.obj"
+	@echo "... src/scenes/menu_scene.i"
+	@echo "... src/scenes/menu_scene.s"
+	@echo "... src/scenes/selection_scene.obj"
+	@echo "... src/scenes/selection_scene.i"
+	@echo "... src/scenes/selection_scene.s"
+	@echo "... src/scenes/verdict_scene.obj"
+	@echo "... src/scenes/verdict_scene.i"
+	@echo "... src/scenes/verdict_scene.s"
+	@echo "... src/systems/dialog_data.obj"
+	@echo "... src/systems/dialog_data.i"
+	@echo "... src/systems/dialog_data.s"
+	@echo "... src/systems/dialog_system.obj"
+	@echo "... src/systems/dialog_system.i"
+	@echo "... src/systems/dialog_system.s"
+	@echo "... src/systems/evidencia_holograma.obj"
+	@echo "... src/systems/evidencia_holograma.i"
+	@echo "... src/systems/evidencia_holograma.s"
+	@echo "... src/systems/mapa_holograma.obj"
+	@echo "... src/systems/mapa_holograma.i"
+	@echo "... src/systems/mapa_holograma.s"
+	@echo "... src/systems/mural_ui.obj"
+	@echo "... src/systems/mural_ui.i"
+	@echo "... src/systems/mural_ui.s"
+	@echo "... src/systems/options_ui.obj"
+	@echo "... src/systems/options_ui.i"
+	@echo "... src/systems/options_ui.s"
+	@echo "... src/systems/player_character.obj"
+	@echo "... src/systems/player_character.i"
+	@echo "... src/systems/player_character.s"
+	@echo "... src/systems/setas_3d.obj"
+	@echo "... src/systems/setas_3d.i"
+	@echo "... src/systems/setas_3d.s"
+	@echo "... src/systems/webcam.obj"
+	@echo "... src/systems/webcam.i"
+	@echo "... src/systems/webcam.s"
+	@echo "... src/world/sala_arquivo_1.obj"
+	@echo "... src/world/sala_arquivo_1.i"
+	@echo "... src/world/sala_arquivo_1.s"
+	@echo "... src/world/sala_auditorio.obj"
+	@echo "... src/world/sala_auditorio.i"
+	@echo "... src/world/sala_auditorio.s"
+	@echo "... src/world/sala_ciber_1.obj"
+	@echo "... src/world/sala_ciber_1.i"
+	@echo "... src/world/sala_ciber_1.s"
+	@echo "... src/world/sala_ciber_2.obj"
+	@echo "... src/world/sala_ciber_2.i"
+	@echo "... src/world/sala_ciber_2.s"
+	@echo "... src/world/sala_contabilidade_1.obj"
+	@echo "... src/world/sala_contabilidade_1.i"
+	@echo "... src/world/sala_contabilidade_1.s"
+	@echo "... src/world/sala_contabilidade_2.obj"
+	@echo "... src/world/sala_contabilidade_2.i"
+	@echo "... src/world/sala_contabilidade_2.s"
+	@echo "... src/world/sala_convivio.obj"
+	@echo "... src/world/sala_convivio.i"
+	@echo "... src/world/sala_convivio.s"
+	@echo "... src/world/sala_copa_1.obj"
+	@echo "... src/world/sala_copa_1.i"
+	@echo "... src/world/sala_copa_1.s"
+	@echo "... src/world/sala_escritorio.obj"
+	@echo "... src/world/sala_escritorio.i"
+	@echo "... src/world/sala_escritorio.s"
+	@echo "... src/world/sala_escritorio_2.obj"
+	@echo "... src/world/sala_escritorio_2.i"
+	@echo "... src/world/sala_escritorio_2.s"
+	@echo "... src/world/sala_garagem_prototipos.obj"
+	@echo "... src/world/sala_garagem_prototipos.i"
+	@echo "... src/world/sala_garagem_prototipos.s"
+	@echo "... src/world/sala_hall_1.obj"
+	@echo "... src/world/sala_hall_1.i"
+	@echo "... src/world/sala_hall_1.s"
+	@echo "... src/world/sala_hall_2.obj"
+	@echo "... src/world/sala_hall_2.i"
+	@echo "... src/world/sala_hall_2.s"
+	@echo "... src/world/sala_hall_3.obj"
+	@echo "... src/world/sala_hall_3.i"
+	@echo "... src/world/sala_hall_3.s"
+	@echo "... src/world/sala_hall_4.obj"
+	@echo "... src/world/sala_hall_4.i"
+	@echo "... src/world/sala_hall_4.s"
+	@echo "... src/world/sala_jardim.obj"
+	@echo "... src/world/sala_jardim.i"
+	@echo "... src/world/sala_jardim.s"
+	@echo "... src/world/sala_lanchonete.obj"
+	@echo "... src/world/sala_lanchonete.i"
+	@echo "... src/world/sala_lanchonete.s"
+	@echo "... src/world/sala_recepcao.obj"
+	@echo "... src/world/sala_recepcao.i"
+	@echo "... src/world/sala_recepcao.s"
+	@echo "... src/world/sala_reuniao_4.obj"
+	@echo "... src/world/sala_reuniao_4.i"
+	@echo "... src/world/sala_reuniao_4.s"
+	@echo "... src/world/sala_server_1.obj"
+	@echo "... src/world/sala_server_1.i"
+	@echo "... src/world/sala_server_1.s"
+	@echo "... src/world/sala_server_2.obj"
+	@echo "... src/world/sala_server_2.i"
+	@echo "... src/world/sala_server_2.s"
+	@echo "... src/world/sala_treino_escritorio.obj"
+	@echo "... src/world/sala_treino_escritorio.i"
+	@echo "... src/world/sala_treino_escritorio.s"
+	@echo "... src/world/sala_treino_ia.obj"
+	@echo "... src/world/sala_treino_ia.i"
+	@echo "... src/world/sala_treino_ia.s"
+	@echo "... src/world/terreo_3d.obj"
+	@echo "... src/world/terreo_3d.i"
+	@echo "... src/world/terreo_3d.s"
 .PHONY : help
 
 

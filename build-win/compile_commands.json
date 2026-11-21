@@ -1,117 +1,285 @@
 [
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/main.c.obj -c /home/vitorc/TuringTest/main.c",
-  "file": "/home/vitorc/TuringTest/main.c",
-  "output": "CMakeFiles/turing_test.dir/main.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/main.c.obj -c /home/vitorc/TuringTest/src/main.c",
+  "file": "/home/vitorc/TuringTest/src/main.c",
+  "output": "CMakeFiles/turing_test.dir/src/main.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/scenes/menu_scene.c.obj -c /home/vitorc/TuringTest/scenes/menu_scene.c",
-  "file": "/home/vitorc/TuringTest/scenes/menu_scene.c",
-  "output": "CMakeFiles/turing_test.dir/scenes/menu_scene.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/core/game_state.c.obj -c /home/vitorc/TuringTest/src/core/game_state.c",
+  "file": "/home/vitorc/TuringTest/src/core/game_state.c",
+  "output": "CMakeFiles/turing_test.dir/src/core/game_state.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.obj -c /home/vitorc/TuringTest/scenes/gameplay_scene.c",
-  "file": "/home/vitorc/TuringTest/scenes/gameplay_scene.c",
-  "output": "CMakeFiles/turing_test.dir/scenes/gameplay_scene.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/core/settings.c.obj -c /home/vitorc/TuringTest/src/core/settings.c",
+  "file": "/home/vitorc/TuringTest/src/core/settings.c",
+  "output": "CMakeFiles/turing_test.dir/src/core/settings.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/scenes/selection_scene.c.obj -c /home/vitorc/TuringTest/scenes/selection_scene.c",
-  "file": "/home/vitorc/TuringTest/scenes/selection_scene.c",
-  "output": "CMakeFiles/turing_test.dir/scenes/selection_scene.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/core/ranking.c.obj -c /home/vitorc/TuringTest/src/core/ranking.c",
+  "file": "/home/vitorc/TuringTest/src/core/ranking.c",
+  "output": "CMakeFiles/turing_test.dir/src/core/ranking.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/utils/raycanvas.c.obj -c /home/vitorc/TuringTest/utils/raycanvas.c",
-  "file": "/home/vitorc/TuringTest/utils/raycanvas.c",
-  "output": "CMakeFiles/turing_test.dir/utils/raycanvas.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/core/transition.c.obj -c /home/vitorc/TuringTest/src/core/transition.c",
+  "file": "/home/vitorc/TuringTest/src/core/transition.c",
+  "output": "CMakeFiles/turing_test.dir/src/core/transition.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/utils/dialog_system.c.obj -c /home/vitorc/TuringTest/utils/dialog_system.c",
-  "file": "/home/vitorc/TuringTest/utils/dialog_system.c",
-  "output": "CMakeFiles/turing_test.dir/utils/dialog_system.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/core/raycanvas.c.obj -c /home/vitorc/TuringTest/src/core/raycanvas.c",
+  "file": "/home/vitorc/TuringTest/src/core/raycanvas.c",
+  "output": "CMakeFiles/turing_test.dir/src/core/raycanvas.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/utils/dialog_data.c.obj -c /home/vitorc/TuringTest/utils/dialog_data.c",
-  "file": "/home/vitorc/TuringTest/utils/dialog_data.c",
-  "output": "CMakeFiles/turing_test.dir/utils/dialog_data.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/core/ui_common.c.obj -c /home/vitorc/TuringTest/src/core/ui_common.c",
+  "file": "/home/vitorc/TuringTest/src/core/ui_common.c",
+  "output": "CMakeFiles/turing_test.dir/src/core/ui_common.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/utils/transition.c.obj -c /home/vitorc/TuringTest/utils/transition.c",
-  "file": "/home/vitorc/TuringTest/utils/transition.c",
-  "output": "CMakeFiles/turing_test.dir/utils/transition.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.obj -c /home/vitorc/TuringTest/src/scenes/menu_scene.c",
+  "file": "/home/vitorc/TuringTest/src/scenes/menu_scene.c",
+  "output": "CMakeFiles/turing_test.dir/src/scenes/menu_scene.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/utils/game_state.c.obj -c /home/vitorc/TuringTest/utils/game_state.c",
-  "file": "/home/vitorc/TuringTest/utils/game_state.c",
-  "output": "CMakeFiles/turing_test.dir/utils/game_state.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.obj -c /home/vitorc/TuringTest/src/scenes/intro_scene.c",
+  "file": "/home/vitorc/TuringTest/src/scenes/intro_scene.c",
+  "output": "CMakeFiles/turing_test.dir/src/scenes/intro_scene.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/utils/settings.c.obj -c /home/vitorc/TuringTest/utils/settings.c",
-  "file": "/home/vitorc/TuringTest/utils/settings.c",
-  "output": "CMakeFiles/turing_test.dir/utils/settings.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.obj -c /home/vitorc/TuringTest/src/scenes/selection_scene.c",
+  "file": "/home/vitorc/TuringTest/src/scenes/selection_scene.c",
+  "output": "CMakeFiles/turing_test.dir/src/scenes/selection_scene.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/utils/options_ui.c.obj -c /home/vitorc/TuringTest/utils/options_ui.c",
-  "file": "/home/vitorc/TuringTest/utils/options_ui.c",
-  "output": "CMakeFiles/turing_test.dir/utils/options_ui.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.obj -c /home/vitorc/TuringTest/src/scenes/gameplay_scene.c",
+  "file": "/home/vitorc/TuringTest/src/scenes/gameplay_scene.c",
+  "output": "CMakeFiles/turing_test.dir/src/scenes/gameplay_scene.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/utils/ranking.c.obj -c /home/vitorc/TuringTest/utils/ranking.c",
-  "file": "/home/vitorc/TuringTest/utils/ranking.c",
-  "output": "CMakeFiles/turing_test.dir/utils/ranking.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.obj -c /home/vitorc/TuringTest/src/gameplay/gameplay_data.c",
+  "file": "/home/vitorc/TuringTest/src/gameplay/gameplay_data.c",
+  "output": "CMakeFiles/turing_test.dir/src/gameplay/gameplay_data.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/utils/webcam.c.obj -c /home/vitorc/TuringTest/utils/webcam.c",
-  "file": "/home/vitorc/TuringTest/utils/webcam.c",
-  "output": "CMakeFiles/turing_test.dir/utils/webcam.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.obj -c /home/vitorc/TuringTest/src/gameplay/gameplay_logic_hint.c",
+  "file": "/home/vitorc/TuringTest/src/gameplay/gameplay_logic_hint.c",
+  "output": "CMakeFiles/turing_test.dir/src/gameplay/gameplay_logic_hint.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/utils/mural_ui.c.obj -c /home/vitorc/TuringTest/utils/mural_ui.c",
-  "file": "/home/vitorc/TuringTest/utils/mural_ui.c",
-  "output": "CMakeFiles/turing_test.dir/utils/mural_ui.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.obj -c /home/vitorc/TuringTest/src/scenes/verdict_scene.c",
+  "file": "/home/vitorc/TuringTest/src/scenes/verdict_scene.c",
+  "output": "CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/utils/mapa_holograma.c.obj -c /home/vitorc/TuringTest/utils/mapa_holograma.c",
-  "file": "/home/vitorc/TuringTest/utils/mapa_holograma.c",
-  "output": "CMakeFiles/turing_test.dir/utils/mapa_holograma.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/dialog_system.c.obj -c /home/vitorc/TuringTest/src/systems/dialog_system.c",
+  "file": "/home/vitorc/TuringTest/src/systems/dialog_system.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/dialog_system.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.obj -c /home/vitorc/TuringTest/utils/evidencia_holograma.c",
-  "file": "/home/vitorc/TuringTest/utils/evidencia_holograma.c",
-  "output": "CMakeFiles/turing_test.dir/utils/evidencia_holograma.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/dialog_data.c.obj -c /home/vitorc/TuringTest/src/systems/dialog_data.c",
+  "file": "/home/vitorc/TuringTest/src/systems/dialog_data.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/dialog_data.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/utils/setas_3d.c.obj -c /home/vitorc/TuringTest/utils/setas_3d.c",
-  "file": "/home/vitorc/TuringTest/utils/setas_3d.c",
-  "output": "CMakeFiles/turing_test.dir/utils/setas_3d.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/webcam.c.obj -c /home/vitorc/TuringTest/src/systems/webcam.c",
+  "file": "/home/vitorc/TuringTest/src/systems/webcam.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/webcam.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/scenes/verdict_scene.c.obj -c /home/vitorc/TuringTest/scenes/verdict_scene.c",
-  "file": "/home/vitorc/TuringTest/scenes/verdict_scene.c",
-  "output": "CMakeFiles/turing_test.dir/scenes/verdict_scene.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/mural_ui.c.obj -c /home/vitorc/TuringTest/src/systems/mural_ui.c",
+  "file": "/home/vitorc/TuringTest/src/systems/mural_ui.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/mural_ui.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
-  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/scenes/intro_scene.c.obj -c /home/vitorc/TuringTest/scenes/intro_scene.c",
-  "file": "/home/vitorc/TuringTest/scenes/intro_scene.c",
-  "output": "CMakeFiles/turing_test.dir/scenes/intro_scene.c.obj"
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/options_ui.c.obj -c /home/vitorc/TuringTest/src/systems/options_ui.c",
+  "file": "/home/vitorc/TuringTest/src/systems/options_ui.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/options_ui.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.obj -c /home/vitorc/TuringTest/src/systems/evidencia_holograma.c",
+  "file": "/home/vitorc/TuringTest/src/systems/evidencia_holograma.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.obj -c /home/vitorc/TuringTest/src/systems/mapa_holograma.c",
+  "file": "/home/vitorc/TuringTest/src/systems/mapa_holograma.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/setas_3d.c.obj -c /home/vitorc/TuringTest/src/systems/setas_3d.c",
+  "file": "/home/vitorc/TuringTest/src/systems/setas_3d.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/setas_3d.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/player_character.c.obj -c /home/vitorc/TuringTest/src/systems/player_character.c",
+  "file": "/home/vitorc/TuringTest/src/systems/player_character.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/player_character.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj -c /home/vitorc/TuringTest/src/world/terreo_3d.c",
+  "file": "/home/vitorc/TuringTest/src/world/terreo_3d.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj -c /home/vitorc/TuringTest/src/world/sala_recepcao.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_recepcao.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj -c /home/vitorc/TuringTest/src/world/sala_lanchonete.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_lanchonete.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj -c /home/vitorc/TuringTest/src/world/sala_jardim.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_jardim.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj -c /home/vitorc/TuringTest/src/world/sala_escritorio.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_escritorio.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_escritorio_2.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_escritorio_2.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj -c /home/vitorc/TuringTest/src/world/sala_convivio.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_convivio.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_hall_1.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_hall_1.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_contabilidade_1.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_contabilidade_1.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_contabilidade_2.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_contabilidade_2.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_arquivo_1.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_arquivo_1.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_copa_1.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_copa_1.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_hall_2.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_hall_2.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_ciber_1.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_ciber_1.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_ciber_2.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_ciber_2.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_server_1.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_server_1.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_server_2.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_server_2.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj -c /home/vitorc/TuringTest/src/world/sala_hall_3.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_hall_3.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj -c /home/vitorc/TuringTest/src/world/sala_treino_escritorio.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_treino_escritorio.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj -c /home/vitorc/TuringTest/src/world/sala_treino_ia.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_treino_ia.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj -c /home/vitorc/TuringTest/src/world/sala_garagem_prototipos.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_garagem_prototipos.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj -c /home/vitorc/TuringTest/src/world/sala_hall_4.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_hall_4.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj -c /home/vitorc/TuringTest/src/world/sala_auditorio.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_auditorio.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj -c /home/vitorc/TuringTest/src/world/sala_reuniao_4.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_reuniao_4.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win/_deps/raylib-build/raylib",
