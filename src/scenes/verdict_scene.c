@@ -1499,6 +1499,9 @@ void UpdateDrawVerdictScene(void) {
             DesenharPontuacaoFinal();
         } else if (g_estado == ESTADO_FOTO) {
             if (MuralFotoUpdateDraw(GameStateGetPlayerName(), g_scoreTotal, g_alvo == AI_INDEX, g_sndHover, &g_rankPosObtida)) {
+                if (SettingsGetAutoReset()) {
+                    SettingsResetToDefaultWithCRT();
+                }
                 g_estado = ESTADO_MURAL;
                 g_tempo = 0.0f;
             }

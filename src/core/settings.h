@@ -41,6 +41,7 @@ void SettingsSetCRT(bool ligado);
 // - Tech Night: temporizador suave 08:00 -> 17:00 (permanece ativo mesmo se Dev Mode for desligado)
 bool SettingsGetAutoReset(void);
 void SettingsSetAutoReset(bool ligado);
+void SettingsResetToDefaultWithCRT(void);
 bool SettingsGetTechNight(void);
 void SettingsSetTechNight(bool ligado);
 

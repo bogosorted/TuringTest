@@ -215,16 +215,25 @@ bool SettingsGetCamera3DFixa(void) { return g_cam3dFixa; }
 void SettingsSetCamera3DFixa(bool fixa) { g_cam3dFixa = fixa; }
 
 bool SettingsGetAutoReset(void) { return g_autoReset; }
+void SettingsResetToDefaultWithCRT(void) {
+    bool prevFull = g_telaCheia;
+    g_volMusica  = 0.8f;
+    g_volEfeitos = 1.0f;
+    g_telaCheia  = true;
+    g_tutorial   = true;
+    g_cam3dFixa  = false;
+    g_paleta     = 0;
+    g_crt        = true;
+    SettingsSave();
+    if (prevFull != g_telaCheia) {
+        SettingsApplyWindowMode();
+    }
+}
+
 void SettingsSetAutoReset(bool ligado) {
     g_autoReset = ligado;
     if (ligado) {
-        g_volMusica  = 0.8f;
-        g_volEfeitos = 1.0f;
-        g_telaCheia  = true;
-        g_tutorial   = true;
-        g_cam3dFixa  = false;
-        g_paleta     = 0;
-        g_crt        = true;
+        SettingsResetToDefaultWithCRT();
     }
 }
 
