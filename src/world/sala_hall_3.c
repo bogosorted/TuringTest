@@ -19,9 +19,19 @@ static const float H3_WALL_H = 3.05f;
 static const PlayerColliderBox H3_COLLIDERS[] = {
     { -1.85f,  0.65f,  1.15f,  1.75f },
     { -4.95f,  2.15f, -4.15f,  2.95f },
+    { -5.00f, -3.40f, -2.50f, -1.15f }, // Balcao redondo da recepcionista (bloqueia acesso por tras)
 };
 
 static const SalaInteractable H3_INTERACTABLES[] = {
+    {
+        "recepcionista_hall_3",
+        "Recepcionista (3º Andar)",
+        { -3.75f, 0.95f, -1.75f },
+        { 1.45f, 1.35f, 1.05f },
+        1.95f,
+        false,
+        "Recepcionista: \"Bem-vindo ao 3º Andar — Treinamento de IA. À esquerda fica o Escritório de Treinamento; à direita ficam o Setor de Treinamento de IA e a Garagem de Protótipos.\""
+    },
     {
         "diretorio_andar_3",
         "Diretório do 3º Andar",
@@ -101,9 +111,12 @@ static void DesenharHall3(float tempo, bool evRelatoriosAtiva) {
                 (Vector3){ 1.15f, 0.80f, 0.04f }, 0.82f, 0.78f, 0.70f, 0.16f);
 
     TerreoCaixa((Vector3){ -0.35f, 0.01f, 1.20f }, (Vector3){ 3.40f, 0.02f, 1.65f }, 0.20f, 0.16f, 0.16f, -1.0f);
-    TerreoCaixa((Vector3){ -0.35f, 0.24f, 1.20f }, (Vector3){ 2.60f, 0.36f, 0.84f }, 0.62f, 0.52f, 0.46f, 0.16f);
-    TerreoCaixa((Vector3){ -0.35f, 0.56f, 1.52f }, (Vector3){ 2.60f, 0.44f, 0.20f }, 0.66f, 0.56f, 0.48f, 0.16f);
-    TerreoPlanta((Vector3){ -4.55f, 0.0f, 2.55f }, 1.20f);
+    TerreoSofaCurvo((Vector3){ -0.35f, 0.0f, 1.20f }, 180.0f, 2.50f);
+    TerreoPlanta((Vector3){ -4.55f, 0.0f, 2.55f }, 1.25f);
+    TerreoPlanta((Vector3){  4.55f, 0.0f, -2.55f }, 1.20f);
+
+    // Balcao redondo em U da recepcionista do 3o andar
+    TerreoBalcaoRecepcaoU((Vector3){ -3.75f, 0.0f, -2.05f });
 
     TerreoElevador((Vector3){ 3.45f, 0.0f, H3_MIN_Z + 0.04f }, 0.0f);
 }

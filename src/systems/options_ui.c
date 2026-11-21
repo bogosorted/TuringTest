@@ -10,7 +10,7 @@
 #define TELA_W 640
 #define TELA_H 360
 
-enum { HOVER_NENHUM = -1, HOVER_ANT = 0, HOVER_PROX = 1, HOVER_TELA_CHEIA = 2, HOVER_TUTORIAL = 3, HOVER_DEV_BTN = 4, HOVER_CRT = 5, HOVER_CAM3D = 6 };
+enum { HOVER_NENHUM = -1, HOVER_ANT = 0, HOVER_PROX = 1, HOVER_TELA_CHEIA = 2, HOVER_TUTORIAL = 3, HOVER_DEV_BTN = 4, HOVER_CRT = 5, HOVER_CAM3D = 6, HOVER_DEV_AUTORESET = 7, HOVER_DEV_TECHNIGHT = 8, HOVER_DEV_RESTART = 9 };
 
 static int   g_sliderArrastando = -1;   // -1 = nenhum, 0 = musica, 1 = efeitos
 static int   g_hoverAnt = HOVER_NENHUM; // botao que estava com o mouse em cima no frame anterior
@@ -321,6 +321,48 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
         Rectangle q = { x0 + i * (larguraAmostra + gap), yAmostra, larguraAmostra, 9.0f };
         DrawRectangleRec(ParaTela((Rectangle){ q.x - 1, q.y - 1, q.width + 2, q.height + 2 }), ComAlpha(est->amostraBorda, a));
         DrawRectangleRec(ParaTela(q), ComAlpha(tons[i], a));
+    }
+
+    // Opcoes exclusivas do Modo Dev (abaixo das amostras de paleta)
+    if (SettingsGetDevMode()) {
+        float yDevRow = yAmostra + 13.0f;
+        float xDev = lay->x;
+        bool autoR = SettingsGetAutoReset();
+        if (Caixinha(autoR, xDev, yDevRow, 98.0f, HOVER_DEV_AUTORESET, lay, est, a, interativoControles, &hoverSeta, tocarHover)) {
+            SettingsSetAutoReset(!autoR);
+            SettingsSave();
+        }
+        Texto(est, "Auto-Reset", xDev + 20.0f, yDevRow, est->valor, a, 0);
+
+        float xTech = xDev + 104.0f;
+        bool techN = SettingsGetTechNight();
+        if (Caixinha(techN, xTech, yDevRow, 96.0f, HOVER_DEV_TECHNIGHT, lay, est, a, interativoControles, &hoverSeta, tocarHover)) {
+            SettingsSetTechNight(!techN);
+            SettingsSave();
+        }
+        Texto(est, "Tech Night", xTech + 20.0f, yDevRow, est->valor, a, 0);
+
+        Rectangle rAppRestart = { lay->direita - 86.0f, yDevRow - 1.0f, 86.0f, 15.0f };
+        bool hovRestart = interativoControles && CheckCollisionPointRec(MouseVirtual(), rAppRestart);
+        if (hovRestart) {
+            hoverSeta = true;
+            if (g_hoverAnt != HOVER_DEV_RESTART && tocarHover) tocarHover();
+            g_hoverAnt = HOVER_DEV_RESTART;
+        }
+        Rectangle rAppTela = ParaTela(rAppRestart);
+        float escR = rAppTela.height / rAppRestart.height;
+        DrawRectangleRec(rAppTela, ComAlpha(hovRestart ? (Color){ 165, 62, 64, 255 } : (Color){ 112, 42, 44, 255 }, a));
+        DrawRectangleLinesEx(rAppTela, 1.1f * escR, ComAlpha((Color){ 255, 242, 230, 255 }, a));
+        int fzR = (int)(8.0f * escR);
+        if (fzR < 1) fzR = 1;
+        const char *lblR = "REINICIAR APP";
+        int twR = MeasureText(lblR, fzR);
+        DrawText(lblR, (int)(rAppTela.x + (rAppTela.width - twR) * 0.5f),
+                 (int)(rAppTela.y + (rAppTela.height - fzR) * 0.5f), fzR, ComAlpha((Color){ 255, 242, 230, 255 }, a));
+        if (hovRestart && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            SettingsSave();
+            SettingsRequestAppRestart();
+        }
     }
 
     // Botaozinho escondido de Dev Tools no canto inferior direito das configuracoes:

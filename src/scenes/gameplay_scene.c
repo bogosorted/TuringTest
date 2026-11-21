@@ -51,11 +51,31 @@ static int       g_typewriterLetterCount = 0;
 static Texture2D g_ditherTile;              // padrão Bayer 25% para escurecer mensagens anteriores
 static Sound     g_sndHover;
 static Sound     g_sndPassos;               // passos ao trocar de local pelas setas
+static Sound     g_sndElevadorPlim;         // som "Plim" ao apertar o botao do elevador
+static Sound     g_sndElevadorChegou;       // som "Plim" mais agudo ao chegar no andar
 // Transicao entre locais: escurece, fica preto com os passos e clareia ja no destino
 #define TRANS_ESCURECE 0.14f
 #define TRANS_PRETO    0.35f
 #define TRANS_CLAREIA  0.16f
+static float     g_transPretoDur = TRANS_PRETO;
 static float     g_transTempo = -1.0f;      // -1 = sem transicao
+static bool      g_transPlimMeioTocado  = false;
+static bool      g_transPlimFinalTocado = false;
+static bool      g_transModoSaltoMapa   = false;
+
+static void TocarSomElevadorPlim(void) {
+    if (g_sndElevadorPlim.frameCount > 0) {
+        SetSoundVolume(g_sndElevadorPlim, 0.55f * SettingsGetSfxVolume());
+        PlaySound(g_sndElevadorPlim);
+    }
+}
+
+static void TocarSomElevadorChegou(void) {
+    if (g_sndElevadorChegou.frameCount > 0) {
+        SetSoundVolume(g_sndElevadorChegou, 0.55f * SettingsGetSfxVolume());
+        PlaySound(g_sndElevadorChegou);
+    }
+}
 static int       g_transDestino = 0;                // som sutil e agradavel de hover nos botoes e ferramentas
 static int       g_choiceHoverAnt        = -1;
 static int       g_setaHover             = -1;   // seta de navegacao sob o mouse (-1 = nenhuma)
@@ -1084,7 +1104,8 @@ static float     g_btnVereditoDevAnim       = 0.0f;
 static float     g_btnVereditoDevVel        = 0.0f;
 static bool      g_confirmarAvancarDia      = false; // modal "Voce tem certeza?" quando ainda ha tokens
 static bool      g_elevadorAberto           = false; // menu de andares do elevador 3D
-static bool      g_mapaCompletoAberto       = false; // tecla M: mostra o predio inteiro em tamanho grande
+static bool      g_mapaCompletoAberto       = false; // tecla M: mostra o tablet holografico com planta alta por andar
+static int       g_mapaAndarSelecionado     = 0;     // andar selecionado no mapa holografico (M)
 
 typedef enum {
     INSP_NENHUMA = 0,
@@ -1177,8 +1198,8 @@ static int       g_funcionario     = 0;       // funcionario sendo entrevistado
 static int       g_fichaAtual      = -1;      // -1 = ficha fechada
 static bool      g_arrastandoFicha = false;
 static bool      g_redimFicha      = false;
-static float     g_fichaScale      = 1.0f;
-static Vector2   g_fichaPos        = { 200, 20 };
+static float     g_fichaScale      = 0.85f;
+static Vector2   g_fichaPos        = { 12, 34 };
 static Vector2   g_offsetFicha     = { 0, 0 };
 
 // Rolagem da parte de baixo da ficha
@@ -2618,8 +2639,9 @@ static Rectangle SuspeitoSilArea(int i) {
 
 // Botoes do topo da janela: Dia, Veredito (Modo DEV) e Proximo Dia / Veredito
 static const Rectangle BADGE_DIA_TOPO         = {   8.0f,   8.0f,  54.0f,  20.0f };
-static const Rectangle BOTAO_VEREDITO_DEV_TOPO = {  76.0f,   8.0f,  90.0f,  22.0f };
-static const Rectangle BOTAO_AVANCAR_TOPO     = { 174.0f,   8.0f, 121.0f,  22.0f };
+static const Rectangle BOTAO_VEREDITO_DEV_TOPO   = {  76.0f,   8.0f,  90.0f,  22.0f };
+static const Rectangle BOTAO_AVANCAR_TOPO        = { 174.0f,   8.0f, 121.0f,  22.0f };
+static const Rectangle BOTAO_REINICIAR_DEV_TOPO  = { 303.0f,   8.0f,  76.0f,  22.0f };
 static const Rectangle BOTAO_AVANCAR_PAINEL   = { DIALOG_BOX_X, 316.0f, DIALOG_BOX_W, 30.0f };
 
 // Modal de confirmacao ("Voce tem certeza?") quando clica para avancar ainda tendo tokens
@@ -2714,11 +2736,12 @@ static bool UpdateMenuElevador(void) {
                 FecharJanelasFerramentas();
                 g_closeupAtual = CLOSEUP_NENHUM;
                 g_transDestino = (int)op->destino;
+                g_transPretoDur = 0.85f; // elevador direto: curto, sem passos
                 g_transTempo = 0.0f;
-                if (g_sndPassos.frameCount > 0) {
-                    SetSoundVolume(g_sndPassos, 0.7f * SettingsGetSfxVolume());
-                    PlaySound(g_sndPassos);
-                }
+                g_transPlimMeioTocado  = true;
+                g_transPlimFinalTocado = false;
+                g_transModoSaltoMapa   = false;
+                TocarSomElevadorPlim();
                 return true;
             }
         }
@@ -2837,6 +2860,7 @@ static void AbrirInspecaoEv3D(TipoInspecaoEv3D tipo, int suspeito, const char *e
 
 static void FecharInspecaoEv3D(void) {
     if (!g_inspecaoEvAtiva) return;
+    bool eraComputador = (g_inspecaoEvTipo == INSP_COMPUTADOR_MEMO || g_inspecaoEvTipo == INSP_TERMINAL_ANALU);
     if (g_inspecaoEvAberta && g_inspecaoEvAnim >= 0.85f && !g_inspecaoEvReg &&
         g_inspecaoEvSusp >= 0 && g_inspecaoEvId[0] != '\0') {
         GameStateRegistrarEvidencia(g_inspecaoEvSusp, g_inspecaoEvId);
@@ -2848,6 +2872,9 @@ static void FecharInspecaoEv3D(void) {
     g_inspecaoEvTextoVisivel = false;
     g_inspArrastandoEsq      = false;
     g_inspArrastandoDir      = false;
+    if (eraComputador) {
+        Terreo3DTriggerComputerExit();
+    }
 }
 
 static void GarantirRTInspecao3D(void) {
@@ -2887,24 +2914,16 @@ static void RenderInspecaoEv3DCena(void) {
     cam.fovy       = 36.0f;
     cam.projection = CAMERA_PERSPECTIVE;
 
-    Color cPapel   = { 240, 230, 214, 255 };
-    Color cPapelSb = { 196, 186, 170, 255 };
-    Color cBordaPp = { 112, 102,  92, 255 };
-    Color cTinta   = {  62,  56,  54, 255 };
-    Color cPasta   = { 198, 160,  94, 255 };
-    Color cPastaEs = { 152, 118,  64, 255 };
-    Color cRabisco = { 196,  48,  48, 255 };
-    Color cEnv     = { 216, 198, 168, 255 };
-    Color cEnvAba  = { 192, 174, 144, 255 };
-    Color cMon     = {  52,  48,  50, 255 };
-    Color cMonBr   = { 155, 145, 138, 255 };
-    Color cTela    = {  34,  76,  56, 255 };
-    Color cTelaBr  = { 132, 232, 172, 255 };
-    Color cAmarelo = { 255, 224,  48, 255 };
-    Color cGrade   = {  54,  49,  52, 255 };
+    // Paleta oficial de 5 tons do jogo (mesmo padrao do mapa e evidencias holograficas)
+    Color cPreto   = {  18,  16,  18, 255 };
+    Color cEscuro  = {  32,  29,  31, 255 };
+    Color cMedio   = { 125, 112, 113, 255 };
+    Color cClaro   = { 189, 181, 168, 255 };
+    Color cMarfim  = { 255, 242, 230, 255 };
+    Color cGrade   = {  46,  42,  45, 255 };
 
     BeginTextureMode(g_inspRT);
-    ClearBackground((Color){ 18, 16, 18, 255 });
+    ClearBackground(cPreto);
     BeginMode3D(cam);
 
     // Grade sutil de referencia espacial 3D no chao da vitrine
@@ -2915,113 +2934,147 @@ static void RenderInspecaoEv3DCena(void) {
     }
 
     if (g_inspecaoEvTipo == INSP_BOLINHA_PAPEL) {
-        // 1) Bolinha de papel 3D que desamassa virando uma folha de papel 3D plana
+        // 1) Bolinha de papel 3D que desamassa suavemente virando uma folha fina e nitida
         if (ease < 0.42f) {
             float k = ease / 0.42f;
-            float sx = 1.0f + k * 0.65f;
-            float sy = 1.0f - k * 0.52f;
-            float sz = 1.0f + k * 0.45f;
+            float smooth = k * k * (3.0f - 2.0f * k);
+            float sx = 1.0f + smooth * 0.65f;
+            float sy = 1.0f - smooth * 0.62f;
+            float sz = 1.0f + smooth * 0.50f;
             rlPushMatrix();
             rlScalef(sx, sy, sz);
-            DrawSphereEx((Vector3){  0.00f, 0.00f,  0.00f }, 0.48f, 6, 6, cPapel);
-            DrawSphereEx((Vector3){  0.18f, 0.14f, -0.10f }, 0.34f, 5, 5, cPapelSb);
-            DrawSphereEx((Vector3){ -0.18f, -0.10f, 0.14f }, 0.32f, 5, 5, cPapel);
-            DrawSphereWires((Vector3){ 0.0f, 0.0f, 0.0f }, 0.51f, 6, 6, cBordaPp);
+            DrawSphereEx((Vector3){  0.00f, 0.00f,  0.00f }, 0.44f, 8, 8, cMarfim);
+            DrawSphereEx((Vector3){  0.16f, 0.12f, -0.09f }, 0.30f, 7, 7, cClaro);
+            DrawSphereEx((Vector3){ -0.16f, -0.09f, 0.12f }, 0.28f, 7, 7, cMarfim);
+            DrawSphereWires((Vector3){ 0.0f, 0.0f, 0.0f }, 0.46f, 8, 8, cMedio);
             rlPopMatrix();
         } else {
             float k = (ease - 0.42f) / 0.58f;
-            float w = 0.90f + 0.72f * k;
-            float d = 0.85f + 1.25f * k;
-            float esp = 0.14f - 0.11f * k;
-            DesenharCuboComBorda3D((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ w, esp, d }, cPapel, cBordaPp);
-            // Vincos em relevo 3D na folha desamassada + linhas de texto
-            DrawLine3D((Vector3){ -w * 0.42f, esp * 0.6f, -d * 0.25f }, (Vector3){ w * 0.44f, esp * 0.6f, -d * 0.08f }, cBordaPp);
-            DrawLine3D((Vector3){ -w * 0.38f, esp * 0.6f,  d * 0.22f }, (Vector3){ w * 0.40f, esp * 0.6f,  d * 0.05f }, cBordaPp);
+            float smooth = k * k * (3.0f - 2.0f * k);
+            float w = 0.92f + 0.68f * smooth;
+            float d = 0.90f + 1.18f * smooth;
+            float esp = 0.09f - 0.072f * smooth;
+            DesenharCuboComBorda3D((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ w, esp, d }, cMarfim, cMedio);
+            // Vincos finos e cabecalho + linhas de texto na paleta do jogo
+            DrawLine3D((Vector3){ -w * 0.44f, esp * 0.55f, -d * 0.24f }, (Vector3){ w * 0.44f, esp * 0.55f, -d * 0.08f }, cMedio);
+            DrawLine3D((Vector3){ -w * 0.40f, esp * 0.55f,  d * 0.20f }, (Vector3){ w * 0.42f, esp * 0.55f,  d * 0.04f }, cMedio);
+            DrawCube((Vector3){ -w * 0.14f, esp * 0.54f, -d * 0.38f }, w * 0.52f, 0.008f, 0.032f, cEscuro);
             for (int l = 0; l < 6; l++) {
-                float lz = -d * 0.34f + l * (d * 0.125f);
-                float lw = (l == 5) ? w * 0.45f : w * 0.74f;
-                DrawCube((Vector3){ -w * 0.37f + lw * 0.5f, esp * 0.55f, lz }, lw, 0.014f, 0.045f, cTinta);
+                float lz = -d * 0.26f + l * (d * 0.115f);
+                float lw = (l == 5) ? w * 0.44f : w * 0.72f;
+                DrawCube((Vector3){ -w * 0.36f + lw * 0.5f, esp * 0.54f, lz }, lw, 0.006f, 0.026f, cMedio);
             }
         }
     } else if (g_inspecaoEvTipo == INSP_PASTA_DEVOLVIDOS) {
-        // 2) Pasta 3D articulada que abre a capa esquerda revelando paginas com rabiscos vermelhos
-        float angCapa = 152.0f * ease; // gira de 0 -> 152 graus no eixo Z pela lombada esquerda
-        // Capa traseira
-        DesenharCuboComBorda3D((Vector3){ 0.0f, -0.06f, 0.0f }, (Vector3){ 1.56f, 0.04f, 2.04f }, cPastaEs, (Color){ 96, 74, 40, 255 });
-        // Pilha de folhas internas
-        DesenharCuboComBorda3D((Vector3){ 0.02f, 0.02f, 0.0f }, (Vector3){ 1.40f, 0.11f, 1.88f }, cPapel, cBordaPp);
-        // Linhas + rabiscos vermelhos 3D em cima das folhas
+        // 2) Pasta fina articulada que abre a capa esquerda revelando paginas com anotacoes na paleta do jogo
+        float angCapa = 154.0f * ease;
+        // Capa traseira fina + aba lateral
+        DesenharCuboComBorda3D((Vector3){ 0.0f, -0.045f, 0.0f }, (Vector3){ 1.54f, 0.018f, 2.02f }, cEscuro, cMedio);
+        DesenharCuboComBorda3D((Vector3){ 0.80f, -0.045f, -0.52f }, (Vector3){ 0.08f, 0.016f, 0.48f }, cEscuro, cMedio);
+        // Pilha fina de folhas internas
+        DesenharCuboComBorda3D((Vector3){ 0.02f, 0.005f, 0.0f }, (Vector3){ 1.38f, 0.065f, 1.86f }, cMarfim, cMedio);
+        // Linhas e marcacoes de revisao na paleta do jogo
         for (int l = 0; l < 5; l++) {
-            float lz = -0.62f + l * 0.28f;
-            DrawCube((Vector3){ -0.04f, 0.085f, lz }, 0.96f, 0.015f, 0.045f, cTinta);
+            float lz = -0.60f + l * 0.28f;
+            DrawCube((Vector3){ -0.04f, 0.042f, lz }, 0.94f, 0.006f, 0.028f, cEscuro);
             if (l == 1 || l == 3) {
-                DrawCubeWires((Vector3){ -0.04f, 0.095f, lz }, 1.06f, 0.025f, 0.16f, cRabisco);
+                DrawCubeWires((Vector3){ -0.04f, 0.048f, lz }, 1.04f, 0.012f, 0.13f, cMedio);
             }
         }
-        // Capa frontal articulada na lombada x = -0.78
+        // Capa frontal articulada na lombada x = -0.77
         rlPushMatrix();
-        rlTranslatef(-0.78f, 0.09f, 0.0f);
+        rlTranslatef(-0.77f, 0.052f, 0.0f);
         rlRotatef(angCapa, 0.0f, 0.0f, 1.0f);
-        DesenharCuboComBorda3D((Vector3){ 0.78f, 0.0f, 0.0f }, (Vector3){ 1.56f, 0.04f, 2.04f }, cPasta, (Color){ 110, 84, 44, 255 });
-        DesenharCuboComBorda3D((Vector3){ 0.80f, 0.028f, -0.35f }, (Vector3){ 0.62f, 0.015f, 0.42f }, cPapel, cBordaPp);
+        DesenharCuboComBorda3D((Vector3){ 0.77f, 0.0f, 0.0f }, (Vector3){ 1.54f, 0.018f, 2.02f }, cMedio, cClaro);
+        DesenharCuboComBorda3D((Vector3){ 0.78f, 0.014f, -0.35f }, (Vector3){ 0.58f, 0.006f, 0.38f }, cMarfim, cEscuro);
         rlPopMatrix();
     } else if (g_inspecaoEvTipo == INSP_COMPUTADOR_MEMO || g_inspecaoEvTipo == INSP_TERMINAL_ANALU) {
-        // 3) Monitor 3D + teclado + janela 3D saltando para frente da tela
-        DesenharCuboComBorda3D((Vector3){ 0.0f, -0.56f, 0.05f }, (Vector3){ 0.84f, 0.06f, 0.56f }, cMon, cMonBr);
-        DesenharCuboComBorda3D((Vector3){ 0.0f, -0.32f, -0.06f }, (Vector3){ 0.16f, 0.46f, 0.14f }, cMon, cMonBr);
-        DesenharCuboComBorda3D((Vector3){ 0.0f, 0.18f, -0.04f }, (Vector3){ 2.10f, 1.24f, 0.14f }, cMon, cMonBr);
-        DesenharCuboComBorda3D((Vector3){ 0.0f, 0.18f,  0.04f }, (Vector3){ 1.90f, 1.04f, 0.02f }, cTela, cTelaBr);
-        // Teclado 3D na frente
-        DesenharCuboComBorda3D((Vector3){ 0.0f, -0.54f, 0.66f }, (Vector3){ 1.32f, 0.05f, 0.42f }, cMon, cMonBr);
-        // Janela 3D que salta pra frente da tela quando clicado
+        // 3) Monitor widescreen fino + pedestal inclinado + teclado low-profile + janela holografica nitida
+        // Base e haste fina do monitor
+        DesenharCuboComBorda3D((Vector3){ 0.0f, -0.58f, 0.02f }, (Vector3){ 0.76f, 0.022f, 0.44f }, cEscuro, cMedio);
+        rlPushMatrix();
+        rlTranslatef(0.0f, -0.34f, -0.10f);
+        rlRotatef(-10.0f, 1.0f, 0.0f, 0.0f);
+        DesenharCuboComBorda3D((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.11f, 0.48f, 0.045f }, cEscuro, cMedio);
+        rlPopMatrix();
+        // Chassi fino widescreen + moldura delgada
+        DesenharCuboComBorda3D((Vector3){ 0.0f, 0.20f, -0.05f }, (Vector3){ 2.18f, 1.24f, 0.045f }, cEscuro, cMedio);
+        // Tela escura com borda luminosa marfim
+        DesenharCuboComBorda3D((Vector3){ 0.0f, 0.20f, -0.022f }, (Vector3){ 2.06f, 1.12f, 0.008f }, cPreto, cClaro);
+        // Barra superior do sistema + linhas de terminal na propria tela
+        DrawCube((Vector3){ 0.0f, 0.70f, -0.014f }, 1.98f, 0.075f, 0.006f, cEscuro);
+        DrawCube((Vector3){ -0.84f, 0.70f, -0.010f }, 0.20f, 0.025f, 0.006f, cMarfim);
+        for (int l = 0; l < 5; l++) {
+            float ly = 0.50f - l * 0.16f;
+            float lw = (l == 4) ? 0.68f : (1.52f - (l % 2) * 0.28f);
+            DrawCube((Vector3){ -0.86f + lw * 0.5f, ly, -0.014f }, lw, 0.022f, 0.006f, (l == 0) ? cMarfim : cMedio);
+        }
+        // Cursor piscando no terminal
+        if (((int)(tempo * 2.5f) % 2) == 0) {
+            DrawCube((Vector3){ -0.14f, -0.14f, -0.012f }, 0.032f, 0.055f, 0.006f, cMarfim);
+        }
+        // LED de energia discreto na moldura inferior
+        DrawCube((Vector3){ 0.92f, -0.39f, -0.020f }, 0.045f, 0.012f, 0.008f, cMarfim);
+
+        // Teclado low-profile fino + fileiras de teclas + mouse ao lado
+        DesenharCuboComBorda3D((Vector3){ -0.10f, -0.57f, 0.62f }, (Vector3){ 1.26f, 0.022f, 0.40f }, cEscuro, cMedio);
+        for (int row = 0; row < 3; row++) {
+            float rz = 0.50f + row * 0.105f;
+            DrawCube((Vector3){ -0.10f, -0.553f, rz }, 1.12f, 0.010f, 0.068f, cMedio);
+        }
+        DesenharCuboComBorda3D((Vector3){ 0.76f, -0.57f, 0.64f }, (Vector3){ 0.16f, 0.024f, 0.26f }, cEscuro, cClaro);
+
+        // Janela holografica fina que salta suavemente para frente da tela
         if (ease > 0.04f) {
-            float zPop = 0.08f + 0.34f * ease;
-            float sc = 0.25f + 0.75f * ease;
-            DesenharCuboComBorda3D((Vector3){ 0.0f, 0.18f, zPop }, (Vector3){ 1.56f * sc, 0.84f * sc, 0.05f }, (Color){ 18, 36, 26, 255 }, cTelaBr);
+            float zPop = 0.06f + 0.36f * ease;
+            float sc = 0.28f + 0.72f * ease;
+            DesenharCuboComBorda3D((Vector3){ 0.0f, 0.20f, zPop }, (Vector3){ 1.56f * sc, 0.86f * sc, 0.014f }, cPreto, cMarfim);
+            // Cabecalho da janela destacada
+            DrawCube((Vector3){ 0.0f, (0.20f + 0.36f * sc), zPop + 0.010f }, 1.50f * sc, 0.09f * sc, 0.006f, cEscuro);
+            DrawCube((Vector3){ -0.45f * sc, (0.20f + 0.36f * sc), zPop + 0.015f }, 0.48f * sc, 0.026f * sc, 0.006f, cMarfim);
             for (int l = 0; l < 4; l++) {
-                float ly = 0.42f * sc - l * (0.20f * sc);
-                DrawCube((Vector3){ -0.08f * sc, ly, zPop + 0.035f }, 1.15f * sc, 0.045f * sc, 0.015f, cTelaBr);
+                float ly = (0.20f + 0.18f * sc) - l * (0.15f * sc);
+                float lw = (l == 3) ? 0.72f * sc : 1.18f * sc;
+                DrawCube((Vector3){ (-0.59f * sc) + lw * 0.5f, ly, zPop + 0.012f }, lw, 0.024f * sc, 0.006f, (l == 0) ? cMarfim : cClaro);
             }
         }
     } else if (g_inspecaoEvTipo == INSP_ENVELOPE_OFICIO) {
-        // 4) Envelope 3D lacrado com aba triangular articulada + folha de oficio deslizando para fora
-        DesenharCuboComBorda3D((Vector3){ 0.0f, -0.06f, 0.25f }, (Vector3){ 1.88f, 0.08f, 1.24f }, cEnv, (Color){ 116, 102, 84, 255 });
-        // Folha do oficio deslizando para fora pela parte traseira (-Z)
+        // 4) Envelope fino lacrado com aba triangular articulada + folha deslizando
+        DesenharCuboComBorda3D((Vector3){ 0.0f, -0.05f, 0.25f }, (Vector3){ 1.86f, 0.036f, 1.22f }, cClaro, cMedio);
         if (ease > 0.05f) {
             float zSlide = 0.22f - 1.10f * ease;
-            float ySlide = 0.03f + 0.18f * ease;
-            DesenharCuboComBorda3D((Vector3){ 0.0f, ySlide, zSlide }, (Vector3){ 1.56f, 0.03f, 1.06f }, cPapel, cBordaPp);
+            float ySlide = 0.01f + 0.16f * ease;
+            DesenharCuboComBorda3D((Vector3){ 0.0f, ySlide, zSlide }, (Vector3){ 1.54f, 0.014f, 1.04f }, cMarfim, cMedio);
             for (int l = 0; l < 4; l++) {
-                DrawCube((Vector3){ 0.0f, ySlide + 0.022f, zSlide - 0.30f + l * 0.18f }, 1.18f, 0.012f, 0.04f, cTinta);
+                DrawCube((Vector3){ 0.0f, ySlide + 0.011f, zSlide - 0.30f + l * 0.18f }, 1.16f, 0.006f, 0.026f, (l == 0) ? cEscuro : cMedio);
             }
         }
-        // Aba triangular 3D girando no eixo X ao redor da borda traseira (z = -0.37)
         rlPushMatrix();
-        rlTranslatef(0.0f, -0.01f, -0.37f);
+        rlTranslatef(0.0f, -0.025f, -0.36f);
         rlRotatef(-145.0f * ease, 1.0f, 0.0f, 0.0f);
         Vector3 a = { -0.92f, 0.0f, 0.0f };
         Vector3 b = {  0.92f, 0.0f, 0.0f };
-        Vector3 c = {  0.00f, 0.0f, 0.66f };
-        DrawTriangle3D(a, c, b, cEnvAba);
-        DrawTriangle3D(a, b, c, cEnvAba);
-        DrawLine3D(a, c, (Color){ 116, 102, 84, 255 });
-        DrawLine3D(b, c, (Color){ 116, 102, 84, 255 });
-        DrawLine3D(a, b, (Color){ 116, 102, 84, 255 });
+        Vector3 c = {  0.00f, 0.0f, 0.65f };
+        DrawTriangle3D(a, c, b, cClaro);
+        DrawTriangle3D(a, b, c, cClaro);
+        DrawLine3D(a, c, cMedio);
+        DrawLine3D(b, c, cMedio);
+        DrawLine3D(a, b, cMedio);
         if (ease < 0.35f) {
-            DrawCylinder((Vector3){ 0.0f, 0.01f, 0.56f }, 0.12f, 0.12f, 0.035f, 12, cRabisco);
+            DrawCylinder((Vector3){ 0.0f, 0.008f, 0.54f }, 0.10f, 0.10f, 0.018f, 16, cEscuro);
         }
         rlPopMatrix();
     } else if (g_inspecaoEvTipo == INSP_ESCUTA_JARDIM) {
-        // 5) Mesa redonda + 2 silhuetas 3D conversando com aneis de som 3D
+        // 5) Mesa redonda + 2 personagens 3D arredondados conversando com aneis de som na paleta do jogo
         TerreoMesaRedonda((Vector3){ 0.0f, -0.85f, 0.0f }, 0.56f, 0.72f);
-        float bal1 = sinf(tempo * 3.1f) * 8.0f;
-        float bal2 = sinf(tempo * 2.6f + 1.8f) * 8.0f;
-        TerreoSilhuetaSombra((Vector3){ -0.78f, -0.85f, 0.0f },  90.0f + bal1, true);
-        TerreoSilhuetaSombra((Vector3){  0.78f, -0.85f, 0.0f }, -90.0f + bal2, true);
+        float bal1 = sinf(tempo * 2.4f) * 6.0f;
+        float bal2 = sinf(tempo * 2.1f + 1.8f) * 6.0f;
+        PlayerCharacterDrawNpc3D((Vector3){ -0.78f, -0.85f, 0.0f },  90.0f + bal1, true, tempo, cam.position);
+        PlayerCharacterDrawNpc3D((Vector3){  0.78f, -0.85f, 0.0f }, -90.0f + bal2, true, tempo + 1.7f, cam.position);
         for (int k = 0; k < 3; k++) {
-            float rad = 0.22f + fmodf(tempo * 0.65f + (float)k * 0.32f, 0.96f);
+            float rad = 0.22f + fmodf(tempo * 0.55f + (float)k * 0.32f, 0.96f);
             float al  = 1.0f - (rad - 0.22f) / 0.96f;
-            DrawCylinderWires((Vector3){ 0.0f, 0.32f, 0.0f }, rad, rad, 0.02f, 18, Fade(cAmarelo, al));
+            DrawCylinderWires((Vector3){ 0.0f, 0.32f, 0.0f }, rad, rad, 0.012f, 24, Fade(cMarfim, al));
         }
     }
 
@@ -3210,27 +3263,97 @@ static void DesenharInspecaoEv3D(void) {
     DrawTextInArea(titulo, (Rectangle){ INSP_PAINEL.x + 8, INSP_PAINEL.y, INSP_PAINEL.width - 28, 22 }, 10, cAmarelo);
     DesenharBotaoFecharPadrao(INSP_BTN_FECHAR);
 
-    // Vitrine 3D renderizada por RenderInspecaoEv3DCena()
+    // Vitrine 3D ou Interface de Site/Terminal RASEC-OS para evidencias de computador
     Rectangle rPalco = ParaTela(INSP_PALCO);
-    if (g_inspRTPronta) {
-        DrawTexturePro(g_inspRT.texture,
-                       (Rectangle){ 0, 0, (float)g_inspRT.texture.width, -(float)g_inspRT.texture.height },
-                       rPalco, (Vector2){ 0, 0 }, 0.0f, WHITE);
-    }
-    DrawRectangleLinesEx(rPalco, 1.5f, (Color){ 88, 80, 82, 255 });
+    if (g_inspecaoEvTipo == INSP_COMPUTADOR_MEMO || g_inspecaoEvTipo == INSP_TERMINAL_ANALU) {
+        bool ehMemo = (g_inspecaoEvTipo == INSP_COMPUTADOR_MEMO);
+        Color cPreto  = {  18,  16,  18, 255 };
+        Color cEscuro = {  32,  29,  31, 255 };
+        Color cMedio  = { 125, 112, 113, 255 };
+        Color cClaro  = { 189, 181, 168, 255 };
+        Color cMarfim = { 255, 242, 230, 255 };
 
-    // HUD discreto de zoom/controle na vitrine
-    DrawTextLeftAligned(TextFormat("3D-VIEW | ZOOM %.1fx  (Arraste: Girar | Scroll: Zoom | R: Reset)", g_inspCam.zoom),
-                        (Vector2){ INSP_PALCO.x + 6, INSP_PALCO.y + INSP_PALCO.height - 13 }, 7, cBorda);
+        DrawRectangleRec(rPalco, cPreto);
+        // Barra de tarefas do sistema operacional no rodape da tela
+        Rectangle rTask = { INSP_PALCO.x, INSP_PALCO.y + INSP_PALCO.height - 16, INSP_PALCO.width, 16 };
+        DrawRectangleRec(ParaTela(rTask), cEscuro);
+        DrawLineEx((Vector2){ rPalco.x, ParaTela(rTask).y }, (Vector2){ rPalco.x + rPalco.width, ParaTela(rTask).y }, 1.0f, cMedio);
+        DrawTextLeftAligned("RASEC-OS  |  Intranet Corporativa", (Vector2){ INSP_PALCO.x + 6, rTask.y + 4 }, 7, cClaro);
+        DrawTextLeftAligned("03:14", (Vector2){ INSP_PALCO.x + INSP_PALCO.width - 32, rTask.y + 4 }, 7, cMarfim);
+
+        // Janela do navegador web
+        Rectangle rWin = { INSP_PALCO.x + 12, INSP_PALCO.y + 8, INSP_PALCO.width - 24, INSP_PALCO.height - 30 };
+        DrawRectangleRec(ParaTela(rWin), (Color){ 24, 21, 23, 255 });
+        DrawRectangleLinesEx(ParaTela(rWin), 1.5f, cClaro);
+
+        // Barra de titulo + botoes da janela
+        Rectangle rTitle = { rWin.x, rWin.y, rWin.width, 15 };
+        DrawRectangleRec(ParaTela(rTitle), cEscuro);
+        DrawTextLeftAligned(ehMemo ? "RASEC Browser — Memorando Interno" : "RASEC Browser — Terminal de Acesso",
+                            (Vector2){ rWin.x + 6, rWin.y + 3 }, 7, cMarfim);
+        DrawTextLeftAligned("_  []  X", (Vector2){ rWin.x + rWin.width - 36, rWin.y + 3 }, 7, cClaro);
+
+        // Barra de endereco (URL)
+        Rectangle rUrl = { rWin.x + 6, rWin.y + 18, rWin.width - 12, 14 };
+        DrawRectangleRec(ParaTela(rUrl), cPreto);
+        DrawRectangleLinesEx(ParaTela(rUrl), 1.0f, cMedio);
+        DrawTextLeftAligned(ehMemo ? "https://intranet.rasec.corp/adm/memorando-setor" : "https://intranet.rasec.corp/logs/ana_lucia",
+                            (Vector2){ rUrl.x + 6, rUrl.y + 3 }, 7, cMarfim);
+
+        // Barra lateral do site
+        Rectangle rSide = { rWin.x + 6, rWin.y + 36, 86, rWin.height - 42 };
+        DrawRectangleRec(ParaTela(rSide), cEscuro);
+        DrawRectangleLinesEx(ParaTela(rSide), 1.0f, cMedio);
+        DrawTextLeftAligned("> Caixa de Entrada", (Vector2){ rSide.x + 5, rSide.y + 8 }, 6, ehMemo ? cMarfim : cClaro);
+        DrawTextLeftAligned("> Logs 03:00h",     (Vector2){ rSide.x + 5, rSide.y + 22 }, 6, !ehMemo ? cMarfim : cClaro);
+        DrawTextLeftAligned("> Auditoria",       (Vector2){ rSide.x + 5, rSide.y + 36 }, 6, cMedio);
+        DrawTextLeftAligned("> Funcionarios",    (Vector2){ rSide.x + 5, rSide.y + 50 }, 6, cMedio);
+
+        // Area principal da pagina
+        Rectangle rBody = { rSide.x + rSide.width + 6, rSide.y, rWin.width - rSide.width - 18, rSide.height };
+        DrawRectangleRec(ParaTela(rBody), cPreto);
+        DrawRectangleLinesEx(ParaTela(rBody), 1.0f, cMedio);
+
+        if (!g_inspecaoEvAberta || g_inspecaoEvAnim < 0.35f) {
+            DrawTextInArea(ehMemo ? "[ARQUIVO ANEXO: MEMORANDO_ADM.PDF]" : "[REGISTRO RESTRITO: TERMINAL_ANALU.LOG]",
+                           (Rectangle){ rBody.x + 8, rBody.y + 28, rBody.width - 16, 20 }, 8, cMarfim);
+            DrawTextInArea("Aguardando abertura...",
+                           (Rectangle){ rBody.x + 8, rBody.y + 52, rBody.width - 16, 16 }, 7, cClaro);
+        } else {
+            DrawTextLeftAligned(ehMemo ? "ASSUNTO: SOBRECARGA NO SETOR ADMINISTRATIVO" : "HISTÓRICO DE ACESSO — MADRUGADA",
+                                (Vector2){ rBody.x + 8, rBody.y + 8 }, 8, cMarfim);
+            DrawLineEx((Vector2){ ParaTela(rBody).x + 6, ParaTela(rBody).y + 22 * (ParaTela(rBody).height / rBody.height) },
+                       (Vector2){ ParaTela(rBody).x + ParaTela(rBody).width - 6, ParaTela(rBody).y + 22 * (ParaTela(rBody).height / rBody.height) },
+                       1.0f, cMedio);
+            if (ehMemo) {
+                DrawTextLeftAligned("De: Diretoria RASEC   |   Para: Arthur G.", (Vector2){ rBody.x + 8, rBody.y + 28 }, 7, cClaro);
+                DrawTextLeftAligned("• Reestruturação imediata de metas do setor.", (Vector2){ rBody.x + 8, rBody.y + 46 }, 7, cMarfim);
+                DrawTextLeftAligned("• Revisar cortes de turno até sexta-feira.", (Vector2){ rBody.x + 8, rBody.y + 60 }, 7, cMarfim);
+            } else {
+                DrawTextLeftAligned("[02:47] LOGIN: ana.lucia@rasec.corp (OK)", (Vector2){ rBody.x + 8, rBody.y + 28 }, 7, cClaro);
+                DrawTextLeftAligned("[03:12] ACESSO: /servidor/treinamento_ia", (Vector2){ rBody.x + 8, rBody.y + 44 }, 7, cMarfim);
+                DrawTextLeftAligned("[03:19] DOWNLOAD: dataset_biometria.enc", (Vector2){ rBody.x + 8, rBody.y + 60 }, 7, cMarfim);
+            }
+        }
+    } else {
+        if (g_inspRTPronta) {
+            DrawTexturePro(g_inspRT.texture,
+                           (Rectangle){ 0, 0, (float)g_inspRT.texture.width, -(float)g_inspRT.texture.height },
+                           rPalco, (Vector2){ 0, 0 }, 0.0f, WHITE);
+        }
+        DrawRectangleLinesEx(rPalco, 1.5f, (Color){ 88, 80, 82, 255 });
+        DrawTextLeftAligned(TextFormat("3D-VIEW | ZOOM %.1fx  (Arraste: Girar | Scroll: Zoom | R: Reset)", g_inspCam.zoom),
+                            (Vector2){ INSP_PALCO.x + 6, INSP_PALCO.y + INSP_PALCO.height - 13 }, 7, cBorda);
+    }
 
     // Rodape conforme estado (antes de clicar vs analisando apos fechar texto)
     if (!g_inspecaoEvAberta) {
-        const char *acao = "Clique no objeto 3D (ou aperte E) para abrir";
-        if (g_inspecaoEvTipo == INSP_BOLINHA_PAPEL)    acao = "Clique na bolinha de papel 3D (ou aperte E) para desamassar";
-        if (g_inspecaoEvTipo == INSP_PASTA_DEVOLVIDOS) acao = "Clique na pasta 3D (ou aperte E) para abrir";
-        if (g_inspecaoEvTipo == INSP_COMPUTADOR_MEMO)  acao = "Clique no monitor 3D (ou aperte E) para ler o memorando";
-        if (g_inspecaoEvTipo == INSP_ENVELOPE_OFICIO)  acao = "Clique no envelope 3D (ou aperte E) para abrir";
-        if (g_inspecaoEvTipo == INSP_TERMINAL_ANALU)   acao = "Clique no terminal 3D (ou aperte E) para ver o histórico";
+        const char *acao = "Aperte E para abrir";
+        if (g_inspecaoEvTipo == INSP_BOLINHA_PAPEL)    acao = "Aperte E para desamassar o papel";
+        if (g_inspecaoEvTipo == INSP_PASTA_DEVOLVIDOS) acao = "Aperte E para abrir a pasta";
+        if (g_inspecaoEvTipo == INSP_COMPUTADOR_MEMO)  acao = "Aperte E para ler o memorando";
+        if (g_inspecaoEvTipo == INSP_ENVELOPE_OFICIO)  acao = "Aperte E para abrir o envelope";
+        if (g_inspecaoEvTipo == INSP_TERMINAL_ANALU)   acao = "Aperte E para ver o histórico";
         Rectangle rDica = { INSP_PAINEL.x + 14, INSP_PALCO.y + INSP_PALCO.height + 16, INSP_PAINEL.width - 28, 28 };
         DrawTextInArea(acao, rDica, 10, cAmarelo);
     } else if (!g_inspecaoEvTextoVisivel && g_inspecaoEvAnim >= 0.98f) {
@@ -4136,12 +4259,31 @@ static void DrawInterrogationTexts(void) {
                                  hoverColor, lightTextColor, textColor);
     }
 
-    // No Modo DEV, permite pular direto para o Veredito em qualquer dia
-    if (SettingsGetDevMode() && !ultimoDia) {
-        bool hovVeredito = !bloqueadoPorOverlay && CheckCollisionPointRec(mouseTela, ParaTela(BOTAO_VEREDITO_DEV_TOPO));
-        DesenharBotaoTopoAnimado(BOTAO_VEREDITO_DEV_TOPO, "Veredito >>", hovVeredito, false,
-                                 &g_btnVereditoDevHoverAnt, &g_btnVereditoDevAnim, &g_btnVereditoDevVel, dt,
+    // No Modo DEV, permite pular direto para o Veredito ou reiniciar a run sem fechar o jogo
+    if (SettingsGetDevMode()) {
+        if (!ultimoDia) {
+            bool hovVeredito = !bloqueadoPorOverlay && CheckCollisionPointRec(mouseTela, ParaTela(BOTAO_VEREDITO_DEV_TOPO));
+            DesenharBotaoTopoAnimado(BOTAO_VEREDITO_DEV_TOPO, "Veredito >>", hovVeredito, false,
+                                     &g_btnVereditoDevHoverAnt, &g_btnVereditoDevAnim, &g_btnVereditoDevVel, dt,
+                                     hoverColor, lightTextColor, textColor);
+        }
+        bool hovReiniciar = !bloqueadoPorOverlay && CheckCollisionPointRec(mouseTela, ParaTela(BOTAO_REINICIAR_DEV_TOPO));
+        static bool s_reinDevHovAnt = false;
+        static float s_reinDevAnim = 0.0f, s_reinDevVel = 0.0f;
+        DesenharBotaoTopoAnimado(BOTAO_REINICIAR_DEV_TOPO, "Reiniciar App", hovReiniciar, false,
+                                 &s_reinDevHovAnt, &s_reinDevAnim, &s_reinDevVel, dt,
                                  hoverColor, lightTextColor, textColor);
+    }
+    if (SettingsGetTechNight()) {
+        float hrs = GameStateGetTechNightClockHours();
+        int halfHours = (int)(hrs * 2.0f + 0.001f);
+        if (halfHours > 34) halfHours = 34; // teto 17:00
+        int hh = halfHours / 2;
+        int mm = (halfHours % 2) * 30;
+        Rectangle rRel = { 588.0f, 340.0f, 44.0f, 16.0f };
+        DrawRectangleRec(ParaTela(rRel), (Color){ 32, 29, 31, 235 });
+        DrawRectangleLinesEx(ParaTela(rRel), 1.0f, (Color){ 189, 181, 168, 220 });
+        DrawTextInArea(TextFormat("%02d:%02d", hh, mm), rRel, 8, (Color){ 255, 242, 230, 255 });
     }
 
     // 3) Cabeçalho do Quadrante 2 (Inferior Esquerdo - OPCOES_AREA)
@@ -4234,8 +4376,9 @@ static void DrawInterrogationTexts(void) {
                 DrawChoiceTextInArea(bufMono, infoBox, 10, (Color){ 255, 242, 230, 255 });
             }
             if (LocalEhTerreo3D(g_localAtual) && g_monologoChars >= (int)strlen(g_monologoTexto)) {
-                Rectangle rConf = { infoBox.x + infoBox.width - 84, infoBox.y + infoBox.height - 14, 80, 12 };
-                DrawTextInArea("[E] Confirmar", rConf, 8, lightTextColor);
+                Rectangle rConf = { infoBox.x + infoBox.width - 114, infoBox.y + infoBox.height - 14, 110, 12 };
+                const char *lblConf = (GameStateGetControle3D() == CONTROLE_MOUSE) ? "Clique p/ continuar" : "[E] Confirmar";
+                DrawTextInArea(lblConf, rConf, 8, lightTextColor);
             }
         } else {
             int presentes[3];
@@ -4245,7 +4388,22 @@ static void DrawInterrogationTexts(void) {
                 presentes[nAqui++] = k;
             }
             const char *info;
-            if (!LocalEhTerreo3D(g_localAtual) && GameplayHoloSalasAtivas()[g_localAtual].escada) {
+            if (LocalEhTerreo3D(g_localAtual)) {
+                const char *acao = Terreo3DProximaAcao();
+                if (acao) {
+                    DrawChoiceTextInArea(acao, infoBox, 10, (Color){ 255, 242, 230, 255 });
+                    info = NULL;
+                } else {
+                    ControleModo3D cm = GameStateGetControle3D();
+                    if (cm == CONTROLE_MOUSE) {
+                        info = "Mouse: Andar e interagir  |  Shift: Correr/Andar  |  M: Mapa";
+                    } else if (cm == CONTROLE_TECLADO) {
+                        info = "WASD: Andar  |  Shift: Correr  |  E/Enter: Interagir  |  M: Mapa";
+                    } else {
+                        info = "WASD/Mouse: Andar  |  E/Clique: Interagir  |  Shift: Correr  |  M: Mapa";
+                    }
+                }
+            } else if (GameplayHoloSalasAtivas()[g_localAtual].escada) {
                 info = (DestinoEscadaSubir(g_localAtual) < 0)
                     ? "Você está no último andar.\n(Clique na escada para descer ou na seta para entrar)"
                     : "Você está na escadaria.\n(Clique nas escadas para mudar de andar ou na seta para entrar)";
@@ -4253,23 +4411,15 @@ static void DrawInterrogationTexts(void) {
                 int s = presentes[0];
                 const char *naNo = (s == 1) ? "no" : "na";
                 const char *pron = (s == 1) ? "ele" : "ela";
-                info = TextFormat("Aperte %s %s para conversar com %s.", naNo, NOMES_SUSPEITOS[s], pron);
+                info = TextFormat("Clique %s %s para conversar com %s.", naNo, NOMES_SUSPEITOS[s], pron);
             } else if (nAqui > 1) {
                 // Na regra de sorteio, apenas Maria (0) e Ana Lucia (2) podem dividir a mesma sala
                 const char *naNo0 = (presentes[0] == 1) ? "no" : "na";
                 const char *naNo1 = (presentes[1] == 1) ? "no" : "na";
                 const char *pronPlural = (presentes[0] == 1 || presentes[1] == 1) ? "eles" : "elas";
-                info = TextFormat("Aperte %s %s ou %s %s para conversar com %s.",
+                info = TextFormat("Clique %s %s ou %s %s para conversar com %s.",
                                   naNo0, NOMES_SUSPEITOS[presentes[0]],
                                   naNo1, NOMES_SUSPEITOS[presentes[1]], pronPlural);
-            } else if (LocalEhTerreo3D(g_localAtual)) {
-                const char *acao = Terreo3DProximaAcao();
-                if (acao) {
-                    DrawChoiceTextInArea(acao, infoBox, 10, (Color){ 255, 242, 230, 255 });
-                    info = NULL;
-                } else {
-                    info = "Use WASD/Setas para explorar o andar.\n[E] ou clique perto de objetos para interagir.";
-                }
             } else {
                 info = "Os suspeitos não estão aqui...\n(Use as setas para andar pelo prédio)";
             }
@@ -4849,6 +4999,39 @@ bool InitGameplayScene(void) {
         Terreo3DInit((int)JANELA_AREA.width, (int)JANELA_AREA.height);
     }
     g_sndPassos = FileExists("assets/audio/passos_2.wav") ? LoadSound("assets/audio/passos_2.wav") : (Sound){ 0 };
+    // Sintetiza o som "Plim" do elevador (acorde C6 -> E6 limpo)
+    {
+        int sr = 44100;
+        int frames = (int)(0.45f * sr);
+        short *samples = (short *)MemAlloc((unsigned int)(frames * sizeof(short)));
+        if (samples) {
+            for (int i = 0; i < frames; i++) {
+                float t = (float)i / (float)sr;
+                float s1 = sinf(2.0f * PI * 1046.5f * t) * expf(-t * 10.0f);
+                float t2 = t - 0.13f;
+                float s2 = (t2 > 0.0f) ? (sinf(2.0f * PI * 1318.5f * t2) * expf(-t2 * 7.5f)) : 0.0f;
+                float mix = (s1 * 0.55f + s2 * 0.75f) * 0.45f;
+                if (mix > 1.0f) mix = 1.0f;
+                if (mix < -1.0f) mix = -1.0f;
+                samples[i] = (short)(mix * 32767.0f);
+            }
+            Wave w = { .frameCount = (unsigned int)frames, .sampleRate = (unsigned int)sr, .sampleSize = 16, .channels = 1, .data = samples };
+            g_sndElevadorPlim = LoadSoundFromWave(w);
+            // Segundo som de chegada do elevador (acorde mais agudo E6 -> A6)
+            for (int i = 0; i < frames; i++) {
+                float t = (float)i / (float)sr;
+                float s1 = sinf(2.0f * PI * 1318.5f * t) * expf(-t * 11.0f);
+                float t2 = t - 0.11f;
+                float s2 = (t2 > 0.0f) ? (sinf(2.0f * PI * 1760.0f * t2) * expf(-t2 * 7.0f)) : 0.0f;
+                float mix = (s1 * 0.50f + s2 * 0.78f) * 0.42f;
+                if (mix > 1.0f) mix = 1.0f;
+                if (mix < -1.0f) mix = -1.0f;
+                samples[i] = (short)(mix * 32767.0f);
+            }
+            g_sndElevadorChegou = LoadSoundFromWave(w);
+            MemFree(samples);
+        }
+    }
     g_setaHover = -1;
     g_setaHoverAnt = -1;
 
@@ -4948,7 +5131,8 @@ bool InitGameplayScene(void) {
 
     g_fichaAtual = -1;
     g_arrastandoFicha = false;
-    g_fichaPos = (Vector2){ 200, 20 };
+    g_fichaScale = 0.85f;
+    g_fichaPos = (Vector2){ 12, 34 };
     g_arrastandoBarra = false;
     g_fichaScroll = 0.0f;
 
@@ -6085,7 +6269,7 @@ static void DesenharTutorialContextual(void) {
             DesenharBalaoGuiaDia0(
                 12.0f, 150.0f, 280.0f,
                 "DIÁLOGOS E TOKENS",
-                "Clique em uma pergunta abaixo para interrogar!\nCada pergunta consome 1 Token (8 por dia). Observe a resposta no chat."
+                "Preste atenção na fala do funcionário!\nClique em uma pergunta abaixo (1 Token cada) e observe a resposta."
             );
             DesenharSetaGuiaDia0((Vector2){ 136.0f, 214.0f }, (Vector2){ 136.0f, rPerg.y - 4.0f });
             return;
@@ -6105,7 +6289,7 @@ static void DesenharTutorialContextual(void) {
                 DesenharBalaoGuiaDia0(
                     324.0f, 152.0f, 294.0f,
                     "FICHA CADASTRAL",
-                    "Clique na Pasta para ver personalidade e comportamentos esperados!\nCompare a ficha com o que o funcionário diz."
+                    "Clique na Pasta para ver personalidade e comportamentos!\nSe tiver dúvida sobre algo que revelaram, verifique na Ficha."
                 );
                 DesenharSetaGuiaDia0((Vector2){ rFicha.x + rFicha.width * 0.5f, 232.0f },
                                      (Vector2){ rFicha.x + rFicha.width * 0.5f, rFicha.y - 4.0f });
@@ -6159,9 +6343,9 @@ static void DesenharTutorialContextual(void) {
                 EndScissorMode();
 
                 DesenharBalaoGuiaDia0(
-                    12.0f, 82.0f, 280.0f,
+                    316.0f, 258.0f, 312.0f,
                     "ANOTANDO NO CHECKLIST",
-                    "Compare com a Ficha e marque [X] no comportamento destacado no Tablet!\nAnotações corretas somam pontos no Veredito."
+                    "Preste atenção na fala deles e marque [X] no Checklist!\nSe tiver dúvida do que revelaram, verifique na Ficha ao lado."
                 );
             }
             return;
@@ -6560,12 +6744,23 @@ static void UpdateGameplay(void) {
                 return;
             }
         }
-        if (SettingsGetDevMode() && GameStateGetDay() < GAME_NUM_DAYS) {
-            bool sobreBtnVereditoDev = CheckCollisionPointRec(mouse, ParaTela(BOTAO_VEREDITO_DEV_TOPO));
-            if (sobreBtnVereditoDev) {
+        if (SettingsGetDevMode()) {
+            if (GameStateGetDay() < GAME_NUM_DAYS) {
+                bool sobreBtnVereditoDev = CheckCollisionPointRec(mouse, ParaTela(BOTAO_VEREDITO_DEV_TOPO));
+                if (sobreBtnVereditoDev) {
+                    hover = true;
+                    if (clicou) {
+                        ExecutarIrParaVereditoDev();
+                        return;
+                    }
+                }
+            }
+            if (CheckCollisionPointRec(mouse, ParaTela(BOTAO_REINICIAR_DEV_TOPO))) {
                 hover = true;
                 if (clicou) {
-                    ExecutarIrParaVereditoDev();
+                    TocarSomHover();
+                    SettingsSave();
+                    SettingsRequestAppRestart();
                     return;
                 }
             }
@@ -6770,19 +6965,21 @@ static void UpdateGameplay(void) {
         } else {
             g_escadaHoverAnt = -1;
         }
-        // Monologo interno: em salas 3D do Terreo, E (ou clique na caixa) completa/confirma e trava movimento
+        // Monologo interno: em salas 3D do Terreo, E/Enter ou clique na tela completa/confirma e trava movimento
         if (g_monologoTexto && g_monologoVidaTimer > 0.0f) {
-            bool clicouCaixa = clicou && CheckCollisionPointRec(mouse, ParaTela(OPCOES_AREA));
-            if (LocalEhTerreo3D(g_localAtual) && (IsKeyPressed(KEY_E) || clicouCaixa)) {
+            bool clicouAvancar = clicou && ((GameStateGetControle3D() != CONTROLE_TECLADO) || CheckCollisionPointRec(mouse, ParaTela(OPCOES_AREA)));
+            if (LocalEhTerreo3D(g_localAtual) && (IsKeyPressed(KEY_E) || IsKeyPressed(KEY_ENTER) || clicouAvancar)) {
                 int totalLen = (int)strlen(g_monologoTexto);
                 if (g_monologoChars < totalLen) {
                     g_monologoChars = totalLen;
                 } else {
                     LimparMonologoInterno();
                 }
+                // Atualiza animacoes do personagem mesmo ao fechar o monologo
+                Terreo3DUpdate(GetFrameTime(), MouseNaJanela(mouse), false, false, true);
                 return;
             }
-            if (!LocalEhTerreo3D(g_localAtual) && clicouCaixa &&
+            if (!LocalEhTerreo3D(g_localAtual) && clicouAvancar &&
                 g_monologoChars < (int)strlen(g_monologoTexto)) {
                 g_monologoChars = (int)strlen(g_monologoTexto);
                 g_monologoVidaTimer = 5.5f;
@@ -6812,8 +7009,9 @@ static void UpdateGameplay(void) {
                                 g_dicaAberta || g_confirmarAvancarDia || g_confirmarAbandonarRun ||
                                 g_elevadorAberto || monologoAtivo;
             bool sobreBotaoTopo = CheckCollisionPointRec(mouse, ParaTela(BOTAO_AVANCAR_TOPO)) ||
-                                  (SettingsGetDevMode() && GameStateGetDay() < GAME_NUM_DAYS &&
-                                   CheckCollisionPointRec(mouse, ParaTela(BOTAO_VEREDITO_DEV_TOPO)));
+                                  (SettingsGetDevMode() &&
+                                   ((GameStateGetDay() < GAME_NUM_DAYS && CheckCollisionPointRec(mouse, ParaTela(BOTAO_VEREDITO_DEV_TOPO))) ||
+                                    CheckCollisionPointRec(mouse, ParaTela(BOTAO_REINICIAR_DEV_TOPO))));
             bool podeClicar3D = sobreJanela && !sobreSuspeito && !escBloqueado && !sobreBotaoTopo && !MouseSobreFicha();
             TerreoInteracaoResultado tRes = Terreo3DUpdate(
                 GetFrameTime(),
@@ -6833,6 +7031,7 @@ static void UpdateGameplay(void) {
                 FecharJanelasFerramentas();
                 g_closeupAtual = CLOSEUP_NENHUM;
                 g_transDestino = (int)LocalPorTerreoDestino(tRes.destino);
+                g_transPretoDur = TRANS_PRETO;
                 g_transTempo = 0.0f;
                 if (g_sndPassos.frameCount > 0) {
                     SetSoundVolume(g_sndPassos, 0.7f * SettingsGetSfxVolume());
@@ -6841,6 +7040,18 @@ static void UpdateGameplay(void) {
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
                 return;
             }
+            static float s_pendEvTimer = 0.0f;
+            static TipoInspecaoEv3D s_pendEvTipo = INSP_NENHUMA;
+            static int s_pendEvSusp = -1;
+            static const char *s_pendEvId = NULL;
+            if (s_pendEvTimer > 0.0f) {
+                s_pendEvTimer -= GetFrameTime();
+                if (s_pendEvTimer <= 0.0f && s_pendEvTipo != INSP_NENHUMA) {
+                    AbrirInspecaoEv3D(s_pendEvTipo, s_pendEvSusp, s_pendEvId);
+                    s_pendEvTipo = INSP_NENHUMA;
+                }
+            }
+
             if (tRes.acionouObjeto) {
                 TocarSomHover();
                 if (tRes.objetoId && strcmp(tRes.objetoId, "elevador") == 0) {
@@ -6848,18 +7059,30 @@ static void UpdateGameplay(void) {
                     FecharJanelasFerramentas();
                     g_elevadorAberto = true;
                 } else if (tRes.objetoId && strcmp(tRes.objetoId, "ev_maria_queixa") == 0) {
-                    AbrirInspecaoEv3D(INSP_BOLINHA_PAPEL, 0, "EV-01");
+                    Terreo3DTriggerPlayerAnim(tRes.objetoPos, PLAYER_ANIM_PAPER, 0.45f);
+                    s_pendEvTipo = INSP_BOLINHA_PAPEL; s_pendEvSusp = 0; s_pendEvId = "EV-01"; s_pendEvTimer = 0.42f;
                 } else if (tRes.objetoId && strcmp(tRes.objetoId, "ev_maria_devolvidos") == 0) {
-                    AbrirInspecaoEv3D(INSP_PASTA_DEVOLVIDOS, 0, "EV-02");
+                    Terreo3DTriggerPlayerAnim(tRes.objetoPos, PLAYER_ANIM_FILE, 0.48f);
+                    s_pendEvTipo = INSP_PASTA_DEVOLVIDOS; s_pendEvSusp = 0; s_pendEvId = "EV-02"; s_pendEvTimer = 0.45f;
                 } else if (tRes.objetoId && strcmp(tRes.objetoId, "ev_arthur_sobrecarga") == 0) {
-                    AbrirInspecaoEv3D(INSP_COMPUTADOR_MEMO, 1, "EV-03");
+                    Terreo3DTriggerComputerSit((Vector3){ 4.58f, 0.0f, 1.60f }, (Vector3){ 5.45f, 0.77f, 1.60f }, 1.85f);
+                    s_pendEvTipo = INSP_COMPUTADOR_MEMO; s_pendEvSusp = 1; s_pendEvId = "EV-03"; s_pendEvTimer = 1.80f;
                 } else if (tRes.objetoId && strcmp(tRes.objetoId, "ev_arthur_demissao") == 0) {
-                    AbrirInspecaoEv3D(INSP_ENVELOPE_OFICIO, 1, "EV-04");
+                    Terreo3DTriggerPlayerAnim(tRes.objetoPos, PLAYER_ANIM_PAPER, 0.45f);
+                    s_pendEvTipo = INSP_ENVELOPE_OFICIO; s_pendEvSusp = 1; s_pendEvId = "EV-04"; s_pendEvTimer = 0.42f;
                 } else if (tRes.objetoId && strcmp(tRes.objetoId, "ev_analu_terminal") == 0) {
-                    AbrirInspecaoEv3D(INSP_TERMINAL_ANALU, 2, "EV-05");
+                    Terreo3DTriggerComputerSit((Vector3){ -1.65f, 0.0f, -0.02f }, (Vector3){ -1.65f, 0.77f, -0.81f }, 1.85f);
+                    s_pendEvTipo = INSP_TERMINAL_ANALU; s_pendEvSusp = 2; s_pendEvId = "EV-05"; s_pendEvTimer = 1.80f;
                 } else if (tRes.objetoId && strcmp(tRes.objetoId, "ev_jardim_sombras") == 0) {
-                    AbrirInspecaoEv3D(INSP_ESCUTA_JARDIM, 2, "EV-06");
+                    if (GameStateTemEvidencia(2, "EV-06") && GameStateGetDay() > GameStateGetEv06CollectedDay()) {
+                        DispararMonologoInterno("Estão conversando sobre outras coisas. Parecem desconfortáveis com você encarando.");
+                    } else {
+                        AbrirInspecaoEv3D(INSP_ESCUTA_JARDIM, 2, "EV-06");
+                    }
                 } else if (tRes.flavorText) {
+                    if (tRes.objetoId && (strstr(tRes.objetoId, "arquivo") != NULL || strstr(tRes.objetoId, "relatorio") != NULL || strstr(tRes.objetoId, "armario") != NULL)) {
+                        Terreo3DTriggerPlayerAnim(tRes.objetoPos, PLAYER_ANIM_FILE, 0.45f);
+                    }
                     if (tRes.objetoId && strcmp(tRes.objetoId, "recepcionista") == 0) {
                         DispararMonologoInternoComSpeaker(tRes.flavorText, "Recepcionista");
                     } else {
@@ -7285,8 +7508,8 @@ void UpdateDrawGameplayScene(void) {
         int andarHolo = GameplayHoloSalasAtivas()[g_localAtual].andar;
         uint64_t suspMask = (1ULL << g_suspeitoLocal[0]) | (1ULL << g_suspeitoLocal[1]) | (1ULL << g_suspeitoLocal[2]);
         if (g_mapaCompletoAberto) {
-            MapaHoloSetFiltro(false, andarHolo, suspMask);
-            MapaHoloRender(476, 268, (int)g_localAtual, salaHoverMapa, LocaisAcessiveis(g_localAtual), (float)GetTime());
+            MapaHoloSetFiltro(true, g_mapaAndarSelecionado, suspMask);
+            MapaHoloRender(476, 236, (int)g_localAtual, -1, LocaisAcessiveis(g_localAtual), (float)GetTime());
         } else {
             MapaHoloSetFiltro(GameStateIs3DMode(), andarHolo, suspMask);
             MapaHoloRender((int)holoArea.width, (int)holoArea.height, (int)g_localAtual,
@@ -7336,8 +7559,23 @@ void UpdateDrawGameplayScene(void) {
                 LimparMonologoInterno();
             }
         }
-        if (g_transTempo >= TRANS_ESCURECE + TRANS_PRETO + TRANS_CLAREIA) {
+        if (g_transModoSaltoMapa && !g_transPlimMeioTocado && g_transTempo >= 1.00f) {
+            g_transPlimMeioTocado = true;
+            if (g_sndPassos.frameCount > 0) StopSound(g_sndPassos);
+            TocarSomElevadorPlim();
+        }
+        if (!g_transPlimFinalTocado &&
+            ((g_transModoSaltoMapa && g_transTempo >= 2.00f) ||
+             (!g_transModoSaltoMapa && g_transPretoDur > 0.60f && g_transTempo >= TRANS_ESCURECE + g_transPretoDur - 0.10f))) {
+            g_transPlimFinalTocado = true;
+            TocarSomElevadorChegou();
+        }
+        if (g_transTempo >= TRANS_ESCURECE + g_transPretoDur + TRANS_CLAREIA) {
             g_transTempo = -1.0f;
+            g_transPretoDur = TRANS_PRETO;
+            g_transPlimMeioTocado  = false;
+            g_transPlimFinalTocado = false;
+            g_transModoSaltoMapa   = false;
             if (g_sndPassos.frameCount > 0) StopSound(g_sndPassos);
         }
     }
@@ -7346,12 +7584,24 @@ void UpdateDrawGameplayScene(void) {
         !g_inspecaoEvAtiva && !g_elevadorAberto && !g_dicaAberta &&
         !g_confirmarAvancarDia && !g_confirmarAbandonarRun) {
         g_mapaCompletoAberto = !g_mapaCompletoAberto;
+        if (g_mapaCompletoAberto) {
+            g_mapaAndarSelecionado = GameplayHoloSalasAtivas()[g_localAtual].andar;
+            if (g_mapaAndarSelecionado < 0) g_mapaAndarSelecionado = 0;
+        }
         TocarSomHover();
     }
 
-    // Os modais (abandonar run / confirmar dia), a ficha, o scanner deepfake e a prancheta ficam por cima de tudo
-    if (!emTransicao && !g_mapaCompletoAberto && !UpdateInspecaoEv3D() && !UpdatePopupEvidencia() && !UpdateMenuElevador() && !UpdateConfirmarAbandonar() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
-        UpdateGameplay();
+    // Inspecao 3D bloqueia apenas movimento do player e cliques de fundo, sem congelar o tempo
+    bool inspecaoBloq = UpdateInspecaoEv3D();
+    if (!emTransicao && !g_mapaCompletoAberto && !UpdatePopupEvidencia() && !UpdateMenuElevador() && !UpdateConfirmarAbandonar() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
+        if (SettingsGetTechNight()) {
+            GameStateUpdateTechNightClock(GetFrameTime());
+        }
+        if (!inspecaoBloq) {
+            UpdateGameplay();
+        } else if (LocalEhTerreo3D(g_localAtual) && g_closeupAtual == CLOSEUP_NENHUM) {
+            Terreo3DUpdate(GetFrameTime(), (Vector2){ -1000.0f, -1000.0f }, false, false, true);
+        }
     }
     if (g_localAtual != LocalInicial()) {
         g_tutMovimentoVisto = true;
@@ -7770,49 +8020,166 @@ void UpdateDrawGameplayScene(void) {
     // 9a-2) Inspecao interativa animada de evidencias 3D (bolinha de papel, pasta, computador, envelope, jardim)
     DesenharInspecaoEv3D();
 
-    // 9a-3) Modal grande do mapa inteiro (tecla M no modo 3D)
+    // 9a-3) Terminal Holografico Tatico (tecla M no modo 3D): planta alta por andar + evidencias restantes
     if (g_mapaCompletoAberto && !g_dialogLoaded) {
-        Rectangle rPainel = { 70, 20, 500, 320 };
-        Rectangle rVit    = { 82, 46, 476, 268 };
-        DrawRectangleRec(GetTelaRect(), Fade(BLACK, 0.72f));
-        DrawRectangleRec(ParaTela((Rectangle){ rPainel.x + 4, rPainel.y + 4, rPainel.width, rPainel.height }), Fade(BLACK, 0.65f));
-        DrawRectangleRec(ParaTela(rPainel), (Color){ 28, 25, 27, 250 });
-        DrawRectangleLinesEx(ParaTela(rPainel), 2.0f, (Color){ 189, 181, 168, 255 });
-        DrawRectangleRec(ParaTela((Rectangle){ rPainel.x, rPainel.y, rPainel.width, 22 }), (Color){ 16, 14, 16, 255 });
-        DrawTextInArea("MAPA COMPLETO DA RASEC  (Aperte M ou ESC para fechar)",
-                       (Rectangle){ rPainel.x + 8, rPainel.y, rPainel.width - 16, 22 }, 10, (Color){ 255, 242, 230, 255 });
+        int numAndaresHolo = MapaHoloNumAndares();
+        if (g_mapaAndarSelecionado < 0 || g_mapaAndarSelecionado >= numAndaresHolo) {
+            g_mapaAndarSelecionado = 0;
+        }
+        if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
+            g_mapaAndarSelecionado = (g_mapaAndarSelecionado + 1) % numAndaresHolo;
+            TocarSomHover();
+        } else if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {
+            g_mapaAndarSelecionado = (g_mapaAndarSelecionado + numAndaresHolo - 1) % numAndaresHolo;
+            TocarSomHover();
+        }
+        for (int a = 0; a < numAndaresHolo && a < 5; a++) {
+            if (IsKeyPressed(KEY_ONE + a)) {
+                g_mapaAndarSelecionado = a;
+                TocarSomHover();
+            }
+        }
 
+        Rectangle rPainel = { 62, 16, 516, 328 };
+        Rectangle rVit    = { 82, 74, 476, 236 };
+        DrawRectangleRec(GetTelaRect(), Fade(BLACK, 0.78f));
+        DrawRectangleRec(ParaTela((Rectangle){ rPainel.x + 4, rPainel.y + 4, rPainel.width, rPainel.height }), Fade(BLACK, 0.70f));
+        DrawRectangleRec(ParaTela(rPainel), (Color){ 28, 25, 27, 252 });
+        DrawRectangleLinesEx(ParaTela(rPainel), 2.0f, (Color){ 189, 181, 168, 255 });
+
+        // Barra superior estilo terminal corporativo na paleta cinza do jogo
+        DrawRectangleRec(ParaTela((Rectangle){ rPainel.x, rPainel.y, rPainel.width, 22 }), (Color){ 18, 16, 18, 255 });
+        bool ev1 = GameStateEvidenciaDisponivelHoje(0, "EV-01") && !GameStateTemEvidencia(0, "EV-01");
+        bool ev2 = GameStateEvidenciaDisponivelHoje(0, "EV-02") && !GameStateTemEvidencia(0, "EV-02");
+        bool ev3 = GameStateEvidenciaDisponivelHoje(1, "EV-03") && !GameStateTemEvidencia(1, "EV-03");
+        bool ev4 = GameStateEvidenciaDisponivelHoje(1, "EV-04") && !GameStateTemEvidencia(1, "EV-04");
+        bool ev5 = GameStateEvidenciaDisponivelHoje(2, "EV-05") && !GameStateTemEvidencia(2, "EV-05");
+        int evTotalDisp = (GameStateEvidenciaDisponivelHoje(0, "EV-01") ? 1 : 0) +
+                          (GameStateEvidenciaDisponivelHoje(0, "EV-02") ? 1 : 0) +
+                          (GameStateEvidenciaDisponivelHoje(1, "EV-03") ? 1 : 0) +
+                          (GameStateEvidenciaDisponivelHoje(1, "EV-04") ? 1 : 0) +
+                          (GameStateEvidenciaDisponivelHoje(2, "EV-05") ? 1 : 0);
+        int evTotalRest = (ev1 ? 1 : 0) + (ev2 ? 1 : 0) + (ev3 ? 1 : 0) + (ev4 ? 1 : 0) + (ev5 ? 1 : 0);
+        DrawTextInArea(TextFormat("RASEC-OS // PLANTA HOLOGRÁFICA   |   EVIDÊNCIAS RESTANTES: %d/%d", evTotalRest, evTotalDisp),
+                       (Rectangle){ rPainel.x + 10, rPainel.y, rPainel.width - 68, 22 }, 9, (Color){ 255, 242, 230, 255 });
+        DrawTextInArea("[M / ESC]", (Rectangle){ rPainel.x + rPainel.width - 62, rPainel.y, 56, 22 }, 8, (Color){ 189, 181, 168, 255 });
+
+        // Abas clicaveis por andar
+        const HoloSala *salas = HoloSalasAtivas();
+        int numSalas = NumHoloSalasAtivas();
+        int andarAtual = salas[g_localAtual].andar;
+        float tabW = (rVit.width - 16.0f) / (float)numAndaresHolo;
+        Vector2 mouseM = UIMouseVirtual();
+        bool clicouM = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+        for (int a = 0; a < numAndaresHolo; a++) {
+            int evAndar = 0;
+            if (a == 0) {
+                if (ev1) evAndar++;
+                if (ev3) evAndar++;
+                if (ev5) evAndar++;
+            } else if (a == 1) {
+                if (ev2) evAndar++;
+                if (ev4) evAndar++;
+            }
+            Rectangle rTab = { rVit.x + a * (tabW + 4.0f), rPainel.y + 27, tabW, 24 };
+            bool sel = (a == g_mapaAndarSelecionado);
+            bool hovTab = CheckCollisionPointRec(mouseM, rTab);
+            if (hovTab && clicouM) {
+                g_mapaAndarSelecionado = a;
+                TocarSomHover();
+            }
+            Color bgTab = sel ? (Color){ 72, 66, 68, 255 } : (hovTab ? (Color){ 52, 46, 48, 255 } : (Color){ 32, 29, 31, 255 });
+            Color bdTab = sel ? (Color){ 255, 242, 230, 255 } : ((a == andarAtual) ? (Color){ 255, 224, 48, 210 } : (Color){ 125, 112, 113, 220 });
+            DrawRectangleRec(ParaTela(rTab), bgTab);
+            DrawRectangleLinesEx(ParaTela(rTab), sel ? 1.5f : 1.0f, bdTab);
+            const char *lblAndar = (a == 0) ? "TÉRREO" : TextFormat("%dº ANDAR", a);
+            const char *txtTab = (evAndar > 0) ? TextFormat("%s (%d)", lblAndar, evAndar) : lblAndar;
+            DrawTextInArea(txtTab, rTab, 8, sel ? (Color){ 255, 242, 230, 255 } : (evAndar > 0 ? (Color){ 255, 224, 48, 255 } : (Color){ 189, 181, 168, 255 }));
+        }
+
+        // Vitrine da planta alta holografica (paleta cinza/carvao)
+        DrawRectangleRec(ParaTela(rVit), (Color){ 18, 16, 18, 255 });
+        DrawRectangleLinesEx(ParaTela(rVit), 1.0f, (Color){ 125, 112, 113, 220 });
         Texture2D tex = MapaHoloTextura();
         DrawTexturePro(tex, (Rectangle){ 0, 0, (float)tex.width, -(float)tex.height },
                        ParaTela(rVit), (Vector2){ 0, 0 }, 0.0f, WHITE);
 
-        const HoloSala *salas = HoloSalasAtivas();
-        int numSalas = NumHoloSalasAtivas();
-        int andarAtual = salas[g_localAtual].andar;
         uint64_t acessiveis = LocaisAcessiveis(g_localAtual);
-        if (SettingsGetDevMode()) {
-            Vector2 pSub = MapaHoloPosAndar(-1);
-            DrawTextLeftAligned("SUBSOLO", (Vector2){ rVit.x + pSub.x, rVit.y + pSub.y + 2.0f }, 8,
-                                (-1 == andarAtual) ? (Color){ 255, 242, 230, 255 } : (Color){ 140, 128, 128, 255 });
-        }
-        int numAndaresHolo = MapaHoloNumAndares();
-        for (int a = 0; a < numAndaresHolo; a++) {
-            Vector2 p = MapaHoloPosAndar(a);
-            DrawTextLeftAligned(NOMES_ANDARES[a], (Vector2){ rVit.x + p.x, rVit.y + p.y + 2.0f }, 8,
-                                (a == andarAtual) ? (Color){ 255, 242, 230, 255 } : (Color){ 140, 128, 128, 255 });
-        }
+        uint64_t suspMaskMapa = (1ULL << g_suspeitoLocal[0]) | (1ULL << g_suspeitoLocal[1]) | (1ULL << g_suspeitoLocal[2]);
+        int hovSuspSala = -1;
         for (int i = 0; i < numSalas; i++) {
             if (salas[i].numPartes == 0) continue;
-            if (!SettingsGetDevMode() && salas[i].andar < 0) continue;
+            if (salas[i].andar != g_mapaAndarSelecionado) continue;
             if (salas[i].escada) continue;
             Vector2 p = MapaHoloPosSala(i);
             bool ativo = (i == (int)g_localAtual) || (((acessiveis >> i) & 1ULL) != 0);
             RotuloMapa(NomeCurtoLocal(i), (Vector2){ rVit.x + p.x, rVit.y + p.y },
-                       ativo ? (Color){ 255, 242, 230, 255 } : (Color){ 150, 138, 138, 255 });
+                       ativo ? (Color){ 255, 242, 230, 255 } : (Color){ 189, 181, 168, 255 });
+
+            if (((suspMaskMapa >> i) & 1ULL) != 0) {
+                Vector2 ps = { rVit.x + p.x + ((i == (int)g_localAtual) ? 7.0f : 0.0f), rVit.y + p.y - 4.0f };
+                if (CheckCollisionPointCircle(mouseM, ps, 9.5f)) {
+                    hovSuspSala = i;
+                }
+            }
+
+            int evSala = 0;
+            if (i == LOCAL_ESCRITORIO && ev1) evSala++;
+            else if (i == LOCAL_CONTABILIDADE_1 && ev2) evSala++;
+            else if (i == LOCAL_ESCRITORIO_2) {
+                if (ev3) evSala++;
+                if (ev5) evSala++;
+            } else if (i == LOCAL_ARQUIVO_1 && ev4) evSala++;
+
+            if (evSala > 0) {
+                Rectangle rEv = { rVit.x + p.x - 16.0f, rVit.y + p.y + 8.0f, 32.0f, 11.0f };
+                DrawRectangleRec(ParaTela(rEv), (Color){ 32, 29, 31, 235 });
+                DrawRectangleLinesEx(ParaTela(rEv), 1.0f, (Color){ 255, 224, 48, 255 });
+                DrawTextInArea(TextFormat("%d EV", evSala), rEv, 7, (Color){ 255, 224, 48, 255 });
+            }
         }
-        DrawTextInArea("VERMELHO: Você   |   AMARELO: Funcionário Suspeito",
-                       (Rectangle){ rPainel.x + 12, rPainel.y + rPainel.height - 20, rPainel.width - 24, 16 },
-                       8, (Color){ 255, 224, 48, 255 });
+        if (hovSuspSala >= 0) {
+            Vector2 ps = MapaHoloPosSala(hovSuspSala);
+            Rectangle rTip = { fmaxf(rVit.x + 6.0f, fminf(rVit.x + ps.x - 68.0f, rVit.x + rVit.width - 142.0f)),
+                               fmaxf(rVit.y + 4.0f, fminf(rVit.y + ps.y - 28.0f, rVit.y + rVit.height - 22.0f)),
+                               136.0f, 18.0f };
+            DrawRectangleRec(ParaTela(rTip), (Color){ 20, 18, 20, 245 });
+            DrawRectangleLinesEx(ParaTela(rTip), 1.0f, (Color){ 255, 224, 48, 255 });
+            DrawTextInArea("Suspeito neste local", rTip, 8, (Color){ 255, 224, 48, 255 });
+        }
+
+        // Botao para pular direto para o andar selecionado (com Plim + transicao de 3s)
+        {
+            bool mesmoAndar = (g_mapaAndarSelecionado == andarAtual);
+            Rectangle rPular = { rPainel.x + rPainel.width - 170.0f, rPainel.y + rPainel.height - 27.0f, 158.0f, 20.0f };
+            bool hovPular = !mesmoAndar && CheckCollisionPointRec(mouseM, rPular);
+            Color bgP = mesmoAndar ? (Color){ 32, 29, 31, 220 } : (hovPular ? (Color){ 96, 86, 88, 255 } : (Color){ 64, 58, 60, 255 });
+            Color bdP = mesmoAndar ? (Color){ 92, 84, 86, 180 } : (Color){ 255, 242, 230, 255 };
+            DrawRectangleRec(ParaTela(rPular), bgP);
+            DrawRectangleLinesEx(ParaTela(rPular), 1.2f, bdP);
+            const char *txtPular = mesmoAndar ? "VOCÊ JÁ ESTÁ AQUI" : "IR PARA ESTE ANDAR >>";
+            DrawTextInArea(txtPular, rPular, 8, mesmoAndar ? (Color){ 130, 122, 122, 255 } : (Color){ 255, 242, 230, 255 });
+            if (hovPular && clicouM) {
+                LocalRasec dest = (g_mapaAndarSelecionado == 0) ? LOCAL_RECEPCAO : GameplayPlantaAndar(g_mapaAndarSelecionado, POS_CIMA);
+                g_mapaCompletoAberto = false;
+                LimparMonologoInterno();
+                FecharJanelasFerramentas();
+                g_closeupAtual = CLOSEUP_NENHUM;
+                g_transDestino = (int)dest;
+                g_transPretoDur = 2.70f; // 1s passos -> 1s plim -> 1s plim de chegada
+                g_transTempo = 0.0f;
+                g_transPlimMeioTocado  = false;
+                g_transPlimFinalTocado = false;
+                g_transModoSaltoMapa   = true;
+                if (g_sndPassos.frameCount > 0) {
+                    SetSoundVolume(g_sndPassos, 0.7f * SettingsGetSfxVolume());
+                    PlaySound(g_sndPassos);
+                }
+            }
+        }
+        DrawTextInArea("VERMELHO: Você | AMARELO: Suspeito | [EV]: Faltam | 1-5: Andar",
+                       (Rectangle){ rPainel.x + 10, rPainel.y + rPainel.height - 23, rPainel.width - 188, 16 },
+                       8, (Color){ 189, 181, 168, 255 });
     }
 
     // 9b) Modal "Abandonar a run?" (ESC com tudo fechado)
@@ -7822,8 +8189,8 @@ void UpdateDrawGameplayScene(void) {
     if (g_transTempo >= 0.0f) {
         float t = g_transTempo, a;
         if (t < TRANS_ESCURECE) a = t / TRANS_ESCURECE;
-        else if (t < TRANS_ESCURECE + TRANS_PRETO) a = 1.0f;
-        else a = 1.0f - (t - TRANS_ESCURECE - TRANS_PRETO) / TRANS_CLAREIA;
+        else if (t < TRANS_ESCURECE + g_transPretoDur) a = 1.0f;
+        else a = 1.0f - (t - TRANS_ESCURECE - g_transPretoDur) / TRANS_CLAREIA;
         DrawRectangleRec(ParaTela(JANELA_AREA), Fade((Color){ 0, 0, 0, 255 }, a));   // so a janela do local
     }
 
@@ -7906,6 +8273,10 @@ void UnloadGameplayScene(void) {
     g_transTempo = -1.0f;
     if (g_sndPassos.frameCount > 0) UnloadSound(g_sndPassos);
     g_sndPassos = (Sound){ 0 };
+    if (g_sndElevadorPlim.frameCount > 0) UnloadSound(g_sndElevadorPlim);
+    g_sndElevadorPlim = (Sound){ 0 };
+    if (g_sndElevadorChegou.frameCount > 0) UnloadSound(g_sndElevadorChegou);
+    g_sndElevadorChegou = (Sound){ 0 };
     if (g_faceRigShader.id > 0) {
         UnloadShader(g_faceRigShader);
         g_faceRigShader = (Shader){ 0 };

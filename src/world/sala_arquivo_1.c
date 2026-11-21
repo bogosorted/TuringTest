@@ -17,7 +17,7 @@ static const float ARQ_WALL_H = 2.95f;
 static const PlayerColliderBox ARQ_COLLIDERS[] = {
     { -4.45f, -3.55f,  4.45f, -2.75f }, // Fileira de armarios ao fundo
     { -4.45f, -1.80f, -3.25f,  1.80f }, // Armarios parede esquerda
-    {  3.25f, -1.80f,  4.45f,  1.80f }, // Armarios parede direita
+    {  3.25f, -2.25f,  4.45f,  1.45f }, // Armarios parede direita (livres da porta decorativa)
     { -1.35f, -0.65f,  1.35f,  0.55f }, // Mesa central de triagem
 };
 
@@ -39,15 +39,6 @@ static const SalaInteractable ARQ_INTERACTABLES[] = {
         2.15f,
         true,
         "Armários numerados de aço cinza guardam contratos, notas fiscais e dossiês dos últimos anos."
-    },
-    {
-        "mesa_triagem_arquivo",
-        "Mesa de Triagem",
-        { 0.0f, 0.85f, -0.05f },
-        { 2.50f, 1.00f, 1.15f },
-        1.95f,
-        true,
-        "Uma mesa de consulta com terminal de catálogo e uma impressora para segunda via de documentos."
     }
 };
 
@@ -86,8 +77,8 @@ static void DesenharArquivo1(float tempo, bool evRelatoriosAtiva) {
                 (Vector3){ 0.16f, ARQ_WALL_H, d }, 0.32f, 0.36f, 0.38f, 0.12f);
 
     TerreoPortaModelo((Vector3){ 0.0f, 0.0f, ARQ_MAX_Z - 0.04f }, 180.0f, PORTA_TIPO_ESCRITORIO);
-    // Porta decorativa a direita para Sala de Manutencao (PrimeiroAndarRASEC3D.png)
-    TerreoPortaModelo((Vector3){ ARQ_MAX_X - 0.04f, 0.0f, -1.80f }, -90.0f, PORTA_TIPO_INDUSTRIAL);
+    // Porta decorativa a direita para Sala de Manutencao (posicionada livre dos armarios)
+    TerreoPortaModelo((Vector3){ ARQ_MAX_X - 0.04f, 0.0f, 2.25f }, -90.0f, PORTA_TIPO_INDUSTRIAL);
 
     // Fileira completa de armarios novos (3D_cabinet_7) ao fundo e nas laterais
     for (int i = 0; i < 7; i++) {
@@ -96,7 +87,7 @@ static void DesenharArquivo1(float tempo, bool evRelatoriosAtiva) {
     for (int i = 0; i < 3; i++) {
         float kz = -1.25f + i * 1.25f;
         TerreoArmario((Vector3){ -4.15f, 0.0f, kz },  90.0f, 1.08f, 1.95f, 0.62f);
-        TerreoArmario((Vector3){  4.15f, 0.0f, kz }, -90.0f, 1.08f, 1.95f, 0.62f);
+        TerreoArmario((Vector3){  4.15f, 0.0f, -1.65f + i * 1.25f }, -90.0f, 1.08f, 1.95f, 0.62f);
     }
 
     // Mesa central de triagem + monitor + impressora
@@ -107,8 +98,8 @@ static void DesenharArquivo1(float tempo, bool evRelatoriosAtiva) {
     }
     TerreoMonitor((Vector3){ -0.55f, 0.77f, -0.05f }, 0.0f);
     TerreoImpressora((Vector3){ 0.65f, 0.0f, -0.05f }, 0.0f);
-    if (!GameStateTemEvidencia(1, "EV-04")) {
-        TerreoEvidenciaBrilhante((Vector3){ 0.05f, 0.77f, -0.05f }, tempo, 2);
+    if (GameStateEvidenciaDisponivelHoje(1, "EV-04") && !GameStateTemEvidencia(1, "EV-04")) {
+        TerreoEvidenciaBrilhante((Vector3){ 0.05f, 0.79f, -0.05f }, tempo, 2);
     }
 }
 

@@ -28,18 +28,18 @@ static const SalaInteractable ESC2_INTERACTABLES[] = {
     {
         "ev_arthur_sobrecarga",
         "Computador (Memorando)",
-        { 5.15f, 0.95f, 1.60f },
+        { 4.65f, 0.95f, 1.60f },
         { 0.95f, 0.95f, 0.95f },
-        2.15f,
+        1.30f,
         true,
         "Uma tela ligada na bancada direita exibindo um memorando interno sobre o setor."
     },
     {
         "ev_analu_terminal",
         "Terminal de Ana Lúcia",
-        { -1.65f, 0.98f, -0.81f },
+        { -1.65f, 0.98f, -0.15f },
         { 0.95f, 0.95f, 0.95f },
-        2.10f,
+        1.30f,
         true,
         "Terminal destravado de Ana Lúcia exibindo histórico suspeito de madrugada."
     },
@@ -143,7 +143,9 @@ static void DesenharBaiaCorporativa2(Vector3 centro, int numPostos, float largur
         if (i < numPostos) {
             float cx = px + larguraPosto * 0.5f;
             TerreoMonitor((Vector3){ cx, 0.77f, centro.z - 0.16f }, 0.0f);
-            TerreoCadeira((Vector3){ cx, 0.0f, centro.z + profTotal * 0.5f + 0.24f }, 180.0f);
+            Vector3 cPos = { cx, 0.0f, centro.z + profTotal * 0.5f + 0.24f };
+            float pull = Terreo3DGetChairPull(cPos);
+            TerreoCadeira((Vector3){ cPos.x, 0.0f, cPos.z + pull }, 180.0f);
         }
     }
 }
@@ -213,22 +215,28 @@ static void DesenharEscritorio2(float tempo, bool evRelatoriosAtiva) {
     TerreoSilhuetaSombra((Vector3){ -0.25f, 0.0f,  2.38f }, 180.0f, true);
 
     DesenharBaiaCorporativa2((Vector3){ -0.25f, 0.0f, -0.65f }, 3, 1.40f, 0.84f);
-    if (!GameStateTemEvidencia(2, "EV-05")) {
+    if (GameStateEvidenciaDisponivelHoje(2, "EV-05") && !GameStateTemEvidencia(2, "EV-05")) {
         TerreoEvidenciaBrilhante((Vector3){ -1.65f, 0.77f, -0.81f }, tempo, 3);
     }
     TerreoSilhuetaSombra((Vector3){  1.15f, 0.0f, -0.02f }, 180.0f, true);
 
     // Fileira direita completa encostada na parede direita
     TerreoCaixa((Vector3){ 5.30f, 0.74f, 0.00f }, (Vector3){ 0.88f, 0.05f, 4.40f }, 0.68f, 0.48f, 0.44f, 0.14f);
-    if (!GameStateTemEvidencia(1, "EV-03")) {
-        TerreoEvidenciaBrilhante((Vector3){ 5.45f, 0.77f, 1.60f }, tempo, 3);
+    if (GameStateEvidenciaDisponivelHoje(1, "EV-03") && !GameStateTemEvidencia(1, "EV-03")) {
+        rlPushMatrix();
+        rlTranslatef(5.45f, 0.77f, 1.60f);
+        rlRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
+        TerreoEvidenciaBrilhante((Vector3){ 0.0f, 0.0f, 0.0f }, tempo, 3);
+        rlPopMatrix();
     }
     DrawCylinder((Vector3){ 5.05f, 0.0f, -2.05f }, 0.035f, 0.035f, 0.72f, 8, TerreoLum(0.22f));
     DrawCylinder((Vector3){ 5.05f, 0.0f,  2.05f }, 0.035f, 0.035f, 0.72f, 8, TerreoLum(0.22f));
     for (int k = 0; k < 3; k++) {
         float kz = -1.60f + k * 1.60f;
         TerreoMonitor((Vector3){ 5.45f, 0.77f, kz }, -90.0f);
-        TerreoCadeira((Vector3){ 4.58f, 0.0f,  kz },  90.0f);
+        Vector3 cPos = { 4.58f, 0.0f, kz };
+        float pull = Terreo3DGetChairPull(cPos);
+        TerreoCadeira((Vector3){ cPos.x - pull, 0.0f, cPos.z }, 90.0f);
     }
 
     // Bebedouro no canto inferior esquerdo

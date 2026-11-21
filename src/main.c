@@ -12,6 +12,7 @@
 #include "settings.h"
 #include "ranking.h"
 #include <math.h>
+#include <unistd.h>
 
 // Lista das telas que o jogo tem
 typedef enum {
@@ -68,7 +69,8 @@ static void GoToWithTransition(Scene destino, const char *texto) {
     TransitionStart(texto);
 }
 
-int main(void) {
+int main(int argc, char **argv) {
+    (void)argc;
     // Garante que o jogo encontre os arquivos em assets/ mesmo se rodar de build/
     ChangeDirectory(GetApplicationDirectory());
     if (!DirectoryExists("assets") && DirectoryExists("../assets")) {
@@ -112,7 +114,7 @@ int main(void) {
     }
     TransitionStartFadeIn();         // fade-in suave ao abrir o jogo
 
-    while (running && !WindowShouldClose()) {
+    while (running && !WindowShouldClose() && !SettingsIsAppRestartRequested()) {
         float dt = GetFrameTime();
         if (dt > 0.05f) dt = 0.05f;
 
@@ -241,5 +243,8 @@ int main(void) {
     CloseAudioDevice(); // Encerra dispositivo de som
     RayCanvasShutdown();
     CloseWindow();
+    if (SettingsConsumeAppRestart()) {
+        execv("/proc/self/exe", argv);
+    }
     return 0;
 }

@@ -32,9 +32,22 @@ void SettingsSetTutorial(bool ligado);
 bool SettingsGetDevMode(void);
 void SettingsSetDevMode(bool ligado);
 
-// Efeito CRT (TV de tubo) - OFF por padrao
+// Efeito CRT (TV de tubo)
 bool SettingsGetCRT(void);
 void SettingsSetCRT(bool ligado);
+
+// Opcoes exclusivas do Modo Dev (ambas OFF por padrao):
+// - Auto-Reset: ao iniciar, reseta configuracoes/paleta e inicia com CRT ligado
+// - Tech Night: temporizador suave 08:00 -> 17:00 (permanece ativo mesmo se Dev Mode for desligado)
+bool SettingsGetAutoReset(void);
+void SettingsSetAutoReset(bool ligado);
+bool SettingsGetTechNight(void);
+void SettingsSetTechNight(bool ligado);
+
+// Reinicio completo da aplicacao (usado pelo botao Dev Mode)
+void SettingsRequestAppRestart(void);
+bool SettingsIsAppRestartRequested(void);
+bool SettingsConsumeAppRestart(void);
 
 // Camera 3D: false = padrao (segue o player), true = fixa com tracking
 bool SettingsGetCamera3DFixa(void);

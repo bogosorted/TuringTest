@@ -1,5 +1,6 @@
 #include "game_state.h"
 #include "settings.h"
+#include "raylib.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -16,6 +17,10 @@ static char           g_playerName[9] = "AGENTE";
 static int            g_playerAvatar = 0;
 static TomVozJogador  g_playerVoiceTone = VOZ_SUAVE;
 static ModoJogo       g_gameMode = MODO_3D;
+static ControleModo3D g_controle3D = CONTROLE_AMBOS;
+static int            g_evUnlockDay[6] = { 1, 1, 2, 2, 3, 1 };
+static int            g_ev06CollectedDay = 0;
+static float          g_techNightHours = 8.0f;
 static int            g_tokensRestantesTotal = 0;
 static int          g_dicasUsadasTotal = 0;
 
@@ -43,10 +48,21 @@ bool GameStateIs3DMode(void) {
     return g_gameMode == MODO_3D;
 }
 
+void GameStateSetControle3D(ControleModo3D ctrl) {
+    if (ctrl < CONTROLE_TECLADO || ctrl > CONTROLE_AMBOS) ctrl = CONTROLE_AMBOS;
+    g_controle3D = ctrl;
+}
+
+ControleModo3D GameStateGetControle3D(void) {
+    return g_controle3D;
+}
+
 void GameStateNewRun(void) {
     g_tutorialConfig = SettingsGetTutorial();
     g_tutorialActive = g_tutorialConfig;
     g_day = 1; // Inicia direto no Dia 1; tutorial aparece de forma contextual durante a partida
+    g_techNightHours = 8.0f;
+    g_ev06CollectedDay = 0;
     g_tokensRestantesTotal = 0;
     g_dicasUsadasTotal = 0;
     g_dialogFlags = 0;
@@ -59,10 +75,44 @@ void GameStateNewRun(void) {
             g_evidencias[i][e] = false;
         }
     }
+    // Randomiza em qual dia (1, 2 ou 3) as evidencias 0..4 ficam disponiveis; EV-06 (5) fica disponivel todos os dias
+    int order[5] = { 0, 1, 2, 3, 4 };
+    for (int i = 4; i > 0; i--) {
+        int j = GetRandomValue(0, i);
+        int tmp = order[i];
+        order[i] = order[j];
+        order[j] = tmp;
+    }
+    for (int i = 0; i < 5; i++) {
+        g_evUnlockDay[order[i]] = 1 + (i / 2);
+    }
+    g_evUnlockDay[5] = 1;
 }
 
 void GameStateNextDay(void) {
     if (g_day < GAME_NUM_DAYS) g_day++;
+}
+
+void GameStateUpdateTechNightClock(float dt) {
+    if (dt <= 0.0f) return;
+    if (dt > 0.05f) dt = 0.05f;
+    // Tech Night (1 semana = 3 dias, no maximo 8 minutos totais com margem de ~30s pro Veredito):
+    // 450s nos 3 dias (~150s por dia = 3h no jogo por dia, avancando de 08:00 ate 17:00)
+    float dayFloor = 8.0f + (float)(g_day - 1) * 3.0f;
+    float dayCeil  = dayFloor + 3.0f;
+    if (dayCeil > 17.0f) dayCeil = 17.0f;
+    if (g_techNightHours < dayFloor) {
+        // Alcanca suavemente o inicio do novo dia caso o jogador conclua mais rapido
+        g_techNightHours += (dayFloor - g_techNightHours) * 0.90f * dt + 0.12f * dt;
+        if (g_techNightHours > dayFloor) g_techNightHours = dayFloor;
+    } else if (g_techNightHours < dayCeil) {
+        g_techNightHours += (3.0f / 150.0f) * dt;
+        if (g_techNightHours > dayCeil) g_techNightHours = dayCeil;
+    }
+}
+
+float GameStateGetTechNightClockHours(void) {
+    return g_techNightHours;
 }
 
 int GameStateGetDay(void) {
@@ -102,7 +152,14 @@ bool GameStateRegistrarEvidencia(int suspeito, const char *ev_id) {
     if (idx < 0) return false;
     if (g_evidencias[suspeito][idx]) return false;
     g_evidencias[suspeito][idx] = true;
+    if (suspeito == 2 && idx == 5) {
+        g_ev06CollectedDay = g_day;
+    }
     return true;
+}
+
+int GameStateGetEv06CollectedDay(void) {
+    return g_ev06CollectedDay;
 }
 
 bool GameStateTemEvidencia(int suspeito, const char *ev_id) {
@@ -110,6 +167,13 @@ bool GameStateTemEvidencia(int suspeito, const char *ev_id) {
     int idx = ParseEvIndex(ev_id);
     if (idx < 0) return false;
     return g_evidencias[suspeito][idx];
+}
+
+bool GameStateEvidenciaDisponivelHoje(int suspeito, const char *ev_id) {
+    (void)suspeito;
+    int idx = ParseEvIndex(ev_id);
+    if (idx < 0 || idx >= 6) return true;
+    return g_day >= g_evUnlockDay[idx];
 }
 
 void GameStateSetDialogFlag(int flagBit) {

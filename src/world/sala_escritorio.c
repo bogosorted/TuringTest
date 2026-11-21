@@ -189,7 +189,7 @@ static void DesenharEscritorio(float tempo, bool evRelatoriosAtiva) {
 
     // 2) FILEIRAS CENTRAIS DE BAIAS + EVIDENCIA BRILHANTE (EV-01: Bolinha de papel amassada da Maria)
     DesenharBaiaCorporativa((Vector3){ -0.25f, 0.0f,  1.75f }, 3, 1.40f, 0.84f);
-    if (!GameStateTemEvidencia(0, "EV-01")) {
+    if (GameStateEvidenciaDisponivelHoje(0, "EV-01") && !GameStateTemEvidencia(0, "EV-01")) {
         TerreoEvidenciaBrilhante((Vector3){ 1.35f, 0.765f, 1.85f }, tempo, 5);
     } else {
         DrawSphereEx((Vector3){ 1.35f, 0.82f, 1.85f }, 0.07f, 5, 6, TerreoLum(0.86f));

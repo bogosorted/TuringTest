@@ -19,9 +19,19 @@ static const float H2_WALL_H = 3.05f;
 static const PlayerColliderBox H2_COLLIDERS[] = {
     { -1.85f,  0.65f,  1.15f,  1.75f }, // Sofa central
     { -4.95f,  2.15f, -4.15f,  2.95f }, // Vaso canto esquerdo
+    { -5.00f, -3.40f, -2.50f, -1.15f }, // Balcao redondo da recepcionista (bloqueia acesso por tras)
 };
 
 static const SalaInteractable H2_INTERACTABLES[] = {
+    {
+        "recepcionista_hall_2",
+        "Recepcionista (2º Andar)",
+        { -3.75f, 0.95f, -1.75f },
+        { 1.45f, 1.35f, 1.05f },
+        1.95f,
+        false,
+        "Recepcionista: \"Bem-vindo ao 2º Andar — Cibersegurança. À esquerda fica o Escritório 1; à direita ficam o Escritório 2 e as Salas de Servidores.\""
+    },
     {
         "diretorio_andar_2",
         "Diretório do 2º Andar",
@@ -101,9 +111,12 @@ static void DesenharHall2(float tempo, bool evRelatoriosAtiva) {
                 (Vector3){ 1.15f, 0.80f, 0.04f }, 0.82f, 0.78f, 0.70f, 0.16f);
 
     TerreoCaixa((Vector3){ -0.35f, 0.01f, 1.20f }, (Vector3){ 3.40f, 0.02f, 1.65f }, 0.20f, 0.16f, 0.16f, -1.0f);
-    TerreoCaixa((Vector3){ -0.35f, 0.24f, 1.20f }, (Vector3){ 2.60f, 0.36f, 0.84f }, 0.64f, 0.54f, 0.48f, 0.16f);
-    TerreoCaixa((Vector3){ -0.35f, 0.56f, 1.52f }, (Vector3){ 2.60f, 0.44f, 0.20f }, 0.68f, 0.58f, 0.50f, 0.16f);
-    TerreoPlanta((Vector3){ -4.55f, 0.0f, 2.55f }, 1.20f);
+    TerreoSofaCurvo((Vector3){ -0.35f, 0.0f, 1.20f }, 180.0f, 2.50f);
+    TerreoPlanta((Vector3){ -4.55f, 0.0f, 2.55f }, 1.25f);
+    TerreoPlanta((Vector3){  4.55f, 0.0f, -2.55f }, 1.20f);
+
+    // Balcao redondo em U da recepcionista do 2o andar
+    TerreoBalcaoRecepcaoU((Vector3){ -3.75f, 0.0f, -2.05f });
 
     TerreoElevador((Vector3){ 3.45f, 0.0f, H2_MIN_Z + 0.04f }, 0.0f);
 }

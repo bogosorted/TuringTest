@@ -137,8 +137,8 @@ static void DesenharContabilidade1(float tempo, bool evRelatoriosAtiva) {
         TerreoArmario((Vector3){  1.80f + i * 1.15f, 0.0f, -3.55f }, 0.0f, 1.05f, 1.85f, 0.60f);
     }
 
-    DesenharBaiaContabilidade((Vector3){ -0.10f, 0.0f,  1.25f }, true);
-    if (!GameStateTemEvidencia(0, "EV-02")) {
+    DesenharBaiaContabilidade((Vector3){ -0.10f, 0.0f,  1.25f }, false);
+    if (GameStateEvidenciaDisponivelHoje(0, "EV-02") && !GameStateTemEvidencia(0, "EV-02")) {
         TerreoEvidenciaBrilhante((Vector3){ 1.55f, 0.77f, 1.25f }, tempo, 1);
     }
     DesenharBaiaContabilidade((Vector3){ -0.10f, 0.0f, -1.35f }, false);

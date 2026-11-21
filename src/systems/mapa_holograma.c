@@ -440,7 +440,7 @@ void MapaHoloRender(int largura, int altura, int salaAtual, int salaHover, uint6
         DrawCircleV(ps, 3.2f, COR_SUSPEITO);
         DrawCircleLinesV(ps, 3.2f, BLACK);
     }
-    if (salaAtual >= 0 && salaAtual < g_numSalas) {
+    if (salaAtual >= 0 && salaAtual < g_numSalas && (!g_apenasAndarAtual || g_salas[salaAtual].andar == g_andarFoco)) {
         Vector2 p = MapaHoloPosSala(salaAtual);
         p.y -= 4.0f;
         p.x = floorf(p.x) + 0.5f;

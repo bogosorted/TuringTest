@@ -114,6 +114,7 @@ typedef struct {
     const char   *objetoId;
     const char   *objetoLabel;
     const char   *flavorText;
+    Vector3       objetoPos;
     bool          acionouSuspeito;
     int           suspeitoIndex;
 } TerreoInteracaoResultado;
@@ -151,6 +152,8 @@ Color TerreoLum(float l);
 void  TerreoCaixa(Vector3 centro, Vector3 tam, float topLum, float frontLum, float sideLum, float wireLum);
 void  TerreoPortaModelo(Vector3 pos, float rotYDeg, TerreoPortaTipo tipo);
 void  TerreoCadeira(Vector3 pos, float rotYDeg);
+void  TerreoCadeiraConfortavel(Vector3 pos, float rotYDeg);
+void  TerreoBalcaoRecepcaoU(Vector3 pos);
 void  TerreoMesaRedonda(Vector3 pos, float raio, float altura);
 void  TerreoBanqueta(Vector3 pos, float altura);
 void  TerreoMonitor(Vector3 pos, float rotYDeg);
@@ -160,6 +163,8 @@ void  TerreoBebedouro(Vector3 pos);
 void  TerreoImpressora(Vector3 pos, float rotYDeg);
 void  TerreoArmario(Vector3 pos, float rotYDeg, float largura, float altura, float prof);
 void  TerreoPlanta(Vector3 pos, float escala);
+void  TerreoSofaCurvo(Vector3 pos, float rotYDeg, float largura);
+void  TerreoSofaRedondo(Vector3 pos, float rotYDeg, float raio);
 void  TerreoEscadaCaracol(Vector3 centro, float raioInt, float raioExt, float altBase, float altTopo, int degraus, float angIniDeg, float angDeltaDeg, bool comMuretaExterna);
 void  TerreoElevador(Vector3 pos, float rotYDeg);
 void  TerreoRackServidor(Vector3 pos, float rotYDeg);
@@ -172,6 +177,10 @@ void Terreo3DUnload(void);
 void Terreo3DDefinirSala(TerreoSalaId sala, TerreoDestino vindoDe);
 void Terreo3DSetEvidenciaAtiva(bool evRelatoriosAtiva);
 void Terreo3DSetSuspeitosSala(const bool presentes[3]);
+void Terreo3DTriggerPlayerAnim(Vector3 targetPos, PlayerInteractAnim tipo, float duracao);
+void Terreo3DTriggerComputerSit(Vector3 seatPos, Vector3 monitorPos, float duracao);
+void Terreo3DTriggerComputerExit(void);
+float Terreo3DGetChairPull(Vector3 chairPos);
 
 TerreoInteracaoResultado Terreo3DUpdate(float dt,
                                         Vector2 mouseJanela,

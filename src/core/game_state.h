@@ -20,6 +20,12 @@ typedef enum {
     MODO_3D = 1
 } ModoJogo;
 
+typedef enum {
+    CONTROLE_TECLADO = 0, // WASD / Setas + E / Enter
+    CONTROLE_MOUSE   = 1, // Clique para andar e interagir
+    CONTROLE_AMBOS   = 2  // Teclado e Mouse juntos
+} ControleModo3D;
+
 // Visao individual de cada personagem quanto ao jogador
 typedef enum {
     VISAO_DUVIDA    = 0,
@@ -27,13 +33,19 @@ typedef enum {
     VISAO_PRESSAO   = 2
 } VisaoJogador;
 
-void     GameStateSetMode(ModoJogo modo);
-ModoJogo GameStateGetMode(void);
-bool     GameStateIs3DMode(void);
+void           GameStateSetMode(ModoJogo modo);
+ModoJogo       GameStateGetMode(void);
+bool           GameStateIs3DMode(void);
+void           GameStateSetControle3D(ControleModo3D ctrl);
+ControleModo3D GameStateGetControle3D(void);
 
 void GameStateNewRun(void);   // comeca uma partida nova (volta para o dia 1)
 void GameStateNextDay(void);  // avanca um dia
 int  GameStateGetDay(void);   // dia atual (1..GAME_NUM_DAYS)
+
+// Relogio suave do Modo Tech Night (08:00 -> 17:00 distribuido ao longo da partida + veredito)
+void  GameStateUpdateTechNightClock(float dt);
+float GameStateGetTechNightClockHours(void);
 
 // Tutorial contextual (ativo durante a partida quando habilitado nas opcoes)
 bool GameStateIsTutorialActive(void);
@@ -51,6 +63,8 @@ VisaoJogador GameStateGetVisaoJogador(int suspeito);
 // Retorna true se a evidencia ainda nao estava registrada (recem-adquirida)
 bool GameStateRegistrarEvidencia(int suspeito, const char *ev_id);
 bool GameStateTemEvidencia(int suspeito, const char *ev_id);
+bool GameStateEvidenciaDisponivelHoje(int suspeito, const char *ev_id);
+int  GameStateGetEv06CollectedDay(void);
 
 // Flags de memoria de dialogo entre dias e entre funcionarios (bit 1..31)
 void GameStateSetDialogFlag(int flagBit);
