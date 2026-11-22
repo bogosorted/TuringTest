@@ -72,6 +72,7 @@ const Color *SettingsOriginalStops(void);             // rampa original (paleta 
 bool         SettingsIsPaletteSecret(int indice);
 bool         SettingsIsPaletteUnlocked(int indice);
 bool         SettingsUnlockPaletteByKey(const char *chave);
+void         SettingsResetSecretPalettes(void);
 int          SettingsUnlockedPaletteCount(void);
 int          SettingsUnlockedPaletteOrder(int indice);
 

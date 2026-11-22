@@ -166,6 +166,7 @@ int main(int argc, char **argv) {
                 if (MenuSceneShouldClose()) {
                     running = false;             // botao Sair
                 } else if (MenuSceneShouldStartGame() && !TransitionActive()) {
+                    SettingsResetSecretPalettes();
                     GameStateNewRun();               // volta para o dia 1
                     ResetTokens();                   // tokens do dia 1
                     GameplaySceneResetDialogues();   // dialogos "nao vistos" de novo
@@ -209,6 +210,7 @@ int main(int argc, char **argv) {
                 if (GameplaySceneShouldClose()) {
                     running = false;
                 } else if (GameplaySceneShouldReturnToMenu() && !TransitionActive()) {
+                    SettingsResetSecretPalettes();
                     GoToWithTransition(SCENE_MENU, NULL);
                 } else if (GameplaySceneShouldAdvanceDay() && !TransitionActive()) {
                     GameStateNextDay();
@@ -228,6 +230,7 @@ int main(int argc, char **argv) {
                 UpdateDrawVerdictScene();
 
                 if (VerdictSceneShouldRestart() && !TransitionActive()) {
+                    SettingsResetSecretPalettes();
                     GoToWithTransition(SCENE_MENU, NULL);     // "Tentar de novo" com fade
                 }
                 break;

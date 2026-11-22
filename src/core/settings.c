@@ -167,7 +167,6 @@ void SettingsLoad(void) {
     while (fgets(linha, sizeof linha, f)) {
         float v;
         int   n;
-        unsigned int u;
         if (sscanf(linha, "musica=%f", &v) == 1)       g_volMusica  = Limitar01(v);
         else if (sscanf(linha, "telacheia=%d", &n) == 1) g_telaCheia = (n != 0);
         else if (sscanf(linha, "efeitos=%f", &v) == 1) g_volEfeitos = Limitar01(v);
@@ -178,8 +177,7 @@ void SettingsLoad(void) {
         else if (sscanf(linha, "cam3d_fixa=%d", &n) == 1) g_cam3dFixa = (n != 0);
         else if (sscanf(linha, "auto_reset=%d", &n) == 1) g_autoReset = (n != 0);
         else if (sscanf(linha, "tech_night=%d", &n) == 1) g_techNight = (n != 0);
-        else if (sscanf(linha, "paletas_desbloqueadas=%u", &u) == 1) g_paletasSecretasMask = u;
-        // A paleta NAO e lida: o jogo sempre abre na Original (g_paleta = 0).
+        // A paleta e as paletas secretas sempre comecam zeradas ao abrir o jogo.
     }
     fclose(f);
     if (g_autoReset) {
@@ -318,8 +316,14 @@ bool SettingsUnlockPaletteByKey(const char *chave) {
     if (bit < 0) return false;
     bool eraNova = ((g_paletasSecretasMask & (1u << bit)) == 0);
     g_paletasSecretasMask |= (1u << bit);
-    if (eraNova) SettingsSave();
     return eraNova;
+}
+
+void SettingsResetSecretPalettes(void) {
+    g_paletasSecretasMask = 0u;
+    if (SettingsIsPaletteSecret(g_paleta)) {
+        g_paleta = 0;
+    }
 }
 
 int SettingsUnlockedPaletteCount(void) {
