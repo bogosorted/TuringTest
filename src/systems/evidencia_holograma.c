@@ -468,28 +468,56 @@ static void DesenharModeloRelatorios(Matrix mObj) {
 }
 
 // -----------------------------------------------------------------------------
-// Modelos 3D contextuais para as pistas desbloqueadas em dialogo
+// Modelos 3D contextuais para as pistas da RASEC
 // -----------------------------------------------------------------------------
 static void DesenharModeloMemorando(Matrix m, bool comErro) {
-    // Prancheta vertical de supervisao com clipe metalico + folha + carimbo ou simbolo [!]
-    CaixaM((Vector3){ 0.0f, -0.05f, 0.0f }, (Vector3){ 1.62f, 2.22f, 0.08f }, 0.44f, 0.84f, m);
-    CaixaM((Vector3){ 0.0f,  1.02f, 0.06f }, (Vector3){ 0.68f, 0.20f, 0.10f }, 0.84f, 0.98f, m);
-    CaixaM((Vector3){ 0.0f, -0.08f, 0.055f }, (Vector3){ 1.40f, 1.88f, 0.03f }, 0.78f, 0.92f, m);
-    for (int l = 0; l < 5; l++) {
-        float yl = 0.56f - l * 0.24f;
-        float tilt = comErro ? ((l % 2 == 0) ? 0.06f : -0.08f) : 0.0f;
-        LinhaM((Vector3){ -0.54f, yl, 0.08f }, (Vector3){ 0.52f, yl + tilt, 0.08f }, m, 0.38f);
+    if (!comErro) {
+        // EV-01: Denuncia descartada ao RH (Maria) — Folha de papel com marcas de dobras de ter sido amassada/descartada
+        CaixaM((Vector3){ 0.0f,  0.00f,  0.00f }, (Vector3){ 1.56f, 2.12f, 0.036f }, 0.80f, 0.96f, m);
+        // Abas e facetas levemente inclinadas simulando papel desamassado
+        Matrix mTop = MatrixMultiply(MatrixRotateX(0.11f), m);
+        CaixaM((Vector3){ 0.0f,  0.66f,  0.03f }, (Vector3){ 1.54f, 0.72f, 0.024f }, 0.84f, 0.96f, mTop);
+        Matrix mBot = MatrixMultiply(MatrixRotateX(-0.09f), m);
+        CaixaM((Vector3){ 0.0f, -0.66f, -0.02f }, (Vector3){ 1.54f, 0.72f, 0.024f }, 0.76f, 0.94f, mBot);
+
+        // Linhas de vinco diagonal (papel amassado e reaberto)
+        LinhaM((Vector3){ -0.76f,  0.34f, 0.028f }, (Vector3){  0.76f,  0.12f, 0.028f }, m, 0.52f);
+        LinhaM((Vector3){ -0.76f, -0.22f, 0.028f }, (Vector3){  0.76f, -0.42f, 0.028f }, m, 0.52f);
+        LinhaM((Vector3){ -0.32f,  1.02f, 0.028f }, (Vector3){  0.24f, -1.02f, 0.028f }, m, 0.48f);
+
+        // Cabecalho "DENUNCIA AO RH" + linhas do texto da queixa + assinatura Maria Bianca
+        CaixaM((Vector3){ -0.18f,  0.78f, 0.035f }, (Vector3){ 0.96f, 0.11f, 0.012f }, 0.32f, 0.94f, m);
+        for (int l = 0; l < 6; l++) {
+            float yl = 0.44f - l * 0.21f;
+            float lw = (l == 5) ? 0.10f : 0.54f;
+            LinhaM((Vector3){ -0.56f, yl, 0.032f }, (Vector3){ lw, yl, 0.032f }, m, 0.36f);
+        }
+        // Carimbo / selo "DESCARTADO" inclinado no canto inferior
+        Matrix mCar = MatrixMultiply(MatrixRotateZ(0.18f), m);
+        CaixaM((Vector3){ 0.24f, -0.72f, 0.036f }, (Vector3){ 0.78f, 0.22f, 0.014f }, 0.34f, 0.98f, mCar);
+        return;
     }
-    if (comErro) {
-        // Exclamacao / X 3D flutuando na frente indicando dados alucinados/incorretos
-        CaixaM((Vector3){ 0.0f, -0.10f, 0.24f }, (Vector3){ 0.14f, 0.56f, 0.12f }, 0.96f, 1.00f, m);
-        CaixaM((Vector3){ 0.0f, -0.54f, 0.24f }, (Vector3){ 0.14f, 0.14f, 0.12f }, 0.96f, 1.00f, m);
-    } else {
-        // Carimbo de mesa pousado no canto inferior
-        CaixaM((Vector3){ 0.36f, -0.62f, 0.14f }, (Vector3){ 0.52f, 0.28f, 0.16f }, 0.62f, 0.94f, m);
-        PrismaY(0.14f, 0.38f, 0.08f, 0.12f, 8, 0.80f, 0.98f, true,
-                MatrixMultiply(MatrixMultiply(MatrixRotateX(PI * 0.5f), MatrixTranslate(0.36f, -0.62f, 0.08f)), m));
+
+    // EV-05 / EV-02: Terminal Corporativo / Relatorio com Alerta Critico [!]
+    // Monitor widescreen + base de mesa + janela holografica de logs suspeitos
+    CaixaM((Vector3){ 0.0f,  0.18f, -0.06f }, (Vector3){ 2.16f, 1.38f, 0.12f }, 0.42f, 0.88f, m);
+    CaixaM((Vector3){ 0.0f,  0.18f,  0.01f }, (Vector3){ 1.98f, 1.20f, 0.03f }, 0.26f, 0.94f, m);
+    // Pedestal e base do monitor
+    CaixaM((Vector3){ 0.0f, -0.64f, -0.08f }, (Vector3){ 0.22f, 0.36f, 0.10f }, 0.48f, 0.86f, m);
+    CaixaM((Vector3){ 0.0f, -0.82f,  0.00f }, (Vector3){ 0.92f, 0.07f, 0.52f }, 0.52f, 0.90f, m);
+
+    // Barra de titulo do terminal (a.lucia - 03:08h) + linhas de log na tela
+    CaixaM((Vector3){ 0.0f,  0.68f,  0.035f }, (Vector3){ 1.88f, 0.12f, 0.015f }, 0.64f, 0.96f, m);
+    for (int l = 0; l < 4; l++) {
+        float yl = 0.42f - l * 0.22f;
+        float xEnd = (l == 2) ? 0.22f : 0.78f;
+        LinhaM((Vector3){ -0.84f, yl, 0.038f }, (Vector3){ xEnd, yl, 0.038f }, m, 0.92f);
     }
+
+    // Janela pop-up 3D projetada a frente da tela com alerta [!] de Acesso Negado / Historico Suspeito
+    CaixaM((Vector3){ 0.42f,  0.08f,  0.22f }, (Vector3){ 0.88f, 0.76f, 0.04f }, 0.36f, 0.98f, m);
+    CaixaM((Vector3){ 0.42f,  0.18f,  0.26f }, (Vector3){ 0.11f, 0.32f, 0.06f }, 0.96f, 1.00f, m);
+    CaixaM((Vector3){ 0.42f, -0.10f,  0.26f }, (Vector3){ 0.11f, 0.10f, 0.06f }, 0.96f, 1.00f, m);
 }
 
 static void DesenharModeloRelogioTempo(Matrix m) {
