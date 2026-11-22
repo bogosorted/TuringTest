@@ -108,13 +108,11 @@ DialogNode* GetCurrentNode(DialogTree *tree) {
 }
 
 bool MakeChoiceById(DialogTree *tree, const char *next_id) {
-    if (!tree || !HasTokens()) return false;
-    bool is_free = (strcmp(next_id, "intro") == 0 || strcmp(next_id, "Entrada") == 0);
+    if (!tree || !next_id) return false;
     for (int i = 0; i < tree->node_count; i++) {
         if (strcmp(tree->nodes[i].id, next_id) == 0) {
             tree->current_node_index = i;
             tree->nodes[i].visited = true;
-            if (!global_infinite_tokens && !SettingsGetDevMode() && !is_free) global_tokens--;
             if (tree->nodes[i].flag_out > 0) {
                 GameStateSetDialogFlag(tree->nodes[i].flag_out);
             }

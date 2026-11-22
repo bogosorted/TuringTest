@@ -7221,7 +7221,8 @@ static void DesenharIconeCadeado(Rectangle boxVirt, Color cor) {
 // Desenha os 6 icones da bandeja com fisica de mola (juiciness), outline brilhante, leve tilt e selo "-2"
 static void DesenharIconeFerramenta(Texture2D tex, int idx) {
     Rectangle area = IconeMenu(idx);
-    bool hov = !MouseSobreFicha() && !g_dicaAberta && !g_confirmarAvancarDia && MouseNoIcone(idx);
+    bool bloqueadoTut = FerramentaBloqueadaTutorial(idx);
+    bool hov = !MouseSobreFicha() && !g_dicaAberta && !g_confirmarAvancarDia && !bloqueadoTut && MouseNoIcone(idx);
 
     float dt = GetFrameTime();
     if (dt > 0.05f) dt = 0.05f;
@@ -7288,19 +7289,15 @@ static void DesenharIconeFerramenta(Texture2D tex, int idx) {
             bloqueadoLimite = true;
         }
     }
-    if (FerramentaBloqueadaTutorial(idx)) {
+    if (bloqueadoTut) {
         bloqueadoLimite = true;
     }
 
-    // 2) Outline brilhante ao redor da silhueta quando em hover ou destaque do tutorial
-    bool brilhoTutorial = DialogTutorialAtivo() && g_tutDialogoEtapa >= 3 && g_tutDialogoEtapa <= 6 &&
-                          (idx == 2 + (g_tutDialogoEtapa - 3));
-    if ((anim > 0.06f && g_iconeSilhuetas[idx].id > 0 && !bloqueadoLimite) ||
-        (brilhoTutorial && g_iconeSilhuetas[idx].id > 0)) {
-        float alphaOut = brilhoTutorial ? (0.65f + 0.35f * sinf((float)GetTime() * 7.0f)) : (anim > 1.0f ? 1.0f : anim);
-        Color corOut = brilhoTutorial ? Fade((Color){ 255, 224, 48, 255 }, alphaOut)
-                                      : ((custo > 0) ? Fade(COR_NEGACAO_CLARO, 0.92f * alphaOut)
-                                                     : Fade((Color){ 255, 242, 230, 255 }, 0.95f * alphaOut));
+    // 2) Outline brilhante ao redor da silhueta quando em hover
+    if (anim > 0.06f && g_iconeSilhuetas[idx].id > 0 && !bloqueadoLimite) {
+        float alphaOut = (anim > 1.0f ? 1.0f : anim);
+        Color corOut = (custo > 0) ? Fade(COR_NEGACAO_CLARO, 0.92f * alphaOut)
+                                   : Fade((Color){ 255, 242, 230, 255 }, 0.95f * alphaOut);
         Rectangle rUmPx = ParaTela((Rectangle){ 0, 0, 1.3f, 1.3f });
         float ox = rUmPx.width;
         float oy = rUmPx.height;
