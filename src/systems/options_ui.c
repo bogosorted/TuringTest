@@ -10,7 +10,7 @@
 #define TELA_W 640
 #define TELA_H 360
 
-enum { HOVER_NENHUM = -1, HOVER_ANT = 0, HOVER_PROX = 1, HOVER_TELA_CHEIA = 2, HOVER_TUTORIAL = 3, HOVER_DEV_BTN = 4, HOVER_CRT = 5, HOVER_CAM3D = 6, HOVER_DEV_AUTORESET = 7, HOVER_DEV_TECHNIGHT = 8, HOVER_DEV_RESTART = 9 };
+enum { HOVER_NENHUM = -1, HOVER_ANT = 0, HOVER_PROX = 1, HOVER_TELA_CHEIA = 2, HOVER_TUTORIAL = 3, HOVER_DEV_BTN = 4, HOVER_CRT = 5, HOVER_CAM3D = 6, HOVER_BALAO = 7, HOVER_DEV_AUTORESET = 8, HOVER_DEV_TECHNIGHT = 9, HOVER_DEV_RESTART = 10 };
 
 static int   g_sliderArrastando = -1;   // -1 = nenhum, 0 = musica, 1 = efeitos
 static int   g_hoverAnt = HOVER_NENHUM; // botao que estava com o mouse em cima no frame anterior
@@ -202,7 +202,8 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
     float yEfeitos   = yMusica + lay->passoY;
     float yTelaCheia = yEfeitos + lay->passoY;
     float yExtras    = yTelaCheia + lay->passoY;
-    float yPaleta    = yExtras + lay->passoY;
+    float yBalao     = yExtras + lay->passoY;
+    float yPaleta    = yBalao + lay->passoY;
 
     bool interativoControles = interativo && !g_devModalAberto;
     bool algumHover = false;
@@ -295,6 +296,21 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
         }
     }
 
+    // Balao [E/Enter] perto do player ao aproximar de interagiveis no modo 3D
+    {
+        const char *lblBalao = "Balão [E/Enter]";
+        Texto(est, lblBalao, lay->x, yBalao, est->nome, a, 0);
+        bool balao = SettingsGetBalaoInteracao();
+        float wBalao = MeasureTextEx(est->fonte, lblBalao, est->tamFonte, est->espacamento).x;
+        float balaoCaixaX = roundf(lay->x + wBalao + lay->gapNome);
+        if (balaoCaixaX < trilhoX) balaoCaixaX = trilhoX;
+        if (Caixinha(balao, balaoCaixaX, yBalao, wBalao, HOVER_BALAO, lay, est, a, interativoControles, &hoverSeta, tocarHover)) {
+            SettingsSetBalaoInteracao(!balao);
+            SettingsSave();
+        }
+        Texto(est, SettingsGetBalaoInteracao() ? "Ligado" : "Desligado", balaoCaixaX + 24.0f, yBalao, est->valor, a, 0);
+    }
+
     // Paleta: [<]  Nome  [>]  3/8
     Texto(est, nomes[3], lay->x, yPaleta, est->nome, a, 0);
     if (Seta(true, trilhoX, yPaleta, HOVER_ANT, est, a, interativoControles, &hoverSeta, tocarHover)) {
@@ -307,7 +323,7 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
     }
 
     Texto(est, SettingsPaletteName(SettingsGetPalette()), trilhoX + trilhoW / 2.0f, yPaleta, est->nomePaleta, a, 1);
-    Texto(est, TextFormat("%d/%d", SettingsGetPalette() + 1, SettingsPaletteCount()), lay->direita, yPaleta, est->valor, a, 2);
+    Texto(est, TextFormat("%d/%d", SettingsUnlockedPaletteOrder(SettingsGetPalette()) + 1, SettingsUnlockedPaletteCount()), lay->direita, yPaleta, est->valor, a, 2);
 
     // Amostras: desenhamos os tons ORIGINAIS de proposito. O pos-processamento
     // (raycanvas.c) troca cada um pelo tom da paleta escolhida, entao o que

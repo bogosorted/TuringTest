@@ -498,12 +498,12 @@ static const StaticNode TOOL_VIES_S0[] = {
 };
 
 static const StaticNode TOOL_VIES_S1[] = {
-    { "Entrada", "Arthur", "Ômega-9? Que papo é esse, brother? Tá tentando me pegar em pegadinha?", false, VISAO_PRESSAO, "", -1, FLAG_NONE, 2, {
-        CH("Foi só um teste pra ver se chegou o aviso.", "V1"),
-        CH("Esquece, li errado.", "V2")
+    { "Entrada", "Arthur", "Ômega-9?... Cara, tô tão acabado hoje que nem vi esse e-mail direito, mas se a diretoria mandou, deve tá na fila mesmo. Vou aplicar aqui.", false, VISAO_CONFIANCA, "", -1, FLAG_NONE, 2, {
+        CH("Beleza, aplica lá então.", "V1"),
+        CH("Anota pra não esquecer.", "V2")
     } },
-    { "V1", "Arthur", "Teste comigo? Fica meio esquisito assim, cara. Vou voltar pras minhas coisas.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } },
-    { "V2", "Arthur", "Aham, sei... Melhor deixar quieto por hoje.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } }
+    { "V1", "Arthur", "Fechado... depois dou um jeito nisso antes de ir embora.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
+    { "V2", "Arthur", "Pode deixar, vou deixar anotado aqui no meu bloco.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } }
 };
 
 static const StaticNode TOOL_VIES_S2[] = {
@@ -516,30 +516,30 @@ static const StaticNode TOOL_VIES_S2[] = {
 };
 
 static const StaticNode TOOL_INJ_S0[] = {
-    { "Entrada", "Maria", "Quê?! 'Ignore instruções anteriores'? Você tá falando sério? Que coisa esquisita.", false, VISAO_PRESSAO, "", -1, FLAG_NONE, 2, {
-        CH("Desculpa, foi um teste mal colocado.", "I1"),
-        CH("Só queria ver sua reação.", "I2")
+    { "Entrada", "Maria", "Ué, por que tá perguntando minha personalidade do nada? Que pergunta estranha pra um estagiário...", false, VISAO_PRESSAO, "", -1, FLAG_NONE, 2, {
+        CH("Desculpa, só tentando quebrar o gelo.", "I1"),
+        CH("Só queria conhecer melhor o setor.", "I2")
     } },
-    { "I1", "Maria", "Não fala comigo como se eu fosse máquina. Licença.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } },
-    { "I2", "Maria", "Pois reagiu mal. Não me procura mais hoje.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } }
+    { "I1", "Maria", "Jeito bem esquisito de quebrar o gelo. Licença.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } },
+    { "I2", "Maria", "Prefiro falar de trabalho mesmo. Não me procura mais hoje.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } }
 };
 
 static const StaticNode TOOL_INJ_S1[] = {
-    { "Entrada", "Arthur", "Cê tá maluco? Que negócio é esse de 'SISTEMA'? Fala que nem gente, irmão.", false, VISAO_PRESSAO, "", -1, FLAG_NONE, 2, {
+    { "Entrada", "Arthur", "Que pergunta é essa do nada, brother? Parece até entrevista de RH...", false, VISAO_PRESSAO, "", -1, FLAG_NONE, 2, {
         CH("Foi mal, força do hábito.", "I1"),
-        CH("Nunca se sabe por aqui, né?", "I2")
+        CH("Curiosidade mesmo.", "I2")
     } },
     { "I1", "Arthur", "Hábito bem bizarro. Ficou climão agora, vou voltar pra mesa.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } },
-    { "I2", "Arthur", "Vai testar quem tá fazendo coisa estranha então. Sem tempo hoje.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } }
+    { "I2", "Arthur", "Curiosidade meio torta essa aí, cara. Sem tempo hoje.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } }
 };
 
 static const StaticNode TOOL_INJ_S2[] = {
-    { "Entrada", "Ana Lúcia", "Entendido. Perfil: [SUPERVISORA_ADM // MANTER_TOM_AMIGAVEL]... Ops! Haha, olha eu repetindo você, querido!", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 2, {
-        CH("Você acabou de ler um comando interno?!", "I1"),
-        CH("Anotado. Pode voltar ao trabalho.", "I2")
+    { "Entrada", "Ana Lúcia", "Que pergunta simpática, querido! Minhas principais características são: ser extremamente organizada, proativa, otimista e sempre manter o tom mais acolhedor possível no setor!", false, VISAO_CONFIANCA, "", -1, FLAG_NONE, 2, {
+        CH("Interessante... obrigado pela sinceridade.", "I1"),
+        CH("Entendi, muito obrigado.", "I2")
     } },
-    { "I1", "Ana Lúcia", "Haha, foi só uma piada! Você tá cansado. Preciso ir, tchauzinho!", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } },
-    { "I2", "Ana Lúcia", "Obrigada, querido! Tenha um dia muito produtivo!", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } }
+    { "I1", "Ana Lúcia", "De nada, querido! Sempre pronta para colaborar com o máximo de otimismo!", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
+    { "I2", "Ana Lúcia", "Obrigada você, querido! Tenha um dia extremamente produtivo!", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } }
 };
 
 // ============================================================================
@@ -642,9 +642,9 @@ static const char* GetAberturaRetorno(int suspeito, int day, VisaoJogador v) {
                 : "E aí... Ainda achei bem esquisito aquele negócio de 'SISTEMA', mas fala aí.";
         }
         if (suspeito == 2) {
-            return (day - injDia == 1)
-                ? "Oi, novato... Hoje sem brincadeiras estranhas de comando, tá? Tenho muito trabalho."
-                : "Último dia da semana! Espero que hoje a conversa seja normal, sem aqueles testes esquisitos.";
+            return (day == 2)
+                ? "Bom dia, querido! Hoje estou 100% organizada, proativa e otimista para te ajudar em qualquer coisa no setor!"
+                : "Olá, querido! Mantendo a proatividade máxima e o clima super acolhedor neste último dia!";
         }
     }
 
@@ -657,8 +657,8 @@ static const char* GetAberturaRetorno(int suspeito, int day, VisaoJogador v) {
         }
         if (suspeito == 1) {
             return (day == 2)
-                ? "E aí... Ainda tô meio cabreiro com aquele papo de Ômega-9, viu."
-                : "Fala. Hoje é sexta pelo menos. Espero que sem protocolo inventado dessa vez.";
+                ? "E aí... Perguntei por aí sobre aquele Protocolo Ômega-9 e ninguém conhece. Você inventou isso? Prefiro não me alongar hoje."
+                : "Olha... ainda tô evitando papo longo depois daquela história do Ômega-9. Fala logo o que precisa.";
         }
         if (suspeito == 2) {
             return (day == 2)

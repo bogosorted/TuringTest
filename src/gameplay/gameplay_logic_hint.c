@@ -144,6 +144,7 @@ static bool g_entrevistaLiberada = false;
 static bool g_infinitosAntes     = false;
 
 static bool   g_dicaAberta = false;
+static bool   g_dicaTutorialVisto = false;
 static double g_dicaTAbertura = 0.0;
 #define DICA_TEMPO_TOTAL 45.0f
 static int    g_dicaEstado = 3;
@@ -277,7 +278,7 @@ static void FinalizarDica(bool acertou, bool tempoEsgotou) {
     g_dicaTempoEsgotado = tempoEsgotou;
     if (acertou) {
         g_dicaEstado = 1;
-        LiberarEntrevista();
+        global_tokens += 1;
         g_dicaShake = 0.18f; g_dicaShakeAmp = 1.5f;
         TocarSomDica(g_dicaSndAcerto, 1.0f);
     } else {
@@ -579,7 +580,7 @@ static void DesenharDicaConteudo(const char *suspectName) {
                                          (Vector2){ x, y + 112 }, largura, 10, corEscura);
             UIDrawTextWrappedLeftAligned("- Passe o mouse num bloco para ver o que ele significa.",
                                          (Vector2){ x, y + 142 }, largura, 10, corEscura);
-            UIDrawTextWrappedLeftAligned("- Acertou: a entrevista não gasta tokens.",
+            UIDrawTextWrappedLeftAligned("- Acertou: ganha +1 Token extra.",
                                          (Vector2){ x, y + 172 }, largura, 10, verde);
             UIDrawTextWrappedLeftAligned("- Errou ou o tempo acabou: a dica só volta amanhã.",
                                          (Vector2){ x, y + 196 }, largura, 10, UI_COR_NEGACAO_FUNDO);
@@ -598,6 +599,24 @@ static void DesenharDicaConteudo(const char *suspectName) {
                                corClaro, corDestaque, corEscura, corBranco, corEscura);
         }
         DesenharBotaoDicaT(rProx, ultima ? "Começar!" : "Próximo >", 12, CheckCollisionPointRec(mouse, UIParaTela(rProx)),
+                           verde, verdeHover, verdeClaro, corBranco, corBranco);
+        return;
+    }
+
+    if (g_dicaEstado == 4) {
+        UIDrawTextLeftAligned("Dica Lógica", (Vector2){ x, y + 38 }, 13, corEscura);
+        Rectangle card = { x, y + 66, largura, 130 };
+        DrawRectangleRec(UIParaTela(card), corClaro);
+        DrawRectangleLinesEx(UIParaTela(card), 1.5f, corDestaque);
+        UIDrawTextInArea("Consumir dica lógica?", (Rectangle){ card.x + 8, card.y + 18, card.width - 16, 26 }, 15, corEscura);
+        UIDrawTextWrappedLeftAligned(
+            "Você só pode usar a Dica Lógica 1 vez por dia e terá 45 segundos para resolver o desafio.",
+            (Vector2){ card.x + 12, card.y + 56 }, card.width - 24, 10, corEscura
+        );
+        Rectangle rN = BotaoApagarDica(), rS = BotaoEnviarDica();
+        DesenharBotaoDicaT(rN, "Não", 12, CheckCollisionPointRec(mouse, UIParaTela(rN)),
+                           UI_COR_NEGACAO_FUNDO, UI_COR_NEGACAO, UI_COR_NEGACAO_CLARO, corBranco, corBranco);
+        DesenharBotaoDicaT(rS, "Sim, consumir", 11, CheckCollisionPointRec(mouse, UIParaTela(rS)),
                            verde, verdeHover, verdeClaro, corBranco, corBranco);
         return;
     }
@@ -671,7 +690,7 @@ static void DesenharDicaConteudo(const char *suspectName) {
         float tx = badge.x + 42, tw = badge.width - 50, esc = UIGetEscala();
         if (acertou) {
             char msg[160];
-            snprintf(msg, sizeof msg, "Correto! A entrevista com %s não gasta tokens.", nome);
+            snprintf(msg, sizeof msg, "Correto! Você ganhou +1 Token extra.");
             UIDrawTextWrappedLeftAligned(msg, (Vector2){ tx, badge.y + 8 }, tw, 11, corBranco);
         } else {
             float yy = badge.y + 8;
@@ -708,6 +727,7 @@ void LogicHintResetDay(void) {
 
 void LogicHintResetRun(void) {
     g_dicaSorteadas = 0;
+    g_dicaTutorialVisto = false;
     LogicHintResetDay();
 }
 
@@ -742,7 +762,7 @@ void LogicHintOpen(bool dialogLoaded, bool *tutDicaVisto) {
     g_dicaAtual = livres[GetRandomValue(0, nLivres - 1)];
     g_dicaSorteadas |= (1u << g_dicaAtual);
     g_dicaPagina = 0;
-    g_dicaEstado = 3;
+    g_dicaEstado = g_dicaTutorialVisto ? 4 : 3;
     g_dicaTempo = DICA_TEMPO_TOTAL;
     g_dicaTempoEsgotado = false;
     g_dicaNFormula = 0;
@@ -800,8 +820,9 @@ bool LogicHintUpdate(void) {
                 g_dicaPagina++;
                 TocarSomDica(g_dicaSndClique, 1.1f);
             } else if (proximo && ultima) {
-                g_dicaEstado = 0;
-                g_dicaTempo = DICA_TEMPO_TOTAL;
+                g_dicaTutorialVisto = true;
+                g_dicaEstado = 4;
+                g_dicaTAbertura = GetTime();
                 TocarSomDica(g_dicaSndClique, 1.2f);
             }
         }
@@ -825,6 +846,22 @@ bool LogicHintUpdate(void) {
             TocarSomDica(g_dicaSndClique, 0.7f);
         }
         if (enviar) EnviarDica();
+    } else if (g_dicaEstado == 4) {
+        Rectangle rSim = BotaoEnviarDica();
+        Rectangle rNao = BotaoApagarDica();
+        bool sim = IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER);
+        bool nao = false;
+        if (CheckCollisionPointRec(mouse, UIParaTela(rSim))) { hover = true; if (clicou) sim = true; }
+        if (CheckCollisionPointRec(mouse, UIParaTela(rNao))) { hover = true; if (clicou) nao = true; }
+        if (GetTime() - g_dicaTAbertura > 0.25) {
+            if (sim) {
+                g_dicaEstado = 0;
+                g_dicaTempo = DICA_TEMPO_TOTAL;
+                TocarSomDica(g_dicaSndClique, 1.2f);
+            } else if (nao) {
+                LogicHintClose();
+            }
+        }
     } else if (CheckCollisionPointRec(mouse, UIParaTela(DICA_OK))) {
         hover = true;
         if (clicou) LogicHintClose();

@@ -28,6 +28,10 @@ void SettingsApplyWindowMode(void);   // aplica na janela (chamar depois do Init
 bool SettingsGetTutorial(void);
 void SettingsSetTutorial(bool ligado);
 
+// Balao flutuante E/Enter perto do player ao aproximar de interagiveis no modo 3D (padrao ativado)
+bool SettingsGetBalaoInteracao(void);
+void SettingsSetBalaoInteracao(bool ligado);
+
 // Modo Desenvolvedor / Dev Tools (persiste ate ser desativado manualmente)
 bool SettingsGetDevMode(void);
 void SettingsSetDevMode(bool ligado);
@@ -61,9 +65,14 @@ void SettingsSetCamera3DFixa(bool fixa);
 // Paletas de cor. A 0 e a original do jogo (sem pos-processamento).
 int          SettingsPaletteCount(void);
 int          SettingsGetPalette(void);
-void         SettingsSetPalette(int indice);          // da a volta (aceita -1 e count)
+void         SettingsSetPalette(int indice);          // da a volta (aceita -1 e count), pula paletas secretas bloqueadas
 const char  *SettingsPaletteName(int indice);
 const Color *SettingsPaletteStops(int indice);        // PALETTE_NUM_STOPS cores
 const Color *SettingsOriginalStops(void);             // rampa original (paleta 0)
+bool         SettingsIsPaletteSecret(int indice);
+bool         SettingsIsPaletteUnlocked(int indice);
+bool         SettingsUnlockPaletteByKey(const char *chave);
+int          SettingsUnlockedPaletteCount(void);
+int          SettingsUnlockedPaletteOrder(int indice);
 
 #endif

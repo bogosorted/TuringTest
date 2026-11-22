@@ -97,6 +97,12 @@ static const SalaPorta JAR_PORTAS[] = {
 };
 
 static void DesenharArvoreOrganica(Vector3 pos, float escala) {
+    Vector3 pPos = Terreo3DGetPlayerPos();
+    bool playerAtras = (pPos.z < pos.z - 0.15f) &&
+                       (pPos.z > pos.z - 4.5f * escala) &&
+                       (fabsf(pPos.x - pos.x) < 1.95f * escala);
+    float alpha = playerAtras ? 0.28f : 1.0f;
+
     rlPushMatrix();
     rlTranslatef(pos.x, pos.y, pos.z);
     rlScalef(escala, escala, escala);
@@ -105,24 +111,28 @@ static void DesenharArvoreOrganica(Vector3 pos, float escala) {
     DrawCylinder((Vector3){ 0.0f, 0.008f, 0.0f }, 1.28f, 1.28f, 0.010f, 20, TerreoLum(0.14f));
     DrawCylinder((Vector3){ 0.0f, 0.012f, 0.0f }, 0.85f, 0.85f, 0.010f, 18, TerreoLum(0.10f));
 
+    if (playerAtras) rlDisableDepthMask();
+
     // Tronco alto e robusto que cresce para fora do topo da camera (sem mostrar o topo!)
-    DrawCylinderEx((Vector3){ 0.0f, 0.00f, 0.0f }, (Vector3){ 0.06f, 4.60f, -0.04f }, 0.24f, 0.13f, 10, TerreoLum(0.16f));
-    DrawCylinderEx((Vector3){ 0.0f, 0.00f, 0.0f }, (Vector3){ -0.30f, 0.03f,  0.16f }, 0.10f, 0.03f, 6, TerreoLum(0.15f));
-    DrawCylinderEx((Vector3){ 0.0f, 0.00f, 0.0f }, (Vector3){  0.28f, 0.03f, -0.18f }, 0.10f, 0.03f, 6, TerreoLum(0.15f));
+    DrawCylinderEx((Vector3){ 0.0f, 0.00f, 0.0f }, (Vector3){ 0.06f, 4.60f, -0.04f }, 0.24f, 0.13f, 10, Fade(TerreoLum(0.16f), alpha));
+    DrawCylinderEx((Vector3){ 0.0f, 0.00f, 0.0f }, (Vector3){ -0.30f, 0.03f,  0.16f }, 0.10f, 0.03f, 6, Fade(TerreoLum(0.15f), alpha));
+    DrawCylinderEx((Vector3){ 0.0f, 0.00f, 0.0f }, (Vector3){  0.28f, 0.03f, -0.18f }, 0.10f, 0.03f, 6, Fade(TerreoLum(0.15f), alpha));
 
     // Galhos organicos altos abrindo-se acima da linha de visao
-    DrawCylinderEx((Vector3){ 0.03f, 3.10f, 0.0f }, (Vector3){ -1.15f, 4.25f,  0.45f }, 0.095f, 0.040f, 8, TerreoLum(0.16f));
-    DrawCylinderEx((Vector3){ 0.04f, 3.35f, 0.0f }, (Vector3){  1.10f, 4.45f, -0.35f }, 0.095f, 0.040f, 8, TerreoLum(0.16f));
-    DrawCylinderEx((Vector3){ 0.03f, 3.60f, 0.0f }, (Vector3){  0.15f, 4.55f,  1.05f }, 0.085f, 0.035f, 8, TerreoLum(0.16f));
+    DrawCylinderEx((Vector3){ 0.03f, 3.10f, 0.0f }, (Vector3){ -1.15f, 4.25f,  0.45f }, 0.095f, 0.040f, 8, Fade(TerreoLum(0.16f), alpha));
+    DrawCylinderEx((Vector3){ 0.04f, 3.35f, 0.0f }, (Vector3){  1.10f, 4.45f, -0.35f }, 0.095f, 0.040f, 8, Fade(TerreoLum(0.16f), alpha));
+    DrawCylinderEx((Vector3){ 0.03f, 3.60f, 0.0f }, (Vector3){  0.15f, 4.55f,  1.05f }, 0.085f, 0.035f, 8, Fade(TerreoLum(0.16f), alpha));
 
     // Folhagem organica densa bem alta (cresce para fora da tela, deixando apenas bordas baixas visiveis)
-    DrawSphereEx((Vector3){  0.00f, 5.10f,  0.00f }, 1.65f, 10, 14, TerreoLum(0.36f));
-    DrawSphereEx((Vector3){ -1.05f, 4.45f,  0.42f }, 1.05f, 9,  12, TerreoLum(0.30f));
-    DrawSphereEx((Vector3){  1.02f, 4.60f, -0.32f }, 1.10f, 9,  12, TerreoLum(0.42f));
-    DrawSphereEx((Vector3){  0.14f, 4.55f,  0.96f }, 0.98f, 9,  12, TerreoLum(0.34f));
+    DrawSphereEx((Vector3){  0.00f, 5.10f,  0.00f }, 1.65f, 10, 14, Fade(TerreoLum(0.36f), alpha));
+    DrawSphereEx((Vector3){ -1.05f, 4.45f,  0.42f }, 1.05f, 9,  12, Fade(TerreoLum(0.30f), alpha));
+    DrawSphereEx((Vector3){  1.02f, 4.60f, -0.32f }, 1.10f, 9,  12, Fade(TerreoLum(0.42f), alpha));
+    DrawSphereEx((Vector3){  0.14f, 4.55f,  0.96f }, 0.98f, 9,  12, Fade(TerreoLum(0.34f), alpha));
     // Pequenos cachos de folhas pendendo dos galhos mais baixos
-    DrawSphereEx((Vector3){ -1.18f, 3.92f,  0.52f }, 0.44f, 7, 9, TerreoLum(0.28f));
-    DrawSphereEx((Vector3){  1.08f, 4.02f,  0.22f }, 0.42f, 7, 9, TerreoLum(0.36f));
+    DrawSphereEx((Vector3){ -1.18f, 3.92f,  0.52f }, 0.44f, 7, 9, Fade(TerreoLum(0.28f), alpha));
+    DrawSphereEx((Vector3){  1.08f, 4.02f,  0.22f }, 0.42f, 7, 9, Fade(TerreoLum(0.36f), alpha));
+
+    if (playerAtras) rlEnableDepthMask();
 
     rlPopMatrix();
 }

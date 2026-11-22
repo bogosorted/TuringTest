@@ -18,6 +18,7 @@ typedef enum {
     TERREO_SALA_CONTABILIDADE_1,
     TERREO_SALA_CONTABILIDADE_2,
     TERREO_SALA_ARQUIVO_1,
+    TERREO_SALA_CAMERAS,
     TERREO_SALA_COPA_1,
     TERREO_SALA_HALL_2,
     TERREO_SALA_CIBER_1,
@@ -50,6 +51,7 @@ typedef enum {
     TERREO_DEST_CONTABILIDADE_1,
     TERREO_DEST_CONTABILIDADE_2,
     TERREO_DEST_ARQUIVO_1,
+    TERREO_DEST_SALA_CAMERAS,
     TERREO_DEST_COPA_1,
     TERREO_DEST_HALL_2,
     TERREO_DEST_CIBER_1,
@@ -119,6 +121,8 @@ typedef struct {
     Vector3       objetoPos;
     bool          acionouSuspeito;
     int           suspeitoIndex;
+    bool          clicouChaoMover;
+    bool          acionouCamerasSecretas;
 } TerreoInteracaoResultado;
 
 // Definicoes de cada sala
@@ -134,6 +138,7 @@ const TerreoSalaDef *SalaHall1Def(void);
 const TerreoSalaDef *SalaContabilidade1Def(void);
 const TerreoSalaDef *SalaContabilidade2Def(void);
 const TerreoSalaDef *SalaArquivo1Def(void);
+const TerreoSalaDef *SalaCamerasDef(void);
 const TerreoSalaDef *SalaCopa1Def(void);
 const TerreoSalaDef *SalaHall2Def(void);
 const TerreoSalaDef *SalaCiber1Def(void);
@@ -204,5 +209,9 @@ Texture2D Terreo3DTextura(void);
 // Retorna dica contextual para a caixa de pensamento do player (NULL se nada perto/em hover)
 const char *Terreo3DProximaAcao(void);
 bool        Terreo3DMouseEmInteragivel(void);
+bool        Terreo3DHasProxInteragivel(void);
+Vector2     Terreo3DPlayerHeadScreenPos(void);
+Vector3     Terreo3DGetPlayerPos(void);
+bool        Terreo3DClosestInteractableScreenPos(Vector2 *outPosJanela);
 
 #endif

@@ -69,6 +69,7 @@ add_executable(turing_test
     src/world/sala_contabilidade_1.c
     src/world/sala_contabilidade_2.c
     src/world/sala_arquivo_1.c
+    src/world/sala_cameras.c
     src/world/sala_copa_1.c
     src/world/sala_hall_2.c
     src/world/sala_ciber_1.c

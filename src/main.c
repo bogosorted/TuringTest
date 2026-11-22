@@ -193,7 +193,7 @@ int main(int argc, char **argv) {
                     GoToWithTransition(SCENE_GAMEPLAY, NULL);
                 } else if (SelectionSceneShouldAdvanceDay() && !TransitionActive()) {
                     GameStateNextDay();
-                    ResetTokens();                   // tokens do novo dia
+                    AddDailyTokens();                // +1 token no novo dia
                     GameplaySceneResetDialogues();
                     const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d", GameStateGetDay());
                     GoToWithTransition(SCENE_GAMEPLAY, transTexto);
@@ -212,7 +212,7 @@ int main(int argc, char **argv) {
                     GoToWithTransition(SCENE_MENU, NULL);
                 } else if (GameplaySceneShouldAdvanceDay() && !TransitionActive()) {
                     GameStateNextDay();
-                    ResetTokens();
+                    AddDailyTokens();
                     GameplaySceneResetDialogues();
                     const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d", GameStateGetDay());
                     GoToWithTransition(SCENE_GAMEPLAY, transTexto);

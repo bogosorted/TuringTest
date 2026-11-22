@@ -50,6 +50,14 @@ static const SalaPorta ARQ_PORTAS[] = {
         { 0.00f, 0.0f, 3.35f },
         1.40f,
         { -0.65f, 3.10f, 1.30f, 0.58f }
+    },
+    {
+        TERREO_DEST_SALA_CAMERAS,
+        "Porta (Sala das Câmeras)",
+        { { 4.35f, 0.0f, 1.55f }, { 4.75f, 2.30f, 2.95f } },
+        { 4.35f, 0.0f, 2.25f },
+        1.40f,
+        { 4.05f, 1.60f, 0.58f, 1.30f }
     }
 };
 

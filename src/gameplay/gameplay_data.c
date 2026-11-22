@@ -24,6 +24,7 @@ const InfoLocal LOCAIS[NUM_LOCAIS] = {
     { "CONTAB. 1",       "CONTABILIDADE 1",        "",             "assets/sprites/locais/1_andar/spr_background_mesa_maria.png" },
     { "CONTAB. 2",       "CONTABILIDADE 2",        "",             "assets/sprites/locais/1_andar/spr_background_mesa_maria.png" },
     { "ARQUIVO",         "ARQUIVO CONTÁBIL",       "",             "assets/sprites/locais/1_andar/spr_background_rh.png" },
+    { "CÂMERAS",         "SALA DAS CÂMERAS",       "",             "assets/sprites/locais/1_andar/spr_background_rh.png" },
     { "COPA",            "COPA DO 1º ANDAR",       "",             "assets/sprites/locais/2_andar/spr_background_geladeira_coffe.png" },
     { "CONVÍVIO",        "ÁREA DE CONVÍVIO",       "",             "assets/sprites/locais/terreo/spr_background_teste.png" },
     { "HALL 2º",         "2º ANDAR - CIBERSEG.",   "",             "assets/sprites/locais/2_andar/spr_background_sala_reuniao.png" },
@@ -92,6 +93,7 @@ const HoloSala HOLO_SALAS[NUM_LOCAIS] = {
     { 1, 1, { { 3.95f, 2.05f, 1.90f, 1.75f } }, false },  // LOCAL_CONTABILIDADE_1
     { 1, 1, { { 5.95f, 2.05f, 1.45f, 1.75f } }, false },  // LOCAL_CONTABILIDADE_2
     { 1, 1, { { 3.95f, 0.20f, 1.90f, 1.75f } }, false },  // LOCAL_ARQUIVO_1
+    { 1, 1, { { 5.95f, 0.20f, 1.45f, 1.75f } }, false },  // LOCAL_SALA_CAMERAS (ao lado do Arquivo)
     { 1, 1, { { 0.20f, 1.35f, 1.45f, 2.45f } }, false },  // LOCAL_COPA_1
     { 0, 1, { { 3.95f, 0.20f, 1.90f, 1.75f } }, false },  // LOCAL_CONVIVIO (Terreo, acima Adm 1)
     // 2o ANDAR (Ciberseguranca + Salas de Servidores, alinhado acima do 1o Andar):
@@ -305,7 +307,8 @@ uint64_t GameplayLocaisAcessiveis(int de) {
         if (de == LOCAL_HALL_1)             return (1ULL << LOCAL_RECEPCAO) | (1ULL << LOCAL_COPA_1) | (1ULL << LOCAL_CONTABILIDADE_1);
         if (de == LOCAL_CONTABILIDADE_1)    return (1ULL << LOCAL_HALL_1) | (1ULL << LOCAL_ARQUIVO_1) | (1ULL << LOCAL_CONTABILIDADE_2);
         if (de == LOCAL_CONTABILIDADE_2)    return (1ULL << LOCAL_CONTABILIDADE_1);
-        if (de == LOCAL_ARQUIVO_1)          return (1ULL << LOCAL_CONTABILIDADE_1);
+        if (de == LOCAL_ARQUIVO_1)          return (1ULL << LOCAL_CONTABILIDADE_1) | (1ULL << LOCAL_SALA_CAMERAS);
+        if (de == LOCAL_SALA_CAMERAS)       return (1ULL << LOCAL_ARQUIVO_1);
         if (de == LOCAL_COPA_1)             return (1ULL << LOCAL_HALL_1);
         if (de == LOCAL_HALL_2)             return (1ULL << LOCAL_HALL_1) | (1ULL << LOCAL_CIBER_1) | (1ULL << LOCAL_CIBER_2);
         if (de == LOCAL_CIBER_1)            return (1ULL << LOCAL_HALL_2);
@@ -354,6 +357,7 @@ bool GameplayLocalEhTerreo3D(LocalRasec loc) {
            loc == LOCAL_ESCRITORIO_2       || loc == LOCAL_CONVIVIO ||
            loc == LOCAL_HALL_1             || loc == LOCAL_CONTABILIDADE_1 ||
            loc == LOCAL_CONTABILIDADE_2    || loc == LOCAL_ARQUIVO_1 ||
+           loc == LOCAL_SALA_CAMERAS       ||
            loc == LOCAL_COPA_1             || loc == LOCAL_HALL_2 ||
            loc == LOCAL_CIBER_1            || loc == LOCAL_CIBER_2 ||
            loc == LOCAL_SERVER_1           || loc == LOCAL_SERVER_2 ||
@@ -379,6 +383,7 @@ TerreoSalaId GameplayTerreoSalaPorLocal(LocalRasec loc) {
         case LOCAL_CONTABILIDADE_1:    return TERREO_SALA_CONTABILIDADE_1;
         case LOCAL_CONTABILIDADE_2:    return TERREO_SALA_CONTABILIDADE_2;
         case LOCAL_ARQUIVO_1:          return TERREO_SALA_ARQUIVO_1;
+        case LOCAL_SALA_CAMERAS:       return TERREO_SALA_CAMERAS;
         case LOCAL_COPA_1:             return TERREO_SALA_COPA_1;
         case LOCAL_HALL_2:             return TERREO_SALA_HALL_2;
         case LOCAL_CIBER_1:            return TERREO_SALA_CIBER_1;
@@ -412,6 +417,7 @@ TerreoDestino GameplayTerreoDestinoPorLocal(LocalRasec loc) {
         case LOCAL_CONTABILIDADE_1:    return TERREO_DEST_CONTABILIDADE_1;
         case LOCAL_CONTABILIDADE_2:    return TERREO_DEST_CONTABILIDADE_2;
         case LOCAL_ARQUIVO_1:          return TERREO_DEST_ARQUIVO_1;
+        case LOCAL_SALA_CAMERAS:       return TERREO_DEST_SALA_CAMERAS;
         case LOCAL_COPA_1:             return TERREO_DEST_COPA_1;
         case LOCAL_HALL_2:             return TERREO_DEST_HALL_2;
         case LOCAL_CIBER_1:            return TERREO_DEST_CIBER_1;
@@ -445,6 +451,7 @@ LocalRasec GameplayLocalPorTerreoDestino(TerreoDestino dest) {
         case TERREO_DEST_CONTABILIDADE_1:    return LOCAL_CONTABILIDADE_1;
         case TERREO_DEST_CONTABILIDADE_2:    return LOCAL_CONTABILIDADE_2;
         case TERREO_DEST_ARQUIVO_1:          return LOCAL_ARQUIVO_1;
+        case TERREO_DEST_SALA_CAMERAS:       return LOCAL_SALA_CAMERAS;
         case TERREO_DEST_COPA_1:             return LOCAL_COPA_1;
         case TERREO_DEST_HALL_2:             return LOCAL_HALL_2;
         case TERREO_DEST_CIBER_1:            return LOCAL_CIBER_1;

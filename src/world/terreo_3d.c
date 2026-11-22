@@ -209,6 +209,9 @@ static bool                 g_evRelatoriosAtiva = false;
 static bool                 g_suspeitosNaSala[3] = { false, false, false };
 static float                g_cooldownEntrada = 0.0f;
 static bool                 g_mouseSobreInteragivel = false;
+static bool                 g_hasProxInteragivel = false;
+static bool                 g_hasClosestMouseTarget = false;
+static Vector3              g_closestMouseTargetPos = { 0 };
 static char                 g_dicaAcao[160] = { 0 };
 
 Color TerreoLum(float l) {
@@ -824,6 +827,7 @@ void Terreo3DInit(int largura, int altura) {
     g_salas[TERREO_SALA_CONTABILIDADE_1] = SalaContabilidade1Def();
     g_salas[TERREO_SALA_CONTABILIDADE_2] = SalaContabilidade2Def();
     g_salas[TERREO_SALA_ARQUIVO_1]       = SalaArquivo1Def();
+    g_salas[TERREO_SALA_CAMERAS]         = SalaCamerasDef();
     g_salas[TERREO_SALA_COPA_1]          = SalaCopa1Def();
     g_salas[TERREO_SALA_HALL_2]          = SalaHall2Def();
     g_salas[TERREO_SALA_CIBER_1]         = SalaCiber1Def();
@@ -845,6 +849,8 @@ void Terreo3DInit(int largura, int altura) {
 
     g_evRelatoriosAtiva = false;
     g_mouseSobreInteragivel = false;
+    g_hasProxInteragivel = false;
+    g_hasClosestMouseTarget = false;
     g_dicaAcao[0] = '\0';
     g_pronto = true;
 }
@@ -1027,6 +1033,14 @@ void Terreo3DDefinirSala(TerreoSalaId sala, TerreoDestino vindoDe) {
         if (vindoDe == TERREO_DEST_CONTABILIDADE_1) {
             pos = (Vector3){ 0.0f, 0.0f, 2.75f };
             yaw = PI;
+        } else if (vindoDe == TERREO_DEST_SALA_CAMERAS) {
+            pos = (Vector3){ 3.85f, 0.0f, 2.25f };
+            yaw = -PI * 0.5f;
+        }
+    } else if (sala == TERREO_SALA_CAMERAS) {
+        if (vindoDe == TERREO_DEST_ARQUIVO_1) {
+            pos = (Vector3){ -2.55f, 0.0f, 1.50f };
+            yaw = PI * 0.5f;
         }
     } else if (sala == TERREO_SALA_COPA_1) {
         if (vindoDe == TERREO_DEST_HALL_1) {
@@ -1134,6 +1148,8 @@ void Terreo3DDefinirSala(TerreoSalaId sala, TerreoDestino vindoDe) {
     AtualizarCameraSeguindo(def, 0.0f, true);
     g_cooldownEntrada = 0.45f;
     g_mouseSobreInteragivel = false;
+    g_hasProxInteragivel = false;
+    g_hasClosestMouseTarget = false;
     g_dicaAcao[0] = '\0';
 }
 
@@ -1435,6 +1451,8 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
     if (dt > 0.05f) dt = 0.05f;
     if (g_cooldownEntrada > 0.0f) g_cooldownEntrada -= dt;
     g_mouseSobreInteragivel = false;
+    g_hasProxInteragivel = false;
+    g_hasClosestMouseTarget = false;
     g_dicaAcao[0] = '\0';
 
     // 1) Atualiza movimento, colisoes com moveis + NPCs em pe e elevacao na escada
@@ -1633,6 +1651,46 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
     bool allowTeclado = (ctrlMode == CONTROLE_TECLADO || ctrlMode == CONTROLE_AMBOS);
     bool allowMouse   = (ctrlMode == CONTROLE_MOUSE   || ctrlMode == CONTROLE_AMBOS);
 
+    g_hasProxInteragivel = (proxSusp >= 0) || (proxPorta != TERREO_DEST_NENHUM) || (proxObj >= 0);
+
+    // Alvo interagivel real mais proximo (para a mini bolinha discreta no tutorial do modo Mouse)
+    g_hasClosestMouseTarget = false;
+    {
+        float bestD = 1e9f;
+        for (int s = 0; s < 3; s++) {
+            if (!g_suspeitosNaSala[s]) continue;
+            Vector3 sp = { 0 };
+            PosicaoSuspeitoNaSala(g_salaAtual, s, &sp, NULL, NULL);
+            float d = hypotf(g_player.position.x - sp.x, g_player.position.z - sp.z);
+            if (d < bestD) {
+                bestD = d;
+                g_hasClosestMouseTarget = true;
+                g_closestMouseTargetPos = (Vector3){ sp.x, sp.y + 1.05f, sp.z };
+            }
+        }
+        for (int i = 0; i < def->numInteractables; i++) {
+            const SalaInteractable *it = &def->interactables[i];
+            if (!g_evRelatoriosAtiva && it->id && strcmp(it->id, "mesa_relatorios") == 0) continue;
+            if (!EvidenciaDisponivelPorId(it->id)) continue;
+            if (!EhObjetoInterativoReal(it->id)) continue;
+            float d = hypotf(g_player.position.x - it->position.x, g_player.position.z - it->position.z);
+            if (d < bestD) {
+                bestD = d;
+                g_hasClosestMouseTarget = true;
+                g_closestMouseTargetPos = (Vector3){ it->position.x, it->position.y + 0.45f, it->position.z };
+            }
+        }
+        for (int i = 0; i < def->numPortas; i++) {
+            const SalaPorta *pt = &def->portas[i];
+            float d = hypotf(g_player.position.x - pt->triggerCenter.x, g_player.position.z - pt->triggerCenter.z);
+            if (d < bestD) {
+                bestD = d;
+                g_hasClosestMouseTarget = true;
+                g_closestMouseTargetPos = (Vector3){ pt->triggerCenter.x, pt->triggerCenter.y + 0.90f, pt->triggerCenter.z };
+            }
+        }
+    }
+
     // Dica no pensamento do player
     const char *acaoTxt = (ctrlMode == CONTROLE_MOUSE) ? "Clique" : "Aperte E";
     if (proxSusp >= 0) {
@@ -1703,6 +1761,10 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
             res.objetoLabel   = def->interactables[proxObj].label;
             res.flavorText    = def->interactables[proxObj].flavorText;
             res.objetoPos     = def->interactables[proxObj].position;
+            return res;
+        }
+        if (g_salaAtual == TERREO_SALA_CAMERAS && g_player.position.z < 0.0f) {
+            res.acionouCamerasSecretas = true;
             return res;
         }
     }
@@ -1778,6 +1840,15 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
             s_mousePendIdx  = hoverObj;
             s_mousePendPos  = def->interactables[hoverObj].position;
         } else {
+            // Clique nos monitores secretos da Sala das Cameras (sem dica visual)
+            if (g_salaAtual == TERREO_SALA_CAMERAS) {
+                Ray rayCam = GetScreenToWorldRayEx(mouseJanela, g_camAtual, g_largura, g_altura);
+                BoundingBox bCam = { { -2.45f, 0.70f, -2.75f }, { 2.45f, 2.20f, -1.35f } };
+                if (GetRayCollisionBox(rayCam, bCam).hit) {
+                    res.acionouCamerasSecretas = true;
+                    return res;
+                }
+            }
             // Clique no chao: raycast no plano Y = 0 e calcula trajeto sem atravessar paredes/moveis
             Ray rayFloor = GetScreenToWorldRayEx(mouseJanela, g_camAtual, g_largura, g_altura);
             if (rayFloor.direction.y < -0.02f) {
@@ -1795,6 +1866,7 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
                     if (s_pathCount > 0) PlayerCharacterSetMoveTarget(&g_player, s_pathPts[0]);
                     else                 PlayerCharacterSetMoveTarget(&g_player, dst);
                     s_mousePendTipo = 0;
+                    res.clicouChaoMover = true;
                 }
             }
         }
@@ -1892,4 +1964,26 @@ const char *Terreo3DProximaAcao(void) {
 
 bool Terreo3DMouseEmInteragivel(void) {
     return g_mouseSobreInteragivel;
+}
+
+bool Terreo3DHasProxInteragivel(void) {
+    return g_hasProxInteragivel;
+}
+
+Vector2 Terreo3DPlayerHeadScreenPos(void) {
+    if (!g_pronto) return (Vector2){ 149.0f, 110.0f };
+    Vector3 head = { g_player.position.x, g_player.position.y + 1.92f, g_player.position.z };
+    return GetWorldToScreenEx(head, g_camAtual, g_largura, g_altura);
+}
+
+Vector3 Terreo3DGetPlayerPos(void) {
+    return g_player.position;
+}
+
+bool Terreo3DClosestInteractableScreenPos(Vector2 *outPosJanela) {
+    if (!g_pronto || !g_hasClosestMouseTarget) return false;
+    if (outPosJanela) {
+        *outPosJanela = GetWorldToScreenEx(g_closestMouseTargetPos, g_camAtual, g_largura, g_altura);
+    }
+    return true;
 }

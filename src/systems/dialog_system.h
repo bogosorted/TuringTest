@@ -48,8 +48,8 @@ typedef struct {
     int current_node_index;
 } DialogTree;
 
-// Economia de Tokens do Jogo (12 por dia)
-#define TOKENS_PER_DAY 8
+// Economia de Tokens do Jogo (1 por dia, acumulativo)
+#define TOKENS_PER_DAY 1
 extern int global_tokens;
 
 // Modo desenvolvedor: true = tokens ilimitados (nao bloqueia e nao gasta).
@@ -59,8 +59,10 @@ extern bool global_infinite_tokens;
 // true se ainda ha tokens para gastar (ou se o modo ilimitado esta ligado)
 bool HasTokens(void);
 
-// Devolve os tokens para o valor inicial (chamar no comeco de cada dia)
+// Devolve os tokens para o valor inicial (chamar no comeco do Dia 1)
 void ResetTokens(void);
+// Adiciona a cota diaria de tokens (chamar ao avancar para um novo dia)
+void AddDailyTokens(void);
 
 // API
 void InitDialogSystem(void);

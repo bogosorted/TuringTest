@@ -15,6 +15,10 @@ void ResetTokens(void) {
     global_tokens = TOKENS_PER_DAY;
 }
 
+void AddDailyTokens(void) {
+    global_tokens += TOKENS_PER_DAY;
+}
+
 void InitDialogSystem(void) {
     // Tokens sao globais, nao resetar aqui
 }

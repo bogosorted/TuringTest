@@ -609,7 +609,7 @@ static void DrawMenu(void) {
 #define OPC_Y_VOLTAR   296.0f
 
 static const OptionsUiLayout LAYOUT_OPCOES = {
-    .x = OPC_LABEL_X, .direita = 600.0f, .yPrimeira = 152.0f, .passoY = 24.0f,
+    .x = OPC_LABEL_X, .direita = 600.0f, .yPrimeira = 148.0f, .passoY = 22.0f,
     .larguraValor = 52.0f, .gapNome = 10.0f
 };
 
