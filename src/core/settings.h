@@ -44,6 +44,10 @@ void SettingsSetAutoReset(bool ligado);
 void SettingsResetToDefaultWithCRT(void);
 bool SettingsGetTechNight(void);
 void SettingsSetTechNight(bool ligado);
+bool SettingsGetDevUnlockSubsolo(void);
+void SettingsSetDevUnlockSubsolo(bool ligado);
+bool SettingsGetDevUnlockUpperFloors(void);
+void SettingsSetDevUnlockUpperFloors(bool ligado);
 
 // Reinicio completo da aplicacao (usado pelo botao Dev Mode)
 void SettingsRequestAppRestart(void);

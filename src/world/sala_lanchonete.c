@@ -48,6 +48,15 @@ static const SalaInteractable LAN_INTERACTABLES[] = {
         1.75f,
         true,
         "Alguém deixou um recibo amassado ao lado de um copo de café vazio."
+    },
+    {
+        "tv_lanchonete",
+        "TV da Lanchonete",
+        { -0.35f, 2.05f, -6.05f },
+        { 1.65f, 0.95f, 0.35f },
+        2.35f,
+        false,
+        "A TV da cantina transmite o boletim diário da RASEC e o cardápio do almoço."
     }
 };
 
@@ -108,6 +117,10 @@ static void DesenharLanchonete(float tempo, bool evRelatoriosAtiva) {
     // Portas de vidro transparentes na parede direita (bem separadas: Jardim ao fundo, Recepcao a frente)
     TerreoPortaModelo((Vector3){ LAN_MAX_X - 0.04f, 0.0f,  4.20f }, -90.0f, PORTA_TIPO_VIDRO);
     TerreoPortaModelo((Vector3){ LAN_MAX_X - 0.04f, 0.0f, -4.20f }, -90.0f, PORTA_TIPO_VIDRO);
+
+    // TVs corporativas na lanchonete (parede do fundo e parede direita entre as portas)
+    TerreoTV((Vector3){ -0.35f, 2.05f, LAN_MIN_Z + 0.08f },   0.0f, tempo);
+    TerreoTV((Vector3){ LAN_MAX_X - 0.08f, 2.05f, 0.00f },  -90.0f, tempo);
 
     // PAREDE ESQUERDA VERTICAL: Divisao + Bancada conectada de ponta a ponta (z: -6.20..+6.20)
     TerreoCaixa((Vector3){ -4.05f, 0.52f, 0.0f }, (Vector3){ 0.82f, 1.04f, d }, 0.36f, 0.28f, 0.26f, 0.12f);

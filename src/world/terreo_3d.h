@@ -32,6 +32,7 @@ typedef enum {
     TERREO_SALA_AUDITORIO,
     TERREO_SALA_REUNIAO_1,
     TERREO_SALA_REUNIAO_2,
+    TERREO_SALA_SUBSOLO,
     TERREO_NUM_SALAS
 } TerreoSalaId;
 
@@ -62,7 +63,8 @@ typedef enum {
     TERREO_DEST_HALL_4,
     TERREO_DEST_AUDITORIO,
     TERREO_DEST_REUNIAO_1,
-    TERREO_DEST_REUNIAO_2
+    TERREO_DEST_REUNIAO_2,
+    TERREO_DEST_SUBSOLO
 } TerreoDestino;
 
 typedef enum {
@@ -146,10 +148,16 @@ const TerreoSalaDef *SalaHall4Def(void);
 const TerreoSalaDef *SalaAuditorioDef(void);
 const TerreoSalaDef *SalaReuniao1Def(void);
 const TerreoSalaDef *SalaReuniao2Def(void);
+const TerreoSalaDef *SalaSubsoloDef(void);
 
 // Helpers compartilhados de geometria 3D (sem projecao de sombras)
 Color TerreoLum(float l);
 void  TerreoCaixa(Vector3 centro, Vector3 tam, float topLum, float frontLum, float sideLum, float wireLum);
+void  TerreoTV(Vector3 pos, float rotYDeg, float tempo);
+void  TerreoDesenharPlayerPreview(bool isFemale, Vector3 pos, float yawDeg, float tempo);
+void  TerreoDesenharPlayerVariant(int variantId, PlayerPreviewAnim anim, Vector3 pos, float yawDeg, float tempo);
+PlayerPreviewAnim TerreoSubsoloGetAnim(int idx);
+PlayerPreviewAnim TerreoSubsoloCiclarAnim(int idx);
 void  TerreoPortaModelo(Vector3 pos, float rotYDeg, TerreoPortaTipo tipo);
 void  TerreoCadeira(Vector3 pos, float rotYDeg);
 void  TerreoCadeiraConfortavel(Vector3 pos, float rotYDeg);
@@ -177,6 +185,7 @@ void Terreo3DUnload(void);
 void Terreo3DDefinirSala(TerreoSalaId sala, TerreoDestino vindoDe);
 void Terreo3DSetEvidenciaAtiva(bool evRelatoriosAtiva);
 void Terreo3DSetSuspeitosSala(const bool presentes[3]);
+void Terreo3DAtualizarAvatarPlayer(void);
 void Terreo3DTriggerPlayerAnim(Vector3 targetPos, PlayerInteractAnim tipo, float duracao);
 void Terreo3DTriggerComputerSit(Vector3 seatPos, Vector3 monitorPos, float duracao);
 void Terreo3DTriggerComputerExit(void);

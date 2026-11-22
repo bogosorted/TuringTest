@@ -1429,11 +1429,11 @@ static void OnClickEnviesar(void) {
         return;
     }
     GastarTokensFerramenta(3);
+    GameStateSetViesUsado(g_suspeitoAtual, true);
     if (!dev) {
         g_enviesarUsado[g_suspeitoAtual] = true;
         g_testeEspecialHoje = true;
         g_testeEspecialPessoa[g_suspeitoAtual] = true;
-        GameStateSetViesUsado(g_suspeitoAtual, true);
     }
 
     AdicionarMensagemChat(
@@ -1492,6 +1492,7 @@ static void OnClickDeepfake(void) {
             SetExpressaoSuspeito(2, EXPR_SURPRESA, true);
         }
     } else {
+        if (dev) GameStateSetDeepfakeUsado(g_suspeitoAtual, true);
         SetExpressaoSuspeito(g_suspeitoAtual, (g_suspeitoAtual == 2) ? EXPR_MEDO : EXPR_SURPRESA, false);
     }
     g_deepfakeAberto = true;
@@ -1513,11 +1514,11 @@ static void OnClickInjecao(void) {
         return;
     }
     GastarTokensFerramenta(4);
+    GameStateSetInjecaoUsada(g_suspeitoAtual, true);
     if (!dev) {
         g_injecaoUsada[g_suspeitoAtual] = true;
         g_testeEspecialHoje = true;
         g_testeEspecialPessoa[g_suspeitoAtual] = true;
-        GameStateSetInjecaoUsada(g_suspeitoAtual, true);
     }
 
     AdicionarMensagemChat(
@@ -2639,9 +2640,7 @@ static Rectangle SuspeitoSilArea(int i) {
 
 // Botoes do topo da janela: Dia, Veredito (Modo DEV) e Proximo Dia / Veredito
 static const Rectangle BADGE_DIA_TOPO         = {   8.0f,   8.0f,  54.0f,  20.0f };
-static const Rectangle BOTAO_VEREDITO_DEV_TOPO   = {  76.0f,   8.0f,  90.0f,  22.0f };
-static const Rectangle BOTAO_AVANCAR_TOPO        = { 174.0f,   8.0f, 121.0f,  22.0f };
-static const Rectangle BOTAO_REINICIAR_DEV_TOPO  = { 303.0f,   8.0f,  76.0f,  22.0f };
+static const Rectangle BOTAO_AVANCAR_TOPO     = { 174.0f,   8.0f, 121.0f,  22.0f };
 static const Rectangle BOTAO_AVANCAR_PAINEL   = { DIALOG_BOX_X, 316.0f, DIALOG_BOX_W, 30.0f };
 
 // Modal de confirmacao ("Voce tem certeza?") quando clica para avancar ainda tendo tokens
@@ -2691,17 +2690,18 @@ typedef struct {
 } ElevadorAndarOpcao;
 
 static const ElevadorAndarOpcao ELEVADOR_OPCOES[6] = {
-    {  4, "4  -  4º ANDAR (Restrito - Semana 1)", LOCAL_HALL_4,   false, false },
-    {  3, "3  -  3º ANDAR (Restrito - Semana 1)", LOCAL_HALL_3,   false, false },
-    {  2, "2  -  2º ANDAR (Restrito - Semana 1)", LOCAL_HALL_2,   false, false },
-    {  1, "1  -  1º ANDAR (Contabilidade)",       LOCAL_HALL_1,   true,  true  },
-    {  0, "0  -  TÉRREO (Recepção / ADM)",        LOCAL_RECEPCAO, true,  true  },
-    { -1, "-1  -  SUBSOLO (Bloqueado)",           LOCAL_RECEPCAO, false, false },
+    {  4, "4  -  4º ANDAR (Executivo)",           LOCAL_HALL_4,         false, false },
+    {  3, "3  -  3º ANDAR (Treinamento IA)",      LOCAL_HALL_3,         false, false },
+    {  2, "2  -  2º ANDAR (Cibersegurança)",      LOCAL_HALL_2,         false, false },
+    {  1, "1  -  1º ANDAR (Contabilidade)",       LOCAL_HALL_1,         true,  true  },
+    {  0, "0  -  TÉRREO (Recepção / ADM)",        LOCAL_RECEPCAO,       true,  true  },
+    { -1, "-1  -  SUBSOLO (Área de Testes)",      LOCAL_SUBSOLO_COMECO, false, false },
 };
 
 static bool ElevadorOpcaoLiberada(const ElevadorAndarOpcao *op) {
     if (!op) return false;
-    if (op->andar >= 2 && SettingsGetDevMode()) return true;
+    if (op->andar >= 2) return SettingsGetDevMode() && SettingsGetDevUnlockUpperFloors();
+    if (op->andar < 0)  return SettingsGetDevMode() && SettingsGetDevUnlockSubsolo();
     return op->interagivel && op->disponivel;
 }
 
@@ -2717,21 +2717,26 @@ static bool UpdateMenuElevador(void) {
         hover = true;
         if (clicou) {
             g_elevadorAberto = false;
-    g_inspecaoEvAtiva = false;
+            g_inspecaoEvAtiva = false;
             return true;
         }
     }
 
     int andarAtual = HOLO_SALAS[g_localAtual].andar;
+    int visIdx = 0;
     for (int i = 0; i < 6; i++) {
         const ElevadorAndarOpcao *op = &ELEVADOR_OPCOES[i];
-        if (!ElevadorOpcaoLiberada(op) || op->andar == andarAtual) continue;
-        Rectangle btn = { ELEVADOR_PAINEL.x + 18, ELEVADOR_PAINEL.y + 42 + i * 36.0f, ELEVADOR_PAINEL.width - 36, 30 };
+        bool liberada = ElevadorOpcaoLiberada(op);
+        // No modo 3D, esconde andares 2/3/4 e Subsolo do elevador ate serem desbloqueados no Modo Dev
+        if (GameStateIs3DMode() && !liberada) continue;
+        Rectangle btn = { ELEVADOR_PAINEL.x + 18, ELEVADOR_PAINEL.y + 42 + visIdx * 36.0f, ELEVADOR_PAINEL.width - 36, 30 };
+        visIdx++;
+        if (!liberada || op->andar == andarAtual) continue;
         if (CheckCollisionPointRec(mouse, ParaTela(btn))) {
             hover = true;
             if (clicou) {
                 g_elevadorAberto = false;
-    g_inspecaoEvAtiva = false;
+                g_inspecaoEvAtiva = false;
                 LimparMonologoInterno();
                 FecharJanelasFerramentas();
                 g_closeupAtual = CLOSEUP_NENHUM;
@@ -2760,30 +2765,40 @@ static void DesenharMenuElevador(void) {
     Color corDestaque = { 189, 181, 168, 255 };
     Color corBranco   = { 255, 242, 230, 255 };
 
+    int numVisiveis = 0;
+    for (int i = 0; i < 6; i++) {
+        if (!GameStateIs3DMode() || ElevadorOpcaoLiberada(&ELEVADOR_OPCOES[i])) numVisiveis++;
+    }
+    float painelH = 54.0f + numVisiveis * 36.0f;
+    Rectangle rElevPainel = { ELEVADOR_PAINEL.x, ELEVADOR_PAINEL.y, ELEVADOR_PAINEL.width, painelH };
+
     DrawRectangleRec(GetTelaRect(), Fade(BLACK, 0.55f));
-    Rectangle sombra = { ELEVADOR_PAINEL.x + 4, ELEVADOR_PAINEL.y + 4, ELEVADOR_PAINEL.width, ELEVADOR_PAINEL.height };
+    Rectangle sombra = { rElevPainel.x + 4, rElevPainel.y + 4, rElevPainel.width, rElevPainel.height };
     DrawRectangleRec(ParaTela(sombra), Fade(BLACK, 0.6f));
 
-    Rectangle rPainel = ParaTela(ELEVADOR_PAINEL);
+    Rectangle rPainel = ParaTela(rElevPainel);
     DrawRectangleRec(rPainel, corFundo);
     DrawRectangleLinesEx(rPainel, 2.0f, corDestaque);
 
-    Rectangle barraTitulo = { ELEVADOR_PAINEL.x, ELEVADOR_PAINEL.y, ELEVADOR_PAINEL.width, 22 };
+    Rectangle barraTitulo = { rElevPainel.x, rElevPainel.y, rElevPainel.width, 22 };
     DrawRectangleRec(ParaTela(barraTitulo), corEscura);
     DrawTextInArea("ELEVADOR - ESCOLHA O ANDAR",
-                   (Rectangle){ ELEVADOR_PAINEL.x, ELEVADOR_PAINEL.y, ELEVADOR_PAINEL.width - 22, 22 },
+                   (Rectangle){ rElevPainel.x, rElevPainel.y, rElevPainel.width - 22, 22 },
                    10, corBranco);
 
-    Rectangle btnFechar = { ELEVADOR_PAINEL.x + ELEVADOR_PAINEL.width - 19, ELEVADOR_PAINEL.y + 3, 16, 16 };
+    Rectangle btnFechar = { rElevPainel.x + rElevPainel.width - 19, rElevPainel.y + 3, 16, 16 };
     DesenharBotaoFecharPadrao(btnFechar);
 
     int andarAtual = HOLO_SALAS[g_localAtual].andar;
+    int visIdx = 0;
     for (int i = 0; i < 6; i++) {
         const ElevadorAndarOpcao *op = &ELEVADOR_OPCOES[i];
-        Rectangle btn = { ELEVADOR_PAINEL.x + 18, ELEVADOR_PAINEL.y + 42 + i * 36.0f, ELEVADOR_PAINEL.width - 36, 30 };
+        bool liberada = ElevadorOpcaoLiberada(op);
+        if (GameStateIs3DMode() && !liberada) continue;
+        Rectangle btn = { rElevPainel.x + 18, rElevPainel.y + 42 + visIdx * 36.0f, rElevPainel.width - 36, 30 };
+        visIdx++;
         Rectangle rBtn = ParaTela(btn);
         bool atual = (op->andar == andarAtual);
-        bool liberada = ElevadorOpcaoLiberada(op);
         bool podeClicar = liberada && !atual;
         bool hov = podeClicar && CheckCollisionPointRec(mouse, rBtn);
 
@@ -3978,8 +3993,9 @@ static void DesenharMapaHolo(void) {
     bool apenasUmAndar = GameStateIs3DMode() && !g_mapaCompletoAberto;
     uint64_t acessiveis = LocaisAcessiveis(g_localAtual);
 
+    bool showSubsolo = SettingsGetDevMode() && SettingsGetDevUnlockSubsolo();
     if (!apenasUmAndar) {
-        if (SettingsGetDevMode()) {
+        if (showSubsolo) {
             Vector2 pSub = MapaHoloPosAndar(-1);
             Color corSub = (-1 == andarAtual) ? (Color){ 255, 242, 230, 255 } : (Color){ 125, 112, 113, 255 };
             DrawTextLeftAligned("SUBSOLO", (Vector2){ area.x + pSub.x, area.y + pSub.y + 2.0f }, 7, corSub);
@@ -3993,7 +4009,7 @@ static void DesenharMapaHolo(void) {
     }
     for (int i = 0; i < numSalas; i++) {
         if (salas[i].numPartes == 0) continue;
-        if (!SettingsGetDevMode() && salas[i].andar < 0) continue;
+        if (!showSubsolo && salas[i].andar < 0) continue;
         if (GameStateIs3DMode() && salas[i].escada) continue;
         if (apenasUmAndar && salas[i].andar != andarAtual) continue;
         Vector2 p = MapaHoloPosSala(i);
@@ -4023,6 +4039,261 @@ static void DesenharMapaHolo(void) {
     DrawTextInArea(dica, rDica, 8, hovNav ? (Color){ 255, 242, 230, 255 } : (Color){ 189, 181, 168, 255 });
 }
 
+// ============================================================================
+// ABA DE FERRAMENTAS DEV (canto superior direito do painel do mapa)
+// ============================================================================
+static bool g_devTabAberta = false;
+static int  g_devTeleportIdx = 0;
+
+typedef struct {
+    const char *nome;
+    LocalRasec  local;
+} DevTeleportAlvo;
+
+static const DevTeleportAlvo DEV_TELEPORT_ALVOS[] = {
+    { "RECEPÇÃO",     LOCAL_RECEPCAO },
+    { "CANTINA",      LOCAL_CANTINA },
+    { "JARDIM",       LOCAL_JARDIM },
+    { "CONVÍVIO",     LOCAL_CONVIVIO },
+    { "ADM 1",        LOCAL_ESCRITORIO },
+    { "ADM 2",        LOCAL_ESCRITORIO_2 },
+    { "HALL 1º",      LOCAL_HALL_1 },
+    { "COPA 1º",      LOCAL_COPA_1 },
+    { "CONTAB. 1",    LOCAL_CONTABILIDADE_1 },
+    { "CONTAB. 2",    LOCAL_CONTABILIDADE_2 },
+    { "ARQUIVO",      LOCAL_ARQUIVO_1 },
+    { "SUBSOLO",      LOCAL_SUBSOLO_COMECO },
+    { "HALL 2º",      LOCAL_HALL_2 },
+    { "HALL 3º",      LOCAL_HALL_3 },
+    { "HALL 4º",      LOCAL_HALL_4 },
+};
+static const int NUM_DEV_TELEPORT_ALVOS = (int)(sizeof(DEV_TELEPORT_ALVOS) / sizeof(DEV_TELEPORT_ALVOS[0]));
+
+static Rectangle DevTabBtnRect(void) {
+    return (Rectangle){ CHAT_AREA_X + CHAT_AREA_W - 58.0f, CHAT_AREA_Y + 2.0f, 56.0f, CHAT_HEADER_H - 4.0f };
+}
+
+static Rectangle DevGridBtnRect(int idx) {
+    int col = idx % 2;
+    int row = idx / 2;
+    float x0 = CHAT_AREA_X + 8.0f;
+    float y0 = CHAT_AREA_Y + CHAT_HEADER_H + 10.0f;
+    float w  = (CHAT_AREA_W - 22.0f) * 0.5f;
+    float h  = 24.0f;
+    return (Rectangle){ x0 + col * (w + 6.0f), y0 + row * (h + 5.0f), w, h };
+}
+
+static void DevReiniciarDiaAtual(void) {
+    int dia = GameStateGetDay();
+    ResetTokens();
+    GameplaySceneResetDialogues();
+    SortearLocaisDoDia(dia);
+    SortearEvidenciasDoDia(dia);
+    bool ok0 = LoadDialogTreeFromData(0, dia, &g_trees[0]);
+    bool ok1 = LoadDialogTreeFromData(1, dia, &g_trees[1]);
+    bool ok2 = LoadDialogTreeFromData(2, dia, &g_trees[2]);
+    g_treesLoaded = (ok0 && ok1 && ok2);
+    g_localAtual = LocalInicial();
+    if (GameStateIs3DMode()) {
+        Terreo3DDefinirSala(TerreoSalaPorLocal(g_localAtual), TERREO_DEST_NENHUM);
+    }
+}
+
+static void DevReiniciarRunCompleta(void) {
+    GameStateNewRun();
+    DevReiniciarDiaAtual();
+}
+
+static void DevTeleportarPara(LocalRasec dest) {
+    LimparMonologoInterno();
+    FecharJanelasFerramentas();
+    g_dialogLoaded = false;
+    g_tree = NULL;
+    g_closeupAtual = CLOSEUP_NENHUM;
+    g_elevadorAberto = false;
+    g_localAtual = dest;
+    if (GameStateIs3DMode() && LocalEhTerreo3D(dest)) {
+        Terreo3DDefinirSala(TerreoSalaPorLocal(dest), TERREO_DEST_NENHUM);
+    }
+}
+
+static bool UpdateAbaDev(bool *hoverOut) {
+    if (!SettingsGetDevMode()) {
+        g_devTabAberta = false;
+        return false;
+    }
+    if (g_pranchetaAberta && g_pranchetaMinimizada) return false;
+
+    Vector2 mouse = RayCanvasGetMousePosition();
+    bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+
+    Rectangle rTab = DevTabBtnRect();
+    if (CheckCollisionPointRec(mouse, ParaTela(rTab))) {
+        if (hoverOut) *hoverOut = true;
+        if (clicou) {
+            TocarSomHover();
+            g_devTabAberta = !g_devTabAberta;
+            return true;
+        }
+    }
+
+    if (!g_devTabAberta) return false;
+
+    // 12 botoes do grid (6 linhas x 2 colunas)
+    for (int i = 0; i < 12; i++) {
+        Rectangle r = DevGridBtnRect(i);
+        if (CheckCollisionPointRec(mouse, ParaTela(r))) {
+            if (hoverOut) *hoverOut = true;
+            if (clicou) {
+                TocarSomHover();
+                switch (i) {
+                    case 0: ExecutarAvancarDiaOuVeredito(); break; // PROXIMO DIA (sem aviso)
+                    case 1: ExecutarIrParaVereditoDev(); break;    // IR P/ VEREDITO
+                    case 2: DevReiniciarDiaAtual(); break;         // REINICIAR DIA
+                    case 3: DevReiniciarRunCompleta(); break;      // REINICIAR RUN
+                    case 4: SettingsSave(); SettingsRequestAppRestart(); break; // REINICIAR APP
+                    case 5: {
+                        int nxt = (GameStateGetPlayerAvatar() + 1) % GAME_NUM_PLAYERS;
+                        GameStateSetPlayerAvatar(nxt);
+                        if (GameStateIs3DMode()) Terreo3DAtualizarAvatarPlayer();
+                    } break;
+                    case 6: SettingsSetTechNight(!SettingsGetTechNight()); SettingsSave(); break;
+                    case 7: SettingsSetAutoReset(!SettingsGetAutoReset()); SettingsSave(); break;
+                    case 8: SettingsSetDevUnlockSubsolo(!SettingsGetDevUnlockSubsolo()); break;
+                    case 9: SettingsSetDevUnlockUpperFloors(!SettingsGetDevUnlockUpperFloors()); break;
+                    case 10: {
+                        GameStateRegistrarEvidencia(0, "EV-01");
+                        GameStateRegistrarEvidencia(0, "EV-02");
+                        GameStateRegistrarEvidencia(1, "EV-03");
+                        GameStateRegistrarEvidencia(1, "EV-04");
+                        GameStateRegistrarEvidencia(2, "EV-05");
+                        GameStateRegistrarEvidencia(2, "EV-06");
+                    } break;
+                    case 11: {
+                        bool algumDesmarcado = false;
+                        for (int f = 0; f < 3 && !algumDesmarcado; f++)
+                            for (int c = 0; c < NUM_CAIXAS && !algumDesmarcado; c++)
+                                if (!g_marcado[f][c]) algumDesmarcado = true;
+                        for (int f = 0; f < 3; f++)
+                            for (int c = 0; c < NUM_CAIXAS; c++)
+                                g_marcado[f][c] = algumDesmarcado;
+                    } break;
+                }
+                return true;
+            }
+        }
+    }
+
+    // Linha de teleporte abaixo do grid
+    float yTp = CHAT_AREA_Y + CHAT_HEADER_H + 10.0f + 6 * 29.0f + 4.0f;
+    float x0  = CHAT_AREA_X + 8.0f;
+    float totW = CHAT_AREA_W - 16.0f;
+    Rectangle rPrev = { x0, yTp, 24.0f, 24.0f };
+    Rectangle rNext = { x0 + totW - 72.0f, yTp, 24.0f, 24.0f };
+    Rectangle rIr   = { x0 + totW - 44.0f, yTp, 44.0f, 24.0f };
+
+    if (CheckCollisionPointRec(mouse, ParaTela(rPrev))) {
+        if (hoverOut) *hoverOut = true;
+        if (clicou) {
+            TocarSomHover();
+            g_devTeleportIdx = (g_devTeleportIdx - 1 + NUM_DEV_TELEPORT_ALVOS) % NUM_DEV_TELEPORT_ALVOS;
+            return true;
+        }
+    }
+    if (CheckCollisionPointRec(mouse, ParaTela(rNext))) {
+        if (hoverOut) *hoverOut = true;
+        if (clicou) {
+            TocarSomHover();
+            g_devTeleportIdx = (g_devTeleportIdx + 1) % NUM_DEV_TELEPORT_ALVOS;
+            return true;
+        }
+    }
+    if (CheckCollisionPointRec(mouse, ParaTela(rIr))) {
+        if (hoverOut) *hoverOut = true;
+        if (clicou) {
+            TocarSomHover();
+            DevTeleportarPara(DEV_TELEPORT_ALVOS[g_devTeleportIdx].local);
+            return true;
+        }
+    }
+    return false;
+}
+
+static void DesenharAbaDev(Rectangle rCorpo) {
+    (void)rCorpo;
+    Vector2 mouse = RayCanvasGetMousePosition();
+    Color cEscuro = { 32, 29, 31, 255 };
+    Color cBtn    = { 48, 43, 46, 255 };
+    Color cBtnHov = { 76, 67, 70, 255 };
+    Color cAtivo  = { 86, 118, 84, 255 };
+    Color cAtHov  = { 104, 142, 102, 255 };
+    Color cBorda  = { 189, 181, 168, 255 };
+    Color cClaro  = { 255, 242, 230, 255 };
+
+    const char *labels[12] = {
+        "PRÓXIMO DIA",
+        "IR P/ VEREDITO",
+        "REINICIAR DIA",
+        "REINICIAR RUN",
+        "REINICIAR APP",
+        TextFormat("PERSONAGEM #%d", GameStateGetPlayerAvatar() + 1),
+        SettingsGetTechNight()           ? "TECH-NIGHT: ON"  : "TECH-NIGHT: OFF",
+        SettingsGetAutoReset()           ? "AUTO-RESET: ON"  : "AUTO-RESET: OFF",
+        SettingsGetDevUnlockSubsolo()    ? "SUBSOLO: ON"     : "SUBSOLO: OFF",
+        SettingsGetDevUnlockUpperFloors()? "ANDARES 2-4: ON" : "ANDARES 2-4: OFF",
+        "DESBL. EVIDÊNCIAS",
+        "MARCAR CHECK-LIST"
+    };
+    bool ativos[12] = {
+        false, false, false, false, false, false,
+        SettingsGetTechNight(),
+        SettingsGetAutoReset(),
+        SettingsGetDevUnlockSubsolo(),
+        SettingsGetDevUnlockUpperFloors(),
+        (GameStateCountEvidences() >= 6),
+        false
+    };
+
+    for (int i = 0; i < 12; i++) {
+        Rectangle r = DevGridBtnRect(i);
+        Rectangle rt = ParaTela(r);
+        bool hov = CheckCollisionPointRec(mouse, rt);
+        Color bg = ativos[i] ? (hov ? cAtHov : cAtivo) : (hov ? cBtnHov : cBtn);
+        DrawRectangleRec(rt, bg);
+        DrawRectangleLinesEx(rt, hov ? 1.8f : 1.1f, hov ? cClaro : cBorda);
+        DrawTextInArea(labels[i], r, 8, cClaro);
+    }
+
+    // Seletor de teleporte
+    float yTp = CHAT_AREA_Y + CHAT_HEADER_H + 10.0f + 6 * 29.0f + 4.0f;
+    float x0  = CHAT_AREA_X + 8.0f;
+    float totW = CHAT_AREA_W - 16.0f;
+    Rectangle rPrev = { x0, yTp, 24.0f, 24.0f };
+    Rectangle rLbl  = { x0 + 27.0f, yTp, totW - 102.0f, 24.0f };
+    Rectangle rNext = { x0 + totW - 72.0f, yTp, 24.0f, 24.0f };
+    Rectangle rIr   = { x0 + totW - 44.0f, yTp, 44.0f, 24.0f };
+
+    bool hP = CheckCollisionPointRec(mouse, ParaTela(rPrev));
+    bool hN = CheckCollisionPointRec(mouse, ParaTela(rNext));
+    bool hI = CheckCollisionPointRec(mouse, ParaTela(rIr));
+
+    DrawRectangleRec(ParaTela(rPrev), hP ? cBtnHov : cBtn);
+    DrawRectangleLinesEx(ParaTela(rPrev), 1.1f, hP ? cClaro : cBorda);
+    DrawTextInArea("<", rPrev, 9, cClaro);
+
+    DrawRectangleRec(ParaTela(rLbl), cEscuro);
+    DrawRectangleLinesEx(ParaTela(rLbl), 1.1f, cBorda);
+    DrawTextInArea(TextFormat("TP: %s", DEV_TELEPORT_ALVOS[g_devTeleportIdx].nome), rLbl, 8, cClaro);
+
+    DrawRectangleRec(ParaTela(rNext), hN ? cBtnHov : cBtn);
+    DrawRectangleLinesEx(ParaTela(rNext), 1.1f, hN ? cClaro : cBorda);
+    DrawTextInArea(">", rNext, 9, cClaro);
+
+    DrawRectangleRec(ParaTela(rIr), hI ? cAtHov : cAtivo);
+    DrawRectangleLinesEx(ParaTela(rIr), 1.4f, hI ? cClaro : cBorda);
+    DrawTextInArea("IR", rIr, 9, cClaro);
+}
+
 static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
         Color textColor  = (Color){ 32, 29, 31, 255 };
     Color borderColor = (Color){ 160, 147, 142, 255 };
@@ -4037,10 +4308,26 @@ static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
 
         int andarTitulo = GameplayHoloSalasAtivas()[g_localAtual].andar;
         const char *nomeAndarTitulo = (andarTitulo >= 0 && andarTitulo < HOLO_NUM_ANDARES) ? NOMES_ANDARES[andarTitulo] : "SUBSOLO";
-        const char *tituloChat = (g_dialogLoaded && suspectIndex >= 0 && suspectIndex < 3)
-                                 ? "HISTÓRICO DA CONVERSA"
-                                 : TextFormat("MAPA DA RASEC - %s", nomeAndarTitulo);
-        DrawTextInArea(tituloChat, rTitulo, 10, (Color){ 255, 242, 230, 255 });
+        const char *tituloChat = (SettingsGetDevMode() && g_devTabAberta)
+                                 ? "FERRAMENTAS DEV"
+                                 : ((g_dialogLoaded && suspectIndex >= 0 && suspectIndex < 3)
+                                    ? "HISTÓRICO DA CONVERSA"
+                                    : TextFormat("MAPA DA RASEC - %s", nomeAndarTitulo));
+        Rectangle rTxtTit = SettingsGetDevMode()
+                            ? (Rectangle){ rTitulo.x, rTitulo.y, rTitulo.width - 60.0f, rTitulo.height }
+                            : rTitulo;
+        DrawTextInArea(tituloChat, rTxtTit, 10, (Color){ 255, 242, 230, 255 });
+
+        if (SettingsGetDevMode()) {
+            Rectangle rTab = DevTabBtnRect();
+            bool hovTab = CheckCollisionPointRec(RayCanvasGetMousePosition(), ParaTela(rTab));
+            Color bgTab = g_devTabAberta
+                          ? (hovTab ? (Color){ 104, 142, 102, 255 } : (Color){ 78, 108, 76, 255 })
+                          : (hovTab ? (Color){ 88, 76, 80, 255 } : (Color){ 54, 48, 52, 255 });
+            DrawRectangleRec(ParaTela(rTab), bgTab);
+            DrawRectangleLinesEx(ParaTela(rTab), 1.2f, hovTab ? (Color){ 255, 242, 230, 255 } : borderColor);
+            DrawTextInArea(g_devTabAberta ? "MAPA" : "DEV", rTab, 8, (Color){ 255, 242, 230, 255 });
+        }
     }
 
     // Área do corpo do chat no retângulo da direita (fundo sólido escuro com sutil textura de fundo)
@@ -4048,6 +4335,11 @@ static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
     Rectangle rCorpoTela = ParaTela(rCorpo);
     DrawRectangleRec(rCorpoTela, Fade((Color){ 32, 29, 31, 255 }, 0.88f));
     DrawRectangleLinesEx(rCorpoTela, 2, borderColor);
+
+    if (SettingsGetDevMode() && g_devTabAberta) {
+        DesenharAbaDev(rCorpo);
+        return;
+    }
 
     if (!g_dialogLoaded || suspectIndex < 0 || suspectIndex >= 3) {
         DesenharMapaHolo();   // fora do interrogatorio o quadrante mostra o mapa do predio
@@ -4256,22 +4548,6 @@ static void DrawInterrogationTexts(void) {
         const char *txtBtnTopo = ultimoDia ? "Ir ao Veredito >>" : "Próximo Dia >>";
         DesenharBotaoTopoAnimado(BOTAO_AVANCAR_TOPO, txtBtnTopo, hovTopo, !HasTokens(),
                                  &g_btnAvancarHoverAnt, &g_btnAvancarAnim, &g_btnAvancarVel, dt,
-                                 hoverColor, lightTextColor, textColor);
-    }
-
-    // No Modo DEV, permite pular direto para o Veredito ou reiniciar a run sem fechar o jogo
-    if (SettingsGetDevMode()) {
-        if (!ultimoDia) {
-            bool hovVeredito = !bloqueadoPorOverlay && CheckCollisionPointRec(mouseTela, ParaTela(BOTAO_VEREDITO_DEV_TOPO));
-            DesenharBotaoTopoAnimado(BOTAO_VEREDITO_DEV_TOPO, "Veredito >>", hovVeredito, false,
-                                     &g_btnVereditoDevHoverAnt, &g_btnVereditoDevAnim, &g_btnVereditoDevVel, dt,
-                                     hoverColor, lightTextColor, textColor);
-        }
-        bool hovReiniciar = !bloqueadoPorOverlay && CheckCollisionPointRec(mouseTela, ParaTela(BOTAO_REINICIAR_DEV_TOPO));
-        static bool s_reinDevHovAnt = false;
-        static float s_reinDevAnim = 0.0f, s_reinDevVel = 0.0f;
-        DesenharBotaoTopoAnimado(BOTAO_REINICIAR_DEV_TOPO, "Reiniciar App", hovReiniciar, false,
-                                 &s_reinDevHovAnt, &s_reinDevAnim, &s_reinDevVel, dt,
                                  hoverColor, lightTextColor, textColor);
     }
     if (SettingsGetTechNight()) {
@@ -6706,6 +6982,7 @@ static void AbrirDialogoSuspeito(int i) {
     if (i < 0 || i >= 3) return;
     g_tutFuncionarioVisto = true;
     g_subtaskFalouSuspeito[i] = true;
+    GameStateRegistrarConversa(i);
     g_tree = &g_trees[i];
     g_dialogLoaded = true;
     g_suspeitoAtual = i;
@@ -6744,26 +7021,9 @@ static void UpdateGameplay(void) {
                 return;
             }
         }
-        if (SettingsGetDevMode()) {
-            if (GameStateGetDay() < GAME_NUM_DAYS) {
-                bool sobreBtnVereditoDev = CheckCollisionPointRec(mouse, ParaTela(BOTAO_VEREDITO_DEV_TOPO));
-                if (sobreBtnVereditoDev) {
-                    hover = true;
-                    if (clicou) {
-                        ExecutarIrParaVereditoDev();
-                        return;
-                    }
-                }
-            }
-            if (CheckCollisionPointRec(mouse, ParaTela(BOTAO_REINICIAR_DEV_TOPO))) {
-                hover = true;
-                if (clicou) {
-                    TocarSomHover();
-                    SettingsSave();
-                    SettingsRequestAppRestart();
-                    return;
-                }
-            }
+        if (UpdateAbaDev(&hover)) {
+            SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+            return;
         }
     }
 
@@ -7008,10 +7268,7 @@ static void UpdateGameplay(void) {
                                 g_deepfakeAberto || (g_pranchetaAberta && !g_pranchetaMinimizada) ||
                                 g_dicaAberta || g_confirmarAvancarDia || g_confirmarAbandonarRun ||
                                 g_elevadorAberto || monologoAtivo;
-            bool sobreBotaoTopo = CheckCollisionPointRec(mouse, ParaTela(BOTAO_AVANCAR_TOPO)) ||
-                                  (SettingsGetDevMode() &&
-                                   ((GameStateGetDay() < GAME_NUM_DAYS && CheckCollisionPointRec(mouse, ParaTela(BOTAO_VEREDITO_DEV_TOPO))) ||
-                                    CheckCollisionPointRec(mouse, ParaTela(BOTAO_REINICIAR_DEV_TOPO))));
+            bool sobreBotaoTopo = CheckCollisionPointRec(mouse, ParaTela(BOTAO_AVANCAR_TOPO));
             bool podeClicar3D = sobreJanela && !sobreSuspeito && !escBloqueado && !sobreBotaoTopo && !MouseSobreFicha();
             TerreoInteracaoResultado tRes = Terreo3DUpdate(
                 GetFrameTime(),
@@ -7058,6 +7315,24 @@ static void UpdateGameplay(void) {
                     LimparMonologoInterno();
                     FecharJanelasFerramentas();
                     g_elevadorAberto = true;
+                } else if (tRes.objetoId && strncmp(tRes.objetoId, "subsolo_modelo_", 15) == 0) {
+                    int mIdx = atoi(tRes.objetoId + 15);
+                    if (mIdx >= 0 && mIdx < 4) {
+                        PlayerPreviewAnim novaAnim = TerreoSubsoloCiclarAnim(mIdx);
+                        static const char *NOMES_MOD[4] = {
+                            "Masc. A (Sobretudo + Óculos)",
+                            "Masc. B (Blazer + Colete + Relógio)",
+                            "Fem. A (Sobretudo + Echarpe)",
+                            "Fem. B (Blazer + Coque + Óculos)"
+                        };
+                        static const char *NOMES_ANIM[PREVIEW_ANIM_COUNT] = {
+                            "IDLE", "ANDANDO", "CORRENDO", "COMPUTADOR", "INTERAGINDO (PAPEL/MAPA)", "INTERAGINDO (PORTA)"
+                        };
+                        static char s_msgSubsolo[160];
+                        snprintf(s_msgSubsolo, sizeof(s_msgSubsolo), "%s — Animação: %s (interaja de novo p/ trocar)",
+                                 NOMES_MOD[mIdx], NOMES_ANIM[novaAnim]);
+                        DispararMonologoInterno(s_msgSubsolo);
+                    }
                 } else if (tRes.objetoId && strcmp(tRes.objetoId, "ev_maria_queixa") == 0) {
                     Terreo3DTriggerPlayerAnim(tRes.objetoPos, PLAYER_ANIM_PAPER, 0.45f);
                     s_pendEvTipo = INSP_BOLINHA_PAPEL; s_pendEvSusp = 0; s_pendEvId = "EV-01"; s_pendEvTimer = 0.42f;

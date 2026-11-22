@@ -1447,14 +1447,17 @@ static void DrawContextualHuman(int styleId, bool fem, Vector3 pos, float yawDeg
     bool sentado = (ativ == NPC_ATIV_SENTADO || ativ == NPC_ATIV_COMPUTADOR || ativ == NPC_ATIV_COMENDO);
 
     float swayYaw  = sentado ? (sinf(phase * 0.5f) * 1.8f)
-                             : (ativ == NPC_ATIV_DESCONFIADA ? (sinf(tempo * 1.25f) * 8.5f)
+                             : (ativ == NPC_ATIV_DESCONFIADA ? (sinf(tempo * 0.85f) * 1.4f)
                              : (sinf(phase * 0.65f) * (styleId == 1 ? 3.5f : 2.5f)));
+    float headWave = sinf(tempo * 0.75f);
+    float headHold = (headWave > 0.35f) ? (headWave - 0.35f) / 0.65f
+                   : ((headWave < -0.35f) ? (headWave + 0.35f) / 0.65f : 0.0f);
     float headTurn = (ativ == NPC_ATIV_DESCONFIADA)
-                     ? (sinf(tempo * 1.65f) * 28.0f)
+                     ? (headHold * 13.0f)
                      : (sinf(phase * 0.55f + 0.7f) * (ativ == NPC_ATIV_COMPUTADOR ? 3.5f : 6.5f));
     float headNod  = (ativ == NPC_ATIV_COMPUTADOR || ativ == NPC_ATIV_LENDO || ativ == NPC_ATIV_COMENDO)
                      ? (12.0f + sinf(phase * 1.1f) * 2.5f)
-                     : (ativ == NPC_ATIV_DESCONFIADA ? (2.5f + sinf(tempo * 2.1f) * 1.8f) : (sinf(phase * 0.90f) * 2.0f));
+                     : (ativ == NPC_ATIV_DESCONFIADA ? (-1.5f + sinf(tempo * 1.1f) * 0.8f) : (sinf(phase * 0.90f) * 2.0f));
 
     float rootScale = isBgNpc ? (fem ? 1.01f : 1.06f) : (fem ? 1.07f : 1.14f);
     Matrix root = MakeLocal(pos, (Vector3){ 0.0f, yawDeg, 0.0f }, (Vector3){ rootScale, rootScale, rootScale });
@@ -1573,10 +1576,10 @@ static void DrawContextualHuman(int styleId, bool fem, Vector3 pos, float yawDeg
             elbowAng = -82.0f;
             armYaw   = (float)side * -22.0f;
         } else if (ativ == NPC_ATIV_DESCONFIADA) {
-            // Postura alerta / bracos levemente recolhidos
-            armAng   = -10.0f;
-            elbowAng = -38.0f + sinf(tempo * 1.9f + (float)side) * 2.5f;
-            armYaw   = (float)side * -14.0f;
+            // Postura executiva ereta e controlada: bracos cruzados / maos juntas a frente
+            armAng   = -16.0f;
+            elbowAng = -68.0f + sinf(tempo * 1.1f) * 1.0f;
+            armYaw   = (float)side * -24.0f;
         } else if (ativ == NPC_ATIV_SENTADO) {
             armAng   = -18.0f;
             elbowAng = -48.0f + sinf(phase) * 2.0f;
@@ -1673,6 +1676,283 @@ static void DrawContextualHuman(int styleId, bool fem, Vector3 pos, float yawDeg
         DrawPart(g_assets.hairM, headM, hLum, false);
         DrawPart(g_assets.bangM1, MatrixMultiply(MakeLocal((Vector3){  0.012f, 0.082f, 0.072f }, (Vector3){ -18.0f, -10.0f, -12.0f }, (Vector3){ 1.1f, 1.15f, 1.1f }), headM), hLum + 0.01f, false);
         DrawPart(g_assets.bangM2, MatrixMultiply(MakeLocal((Vector3){ -0.022f, 0.084f, 0.068f }, (Vector3){ -22.0f, 14.0f, 10.0f }, (Vector3){ 1.1f, 1.15f, 1.1f }), headM), hLum + 0.01f, false);
+    }
+}
+
+void PlayerCharacterDrawModelPreview3D(bool isFemale, Vector3 pos, float yawDeg, float tempo, Vector3 camPos) {
+    PlayerCharacter dummy;
+    PlayerCharacterInit(&dummy, pos, yawDeg * DEG2RAD);
+    dummy.isFemale = isFemale;
+    dummy.idleTime = tempo;
+    PlayerCharacterDraw3D(&dummy, camPos);
+}
+
+// Desenha variantes aprimoradas do modelo do player (0=Masc Noir, 1=Masc Corp, 2=Fem Noir, 3=Fem Exec)
+// com todas as animacoes testaveis (idle, andar, correr, computador, papel/mapa, porta).
+void PlayerCharacterDrawVariant3D(int variantId, PlayerPreviewAnim anim, Vector3 pos, float yawDeg, float tempo, Vector3 camPos) {
+    EnsurePlayerAssets();
+    if (!g_assets.initialized) return;
+
+    float viewArr[3] = { camPos.x, camPos.y, camPos.z };
+    SetShaderValue(g_assets.shader, g_assets.locViewPos, viewArr, SHADER_UNIFORM_VEC3);
+
+    int v = (variantId < 0) ? 0 : (variantId % 4);
+    bool fem         = (v == 2 || v == 3);
+    bool longCoat    = (v == 0 || v == 2); // V0 e V2: sobretudo longo; V1 e V3: blazer executivo
+    bool hasGlasses  = (v == 0 || v == 3);
+    bool hasScarf    = (v == 2);
+    bool hasBunHair  = (v == 3);
+    bool hasWatch    = (v == 1);
+
+    float coatLum  = (v == 0) ? 0.16f : ((v == 1) ? 0.36f : ((v == 2) ? 0.20f : 0.42f));
+    float lapelLum = (v == 0) ? 0.30f : ((v == 1) ? 0.48f : ((v == 2) ? 0.34f : 0.56f));
+    float pantLum  = (v == 0) ? 0.15f : ((v == 1) ? 0.18f : ((v == 2) ? 0.16f : 0.20f));
+    float shirtLum = (v == 3) ? 0.84f : 0.92f;
+
+    float blend = 0.0f;
+    float runB  = 0.0f;
+    float walkCycle = 0.0f;
+    float sitFactor = 0.0f;
+    float paperInspect = 0.0f;
+    float reach = 0.0f;
+
+    if (anim == PREVIEW_ANIM_WALK) {
+        blend = 1.0f;
+        walkCycle = tempo * 6.5f;
+    } else if (anim == PREVIEW_ANIM_RUN) {
+        blend = 1.0f;
+        runB  = 1.0f;
+        walkCycle = tempo * 10.5f;
+    } else if (anim == PREVIEW_ANIM_COMPUTER) {
+        sitFactor = 1.0f;
+    } else if (anim == PREVIEW_ANIM_PAPER) {
+        paperInspect = 0.85f + 0.15f * sinf(tempo * 2.2f);
+    } else if (anim == PREVIEW_ANIM_DOOR) {
+        float cyc = fmodf(tempo, 2.0f);
+        reach = (cyc < 1.0f) ? sinf(cyc * PI) : 0.0f;
+    }
+
+    float strideMult = 1.0f + 0.36f * runB;
+    float s  = sinf(walkCycle);
+    float c2 = cosf(2.0f * walkCycle);
+
+    float idleBreath  = sinf(tempo * 1.9f) * 0.006f * (1.0f - blend);
+    float walkBob     = (-c2 * 0.022f * strideMult) * blend;
+    float bobY        = walkBob + idleBreath;
+    float idleHipRoll = 1.4f * (1.0f - blend);
+    float pelvisYaw   = s * 5.5f * blend + 1.5f * (1.0f - blend);
+    float pelvisRoll  = s * 2.6f * blend + idleHipRoll;
+    float torsoYaw    = -s * 6.2f * blend - 1.2f * (1.0f - blend);
+    float forwardLean = (6.5f + 6.5f * runB) * blend + 1.0f * (1.0f - blend);
+
+    float rootScale = fem ? 1.06f : 1.13f;
+    Matrix root = MakeLocal(pos, (Vector3){ 0.0f, yawDeg, 0.0f }, (Vector3){ rootScale, rootScale, rootScale });
+    Matrix shadowProj = MakePlanarShadowMatrix(pos.y + 0.008f, pos);
+
+    float pelvY = (0.87f + bobY) * (1.0f - sitFactor) + 0.42f * sitFactor;
+    float pelvZ = -0.05f * sitFactor;
+    Matrix pelvisM = MatrixMultiply(
+        MakeLocal((Vector3){ 0.0f, pelvY, pelvZ },
+                  (Vector3){ 0.0f, pelvisYaw * (1.0f - sitFactor), pelvisRoll * (1.0f - sitFactor) },
+                  (Vector3){ 1, 1, 1 }),
+        root
+    );
+
+    // 1) Pernas articuladas
+    float hipX = fem ? 0.086f : 0.098f;
+    for (int side = -1; side <= 1; side += 2) {
+        float phase = (side < 0) ? walkCycle : (walkCycle + PI);
+        float sp = sinf(phase);
+        float cp = cosf(phase);
+        float swingPhase = fmaxf(0.0f, cp);
+        float legAng   = ((-sp * 24.0f * strideMult) * blend + ((side < 0) ? 2.0f : -2.0f) * (1.0f - blend)) * (1.0f - sitFactor) + (-86.0f * sitFactor);
+        float kneeBend = ((swingPhase * 36.0f * strideMult + 3.0f) * blend + ((side < 0) ? 2.5f : 4.5f) * (1.0f - blend)) * (1.0f - sitFactor) + (86.0f * sitFactor);
+        float footPitch = ((-legAng * 0.50f - cp * 7.0f) * blend) * (1.0f - sitFactor);
+
+        Matrix hipM = MatrixMultiply(
+            MakeLocal((Vector3){ (float)side * hipX, 0.0f, 0.04f * sitFactor },
+                      (Vector3){ legAng, 0.0f, (float)side * (-1.0f + 4.5f * sitFactor) },
+                      (Vector3){ 1, 1, 1 }),
+            pelvisM
+        );
+        DrawPartWithShadow(fem ? g_assets.thighF : g_assets.thighM, hipM, pantLum, false, &shadowProj);
+        Matrix kneeM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, fem ? -0.41f : -0.42f, 0.0f }, (Vector3){ kneeBend, 0, 0 }, (Vector3){ 1, 1, 1 }), hipM);
+        DrawPart(g_assets.jointSphere, MatrixMultiply(MatrixScale(fem ? 0.056f : 0.064f, fem ? 0.056f : 0.064f, fem ? 0.056f : 0.064f), kneeM), pantLum * 0.95f, false);
+        DrawPartWithShadow(fem ? g_assets.calfF : g_assets.calfM, kneeM, pantLum * 0.92f, false, &shadowProj);
+        Matrix ankleM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, fem ? -0.39f : -0.40f, 0.0f }, (Vector3){ footPitch - kneeBend * 0.45f * (1.0f - sitFactor), 0, 0 }, (Vector3){ 1, 1, 1 }), kneeM);
+        DrawPartWithShadow(g_assets.shoe, ankleM, 0.06f, false, &shadowProj);
+    }
+
+    // 2) Tronco, camisa, cinto com fivela, colete/paleto/sobretudo, botoes e cracha
+    float compLean = 8.0f * sitFactor + 7.0f * paperInspect;
+    Matrix torsoBase = MatrixMultiply(
+        MakeLocal((Vector3){ 0.0f, 0.25f, 0.0f },
+                  (Vector3){ forwardLean * (1.0f - sitFactor) + compLean, torsoYaw * (1.0f - sitFactor), -pelvisRoll * 0.65f * (1.0f - sitFactor) },
+                  (Vector3){ 1, 1, 1 }),
+        pelvisM
+    );
+
+    DrawPart(g_assets.shirt, torsoBase, shirtLum, false);
+    if (v == 1) {
+        // Colete escuro interno sob o blazer claro (Masc Corp)
+        DrawPart(g_assets.torsoM, MatrixMultiply(MakeLocal((Vector3){ 0.0f, -0.02f, 0.008f }, (Vector3){ 0, 0, 0 }, (Vector3){ 0.97f, 0.95f, 0.98f }), torsoBase), 0.14f, false);
+    } else if (!fem) {
+        DrawPart(g_assets.tie, MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.04f, 0.100f }, (Vector3){ 3.0f, 0, 0 }, (Vector3){ 1.0f, 1.0f, 1.0f }), torsoBase), 0.06f, false);
+    } else if (v == 3) {
+        DrawPart(g_assets.tie, MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.09f, 0.096f }, (Vector3){ 3.0f, 0, 0 }, (Vector3){ 0.65f, 0.58f, 0.72f }), torsoBase), 0.10f, false);
+    }
+
+    DrawPartWithShadow(fem ? g_assets.torsoF : g_assets.torsoM,
+                       MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.0f, -0.010f }, (Vector3){ 0, 0, 0 }, (Vector3){ 1.04f, 1.01f, 1.02f }), torsoBase),
+                       coatLum, false, &shadowProj);
+
+    // Cinto marcado na cintura + fivela metalica
+    DrawPart(g_assets.belt, MatrixMultiply(MakeLocal((Vector3){ 0.0f, -0.165f, 0.002f }, (Vector3){ 0, 0, 0 }, (Vector3){ fem ? 0.98f : 1.06f, 1.0f, 1.04f }), torsoBase), 0.08f, false);
+    rlPushMatrix();
+    rlMultMatrixf(MatrixToFloat(torsoBase));
+    DrawCube((Vector3){ 0.0f, -0.165f, 0.118f }, 0.046f, 0.032f, 0.012f, (Color){ 215, 206, 194, 255 });
+    // Botoes verticais do paleto/sobretudo
+    DrawCube((Vector3){ 0.035f, -0.04f, 0.112f }, 0.014f, 0.014f, 0.008f, (Color){ 170, 162, 152, 255 });
+    DrawCube((Vector3){ 0.035f, -0.10f, 0.112f }, 0.014f, 0.014f, 0.008f, (Color){ 170, 162, 152, 255 });
+    rlPopMatrix();
+
+    // Echarpe / gola alta clara (Fem Noir)
+    if (hasScarf) {
+        rlPushMatrix();
+        rlMultMatrixf(MatrixToFloat(torsoBase));
+        DrawCylinder((Vector3){ 0.0f, 0.19f, 0.006f }, 0.095f, 0.108f, 0.075f, 14, (Color){ 218, 210, 198, 255 });
+        DrawCube((Vector3){ -0.03f, 0.09f, 0.106f }, 0.068f, 0.15f, 0.022f, (Color){ 204, 196, 184, 255 });
+        rlPopMatrix();
+    }
+
+    DrawBadgeDetails(torsoBase, 0.04f);
+
+    // Barra do sobretudo (longa em V0/V2, blazer curto em V1/V3)
+    float coatSway = -sinf(walkCycle) * (10.5f * strideMult) * blend - (13.5f + 7.5f * runB) * blend - 18.0f * sitFactor;
+    float coatLag  = cosf(walkCycle) * 6.5f * blend;
+    float skirtScaleY = longCoat ? 1.0f : 0.44f;
+    Matrix skirtM = MatrixMultiply(
+        MakeLocal((Vector3){ 0.0f, -0.18f, -0.008f }, (Vector3){ coatSway, coatLag, -pelvisRoll * 0.75f }, (Vector3){ 1.03f, skirtScaleY, 1.02f }),
+        torsoBase
+    );
+    DrawPartWithShadow(fem ? g_assets.coatSkirtF : g_assets.coatSkirtM, skirtM, coatLum - 0.01f, false, &shadowProj);
+
+    for (int side = -1; side <= 1; side += 2) {
+        float flapX = (float)side * (fem ? 0.086f : 0.098f);
+        Matrix flapM = MatrixMultiply(
+            MakeLocal((Vector3){ flapX, -0.18f, 0.070f },
+                      (Vector3){ coatSway * 0.90f + (float)side * coatLag * 0.65f, (float)side * 10.0f, (float)side * (fem ? 2.5f : 2.0f) },
+                      (Vector3){ 1.02f, skirtScaleY, 1.0f }),
+            torsoBase
+        );
+        DrawPart(fem ? g_assets.coatFlapF : g_assets.coatFlapM, flapM, coatLum + 0.03f, false);
+
+        Matrix lapelM = MatrixMultiply(
+            MakeLocal((Vector3){ (float)side * (fem ? 0.064f : 0.072f), 0.10f, 0.094f },
+                      (Vector3){ 4.0f, (float)side * 12.0f, (float)side * -16.0f },
+                      (Vector3){ 0.88f, 1.04f, 0.88f }),
+            torsoBase
+        );
+        DrawPart(g_assets.lapel, lapelM, lapelLum, false);
+    }
+    DrawPart(g_assets.collarBack, MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.21f, -0.010f }, (Vector3){ -6.0f, 0, 0 }, (Vector3){ 1.02f, 1.0f, 1.02f }), torsoBase), lapelLum - 0.02f, false);
+
+    // 3) Bracos com punhos brancos + relogio + prancheta na animacao de papel
+    float shXBase = fem ? 0.175f : 0.212f;
+    for (int side = -1; side <= 1; side += 2) {
+        float legPhase = (side < 0) ? walkCycle : (walkCycle + PI);
+        float armPhase = legPhase - 0.35f;
+        float sp = sinf(armPhase);
+        float armAng   = (sp * 21.0f * strideMult) * blend + ((side > 0) ? -2.5f : 2.0f) * (1.0f - blend);
+        float elbowAng = (-18.0f - fmaxf(0.0f, -sp) * 22.0f * strideMult) * blend - (10.0f + sinf(tempo * 1.9f) * 1.5f) * (1.0f - blend);
+        float armOutZ  = (float)side * (fem ? 5.2f : 6.0f);
+        float armYaw   = 0.0f;
+
+        if (sitFactor > 0.05f) {
+            float typeOsc = sinf(tempo * 11.0f + (float)side * 2.2f);
+            armAng   = -36.0f * sitFactor + typeOsc * 3.5f;
+            elbowAng = -62.0f * sitFactor + typeOsc * 6.0f;
+            armYaw   = (float)side * -14.0f * sitFactor;
+        } else if (paperInspect > 0.05f) {
+            float flipOsc = sinf(tempo * 7.5f + (float)side * 1.4f);
+            armAng   = -34.0f * paperInspect + flipOsc * 3.5f;
+            elbowAng = -68.0f * paperInspect + flipOsc * 6.5f;
+            armYaw   = (float)side * -16.0f * paperInspect;
+        } else if (side < 0 && reach > 0.01f) {
+            armAng = -66.0f * reach;
+            elbowAng = -16.0f * (1.0f - 0.4f * reach);
+        }
+
+        Matrix shM = MatrixMultiply(MakeLocal((Vector3){ (float)side * shXBase, 0.18f, 0.0f }, (Vector3){ armAng, armYaw, armOutZ }, (Vector3){ 1, 1, 1 }), torsoBase);
+        DrawPart(g_assets.jointSphere, MatrixMultiply(MatrixScale(fem ? 0.048f : 0.056f, fem ? 0.048f : 0.056f, fem ? 0.048f : 0.056f), shM), coatLum + 0.05f, false);
+        DrawPartWithShadow(fem ? g_assets.upperArmF : g_assets.upperArmM, shM, coatLum + 0.05f, false, &shadowProj);
+
+        Matrix elbM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, fem ? -0.26f : -0.27f, 0.0f }, (Vector3){ elbowAng, 0, (float)side * -2.5f }, (Vector3){ 1, 1, 1 }), shM);
+        DrawPart(g_assets.jointSphere, MatrixMultiply(MatrixScale(fem ? 0.036f : 0.043f, fem ? 0.036f : 0.043f, fem ? 0.036f : 0.043f), elbM), coatLum + 0.04f, false);
+        DrawPartWithShadow(fem ? g_assets.forearmF : g_assets.forearmM, elbM, coatLum + 0.04f, false, &shadowProj);
+
+        // Punho branco discreto da camisa + relogio no pulso esquerdo (V1)
+        rlPushMatrix();
+        rlMultMatrixf(MatrixToFloat(elbM));
+        DrawCylinder((Vector3){ 0.0f, fem ? -0.225f : -0.235f, 0.0f }, 0.036f, 0.034f, 0.026f, 10, (Color){ 232, 224, 214, 255 });
+        if (hasWatch && side < 0) {
+            DrawCylinder((Vector3){ 0.0f, -0.242f, 0.0f }, 0.038f, 0.038f, 0.014f, 10, (Color){ 32, 29, 31, 255 });
+            DrawCube((Vector3){ 0.0f, -0.242f, 0.036f }, 0.020f, 0.016f, 0.008f, (Color){ 215, 206, 194, 255 });
+        }
+        rlPopMatrix();
+
+        Matrix handM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, fem ? -0.24f : -0.25f, 0.008f }, (Vector3){ -8.0f - sp * 6.0f * blend, 0, (float)side * -4.0f }, (Vector3){ 1, 1, 1 }), elbM);
+        DrawPart(g_assets.hand, handM, 0.64f, false);
+
+        if (paperInspect > 0.3f && side > 0) {
+            rlPushMatrix();
+            rlMultMatrixf(MatrixToFloat(handM));
+            DrawCube((Vector3){ -0.05f, -0.04f, 0.05f }, 0.20f, 0.015f, 0.26f, (Color){ 230, 222, 210, 255 });
+            DrawCubeWires((Vector3){ -0.05f, -0.04f, 0.05f }, 0.20f, 0.015f, 0.26f, (Color){ 42, 38, 40, 255 });
+            rlPopMatrix();
+        }
+    }
+
+    // 4) Pescoco, cabeca, oculos e penteados distintos
+    Matrix neckM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.22f, 0.0f }, (Vector3){ -forwardLean * 0.55f, -torsoYaw * 0.5f, 0 }, (Vector3){ 1, 1, 1 }), torsoBase);
+    DrawPart(fem ? g_assets.neckF : g_assets.neckM, neckM, 0.58f, false);
+    Matrix headM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.19f, 0.012f }, (Vector3){ 4.0f + 8.0f * paperInspect, 0.0f, 0.0f }, (Vector3){ 1, 1, 1 }), neckM);
+    DrawPartWithShadow(fem ? g_assets.headF : g_assets.headM, headM, 0.64f, false, &shadowProj);
+    DrawFaceDetails(headM, fem, 1.0f);
+
+    if (hasGlasses) {
+        rlPushMatrix();
+        rlMultMatrixf(MatrixToFloat(headM));
+        DrawCubeWires((Vector3){ -0.030f, 0.020f, 0.095f }, 0.042f, 0.022f, 0.008f, (Color){ 20, 18, 20, 255 });
+        DrawCubeWires((Vector3){  0.030f, 0.020f, 0.095f }, 0.042f, 0.022f, 0.008f, (Color){ 20, 18, 20, 255 });
+        DrawCube((Vector3){ 0.0f, 0.024f, 0.095f }, 0.018f, 0.005f, 0.008f, (Color){ 20, 18, 20, 255 });
+        rlPopMatrix();
+    }
+
+    if (fem) {
+        float hairLagX = -blend * 12.0f + sinf(walkCycle) * 8.5f * blend + sinf(tempo * 1.6f) * 1.6f;
+        float hairLagZ = -sinf(walkCycle) * 6.5f * blend + cosf(tempo * 1.3f) * 1.4f;
+        DrawPart(g_assets.hairF, MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.006f, 0.0f }, (Vector3){ 0, 0, 0 }, (Vector3){ 1.06f, 1.05f, 1.06f }), headM), 0.09f, false);
+        if (hasBunHair) {
+            // Coque elegante na nuca (Fem Exec)
+            rlPushMatrix();
+            rlMultMatrixf(MatrixToFloat(headM));
+            DrawSphereEx((Vector3){ 0.0f, 0.025f, -0.105f }, 0.056f, 10, 10, (Color){ 26, 23, 25, 255 });
+            rlPopMatrix();
+        } else {
+            DrawPart(g_assets.hairBackF, MatrixMultiply(MakeLocal((Vector3){ 0.0f, -0.01f, -0.005f }, (Vector3){ hairLagX, 0, hairLagZ }, (Vector3){ 1.08f, 1.12f, 1.08f }), headM), 0.08f, false);
+            for (int side = -1; side <= 1; side += 2) {
+                DrawPart(g_assets.hairSideF, MatrixMultiply(MakeLocal((Vector3){ (float)side * 0.072f, 0.0f, 0.005f }, (Vector3){ hairLagX * 0.75f, 0, (float)side * -8.0f + hairLagZ * 0.65f }, (Vector3){ 1.06f, 1.10f, 1.06f }), headM), 0.09f, false);
+            }
+        }
+        DrawPart(g_assets.bangM2, MatrixMultiply(MakeLocal((Vector3){ -0.028f, 0.068f, 0.078f }, (Vector3){ 12.0f, 18.0f, 16.0f }, (Vector3){ 0.95f, 0.90f, 1.0f }), headM), 0.09f, false);
+        DrawPart(g_assets.bangM1, MatrixMultiply(MakeLocal((Vector3){  0.028f, 0.068f, 0.078f }, (Vector3){ 12.0f, -18.0f, -16.0f }, (Vector3){ 0.95f, 0.90f, 1.0f }), headM), 0.09f, false);
+    } else {
+        float bangSway = sinf(walkCycle) * 4.5f * blend;
+        float hairScaleY = (v == 1) ? 1.14f : 1.06f;
+        DrawPart(g_assets.hairM, MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.006f, -0.004f }, (Vector3){ 0, 0, 0 }, (Vector3){ 1.06f, hairScaleY, 1.06f }), headM), 0.09f, false);
+        DrawPart(g_assets.bangM1, MatrixMultiply(MakeLocal((Vector3){  0.014f, 0.074f, 0.082f }, (Vector3){ 10.0f + bangSway, -12.0f, -14.0f }, (Vector3){ 1.12f, 1.12f, 1.08f }), headM), 0.10f, false);
+        DrawPart(g_assets.bangM2, MatrixMultiply(MakeLocal((Vector3){ -0.024f, 0.072f, 0.080f }, (Vector3){  8.0f - bangSway,  14.0f,  12.0f }, (Vector3){ 1.12f, 1.12f, 1.08f }), headM), 0.10f, false);
     }
 }
 

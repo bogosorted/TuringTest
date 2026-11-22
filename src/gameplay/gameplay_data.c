@@ -346,11 +346,13 @@ bool GameplayLocalEhTerreo3D(LocalRasec loc) {
            loc == LOCAL_HALL_3             || loc == LOCAL_TREINO_ESCRITORIO ||
            loc == LOCAL_TREINO_IA          || loc == LOCAL_GARAGEM_PROTOTIPOS ||
            loc == LOCAL_HALL_4             || loc == LOCAL_AUDITORIO ||
-           loc == LOCAL_REUNIAO_1          || loc == LOCAL_REUNIAO_2;
+           loc == LOCAL_REUNIAO_1          || loc == LOCAL_REUNIAO_2 ||
+           loc == LOCAL_SUBSOLO_COMECO;
 }
 
 TerreoSalaId GameplayTerreoSalaPorLocal(LocalRasec loc) {
     switch (loc) {
+        case LOCAL_SUBSOLO_COMECO:     return TERREO_SALA_SUBSOLO;
         case LOCAL_RECEPCAO:           return TERREO_SALA_RECEPCAO;
         case LOCAL_CANTINA:            return TERREO_SALA_LANCHONETE;
         case LOCAL_JARDIM:             return TERREO_SALA_JARDIM;
@@ -383,6 +385,7 @@ TerreoSalaId GameplayTerreoSalaPorLocal(LocalRasec loc) {
 
 TerreoDestino GameplayTerreoDestinoPorLocal(LocalRasec loc) {
     switch (loc) {
+        case LOCAL_SUBSOLO_COMECO:     return TERREO_DEST_SUBSOLO;
         case LOCAL_RECEPCAO:           return TERREO_DEST_RECEPCAO;
         case LOCAL_CANTINA:            return TERREO_DEST_LANCHONETE;
         case LOCAL_JARDIM:             return TERREO_DEST_JARDIM;
@@ -415,6 +418,7 @@ TerreoDestino GameplayTerreoDestinoPorLocal(LocalRasec loc) {
 
 LocalRasec GameplayLocalPorTerreoDestino(TerreoDestino dest) {
     switch (dest) {
+        case TERREO_DEST_SUBSOLO:            return LOCAL_SUBSOLO_COMECO;
         case TERREO_DEST_RECEPCAO:           return LOCAL_RECEPCAO;
         case TERREO_DEST_LANCHONETE:         return LOCAL_CANTINA;
         case TERREO_DEST_JARDIM:             return LOCAL_JARDIM;

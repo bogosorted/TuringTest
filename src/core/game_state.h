@@ -66,17 +66,27 @@ bool GameStateTemEvidencia(int suspeito, const char *ev_id);
 bool GameStateEvidenciaDisponivelHoje(int suspeito, const char *ev_id);
 int  GameStateGetEv06CollectedDay(void);
 
-// Flags de memoria de dialogo entre dias e entre funcionarios (bit 1..31)
+// Flags de memoria de dialogo entre dias e entre funcionarios (bit 1..63)
 void GameStateSetDialogFlag(int flagBit);
 bool GameStateHasDialogFlag(int flagBit);
 
-// Rastreia se o jogador usou Enviesamento, Deepfake ou Injecao contra cada suspeito na run
+// Historico real de conversas por suspeito (0=Maria, 1=Arthur, 2=Ana Lucia)
+void GameStateRegistrarConversa(int suspeito);
+bool GameStateJaConversou(int suspeito);
+bool GameStateJaConversouAntesDeHoje(int suspeito);
+int  GameStateUltimoDiaConversaAnterior(int suspeito);
+bool GameStateConversouNoDia(int suspeito, int dia);
+
+// Rastreia se o jogador usou Enviesamento, Deepfake ou Injecao contra cada suspeito na run (e em qual dia)
 void GameStateSetViesUsado(int suspeito, bool usado);
 bool GameStateGetViesUsado(int suspeito);
+int  GameStateGetViesDia(int suspeito);
 void GameStateSetDeepfakeUsado(int suspeito, bool usado);
 bool GameStateGetDeepfakeUsado(int suspeito);
+int  GameStateGetDeepfakeDia(int suspeito);
 void GameStateSetInjecaoUsada(int suspeito, bool usada);
 bool GameStateGetInjecaoUsada(int suspeito);
+int  GameStateGetInjecaoDia(int suspeito);
 int  GameStateCountSpecialToolsUsed(void);
 
 // Nome, retrato (0..5), genero do retrato e tom de voz do jogador, alem das estatisticas de pontuacao da run

@@ -180,7 +180,8 @@ static void PosicionarCamera(float ang, float flutua) {
         g_camera.position = (Vector3){ alvo.x + sinf(ang) * dist, alvo.y + alt + flutua, alvo.z + cosf(ang) * dist };
         return;
     }
-    float centroY = SettingsGetDevMode()
+    bool showSubsolo = SettingsGetDevMode() && SettingsGetDevUnlockSubsolo();
+    float centroY = showSubsolo
         ? g_andarAlt * (g_numAndares - 2) / 2.0f + 0.15f
         : g_andarAlt * (g_numAndares - 1) / 2.0f + 0.15f;
     Vector3 alvo = { g_plantaW / 2.0f, centroY, g_plantaD / 2.0f };
@@ -191,8 +192,9 @@ static void PosicionarCamera(float ang, float flutua) {
 // Menor fovy em que o predio inteiro (ou o andar focado) cabe na textura (com folga).
 static void AjustarZoom(void) {
     PosicionarCamera(0.0f, 0.0f);
+    bool showSubsolo = SettingsGetDevMode() && SettingsGetDevUnlockSubsolo();
     float topo = g_apenasAndarAtual ? (AlturaAndar(g_andarFoco) + PAREDE_ALT * 1.4f) : (AlturaAndar(g_numAndares - 1) + ESCADA_ALT);
-    float base = g_apenasAndarAtual ? (AlturaAndar(g_andarFoco) - PLACA_ESP) : (SettingsGetDevMode() ? AlturaAndar(-1) - PLACA_ESP : -PLACA_ESP);
+    float base = g_apenasAndarAtual ? (AlturaAndar(g_andarFoco) - PLACA_ESP) : (showSubsolo ? AlturaAndar(-1) - PLACA_ESP : -PLACA_ESP);
     Vector3 cantos[8];
     for (int i = 0; i < 8; i++) {
         cantos[i] = (Vector3){ (i & 1) ? g_plantaW : 0.0f, (i & 2) ? topo : base, (i & 4) ? g_plantaD : 0.0f };
@@ -400,17 +402,18 @@ void MapaHoloRender(int largura, int altura, int salaAtual, int salaHover, uint6
             }
         }
     }
-    int minAndar = g_apenasAndarAtual ? g_andarFoco : (SettingsGetDevMode() ? -1 : 0);
+    bool showSubsolo = SettingsGetDevMode() && SettingsGetDevUnlockSubsolo();
+    int minAndar = g_apenasAndarAtual ? g_andarFoco : (showSubsolo ? -1 : 0);
     int maxAndarLoop = g_apenasAndarAtual ? (g_andarFoco + 1) : g_numAndares;
     for (int a = minAndar; a < maxAndarLoop; a++) DesenharAndar(a, a == andarAtual);
     for (int k = 0; k < g_numCorredores; k++) {
-        if (!SettingsGetDevMode() && g_corredores[k].andar < 0) continue;
+        if (!showSubsolo && g_corredores[k].andar < 0) continue;
         if (g_apenasAndarAtual && g_corredores[k].andar != g_andarFoco) continue;
         DesenharCorredor(&g_corredores[k], g_corredores[k].andar == andarAtual);
     }
     for (int i = 0; i < g_numSalas; i++) {
         if (g_salas[i].numPartes == 0) continue;
-        if (!SettingsGetDevMode() && g_salas[i].andar < 0) continue;
+        if (!showSubsolo && g_salas[i].andar < 0) continue;
         if (g_apenasAndarAtual && g_salas[i].andar != g_andarFoco) continue;
         bool acessivel = ((acessiveis >> i) & 1ULL) != 0;
         DesenharSala(i, i == salaAtual, i == salaHover && acessivel, acessivel || i == salaAtual);
@@ -464,7 +467,7 @@ int MapaHoloNumAndares(void) {
 int MapaHoloSalaEm(Vector2 ponto) {
     if (!g_pronto || !g_texPronta) return -1;
     // De cima para baixo: o andar de cima e desenhado por ultimo e fica na frente
-    int minAndar = SettingsGetDevMode() ? -1 : 0;
+    int minAndar = (SettingsGetDevMode() && SettingsGetDevUnlockSubsolo()) ? -1 : 0;
     for (int andar = g_numAndares - 1; andar >= minAndar; andar--) {
         for (int i = 0; i < g_numSalas; i++) {
             const HoloSala *s = &g_salas[i];

@@ -838,6 +838,7 @@ void Terreo3DInit(int largura, int altura) {
     g_salas[TERREO_SALA_AUDITORIO]          = SalaAuditorioDef();
     g_salas[TERREO_SALA_REUNIAO_1]          = SalaReuniao1Def();
     g_salas[TERREO_SALA_REUNIAO_2]          = SalaReuniao2Def();
+    g_salas[TERREO_SALA_SUBSOLO]            = SalaSubsoloDef();
 
     GarantirTexturas(largura, altura);
     Terreo3DDefinirSala(TERREO_SALA_RECEPCAO, TERREO_DEST_NENHUM);
@@ -944,7 +945,12 @@ void Terreo3DDefinirSala(TerreoSalaId sala, TerreoDestino vindoDe) {
         } else if (vindoDe == TERREO_DEST_ESCRITORIO) {
             pos = (Vector3){ 4.70f, 0.0f, 1.35f };
             yaw = -PI * 0.5f;
-        } else if (vindoDe == TERREO_DEST_ESCADA_2D || vindoDe == TERREO_DEST_HALL_1) {
+        } else if (vindoDe == TERREO_DEST_ESCADA_2D ||
+                   vindoDe == TERREO_DEST_HALL_1 ||
+                   vindoDe == TERREO_DEST_HALL_2 ||
+                   vindoDe == TERREO_DEST_HALL_3 ||
+                   vindoDe == TERREO_DEST_HALL_4 ||
+                   vindoDe == TERREO_DEST_SUBSOLO) {
             pos = (Vector3){ 4.35f, 0.0f, -2.90f };
             yaw = 0.0f;
         }
@@ -989,7 +995,9 @@ void Terreo3DDefinirSala(TerreoSalaId sala, TerreoDestino vindoDe) {
             yaw = PI;
         }
     } else if (sala == TERREO_SALA_HALL_1) {
-        if (vindoDe == TERREO_DEST_RECEPCAO || vindoDe == TERREO_DEST_ESCADA_1) {
+        if (vindoDe == TERREO_DEST_RECEPCAO || vindoDe == TERREO_DEST_ESCADA_1 ||
+            vindoDe == TERREO_DEST_HALL_2 || vindoDe == TERREO_DEST_HALL_3 ||
+            vindoDe == TERREO_DEST_HALL_4 || vindoDe == TERREO_DEST_SUBSOLO) {
             pos = (Vector3){ 3.55f, 0.0f, -2.15f };
             yaw = 0.0f;
         } else if (vindoDe == TERREO_DEST_CONTABILIDADE_1) {
@@ -1169,9 +1177,9 @@ static void PosicaoSuspeitoNaSala(TerreoSalaId sala, int s, Vector3 *outPos, flo
         static const float yaws[3]  = { -35.0f, 25.0f, -120.0f };
         p = pts[s]; yaw = yaws[s];
     } else if (sala == TERREO_SALA_LANCHONETE) {
-        // Cantina: em pe nos corredores entre as mesas
-        static const Vector3 pts[3] = { { -1.40f, 0, -2.10f }, { 0.15f, 0, -0.80f }, { -1.20f, 0, 2.30f } };
-        static const float yaws[3]  = { 35.0f, -45.0f, 15.0f };
+        // Cantina: em pe nos corredores amplos, bem longe das mesas
+        static const Vector3 pts[3] = { { -1.40f, 0, -2.10f }, { -1.10f, 0, -0.55f }, { -1.35f, 0, 3.35f } };
+        static const float yaws[3]  = { 35.0f, -25.0f, 25.0f };
         p = pts[s]; yaw = yaws[s];
     } else if (sala == TERREO_SALA_JARDIM) {
         // Jardim: em pe pelas trilhas
@@ -1179,37 +1187,38 @@ static void PosicaoSuspeitoNaSala(TerreoSalaId sala, int s, Vector3 *outPos, flo
         static const float yaws[3]  = { 35.0f, -120.0f, -45.0f };
         p = pts[s]; yaw = yaws[s];
     } else if (sala == TERREO_SALA_ESCRITORIO) {
-        // Escritorio: em pe nos corredores entre baias
-        static const Vector3 pts[3] = { { -0.10f, 0, -0.30f }, { 0.85f, 0, 1.45f }, { -2.10f, 0, 1.45f } };
-        static const float yaws[3]  = { 15.0f, -160.0f, 25.0f };
+        // ADM 1: corredores livres (baias ocupam x:-2.45..1.95, z:-1.25..0.15 e z:1.15..2.55)
+        static const Vector3 pts[3] = { { -0.60f, 0, 0.65f }, { 3.15f, 0, 1.25f }, { 2.85f, 0, -2.05f } };
+        static const float yaws[3]  = { 15.0f, -135.0f, -35.0f };
         p = pts[s]; yaw = yaws[s];
     } else if (sala == TERREO_SALA_ESCRITORIO_2) {
-        // ADM 2: em pe nos corredores livres
-        static const Vector3 pts[3] = { { -0.20f, 0, -1.10f }, { 1.85f, 0, 1.15f }, { 2.95f, 0, -0.85f } };
-        static const float yaws[3]  = { 20.0f, -155.0f, -30.0f };
+        // ADM 2: corredores livres longe das baias e da parede direita (x:4.35..5.80)
+        static const Vector3 pts[3] = { { -0.50f, 0, 0.65f }, { 3.15f, 0, 1.45f }, { 3.15f, 0, -1.65f } };
+        static const float yaws[3]  = { 15.0f, -145.0f, -35.0f };
         p = pts[s]; yaw = yaws[s];
     } else if (sala == TERREO_SALA_CONVIVIO) {
-        // Convivio: em pe na area aberta
-        static const Vector3 pts[3] = { { -1.80f, 0, 0.80f }, { 0.10f, 0, 1.10f }, { 1.90f, 0, 0.65f } };
+        // Convivio: em pe na area aberta, longe do sofa e das mesas
+        static const Vector3 pts[3] = { { -1.80f, 0, 1.25f }, { 0.20f, 0, 1.35f }, { 2.20f, 0, 0.85f } };
         static const float yaws[3]  = { 25.0f, 180.0f, -35.0f };
         p = pts[s]; yaw = yaws[s];
     } else if (sala == TERREO_SALA_CONTABILIDADE_1) {
-        // Contabilidade 1: em pe no corredor central livre (entre os dois blocos de baias)
-        static const Vector3 pts[3] = { { -1.80f, 0, -0.05f }, { 0.40f, 0, -0.05f }, { 2.40f, 0, -0.05f } };
-        static const float yaws[3]  = { 15.0f, -20.0f, -135.0f };
+        // Contabilidade 1: corredores amplos sem cruzar blocos de baias
+        static const Vector3 pts[3] = { { -1.80f, 0, -0.05f }, { 3.85f, 0, 0.35f }, { 3.85f, 0, -1.55f } };
+        static const float yaws[3]  = { 15.0f, -110.0f, -65.0f };
         p = pts[s]; yaw = yaws[s];
     } else if (sala == TERREO_SALA_CONTABILIDADE_2) {
-        // Contabilidade 2: em pe na area livre
-        static const Vector3 pts[3] = { { -1.45f, 0, -0.60f }, { 0.60f, 0, -0.60f }, { 2.40f, 0, -0.45f } };
-        static const float yaws[3]  = { 20.0f, 0.0f, -25.0f };
+        // Contabilidade 2: longe da mesa comprida central (x:-1.40..3.20, z:-1.05..1.25)
+        static const Vector3 pts[3] = { { -2.65f, 0, 0.25f }, { 0.60f, 0, 2.15f }, { 0.85f, 0, -2.05f } };
+        static const float yaws[3]  = { 75.0f, 180.0f, 0.0f };
         p = pts[s]; yaw = yaws[s];
     } else if (sala == TERREO_SALA_ARQUIVO_1) {
         static const Vector3 pts[3] = { { -2.05f, 0, 1.35f }, { 2.05f, 0, 1.35f }, { 0.00f, 0, -1.75f } };
         static const float yaws[3]  = { 135.0f, -135.0f, 0.0f };
         p = pts[s]; yaw = yaws[s];
     } else if (sala == TERREO_SALA_COPA_1) {
-        static const Vector3 pts[3] = { { -1.20f, 0, 0.35f }, { 0.85f, 0, 0.35f }, { 0.00f, 0, -1.25f } };
-        static const float yaws[3]  = { 140.0f, -140.0f, 0.0f };
+        // Copa 1: longe das mesas redondas (z:0.30..2.00) e da bancada (z:-3.50..-2.50)
+        static const Vector3 pts[3] = { { -2.10f, 0, -1.20f }, { 3.25f, 0, 1.40f }, { -0.35f, 0, -0.75f } };
+        static const float yaws[3]  = { 20.0f, -130.0f, 10.0f };
         p = pts[s]; yaw = yaws[s];
     } else if (sala == TERREO_SALA_CIBER_1 || sala == TERREO_SALA_CIBER_2 ||
                sala == TERREO_SALA_TREINO_ESCRITORIO || sala == TERREO_SALA_TREINO_IA) {
@@ -1284,6 +1293,55 @@ static const ExtraNpcDef EXTRA_NPCS[] = {
     { TERREO_SALA_TREINO_ESCRITORIO,{  2.40f, 0.0f, -0.55f },  180.0f, NPC_ATIV_COMPUTADOR, 2 },
     { TERREO_SALA_TREINO_IA,        { -1.55f, 0.0f,  0.85f },  180.0f, NPC_ATIV_COMPUTADOR, 5 },
 };
+
+void TerreoTV(Vector3 pos, float rotYDeg, float tempo) {
+    rlPushMatrix();
+    rlTranslatef(pos.x, pos.y, pos.z);
+    rlRotatef(rotYDeg, 0.0f, 1.0f, 0.0f);
+    // Suporte traseiro na parede
+    TerreoCaixa((Vector3){ 0.0f, 0.0f, -0.02f }, (Vector3){ 0.42f, 0.24f, 0.06f }, 0.16f, 0.14f, 0.14f, -1.0f);
+    // Moldura escura da TV widescreen
+    TerreoCaixa((Vector3){ 0.0f, 0.0f,  0.04f }, (Vector3){ 1.46f, 0.84f, 0.06f }, 0.14f, 0.12f, 0.12f, 0.24f);
+    // Tela acesa com brilho suave animado
+    float pulso = 0.72f + 0.06f * sinf(tempo * 2.4f);
+    TerreoCaixa((Vector3){ 0.0f, 0.02f, 0.075f }, (Vector3){ 1.34f, 0.68f, 0.015f }, pulso, pulso, pulso * 0.9f, -1.0f);
+    // Faixa de rodape estilo telejornal corporativo
+    float barraX = -0.35f + 0.70f * (0.5f + 0.5f * sinf(tempo * 0.9f));
+    TerreoCaixa((Vector3){ 0.0f, -0.25f, 0.086f }, (Vector3){ 1.32f, 0.11f, 0.01f }, 0.24f, 0.22f, 0.22f, -1.0f);
+    TerreoCaixa((Vector3){ barraX, -0.25f, 0.092f }, (Vector3){ 0.34f, 0.05f, 0.008f }, 0.92f, 0.92f, 0.92f, -1.0f);
+    // Grafico/bloco de apresentacao no canto da tela
+    TerreoCaixa((Vector3){ -0.34f, 0.08f, 0.086f }, (Vector3){ 0.44f, 0.30f, 0.008f }, 0.45f, 0.42f, 0.42f, 0.18f);
+    TerreoCaixa((Vector3){  0.26f, 0.15f, 0.086f }, (Vector3){ 0.50f, 0.07f, 0.008f }, 0.30f, 0.28f, 0.28f, -1.0f);
+    TerreoCaixa((Vector3){  0.22f, 0.02f, 0.086f }, (Vector3){ 0.42f, 0.06f, 0.008f }, 0.36f, 0.34f, 0.34f, -1.0f);
+    rlPopMatrix();
+}
+
+static PlayerPreviewAnim g_subsoloAnims[4] = {
+    PREVIEW_ANIM_IDLE, PREVIEW_ANIM_IDLE, PREVIEW_ANIM_IDLE, PREVIEW_ANIM_IDLE
+};
+
+void TerreoDesenharPlayerPreview(bool isFemale, Vector3 pos, float yawDeg, float tempo) {
+    PlayerCharacterDrawModelPreview3D(isFemale, pos, yawDeg, tempo, g_camAtual.position);
+}
+
+void TerreoDesenharPlayerVariant(int variantId, PlayerPreviewAnim anim, Vector3 pos, float yawDeg, float tempo) {
+    PlayerCharacterDrawVariant3D(variantId, anim, pos, yawDeg, tempo, g_camAtual.position);
+}
+
+PlayerPreviewAnim TerreoSubsoloGetAnim(int idx) {
+    if (idx < 0 || idx >= 4) return PREVIEW_ANIM_IDLE;
+    return g_subsoloAnims[idx];
+}
+
+PlayerPreviewAnim TerreoSubsoloCiclarAnim(int idx) {
+    if (idx < 0 || idx >= 4) return PREVIEW_ANIM_IDLE;
+    g_subsoloAnims[idx] = (PlayerPreviewAnim)((g_subsoloAnims[idx] + 1) % PREVIEW_ANIM_COUNT);
+    return g_subsoloAnims[idx];
+}
+
+void Terreo3DAtualizarAvatarPlayer(void) {
+    g_player.isFemale = GameStateIsPlayerFemale();
+}
 
 static void TerreoDesenharFuncionariosExtras(TerreoSalaId sala, float tempo) {
     int count = (int)(sizeof(EXTRA_NPCS) / sizeof(EXTRA_NPCS[0]));

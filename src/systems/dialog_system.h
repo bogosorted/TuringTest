@@ -5,17 +5,23 @@
 #include "game_state.h"
 
 #define MAX_CHOICES 4
-#define MAX_NODE_CHOICES 8
+#define MAX_NODE_CHOICES 16
 #define MAX_TEXT_LENGTH 512
 #define MAX_ID_LENGTH 32
-#define MAX_DIALOG_NODES 50
+#define MAX_DIALOG_NODES 64
 
 typedef struct {
     char text[MAX_TEXT_LENGTH];
     char next_node[MAX_ID_LENGTH];
     char req_evidencia[MAX_ID_LENGTH]; // se nao vazio, exige esta evidencia registrada
     int  req_suspeito;                 // -1 = mesmo suspeito da arvore, 0..2 = evidencia cruzada
-    int  req_flag;                     // 0 = nenhuma, 1..31 = exige flag de dialogo anterior
+    int  req_flag;                     // 0 = nenhuma, 1..63 = exige flag de dialogo anterior
+    int  req_flag_alt;                 // 0 = nenhuma, 1..63 = alternativa OR para req_flag
+    int  forbid_flag;                  // 0 = nenhuma, 1..63 = bloqueia se esta flag ja foi ativada
+    bool req_falou_antes;              // se true, exige conversa em dia anterior com este suspeito
+    bool req_vies_anterior;            // se true, exige Enviesamento usado neste suspeito em dia anterior
+    bool req_injecao_anterior;         // se true, exige Injecao usada neste suspeito em dia anterior
+    bool req_deepfake_anterior;        // se true, exige Deepfake usado neste suspeito em dia anterior
     bool req_poucas_ev;                // se true, aparece apenas quando jogador tem < 2 evidencias
 } DialogChoice;
 

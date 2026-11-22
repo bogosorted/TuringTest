@@ -1,6 +1,7 @@
 #include "game_state.h"
 #include "settings.h"
 #include "raylib.h"
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -9,10 +10,14 @@ static bool         g_tutorialConfig = true; // Por padrao ativado no setup
 static bool         g_tutorialActive = true;
 static VisaoJogador g_visaoJogador[GAME_NUM_SUSPECTS] = { VISAO_DUVIDA, VISAO_DUVIDA, VISAO_DUVIDA };
 static bool         g_evidencias[GAME_NUM_SUSPECTS][GAME_MAX_EVIDENCIAS] = { { false } };
-static unsigned int g_dialogFlags = 0;
+static uint64_t     g_dialogFlags = 0;
+static bool         g_conversouNoDia[GAME_NUM_SUSPECTS][GAME_NUM_DAYS + 1] = { { false } };
 static bool         g_viesUsado[GAME_NUM_SUSPECTS] = { false };
+static int          g_viesDia[GAME_NUM_SUSPECTS] = { 0 };
 static bool         g_deepfakeUsado[GAME_NUM_SUSPECTS] = { false };
+static int          g_deepfakeDia[GAME_NUM_SUSPECTS] = { 0 };
 static bool         g_injecaoUsada[GAME_NUM_SUSPECTS] = { false };
+static int          g_injecaoDia[GAME_NUM_SUSPECTS] = { 0 };
 static char           g_playerName[9] = "AGENTE";
 static int            g_playerAvatar = 0;
 static TomVozJogador  g_playerVoiceTone = VOZ_SUAVE;
@@ -69,8 +74,14 @@ void GameStateNewRun(void) {
     for (int i = 0; i < GAME_NUM_SUSPECTS; i++) {
         g_visaoJogador[i] = VISAO_DUVIDA;
         g_viesUsado[i] = false;
+        g_viesDia[i] = 0;
         g_deepfakeUsado[i] = false;
+        g_deepfakeDia[i] = 0;
         g_injecaoUsada[i] = false;
+        g_injecaoDia[i] = 0;
+        for (int d = 0; d <= GAME_NUM_DAYS; d++) {
+            g_conversouNoDia[i][d] = false;
+        }
         for (int e = 0; e < GAME_MAX_EVIDENCIAS; e++) {
             g_evidencias[i][e] = false;
         }
@@ -177,18 +188,53 @@ bool GameStateEvidenciaDisponivelHoje(int suspeito, const char *ev_id) {
 }
 
 void GameStateSetDialogFlag(int flagBit) {
-    if (flagBit <= 0 || flagBit >= 32) return;
-    g_dialogFlags |= (1u << (unsigned int)flagBit);
+    if (flagBit <= 0 || flagBit >= 64) return;
+    g_dialogFlags |= (1ULL << (unsigned int)flagBit);
 }
 
 bool GameStateHasDialogFlag(int flagBit) {
-    if (flagBit <= 0 || flagBit >= 32) return true;
-    return (g_dialogFlags & (1u << (unsigned int)flagBit)) != 0;
+    if (flagBit <= 0 || flagBit >= 64) return true;
+    return (g_dialogFlags & (1ULL << (unsigned int)flagBit)) != 0;
+}
+
+void GameStateRegistrarConversa(int suspeito) {
+    if (suspeito < 0 || suspeito >= GAME_NUM_SUSPECTS) return;
+    if (g_day >= 1 && g_day <= GAME_NUM_DAYS) {
+        g_conversouNoDia[suspeito][g_day] = true;
+    }
+}
+
+bool GameStateJaConversou(int suspeito) {
+    if (suspeito < 0 || suspeito >= GAME_NUM_SUSPECTS) return false;
+    for (int d = 1; d <= GAME_NUM_DAYS; d++) {
+        if (g_conversouNoDia[suspeito][d]) return true;
+    }
+    return false;
+}
+
+bool GameStateJaConversouAntesDeHoje(int suspeito) {
+    return GameStateUltimoDiaConversaAnterior(suspeito) > 0;
+}
+
+int GameStateUltimoDiaConversaAnterior(int suspeito) {
+    if (suspeito < 0 || suspeito >= GAME_NUM_SUSPECTS) return 0;
+    for (int d = g_day - 1; d >= 1; d--) {
+        if (g_conversouNoDia[suspeito][d]) return d;
+    }
+    return 0;
+}
+
+bool GameStateConversouNoDia(int suspeito, int dia) {
+    if (suspeito < 0 || suspeito >= GAME_NUM_SUSPECTS) return false;
+    if (dia < 1 || dia > GAME_NUM_DAYS) return false;
+    return g_conversouNoDia[suspeito][dia];
 }
 
 void GameStateSetViesUsado(int suspeito, bool usado) {
     if (suspeito < 0 || suspeito >= GAME_NUM_SUSPECTS) return;
     g_viesUsado[suspeito] = usado;
+    if (usado && g_viesDia[suspeito] == 0) g_viesDia[suspeito] = g_day;
+    if (!usado) g_viesDia[suspeito] = 0;
 }
 
 bool GameStateGetViesUsado(int suspeito) {
@@ -196,9 +242,16 @@ bool GameStateGetViesUsado(int suspeito) {
     return g_viesUsado[suspeito];
 }
 
+int GameStateGetViesDia(int suspeito) {
+    if (suspeito < 0 || suspeito >= GAME_NUM_SUSPECTS) return 0;
+    return g_viesDia[suspeito];
+}
+
 void GameStateSetDeepfakeUsado(int suspeito, bool usado) {
     if (suspeito < 0 || suspeito >= GAME_NUM_SUSPECTS) return;
     g_deepfakeUsado[suspeito] = usado;
+    if (usado && g_deepfakeDia[suspeito] == 0) g_deepfakeDia[suspeito] = g_day;
+    if (!usado) g_deepfakeDia[suspeito] = 0;
 }
 
 bool GameStateGetDeepfakeUsado(int suspeito) {
@@ -206,14 +259,26 @@ bool GameStateGetDeepfakeUsado(int suspeito) {
     return g_deepfakeUsado[suspeito];
 }
 
+int GameStateGetDeepfakeDia(int suspeito) {
+    if (suspeito < 0 || suspeito >= GAME_NUM_SUSPECTS) return 0;
+    return g_deepfakeDia[suspeito];
+}
+
 void GameStateSetInjecaoUsada(int suspeito, bool usada) {
     if (suspeito < 0 || suspeito >= GAME_NUM_SUSPECTS) return;
     g_injecaoUsada[suspeito] = usada;
+    if (usada && g_injecaoDia[suspeito] == 0) g_injecaoDia[suspeito] = g_day;
+    if (!usada) g_injecaoDia[suspeito] = 0;
 }
 
 bool GameStateGetInjecaoUsada(int suspeito) {
     if (suspeito < 0 || suspeito >= GAME_NUM_SUSPECTS) return false;
     return g_injecaoUsada[suspeito];
+}
+
+int GameStateGetInjecaoDia(int suspeito) {
+    if (suspeito < 0 || suspeito >= GAME_NUM_SUSPECTS) return 0;
+    return g_injecaoDia[suspeito];
 }
 
 int GameStateCountSpecialToolsUsed(void) {
