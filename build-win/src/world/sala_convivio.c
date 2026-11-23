@@ -16,10 +16,12 @@ static const float CONV_MAX_Z =  3.40f;
 static const float CONV_WALL_H = 2.95f;
 
 static const PlayerColliderBox CONV_COLLIDERS[] = {
-    { -2.40f, -2.55f,  0.40f, -1.45f }, // Sofa de descanso ao fundo
-    { -2.05f, -0.75f,  0.05f,  0.45f }, // Mesinha de centro
+    { -2.45f, -3.35f,  0.45f, -1.85f }, // Sofa redondo encostado na parede
+    { -1.70f, -0.95f, -0.30f,  0.25f }, // Mesinha de centro
     {  1.55f, -2.45f,  3.15f, -0.85f }, // Mesa redonda de convivio
     {  3.75f, -3.25f,  4.65f, -2.35f }, // Bebedouro
+    { -4.55f, -3.20f, -3.75f, -2.35f }, // Vaso de planta
+    {  3.75f,  2.25f,  4.55f,  3.05f }, // Vaso de planta canto direito
 };
 
 static const SalaInteractable CONV_INTERACTABLES[] = {
@@ -102,18 +104,18 @@ static void DesenharConvivio(float tempo, bool evRelatoriosAtiva) {
     TerreoPortaModelo((Vector3){ 0.00f, 0.0f, CONV_MAX_Z - 0.04f },  180.0f, PORTA_TIPO_ESCRITORIO);
     TerreoPortaModelo((Vector3){ CONV_MAX_X - 0.04f, 0.0f, -0.20f }, -90.0f, PORTA_TIPO_ESCRITORIO);
 
-    // Tapete + Sofa + Mesinha de centro
-    TerreoCaixa((Vector3){ -1.00f, 0.01f, -1.10f }, (Vector3){ 3.20f, 0.02f, 2.40f }, 0.24f, 0.20f, 0.18f, -1.0f);
-    TerreoCaixa((Vector3){ -1.00f, 0.24f, -2.00f }, (Vector3){ 2.60f, 0.36f, 0.84f }, 0.76f, 0.66f, 0.58f, 0.16f);
-    TerreoCaixa((Vector3){ -1.00f, 0.56f, -2.32f }, (Vector3){ 2.60f, 0.44f, 0.20f }, 0.80f, 0.70f, 0.62f, 0.16f);
-    TerreoMesaRedonda((Vector3){ -1.00f, 0.0f, -0.15f }, 0.55f, 0.46f);
+    // Tapete + Sofa redondo encostado na parede + Mesinha de centro com perna visivel
+    TerreoCaixa((Vector3){ -1.00f, 0.01f, -1.35f }, (Vector3){ 3.50f, 0.02f, 2.95f }, 0.24f, 0.20f, 0.18f, -1.0f);
+    TerreoSofaRedondo((Vector3){ -1.00f, 0.0f, -2.65f }, 0.0f, 1.35f);
+    TerreoMesaRedonda((Vector3){ -1.00f, 0.0f, -0.35f }, 0.52f, 0.56f);
 
     // Mesa redonda + banquetas + bebedouro + plantas
     TerreoMesaRedonda((Vector3){ 2.35f, 0.0f, -1.65f }, 0.65f, 0.76f);
     TerreoBanqueta((Vector3){ 1.50f, 0.0f, -1.65f }, 0.56f);
     TerreoBanqueta((Vector3){ 3.20f, 0.0f, -1.65f }, 0.56f);
     TerreoBebedouro((Vector3){ 4.20f, 0.0f, -2.80f });
-    TerreoPlanta((Vector3){ -4.15f, 0.0f, -2.75f }, 1.25f);
+    TerreoPlanta((Vector3){ -4.15f, 0.0f, -2.75f }, 1.35f);
+    TerreoPlanta((Vector3){  4.15f, 0.0f,  2.65f }, 1.25f);
 }
 
 static const TerreoSalaDef SALA_CONVIVIO_DEF = {

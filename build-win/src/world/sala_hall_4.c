@@ -17,7 +17,7 @@ static const float H4_MAX_Z =  3.20f;
 static const float H4_WALL_H = 3.15f;
 
 static const PlayerColliderBox H4_COLLIDERS[] = {
-    { -3.75f, -3.25f, -1.35f, -2.05f }, // Balcao executivo de recepcao
+    { -3.85f, -3.40f, -1.25f, -1.65f }, // Balcao executivo em U (bloqueia acesso por tras)
     { -1.85f,  0.65f,  1.15f,  1.75f }, // Sofa de espera executivo
     { -5.15f,  2.15f, -4.35f,  2.95f }, // Vaso canto esquerdo
 };
@@ -25,12 +25,12 @@ static const PlayerColliderBox H4_COLLIDERS[] = {
 static const SalaInteractable H4_INTERACTABLES[] = {
     {
         "balcao_executivo_4",
-        "Balcão Executivo",
+        "Recepcionista (4º Andar)",
         { -2.55f, 0.90f, -2.65f },
         { 2.25f, 1.30f, 1.10f },
         2.00f,
-        true,
-        "A recepção da diretoria está deserta. Apenas a placa dourada 'PRESIDÊNCIA' brilha na parede."
+        false,
+        "Recepcionista: \"Bem-vindo ao 4º Andar — Executivo e Presidência. À esquerda fica o Auditório; à direita ficam as Salas de Reunião da diretoria.\""
     },
     {
         "elevador",
@@ -94,11 +94,11 @@ static void DesenharHall4(float tempo, bool evRelatoriosAtiva) {
     TerreoCaixa((Vector3){ -2.55f, 0.52f, -2.65f }, (Vector3){ 2.30f, 1.04f, 0.90f }, 0.72f, 0.54f, 0.46f, 0.14f);
     TerreoMonitor((Vector3){ -2.55f, 1.06f, -2.65f }, 0.0f);
 
-    // Sofa executivo
+    // Sofa curvo executivo + plantas
     TerreoCaixa((Vector3){ -0.35f, 0.01f, 1.20f }, (Vector3){ 3.40f, 0.02f, 1.65f }, 0.22f, 0.18f, 0.18f, -1.0f);
-    TerreoCaixa((Vector3){ -0.35f, 0.24f, 1.20f }, (Vector3){ 2.60f, 0.36f, 0.84f }, 0.80f, 0.70f, 0.62f, 0.16f);
-    TerreoCaixa((Vector3){ -0.35f, 0.56f, 1.52f }, (Vector3){ 2.60f, 0.44f, 0.20f }, 0.84f, 0.74f, 0.64f, 0.16f);
-    TerreoPlanta((Vector3){ -4.75f, 0.0f, 2.55f }, 1.25f);
+    TerreoSofaCurvo((Vector3){ -0.35f, 0.0f, 1.20f }, 180.0f, 2.50f);
+    TerreoPlanta((Vector3){ -4.75f, 0.0f, 2.55f }, 1.30f);
+    TerreoPlanta((Vector3){  4.55f, 0.0f, -2.55f }, 1.25f);
 
     TerreoElevador((Vector3){ 3.45f, 0.0f, H4_MIN_Z + 0.04f }, 0.0f);
 }

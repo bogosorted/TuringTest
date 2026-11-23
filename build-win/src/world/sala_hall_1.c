@@ -20,9 +20,19 @@ static const float H1_WALL_H = 3.05f;
 static const PlayerColliderBox H1_COLLIDERS[] = {
     { -1.95f,  0.65f,  1.05f,  1.75f }, // Sofa central compacto
     { -5.15f,  2.15f, -4.35f,  2.95f }, // Vaso canto esquerdo
+    { -5.10f, -3.40f, -2.60f, -1.15f }, // Balcao redondo da recepcionista (bloqueia acesso por tras)
 };
 
 static const SalaInteractable H1_INTERACTABLES[] = {
+    {
+        "recepcionista_hall_1",
+        "Recepcionista (1º Andar)",
+        { -3.85f, 0.95f, -1.75f },
+        { 1.45f, 1.35f, 1.05f },
+        1.95f,
+        false,
+        "1º Andar — Contabilidade. Copa à esquerda; Contabilidade 1, 2 e Arquivo à direita."
+    },
     {
         "diretorio_andar_1",
         "Diretório do 1º Andar",
@@ -106,11 +116,14 @@ static void DesenharHall1(float tempo, bool evRelatoriosAtiva) {
     TerreoCaixa((Vector3){ -3.85f, 1.60f, H1_MIN_Z + 0.03f },
                 (Vector3){ 1.15f, 0.80f, 0.04f }, 0.82f, 0.78f, 0.70f, 0.16f);
 
-    // Tapete + Sofa compacto
+    // Tapete + Sofa curvo + Plantas
     TerreoCaixa((Vector3){ -0.45f, 0.01f, 1.20f }, (Vector3){ 3.40f, 0.02f, 1.65f }, 0.22f, 0.18f, 0.18f, -1.0f);
-    TerreoCaixa((Vector3){ -0.45f, 0.24f, 1.20f }, (Vector3){ 2.60f, 0.36f, 0.84f }, 0.72f, 0.62f, 0.56f, 0.16f);
-    TerreoCaixa((Vector3){ -0.45f, 0.56f, 1.52f }, (Vector3){ 2.60f, 0.44f, 0.20f }, 0.76f, 0.66f, 0.58f, 0.16f);
-    TerreoPlanta((Vector3){ -4.75f, 0.0f, 2.55f }, 1.25f);
+    TerreoSofaCurvo((Vector3){ -0.45f, 0.0f, 1.20f }, 180.0f, 2.50f);
+    TerreoPlanta((Vector3){ -4.75f, 0.0f, 2.55f }, 1.30f);
+    TerreoPlanta((Vector3){  4.75f, 0.0f, -2.65f }, 1.25f);
+
+    // Balcao redondo em U da recepcionista do 1o andar
+    TerreoBalcaoRecepcaoU((Vector3){ -3.85f, 0.0f, -2.05f });
 
     // Elevador no fundo-direito
     TerreoElevador((Vector3){ 3.55f, 0.0f, H1_MIN_Z + 0.04f }, 0.0f);

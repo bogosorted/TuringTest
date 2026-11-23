@@ -5,15 +5,24 @@
 #include "game_state.h"
 
 #define MAX_CHOICES 4
-#define MAX_NODE_CHOICES 8
+#define MAX_NODE_CHOICES 16
 #define MAX_TEXT_LENGTH 512
 #define MAX_ID_LENGTH 32
-#define MAX_DIALOG_NODES 50
+#define MAX_DIALOG_NODES 64
 
 typedef struct {
     char text[MAX_TEXT_LENGTH];
     char next_node[MAX_ID_LENGTH];
     char req_evidencia[MAX_ID_LENGTH]; // se nao vazio, exige esta evidencia registrada
+    int  req_suspeito;                 // -1 = mesmo suspeito da arvore, 0..2 = evidencia cruzada
+    int  req_flag;                     // 0 = nenhuma, 1..63 = exige flag de dialogo anterior
+    int  req_flag_alt;                 // 0 = nenhuma, 1..63 = alternativa OR para req_flag
+    int  forbid_flag;                  // 0 = nenhuma, 1..63 = bloqueia se esta flag ja foi ativada
+    bool req_falou_antes;              // se true, exige conversa em dia anterior com este suspeito
+    bool req_vies_anterior;            // se true, exige Enviesamento usado neste suspeito em dia anterior
+    bool req_injecao_anterior;         // se true, exige Injecao usada neste suspeito em dia anterior
+    bool req_deepfake_anterior;        // se true, exige Deepfake usado neste suspeito em dia anterior
+    bool req_poucas_ev;                // se true, aparece apenas quando jogador tem < 2 evidencias
 } DialogChoice;
 
 typedef struct {
@@ -26,6 +35,8 @@ typedef struct {
     bool is_leaf;
     VisaoJogador visao_out;
     char ev_desbloqueada[MAX_ID_LENGTH]; // evidencia ganha ao visitar este no
+    int  ev_suspeito;                    // -1 = mesmo suspeito da arvore, 0..2 = outro suspeito
+    int  flag_out;                       // 0 = nenhuma, 1..31 = grava flag ao visitar este no
 } DialogNode;
 
 typedef struct {
@@ -37,8 +48,8 @@ typedef struct {
     int current_node_index;
 } DialogTree;
 
-// Economia de Tokens do Jogo (12 por dia)
-#define TOKENS_PER_DAY 8
+// Economia de Tokens do Jogo (1 por dia, acumulativo)
+#define TOKENS_PER_DAY 1
 extern int global_tokens;
 
 // Modo desenvolvedor: true = tokens ilimitados (nao bloqueia e nao gasta).
@@ -48,8 +59,10 @@ extern bool global_infinite_tokens;
 // true se ainda ha tokens para gastar (ou se o modo ilimitado esta ligado)
 bool HasTokens(void);
 
-// Devolve os tokens para o valor inicial (chamar no comeco de cada dia)
+// Devolve os tokens para o valor inicial (chamar no comeco do Dia 1)
 void ResetTokens(void);
+// Adiciona a cota diaria de tokens (chamar ao avancar para um novo dia)
+void AddDailyTokens(void);
 
 // API
 void InitDialogSystem(void);

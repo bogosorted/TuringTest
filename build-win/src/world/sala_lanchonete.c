@@ -5,37 +5,36 @@
 #define PI 3.14159265358979323846f
 #endif
 
-static const float LAN_MIN_X = -4.70f;
-static const float LAN_MAX_X =  4.70f;
-static const float LAN_MIN_Z = -3.70f;
-static const float LAN_MAX_Z =  3.70f;
+// Planta baixa do terreo (TerreoRASEC3D.png):
+// A Lanchonete/Cantina ocupa toda a altura vertical esquerda do terreo e cresce para a esquerda (<) para dar espaco as mesas.
+static const float LAN_MIN_X = -5.60f;
+static const float LAN_MAX_X =  3.90f;
+static const float LAN_MIN_Z = -6.20f;
+static const float LAN_MAX_Z =  6.20f;
 static const float LAN_WALL_H = 2.85f;
 
-// Lanchonete estilo loja de shopping:
-// - Na parede esquerda, verticalmente: divisao entre o player e a bancada com vendedores atras
-// - Mesas redondas organizadas na area centro-direita
-// - Porta de vidro na direita-frente (Recepcao) e porta de vidro ao fundo (Jardim)
 static const PlayerColliderBox LAN_COLLIDERS[] = {
-    { -4.70f, -3.70f, -2.05f,  3.70f }, // Divisao + bancada vertical conectada de parede a parede
-    { -0.25f,  0.65f,  1.35f,  2.25f }, // Mesa redonda 1 (centro-frente)
-    { -0.25f, -2.05f,  1.35f, -0.45f }, // Mesa redonda 2 (centro-fundo)
-    {  2.05f, -2.05f,  3.65f, -0.45f }, // Mesa redonda 3 (direita-fundo)
+    { -5.60f, -6.20f, -3.20f,  6.20f }, // Divisao + bancada vertical na parede esquerda
+    {  0.55f, -4.40f,  2.15f, -2.80f }, // Mesa redonda 1 (fundo)
+    {  0.55f, -1.20f,  2.15f,  0.40f }, // Mesa redonda 2 (centro)
+    {  0.55f,  2.40f,  2.15f,  4.00f }, // Mesa redonda 3 (frente)
+    { -1.95f,  0.60f, -0.35f,  2.20f }, // Mesa redonda 4 (meio-esquerda)
 };
 
 static const SalaInteractable LAN_INTERACTABLES[] = {
     {
         "bancada_vendedores",
         "Bancada da Lanchonete",
-        { -2.95f, 1.00f,  0.20f },
-        { 1.85f, 1.80f, 4.40f },
+        { -4.05f, 1.00f,  0.00f },
+        { 1.75f, 1.80f, 7.60f },
         2.35f,
         false,
-        "Os vendedores aguardam atrás da bancada, mas você não precisa comprar nada agora."
+        "Os vendedores aguardam atrás da longa bancada da cantina, mas você não precisa comprar nada agora."
     },
     {
         "mesa_lanchonete_1",
         "Mesa da Lanchonete",
-        {  0.55f, 0.65f,  1.45f },
+        {  1.35f, 0.65f, -3.60f },
         { 1.35f, 0.90f, 1.35f },
         1.75f,
         true,
@@ -44,32 +43,41 @@ static const SalaInteractable LAN_INTERACTABLES[] = {
     {
         "mesa_lanchonete_2",
         "Mesa da Lanchonete",
-        {  2.85f, 0.65f, -1.25f },
+        {  1.35f, 0.65f,  3.20f },
         { 1.35f, 0.90f, 1.35f },
         1.75f,
         true,
         "Alguém deixou um recibo amassado ao lado de um copo de café vazio."
+    },
+    {
+        "tv_lanchonete",
+        "TV da Lanchonete",
+        { -0.35f, 2.05f, -6.05f },
+        { 1.65f, 0.95f, 0.35f },
+        2.35f,
+        false,
+        "A TV da cantina transmite o boletim diário da RASEC e o cardápio do almoço."
     }
 };
 
 static const SalaPorta LAN_PORTAS[] = {
-    // Porta de vidro na direita-frente -> volta para Recepcao
+    // Porta de vidro na parede direita-frente -> volta para Recepcao (bem separada da porta do Jardim)
     {
         TERREO_DEST_RECEPCAO,
         "Porta de Vidro (Recepção)",
-        { {  4.35f, 0.0f,  0.45f }, {  4.85f, 2.30f,  1.85f } },
-        {  4.40f, 0.0f,  1.15f },
+        { {  3.55f, 0.0f,  3.50f }, {  4.05f, 2.30f,  4.90f } },
+        {  3.60f, 0.0f,  4.20f },
         1.45f,
-        {  4.10f,  0.50f, 0.65f, 1.30f }
+        {  3.35f,  3.55f, 0.65f, 1.30f }
     },
-    // Porta de vidro ao fundo -> sai para o Jardim
+    // Porta de vidro na parede direita-fundo -> sai para o Jardim
     {
         TERREO_DEST_JARDIM,
         "Porta de Vidro (Jardim)",
-        { { -0.15f, 0.0f, -3.85f }, {  1.25f, 2.30f, -3.40f } },
-        {  0.55f, 0.0f, -3.45f },
+        { {  3.55f, 0.0f, -4.90f }, {  4.05f, 2.30f, -3.50f } },
+        {  3.60f, 0.0f, -4.20f },
         1.45f,
-        { -0.10f, -3.75f, 1.30f, 0.62f }
+        {  3.35f, -4.85f, 0.65f, 1.30f }
     }
 };
 
@@ -106,53 +114,58 @@ static void DesenharLanchonete(float tempo, bool evRelatoriosAtiva) {
     TerreoCaixa((Vector3){ LAN_MAX_X + 0.08f, LAN_WALL_H * 0.5f, cz },
                 (Vector3){ 0.16f, LAN_WALL_H, d }, 0.32f, 0.36f, 0.38f, 0.12f);
 
-    // Portas de vidro transparentes (Recepcao na direita-frente, Jardim ao fundo)
-    TerreoPortaModelo((Vector3){ LAN_MAX_X - 0.04f, 0.0f, 1.15f }, -90.0f, PORTA_TIPO_VIDRO);
-    TerreoPortaModelo((Vector3){ 0.55f, 0.0f, LAN_MIN_Z + 0.04f },   0.0f, PORTA_TIPO_VIDRO);
+    // Portas de vidro transparentes na parede direita (bem separadas: Jardim ao fundo, Recepcao a frente)
+    TerreoPortaModelo((Vector3){ LAN_MAX_X - 0.04f, 0.0f,  4.20f }, -90.0f, PORTA_TIPO_VIDRO);
+    TerreoPortaModelo((Vector3){ LAN_MAX_X - 0.04f, 0.0f, -4.20f }, -90.0f, PORTA_TIPO_VIDRO);
 
-    // PAREDE ESQUERDA VERTICAL: Divisao + Bancada conectada ate a parede (z: -3.70..+3.70)
-    TerreoCaixa((Vector3){ -2.80f, 0.52f, 0.0f }, (Vector3){ 0.82f, 1.04f, 7.40f }, 0.36f, 0.28f, 0.26f, 0.12f);
-    TerreoCaixa((Vector3){ -2.80f, 1.06f, 0.0f }, (Vector3){ 0.92f, 0.06f, 7.40f }, 0.82f, 0.62f, 0.54f, 0.16f);
+    // TVs corporativas na lanchonete (parede do fundo e parede direita entre as portas)
+    TerreoTV((Vector3){ -0.35f, 2.05f, LAN_MIN_Z + 0.08f },   0.0f, tempo);
+    TerreoTV((Vector3){ LAN_MAX_X - 0.08f, 2.05f, 0.00f },  -90.0f, tempo);
+
+    // PAREDE ESQUERDA VERTICAL: Divisao + Bancada conectada de ponta a ponta (z: -6.20..+6.20)
+    TerreoCaixa((Vector3){ -4.05f, 0.52f, 0.0f }, (Vector3){ 0.82f, 1.04f, d }, 0.36f, 0.28f, 0.26f, 0.12f);
+    TerreoCaixa((Vector3){ -4.05f, 1.06f, 0.0f }, (Vector3){ 0.92f, 0.06f, d }, 0.82f, 0.62f, 0.54f, 0.16f);
 
     // Divisoria superior envidracada conectada de ponta a ponta
-    for (int p = 0; p < 5; p++) {
-        float pz = -3.45f + p * 1.72f;
-        DrawCylinder((Vector3){ -2.42f, 1.09f, pz }, 0.03f, 0.03f, 1.20f, 8, TerreoLum(0.24f));
+    for (int p = 0; p < 8; p++) {
+        float pz = -5.75f + p * 1.64f;
+        DrawCylinder((Vector3){ -3.66f, 1.09f, pz }, 0.03f, 0.03f, 1.20f, 8, TerreoLum(0.24f));
     }
-    TerreoCaixa((Vector3){ -2.42f, 2.28f, 0.0f }, (Vector3){ 0.06f, 0.08f, 7.40f }, 0.28f, 0.22f, 0.22f, 0.10f);
+    TerreoCaixa((Vector3){ -3.66f, 2.28f, 0.0f }, (Vector3){ 0.06f, 0.08f, d }, 0.28f, 0.22f, 0.22f, 0.10f);
 
     // Vitrines, caixa e cafeteira sobre a bancada vertical
-    TerreoCaixa((Vector3){ -2.75f, 1.28f,  1.25f }, (Vector3){ 0.48f, 0.40f, 1.25f }, 0.80f, 0.72f, 0.66f, 0.20f);
-    TerreoCaixa((Vector3){ -2.75f, 1.22f, -0.45f }, (Vector3){ 0.34f, 0.28f, 0.36f }, 0.22f, 0.18f, 0.16f, 0.35f);
-    TerreoCaixa((Vector3){ -2.85f, 1.30f, -2.15f }, (Vector3){ 0.44f, 0.48f, 0.56f }, 0.28f, 0.20f, 0.18f, 0.12f);
+    TerreoCaixa((Vector3){ -4.00f, 1.28f,  2.35f }, (Vector3){ 0.48f, 0.40f, 1.45f }, 0.80f, 0.72f, 0.66f, 0.20f);
+    TerreoCaixa((Vector3){ -4.00f, 1.22f, -0.25f }, (Vector3){ 0.34f, 0.28f, 0.36f }, 0.22f, 0.18f, 0.16f, 0.35f);
+    TerreoCaixa((Vector3){ -4.10f, 1.30f, -2.85f }, (Vector3){ 0.44f, 0.48f, 0.56f }, 0.28f, 0.20f, 0.18f, 0.12f);
 
-    // 2 vendedores como sombras puras atras da bancada (sem dialogo importante)
-    TerreoSilhuetaSombra((Vector3){ -3.85f, 0.0f, -1.25f }, 90.0f, false);
-    TerreoSilhuetaSombra((Vector3){ -3.85f, 0.0f,  1.05f }, 90.0f, false);
+    // 2 vendedores atras da bancada
+    TerreoSilhuetaSombra((Vector3){ -4.95f, 0.0f, -1.85f }, 90.0f, false);
+    TerreoSilhuetaSombra((Vector3){ -4.95f, 0.0f,  1.75f }, 90.0f, false);
 
-    // 4 banquinhos alinhados ao longo da bancada vertical
-    for (int b = 0; b < 4; b++) {
-        TerreoBanqueta((Vector3){ -2.18f, 0.0f, -2.25f + b * 1.25f }, 0.68f);
+    // 6 banquinhos alinhados ao longo da bancada vertical
+    for (int b = 0; b < 6; b++) {
+        TerreoBanqueta((Vector3){ -3.38f, 0.0f, -4.15f + b * 1.66f }, 0.68f);
     }
 
-    // 3 mesas redondas organizadas na area centro-direita
-    DesenharConjuntoMesaRedonda((Vector3){ 0.55f, 0.0f,  1.45f });
-    DesenharConjuntoMesaRedonda((Vector3){ 0.55f, 0.0f, -1.25f });
-    DesenharConjuntoMesaRedonda((Vector3){ 2.85f, 0.0f, -1.25f });
+    // 4 mesas redondas bem espacadas da bancada e das portas
+    DesenharConjuntoMesaRedonda((Vector3){  1.35f, 0.0f, -3.60f });
+    DesenharConjuntoMesaRedonda((Vector3){  1.35f, 0.0f, -0.40f });
+    DesenharConjuntoMesaRedonda((Vector3){  1.35f, 0.0f,  3.20f });
+    DesenharConjuntoMesaRedonda((Vector3){ -1.15f, 0.0f,  1.40f });
 }
 
 static const TerreoSalaDef SALA_LANCHONETE_DEF = {
     .id = TERREO_SALA_LANCHONETE,
     .camera = {
-        .position   = { -0.25f, 5.45f, 8.20f },
-        .target     = {  0.00f, 0.70f, -0.20f },
-        .up         = {  0.00f, 1.00f,  0.00f },
-        .fovy       = 40.5f,
+        .position   = { -0.60f, 6.40f, 10.60f },
+        .target     = { -0.60f, 0.70f, 0.00f },
+        .up         = {  0.00f, 1.00f, 0.00f },
+        .fovy       = 41.0f,
         .projection = CAMERA_PERSPECTIVE
     },
     .boundsXZ         = { LAN_MIN_X, LAN_MIN_Z, LAN_MAX_X - LAN_MIN_X, LAN_MAX_Z - LAN_MIN_Z },
     .bgColor          = { 24, 22, 24, 255 },
-    .defaultSpawnPos  = { 3.55f, 0.0f, 1.15f },
+    .defaultSpawnPos  = { 2.95f, 0.0f, 4.20f },
     .defaultSpawnYaw  = -PI * 0.5f,
     .colliders        = LAN_COLLIDERS,
     .numColliders     = (int)(sizeof(LAN_COLLIDERS) / sizeof(LAN_COLLIDERS[0])),

@@ -34,7 +34,7 @@ static const SalaInteractable REC_INTERACTABLES[] = {
         { 2.60f, 1.90f, 1.70f },
         2.65f,
         false,
-        "Boa tarde. Seja bem-vindo à RASEC, os setores ficam pelas portas laterais."
+        "Boa tarde! Os setores ficam pelas portas laterais."
     },
     {
         "area_espera",
@@ -311,7 +311,7 @@ static const TerreoSalaDef SALA_RECEPCAO_DEF = {
     },
     .boundsXZ         = { REC_MIN_X, REC_MIN_Z, REC_MAX_X - REC_MIN_X, REC_MAX_Z - REC_MIN_Z },
     .bgColor          = { 24, 22, 24, 255 },
-    .defaultSpawnPos  = { 0.65f, 0.0f, 3.45f },
+    .defaultSpawnPos  = { 0.65f, 0.0f, 2.85f },
     .defaultSpawnYaw  = PI,
     .colliders        = REC_COLLIDERS,
     .numColliders     = (int)(sizeof(REC_COLLIDERS) / sizeof(REC_COLLIDERS[0])),

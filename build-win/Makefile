@@ -833,6 +833,30 @@ src/world/sala_auditorio.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.s
 .PHONY : src/world/sala_auditorio.c.s
 
+src/world/sala_cameras.obj: src/world/sala_cameras.c.obj
+.PHONY : src/world/sala_cameras.obj
+
+# target to build an object file
+src/world/sala_cameras.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_cameras.c.obj
+.PHONY : src/world/sala_cameras.c.obj
+
+src/world/sala_cameras.i: src/world/sala_cameras.c.i
+.PHONY : src/world/sala_cameras.i
+
+# target to preprocess a source file
+src/world/sala_cameras.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_cameras.c.i
+.PHONY : src/world/sala_cameras.c.i
+
+src/world/sala_cameras.s: src/world/sala_cameras.c.s
+.PHONY : src/world/sala_cameras.s
+
+# target to generate assembly for a file
+src/world/sala_cameras.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_cameras.c.s
+.PHONY : src/world/sala_cameras.c.s
+
 src/world/sala_ciber_1.obj: src/world/sala_ciber_1.c.obj
 .PHONY : src/world/sala_ciber_1.obj
 
@@ -1289,6 +1313,30 @@ src/world/sala_server_2.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_server_2.c.s
 .PHONY : src/world/sala_server_2.c.s
 
+src/world/sala_subsolo.obj: src/world/sala_subsolo.c.obj
+.PHONY : src/world/sala_subsolo.obj
+
+# target to build an object file
+src/world/sala_subsolo.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.obj
+.PHONY : src/world/sala_subsolo.c.obj
+
+src/world/sala_subsolo.i: src/world/sala_subsolo.c.i
+.PHONY : src/world/sala_subsolo.i
+
+# target to preprocess a source file
+src/world/sala_subsolo.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.i
+.PHONY : src/world/sala_subsolo.c.i
+
+src/world/sala_subsolo.s: src/world/sala_subsolo.c.s
+.PHONY : src/world/sala_subsolo.s
+
+# target to generate assembly for a file
+src/world/sala_subsolo.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.s
+.PHONY : src/world/sala_subsolo.c.s
+
 src/world/sala_treino_escritorio.obj: src/world/sala_treino_escritorio.c.obj
 .PHONY : src/world/sala_treino_escritorio.obj
 
@@ -1454,6 +1502,9 @@ help:
 	@echo "... src/world/sala_auditorio.obj"
 	@echo "... src/world/sala_auditorio.i"
 	@echo "... src/world/sala_auditorio.s"
+	@echo "... src/world/sala_cameras.obj"
+	@echo "... src/world/sala_cameras.i"
+	@echo "... src/world/sala_cameras.s"
 	@echo "... src/world/sala_ciber_1.obj"
 	@echo "... src/world/sala_ciber_1.i"
 	@echo "... src/world/sala_ciber_1.s"
@@ -1511,6 +1562,9 @@ help:
 	@echo "... src/world/sala_server_2.obj"
 	@echo "... src/world/sala_server_2.i"
 	@echo "... src/world/sala_server_2.s"
+	@echo "... src/world/sala_subsolo.obj"
+	@echo "... src/world/sala_subsolo.i"
+	@echo "... src/world/sala_subsolo.s"
 	@echo "... src/world/sala_treino_escritorio.obj"
 	@echo "... src/world/sala_treino_escritorio.i"
 	@echo "... src/world/sala_treino_escritorio.s"

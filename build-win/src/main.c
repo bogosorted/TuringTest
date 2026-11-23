@@ -12,6 +12,7 @@
 #include "settings.h"
 #include "ranking.h"
 #include <math.h>
+#include <unistd.h>
 
 // Lista das telas que o jogo tem
 typedef enum {
@@ -68,7 +69,8 @@ static void GoToWithTransition(Scene destino, const char *texto) {
     TransitionStart(texto);
 }
 
-int main(void) {
+int main(int argc, char **argv) {
+    (void)argc;
     // Garante que o jogo encontre os arquivos em assets/ mesmo se rodar de build/
     ChangeDirectory(GetApplicationDirectory());
     if (!DirectoryExists("assets") && DirectoryExists("../assets")) {
@@ -112,7 +114,7 @@ int main(void) {
     }
     TransitionStartFadeIn();         // fade-in suave ao abrir o jogo
 
-    while (running && !WindowShouldClose()) {
+    while (running && !WindowShouldClose() && !SettingsIsAppRestartRequested()) {
         float dt = GetFrameTime();
         if (dt > 0.05f) dt = 0.05f;
 
@@ -164,6 +166,7 @@ int main(void) {
                 if (MenuSceneShouldClose()) {
                     running = false;             // botao Sair
                 } else if (MenuSceneShouldStartGame() && !TransitionActive()) {
+                    SettingsResetSecretPalettes();
                     GameStateNewRun();               // volta para o dia 1
                     ResetTokens();                   // tokens do dia 1
                     GameplaySceneResetDialogues();   // dialogos "nao vistos" de novo
@@ -191,7 +194,7 @@ int main(void) {
                     GoToWithTransition(SCENE_GAMEPLAY, NULL);
                 } else if (SelectionSceneShouldAdvanceDay() && !TransitionActive()) {
                     GameStateNextDay();
-                    ResetTokens();                   // tokens do novo dia
+                    AddDailyTokens();                // +1 token no novo dia
                     GameplaySceneResetDialogues();
                     const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d", GameStateGetDay());
                     GoToWithTransition(SCENE_GAMEPLAY, transTexto);
@@ -207,10 +210,11 @@ int main(void) {
                 if (GameplaySceneShouldClose()) {
                     running = false;
                 } else if (GameplaySceneShouldReturnToMenu() && !TransitionActive()) {
+                    SettingsResetSecretPalettes();
                     GoToWithTransition(SCENE_MENU, NULL);
                 } else if (GameplaySceneShouldAdvanceDay() && !TransitionActive()) {
                     GameStateNextDay();
-                    ResetTokens();
+                    AddDailyTokens();
                     GameplaySceneResetDialogues();
                     const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d", GameStateGetDay());
                     GoToWithTransition(SCENE_GAMEPLAY, transTexto);
@@ -226,6 +230,7 @@ int main(void) {
                 UpdateDrawVerdictScene();
 
                 if (VerdictSceneShouldRestart() && !TransitionActive()) {
+                    SettingsResetSecretPalettes();
                     GoToWithTransition(SCENE_MENU, NULL);     // "Tentar de novo" com fade
                 }
                 break;
@@ -241,5 +246,8 @@ int main(void) {
     CloseAudioDevice(); // Encerra dispositivo de som
     RayCanvasShutdown();
     CloseWindow();
+    if (SettingsConsumeAppRestart()) {
+        execv("/proc/self/exe", argv);
+    }
     return 0;
 }

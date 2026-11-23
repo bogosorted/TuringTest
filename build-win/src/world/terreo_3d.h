@@ -18,6 +18,7 @@ typedef enum {
     TERREO_SALA_CONTABILIDADE_1,
     TERREO_SALA_CONTABILIDADE_2,
     TERREO_SALA_ARQUIVO_1,
+    TERREO_SALA_CAMERAS,
     TERREO_SALA_COPA_1,
     TERREO_SALA_HALL_2,
     TERREO_SALA_CIBER_1,
@@ -32,6 +33,7 @@ typedef enum {
     TERREO_SALA_AUDITORIO,
     TERREO_SALA_REUNIAO_1,
     TERREO_SALA_REUNIAO_2,
+    TERREO_SALA_SUBSOLO,
     TERREO_NUM_SALAS
 } TerreoSalaId;
 
@@ -49,6 +51,7 @@ typedef enum {
     TERREO_DEST_CONTABILIDADE_1,
     TERREO_DEST_CONTABILIDADE_2,
     TERREO_DEST_ARQUIVO_1,
+    TERREO_DEST_SALA_CAMERAS,
     TERREO_DEST_COPA_1,
     TERREO_DEST_HALL_2,
     TERREO_DEST_CIBER_1,
@@ -62,7 +65,8 @@ typedef enum {
     TERREO_DEST_HALL_4,
     TERREO_DEST_AUDITORIO,
     TERREO_DEST_REUNIAO_1,
-    TERREO_DEST_REUNIAO_2
+    TERREO_DEST_REUNIAO_2,
+    TERREO_DEST_SUBSOLO
 } TerreoDestino;
 
 typedef enum {
@@ -114,6 +118,11 @@ typedef struct {
     const char   *objetoId;
     const char   *objetoLabel;
     const char   *flavorText;
+    Vector3       objetoPos;
+    bool          acionouSuspeito;
+    int           suspeitoIndex;
+    bool          clicouChaoMover;
+    bool          acionouCamerasSecretas;
 } TerreoInteracaoResultado;
 
 // Definicoes de cada sala
@@ -129,6 +138,7 @@ const TerreoSalaDef *SalaHall1Def(void);
 const TerreoSalaDef *SalaContabilidade1Def(void);
 const TerreoSalaDef *SalaContabilidade2Def(void);
 const TerreoSalaDef *SalaArquivo1Def(void);
+const TerreoSalaDef *SalaCamerasDef(void);
 const TerreoSalaDef *SalaCopa1Def(void);
 const TerreoSalaDef *SalaHall2Def(void);
 const TerreoSalaDef *SalaCiber1Def(void);
@@ -143,12 +153,20 @@ const TerreoSalaDef *SalaHall4Def(void);
 const TerreoSalaDef *SalaAuditorioDef(void);
 const TerreoSalaDef *SalaReuniao1Def(void);
 const TerreoSalaDef *SalaReuniao2Def(void);
+const TerreoSalaDef *SalaSubsoloDef(void);
 
 // Helpers compartilhados de geometria 3D (sem projecao de sombras)
 Color TerreoLum(float l);
 void  TerreoCaixa(Vector3 centro, Vector3 tam, float topLum, float frontLum, float sideLum, float wireLum);
+void  TerreoTV(Vector3 pos, float rotYDeg, float tempo);
+void  TerreoDesenharPlayerPreview(bool isFemale, Vector3 pos, float yawDeg, float tempo);
+void  TerreoDesenharPlayerVariant(int variantId, PlayerPreviewAnim anim, Vector3 pos, float yawDeg, float tempo);
+PlayerPreviewAnim TerreoSubsoloGetAnim(int idx);
+PlayerPreviewAnim TerreoSubsoloCiclarAnim(int idx);
 void  TerreoPortaModelo(Vector3 pos, float rotYDeg, TerreoPortaTipo tipo);
 void  TerreoCadeira(Vector3 pos, float rotYDeg);
+void  TerreoCadeiraConfortavel(Vector3 pos, float rotYDeg);
+void  TerreoBalcaoRecepcaoU(Vector3 pos);
 void  TerreoMesaRedonda(Vector3 pos, float raio, float altura);
 void  TerreoBanqueta(Vector3 pos, float altura);
 void  TerreoMonitor(Vector3 pos, float rotYDeg);
@@ -158,16 +176,25 @@ void  TerreoBebedouro(Vector3 pos);
 void  TerreoImpressora(Vector3 pos, float rotYDeg);
 void  TerreoArmario(Vector3 pos, float rotYDeg, float largura, float altura, float prof);
 void  TerreoPlanta(Vector3 pos, float escala);
+void  TerreoSofaCurvo(Vector3 pos, float rotYDeg, float largura);
+void  TerreoSofaRedondo(Vector3 pos, float rotYDeg, float raio);
 void  TerreoEscadaCaracol(Vector3 centro, float raioInt, float raioExt, float altBase, float altTopo, int degraus, float angIniDeg, float angDeltaDeg, bool comMuretaExterna);
 void  TerreoElevador(Vector3 pos, float rotYDeg);
 void  TerreoRackServidor(Vector3 pos, float rotYDeg);
 void  TerreoRoboPrototipo(Vector3 pos, float rotYDeg);
+void  TerreoEvidenciaBrilhante(Vector3 pos, float tempo, int tipoModelo);
 
 // Ciclo de vida e loop da cena 3D do Terreo
 void Terreo3DInit(int largura, int altura);
 void Terreo3DUnload(void);
 void Terreo3DDefinirSala(TerreoSalaId sala, TerreoDestino vindoDe);
 void Terreo3DSetEvidenciaAtiva(bool evRelatoriosAtiva);
+void Terreo3DSetSuspeitosSala(const bool presentes[3]);
+void Terreo3DAtualizarAvatarPlayer(void);
+void Terreo3DTriggerPlayerAnim(Vector3 targetPos, PlayerInteractAnim tipo, float duracao);
+void Terreo3DTriggerComputerSit(Vector3 seatPos, Vector3 monitorPos, float duracao);
+void Terreo3DTriggerComputerExit(void);
+float Terreo3DGetChairPull(Vector3 chairPos);
 
 TerreoInteracaoResultado Terreo3DUpdate(float dt,
                                         Vector2 mouseJanela,
@@ -182,5 +209,9 @@ Texture2D Terreo3DTextura(void);
 // Retorna dica contextual para a caixa de pensamento do player (NULL se nada perto/em hover)
 const char *Terreo3DProximaAcao(void);
 bool        Terreo3DMouseEmInteragivel(void);
+bool        Terreo3DHasProxInteragivel(void);
+Vector2     Terreo3DPlayerHeadScreenPos(void);
+Vector3     Terreo3DGetPlayerPos(void);
+bool        Terreo3DClosestInteractableScreenPos(Vector2 *outPosJanela);
 
 #endif

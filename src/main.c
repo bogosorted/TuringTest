@@ -71,10 +71,12 @@ static void GoToWithTransition(Scene destino, const char *texto) {
 
 int main(int argc, char **argv) {
     (void)argc;
-    // Garante que o jogo encontre os arquivos em assets/ mesmo se rodar de build/
+    // Garante que o jogo encontre os arquivos em assets/ mesmo se rodar de build/, build/Debug/ ou out/build/...
     ChangeDirectory(GetApplicationDirectory());
-    if (!DirectoryExists("assets") && DirectoryExists("../assets")) {
-        ChangeDirectory("..");
+    if (!DirectoryExists("assets")) {
+        if (DirectoryExists("../assets"))            ChangeDirectory("..");
+        else if (DirectoryExists("../../assets"))    ChangeDirectory("../..");
+        else if (DirectoryExists("../../../assets")) ChangeDirectory("../../..");
     }
     SettingsLoad();   // volumes e paleta salvos no settings.cfg
     RankingLoad();    // ranking de pontuacoes salvo em ranking.cfg

@@ -205,6 +205,12 @@
 },
 {
   "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_cameras.c.o -c /home/vitorc/TuringTest/src/world/sala_cameras.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_cameras.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_cameras.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
   "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.o -c /home/vitorc/TuringTest/src/world/sala_copa_1.c",
   "file": "/home/vitorc/TuringTest/src/world/sala_copa_1.c",
   "output": "CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.o"
@@ -280,6 +286,12 @@
   "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.o -c /home/vitorc/TuringTest/src/world/sala_reuniao_4.c",
   "file": "/home/vitorc/TuringTest/src/world/sala_reuniao_4.c",
   "output": "CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.o"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-linux-release",
+  "command": "/usr/bin/cc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP -I/home/vitorc/TuringTest/src -I/home/vitorc/TuringTest/src/core -I/home/vitorc/TuringTest/src/scenes -I/home/vitorc/TuringTest/src/gameplay -I/home/vitorc/TuringTest/src/systems -I/home/vitorc/TuringTest/src/world -I/home/vitorc/TuringTest/build/_deps/raylib-src/src -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.o -c /home/vitorc/TuringTest/src/world/sala_subsolo.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_subsolo.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.o"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-linux-release/_deps/raylib-build/raylib",

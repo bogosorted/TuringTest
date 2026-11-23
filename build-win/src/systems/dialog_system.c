@@ -15,6 +15,10 @@ void ResetTokens(void) {
     global_tokens = TOKENS_PER_DAY;
 }
 
+void AddDailyTokens(void) {
+    global_tokens += TOKENS_PER_DAY;
+}
+
 void InitDialogSystem(void) {
     // Tokens sao globais, nao resetar aqui
 }
@@ -104,13 +108,14 @@ DialogNode* GetCurrentNode(DialogTree *tree) {
 }
 
 bool MakeChoiceById(DialogTree *tree, const char *next_id) {
-    if (!tree || !HasTokens()) return false;
-    bool is_free = (strcmp(next_id, "intro") == 0 || strcmp(next_id, "Entrada") == 0);
+    if (!tree || !next_id) return false;
     for (int i = 0; i < tree->node_count; i++) {
         if (strcmp(tree->nodes[i].id, next_id) == 0) {
             tree->current_node_index = i;
             tree->nodes[i].visited = true;
-            if (!global_infinite_tokens && !SettingsGetDevMode() && !is_free) global_tokens--;
+            if (tree->nodes[i].flag_out > 0) {
+                GameStateSetDialogFlag(tree->nodes[i].flag_out);
+            }
             if (tree->nodes[i].is_leaf && tree->suspect_index >= 0) {
                 GameStateSetVisaoJogador(tree->suspect_index, tree->nodes[i].visao_out);
             }
@@ -135,8 +140,32 @@ static bool NodeIdVisited(const DialogTree *tree, const char *id) {
 }
 
 static bool ChoiceAllowed(const DialogTree *tree, const DialogChoice *ch) {
-    if (ch->req_evidencia[0] == '\0') return true;
-    return GameStateTemEvidencia(tree->suspect_index, ch->req_evidencia);
+    if (ch->req_poucas_ev && GameStateCountEvidences() >= 2) return false;
+    if (ch->forbid_flag > 0 && GameStateHasDialogFlag(ch->forbid_flag)) return false;
+    if (ch->req_flag > 0) {
+        bool ok = GameStateHasDialogFlag(ch->req_flag);
+        if (!ok && ch->req_flag_alt > 0) ok = GameStateHasDialogFlag(ch->req_flag_alt);
+        if (!ok) return false;
+    }
+    if (ch->req_evidencia[0] != '\0') {
+        int alvo = (ch->req_suspeito >= 0 && ch->req_suspeito < GAME_NUM_SUSPECTS)
+                   ? ch->req_suspeito : tree->suspect_index;
+        if (!GameStateTemEvidencia(alvo, ch->req_evidencia)) return false;
+    }
+    if (ch->req_falou_antes && !GameStateJaConversouAntesDeHoje(tree->suspect_index)) return false;
+    if (ch->req_vies_anterior) {
+        int d = GameStateGetViesDia(tree->suspect_index);
+        if (d <= 0 || d >= tree->day) return false;
+    }
+    if (ch->req_injecao_anterior) {
+        int d = GameStateGetInjecaoDia(tree->suspect_index);
+        if (d <= 0 || d >= tree->day) return false;
+    }
+    if (ch->req_deepfake_anterior) {
+        int d = GameStateGetDeepfakeDia(tree->suspect_index);
+        if (d <= 0 || d >= tree->day) return false;
+    }
+    return true;
 }
 
 static const DialogNode* FindRootNode(const DialogTree *tree) {
@@ -156,13 +185,21 @@ int GetAvailableChoices(DialogTree *tree, DialogChoice out[MAX_CHOICES]) {
     DialogNode *node = GetCurrentNode(tree);
     if (!node) return 0;
 
-    // Apenas as escolhas explicitas do no atual (nos finais nao retornam ao comeco automaticamente,
-    // a nao ser que haja uma escolha explicita apontando para "Entrada")
-    for (int i = 0; i < node->choice_count && count < MAX_CHOICES; i++) {
-        if (!ChoiceAllowed(tree, &node->choices[i])) continue;
-        bool voltaEntrada = (strcmp(node->choices[i].next_node, "Entrada") == 0);
-        if (voltaEntrada || !NodeIdVisited(tree, node->choices[i].next_node)) {
-            out[count++] = node->choices[i];
+    // Sempre exibe no maximo 2 opcoes por turno, priorizando opcoes condicionais desbloqueadas (ferramenta/evidencia/flag)
+    const int maxVisiveis = 2;
+    for (int passo = 0; passo < 2 && count < maxVisiveis; passo++) {
+        for (int i = 0; i < node->choice_count && count < maxVisiveis; i++) {
+            bool ehCond = (node->choices[i].req_evidencia[0] != '\0' ||
+                           node->choices[i].req_flag > 0 ||
+                           node->choices[i].req_vies_anterior ||
+                           node->choices[i].req_injecao_anterior ||
+                           node->choices[i].req_deepfake_anterior);
+            if ((passo == 0 && !ehCond) || (passo == 1 && ehCond)) continue;
+            if (!ChoiceAllowed(tree, &node->choices[i])) continue;
+            bool voltaEntrada = (strcmp(node->choices[i].next_node, "Entrada") == 0);
+            if (voltaEntrada || !NodeIdVisited(tree, node->choices[i].next_node)) {
+                out[count++] = node->choices[i];
+            }
         }
     }
     return count;

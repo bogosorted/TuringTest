@@ -29,9 +29,24 @@ static float g_volEfeitos = 1.0f;
 static int   g_paleta     = 0;
 static bool  g_telaCheia  = true;
 static bool  g_tutorial   = true;
+static bool  g_balaoInteracao = true;
 static bool  g_devMode    = false;
 static bool  g_crt        = false;
-static bool  g_cam3dFixa  = false;
+static bool  g_cam3dFixa  = true;
+static bool  g_autoReset  = false;
+static bool  g_techNight  = false;
+static bool  g_restartApp = false;
+static unsigned int g_paletasSecretasMask = 0u;
+
+static int SecretBitForKey(const char *chave) {
+    if (!chave) return -1;
+    if (strcmp(chave, "noite-azul") == 0)    return 0;
+    if (strcmp(chave, "carmesim") == 0)      return 1;
+    if (strcmp(chave, "cores-reais") == 0)   return 2;
+    if (strcmp(chave, "espaco-mental") == 0) return 3;
+    if (strcmp(chave, "whos-liliac") == 0)   return 4;
+    return -1;
+}
 
 #define JANELA_W 1280
 #define JANELA_H 720
@@ -61,7 +76,8 @@ static void NomeBonito(const char *arquivo, char out[NOME_LEN]) {
     if (strcmp(arquivo, "whos-liliac") == 0)   { snprintf(out, NOME_LEN, "Who's liliac?"); return; }
     if (strcmp(arquivo, "gameboy") == 0)       { snprintf(out, NOME_LEN, "Gameboy"); return; }
     if (strcmp(arquivo, "espaco-mental") == 0) { snprintf(out, NOME_LEN, "Espaço Mental"); return; }
-    if (strcmp(arquivo, "crepusculo") == 0)    { snprintf(out, NOME_LEN, "Crepúsculo"); return; }
+    if (strcmp(arquivo, "crepusculo") == 0)     { snprintf(out, NOME_LEN, "Crepúsculo"); return; }
+    if (strcmp(arquivo, "ambar-terminal") == 0) { snprintf(out, NOME_LEN, "Âmbar Terminal"); return; }
 
     snprintf(out, NOME_LEN, "%s", arquivo);
     size_t n = strlen(out);
@@ -155,12 +171,25 @@ void SettingsLoad(void) {
         else if (sscanf(linha, "telacheia=%d", &n) == 1) g_telaCheia = (n != 0);
         else if (sscanf(linha, "efeitos=%f", &v) == 1) g_volEfeitos = Limitar01(v);
         else if (sscanf(linha, "tutorial=%d", &n) == 1) g_tutorial = (n != 0);
+        else if (sscanf(linha, "balao_interacao=%d", &n) == 1) g_balaoInteracao = (n != 0);
         else if (sscanf(linha, "dev=%d", &n) == 1) g_devMode = (n != 0);
         else if (sscanf(linha, "crt=%d", &n) == 1) g_crt = (n != 0);
         else if (sscanf(linha, "cam3d_fixa=%d", &n) == 1) g_cam3dFixa = (n != 0);
-        // A paleta NAO e lida: o jogo sempre abre na Original (g_paleta = 0).
+        else if (sscanf(linha, "auto_reset=%d", &n) == 1) g_autoReset = (n != 0);
+        else if (sscanf(linha, "tech_night=%d", &n) == 1) g_techNight = (n != 0);
+        // A paleta e as paletas secretas sempre comecam zeradas ao abrir o jogo.
     }
     fclose(f);
+    if (g_autoReset) {
+        g_volMusica  = 0.8f;
+        g_volEfeitos = 1.0f;
+        g_telaCheia  = true;
+        g_tutorial   = true;
+        g_balaoInteracao = true;
+        g_cam3dFixa  = true;
+        g_paleta     = 0;
+        g_crt        = false;
+    }
     global_infinite_tokens = g_devMode;
 }
 
@@ -171,9 +200,9 @@ void SettingsSave(void) {
         return;
     }
     // A paleta nao e salva: vale so enquanto o jogo esta aberto
-    fprintf(f, "musica=%.2f\nefeitos=%.2f\ntelacheia=%d\ntutorial=%d\ndev=%d\ncrt=%d\ncam3d_fixa=%d\n",
-            g_volMusica, g_volEfeitos, g_telaCheia ? 1 : 0, g_tutorial ? 1 : 0, g_devMode ? 1 : 0,
-            g_crt ? 1 : 0, g_cam3dFixa ? 1 : 0);
+    fprintf(f, "musica=%.2f\nefeitos=%.2f\ntelacheia=%d\ntutorial=%d\nbalao_interacao=%d\ndev=%d\ncrt=%d\ncam3d_fixa=%d\nauto_reset=%d\ntech_night=%d\npaletas_desbloqueadas=%u\n",
+            g_volMusica, g_volEfeitos, g_telaCheia ? 1 : 0, g_tutorial ? 1 : 0, g_balaoInteracao ? 1 : 0, g_devMode ? 1 : 0,
+            g_crt ? 1 : 0, g_cam3dFixa ? 1 : 0, g_autoReset ? 1 : 0, g_techNight ? 1 : 0, g_paletasSecretasMask);
     fclose(f);
 }
 
@@ -188,6 +217,9 @@ void SettingsSetFullscreen(bool ligado) { g_telaCheia = ligado; }
 bool SettingsGetTutorial(void) { return g_tutorial; }
 void SettingsSetTutorial(bool ligado) { g_tutorial = ligado; }
 
+bool SettingsGetBalaoInteracao(void) { return g_balaoInteracao; }
+void SettingsSetBalaoInteracao(bool ligado) { g_balaoInteracao = ligado; }
+
 bool SettingsGetDevMode(void) { return g_devMode; }
 void SettingsSetDevMode(bool ligado) {
     g_devMode = ligado;
@@ -199,6 +231,51 @@ void SettingsSetCRT(bool ligado) { g_crt = ligado; }
 
 bool SettingsGetCamera3DFixa(void) { return g_cam3dFixa; }
 void SettingsSetCamera3DFixa(bool fixa) { g_cam3dFixa = fixa; }
+
+bool SettingsGetAutoReset(void) { return g_autoReset; }
+void SettingsResetToDefaultWithCRT(void) {
+    bool prevFull = g_telaCheia;
+    g_volMusica  = 0.8f;
+    g_volEfeitos = 1.0f;
+    g_telaCheia  = true;
+    g_tutorial   = true;
+    g_balaoInteracao = true;
+    g_cam3dFixa  = true;
+    g_paleta     = 0;
+    g_crt        = false;
+    SettingsSave();
+    if (prevFull != g_telaCheia) {
+        SettingsApplyWindowMode();
+    }
+}
+
+void SettingsSetAutoReset(bool ligado) {
+    g_autoReset = ligado;
+    if (ligado) {
+        SettingsResetToDefaultWithCRT();
+    }
+}
+
+static bool g_devUnlockSubsolo = false;
+static bool g_devUnlockUpperFloors = false;
+static bool g_devFirstPerson = false;
+
+bool SettingsGetTechNight(void) { return g_techNight; }
+void SettingsSetTechNight(bool ligado) { g_techNight = ligado; }
+bool SettingsGetDevUnlockSubsolo(void) { return g_devUnlockSubsolo; }
+void SettingsSetDevUnlockSubsolo(bool ligado) { g_devUnlockSubsolo = ligado; }
+bool SettingsGetDevUnlockUpperFloors(void) { return g_devUnlockUpperFloors; }
+void SettingsSetDevUnlockUpperFloors(bool ligado) { g_devUnlockUpperFloors = ligado; }
+bool SettingsGetDevFirstPerson(void) { return g_devFirstPerson; }
+void SettingsSetDevFirstPerson(bool ligado) { g_devFirstPerson = ligado; }
+
+void SettingsRequestAppRestart(void) { g_restartApp = true; }
+bool SettingsIsAppRestartRequested(void) { return g_restartApp; }
+bool SettingsConsumeAppRestart(void) {
+    bool r = g_restartApp;
+    g_restartApp = false;
+    return r;
+}
 
 // Aplica modo tela cheia ou janela conforme g_telaCheia
 void SettingsApplyWindowMode(void) {
@@ -225,11 +302,66 @@ void SettingsApplyWindowMode(void) {
     }
 }
 
+bool SettingsIsPaletteSecret(int indice) {
+    if (indice < 0 || indice >= g_numPaletas) return false;
+    return SecretBitForKey(g_paletas[indice].chave) >= 0;
+}
+
+bool SettingsIsPaletteUnlocked(int indice) {
+    if (indice < 0 || indice >= g_numPaletas) return false;
+    int bit = SecretBitForKey(g_paletas[indice].chave);
+    if (bit < 0) return true;
+    return (g_paletasSecretasMask & (1u << bit)) != 0;
+}
+
+bool SettingsUnlockPaletteByKey(const char *chave) {
+    int bit = SecretBitForKey(chave);
+    if (bit < 0) return false;
+    bool eraNova = ((g_paletasSecretasMask & (1u << bit)) == 0);
+    g_paletasSecretasMask |= (1u << bit);
+    return eraNova;
+}
+
+void SettingsResetSecretPalettes(void) {
+    g_paletasSecretasMask = 0u;
+    if (SettingsIsPaletteSecret(g_paleta)) {
+        g_paleta = 0;
+    }
+}
+
+int SettingsUnlockedPaletteCount(void) {
+    int cnt = 0;
+    for (int i = 0; i < g_numPaletas; i++) {
+        if (SettingsIsPaletteUnlocked(i)) cnt++;
+    }
+    return cnt;
+}
+
+int SettingsUnlockedPaletteOrder(int indice) {
+    int ord = 0;
+    for (int i = 0; i < g_numPaletas; i++) {
+        if (!SettingsIsPaletteUnlocked(i)) continue;
+        if (i == indice) return ord;
+        ord++;
+    }
+    return 0;
+}
+
 int SettingsPaletteCount(void) { return g_numPaletas; }
 int SettingsGetPalette(void) { return g_paleta; }
 
 void SettingsSetPalette(int indice) {
-    g_paleta = ((indice % g_numPaletas) + g_numPaletas) % g_numPaletas;
+    if (g_numPaletas <= 0) { g_paleta = 0; return; }
+    int dir = (indice < g_paleta) ? -1 : 1;
+    int cand = ((indice % g_numPaletas) + g_numPaletas) % g_numPaletas;
+    for (int step = 0; step < g_numPaletas; step++) {
+        if (SettingsIsPaletteUnlocked(cand)) {
+            g_paleta = cand;
+            return;
+        }
+        cand = ((cand + dir) % g_numPaletas + g_numPaletas) % g_numPaletas;
+    }
+    g_paleta = 0;
 }
 
 const char *SettingsPaletteName(int indice) {

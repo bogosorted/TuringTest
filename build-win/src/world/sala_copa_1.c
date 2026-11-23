@@ -6,25 +6,26 @@
 #endif
 
 // Copa do 1o Andar (Contabilidade):
-// Bancada com pia/cafeteira, geladeira corporativa, bebedouro e mesa redonda com banquetas.
-static const float COPA1_MIN_X = -4.20f;
-static const float COPA1_MAX_X =  4.20f;
-static const float COPA1_MIN_Z = -3.40f;
-static const float COPA1_MAX_Z =  3.40f;
-static const float COPA1_WALL_H = 2.85f;
+// Bancada com pia/cafeteira, geladeira corporativa, bebedouro, 2 mesas redondas e porta decorativa de banheiro.
+static const float COPA1_MIN_X = -4.80f;
+static const float COPA1_MAX_X =  4.80f;
+static const float COPA1_MIN_Z = -3.60f;
+static const float COPA1_MAX_Z =  3.60f;
+static const float COPA1_WALL_H = 2.95f;
 
 static const PlayerColliderBox COPA1_COLLIDERS[] = {
-    { -4.05f, -3.35f, -2.95f, -2.25f }, // Geladeira
-    { -2.85f, -3.35f,  1.65f, -2.45f }, // Bancada da pia/cafeteira
-    {  2.65f, -3.30f,  3.55f, -2.45f }, // Bebedouro
-    { -0.45f,  0.15f,  1.25f,  1.85f }, // Mesa redonda
+    { -4.55f, -3.50f, -3.45f, -2.35f }, // Geladeira
+    { -3.15f, -3.50f,  0.65f, -2.50f }, // Bancada da pia/cafeteira
+    {  3.25f, -3.45f,  4.25f, -2.50f }, // Bebedouro
+    { -2.95f,  0.30f, -1.25f,  2.00f }, // Mesa redonda 1 (esquerda)
+    {  0.50f,  0.30f,  2.20f,  2.00f }, // Mesa redonda 2 (direita)
 };
 
 static const SalaInteractable COPA1_INTERACTABLES[] = {
     {
         "geladeira_copa_1",
         "Geladeira da Copa",
-        { -3.50f, 1.00f, -2.80f },
+        { -4.00f, 1.00f, -2.95f },
         { 1.00f, 1.95f, 0.95f },
         1.85f,
         true,
@@ -33,7 +34,7 @@ static const SalaInteractable COPA1_INTERACTABLES[] = {
     {
         "cafeteira_copa_1",
         "Cafeteira e Bancada",
-        { -0.60f, 0.90f, -2.90f },
+        { -1.25f, 0.90f, -3.00f },
         { 2.60f, 1.15f, 0.95f },
         1.95f,
         true,
@@ -42,11 +43,38 @@ static const SalaInteractable COPA1_INTERACTABLES[] = {
     {
         "mesa_copa_1",
         "Mesa da Copa",
-        { 0.40f, 0.65f, 1.00f },
+        { -2.10f, 0.65f, 1.15f },
         { 1.40f, 0.95f, 1.40f },
         1.75f,
         true,
-        "Mesa pequena de descanso usada nos intervalos entre fechamentos contábeis."
+        "Mesa de descanso usada nos intervalos entre fechamentos contábeis."
+    },
+    {
+        "mesa_copa_2",
+        "Mesa da Copa",
+        { 1.35f, 0.65f, 1.15f },
+        { 1.40f, 0.95f, 1.40f },
+        1.75f,
+        true,
+        "Segunda mesa de refeições da copa do 1º andar."
+    },
+    {
+        "banheiro_copa_1",
+        "Banheiro de Funcionários",
+        {  1.95f, 1.10f, -3.50f },
+        { 1.35f, 2.20f, 0.45f },
+        1.65f,
+        true,
+        "Banheiro de Funcionários — porta fechada para manutenção."
+    },
+    {
+        "tv_copa_1",
+        "TV Corporativa",
+        { -4.65f, 1.90f, 0.65f },
+        { 0.35f, 0.95f, 1.55f },
+        2.10f,
+        false,
+        "A TV da copa exibe avisos internos da RASEC e notícias corporativas sem som."
     }
 };
 
@@ -54,10 +82,10 @@ static const SalaPorta COPA1_PORTAS[] = {
     {
         TERREO_DEST_HALL_1,
         "Porta (Hall 1º Andar)",
-        { { 3.95f, 0.0f, -0.25f }, { 4.45f, 2.30f, 1.15f } },
-        { 4.00f, 0.0f, 0.45f },
-        1.40f,
-        { 3.75f, -0.20f, 0.55f, 1.30f }
+        { { 4.45f, 0.0f, -0.25f }, { 5.00f, 2.30f, 1.15f } },
+        { 4.55f, 0.0f, 0.45f },
+        1.55f,
+        { 4.30f, -0.20f, 0.60f, 1.30f }
     }
 };
 
@@ -86,38 +114,50 @@ static void DesenharCopa1(float tempo, bool evRelatoriosAtiva) {
                 (Vector3){ 0.16f, COPA1_WALL_H, d }, 0.32f, 0.36f, 0.38f, 0.12f);
 
     TerreoPortaModelo((Vector3){ COPA1_MAX_X - 0.04f, 0.0f, 0.45f }, -90.0f, PORTA_TIPO_VIDRO);
+    // Porta decorativa do Banheiro de Funcionarios na parede superior (respeitando planta baixa do 1o andar) + placa
+    TerreoPortaModelo((Vector3){ 1.95f, 0.0f, COPA1_MIN_Z + 0.04f }, 0.0f, PORTA_TIPO_ESCRITORIO);
+    TerreoCaixa((Vector3){ 1.05f, 1.55f, COPA1_MIN_Z + 0.05f }, (Vector3){ 0.34f, 0.24f, 0.03f }, 0.88f, 0.80f, 0.72f, 0.14f);
+
+    // TV corporativa na parede esquerda voltada para as mesas
+    TerreoTV((Vector3){ COPA1_MIN_X + 0.08f, 1.95f, 0.65f }, 90.0f, tempo);
 
     // Geladeira
-    TerreoCaixa((Vector3){ -3.50f, 0.96f, -2.85f }, (Vector3){ 0.86f, 1.92f, 0.76f }, 0.84f, 0.76f, 0.66f, 0.18f);
-    TerreoCaixa((Vector3){ -3.18f, 1.25f, -2.44f }, (Vector3){ 0.04f, 0.42f, 0.04f }, 0.24f, 0.20f, 0.20f, -1.0f);
+    TerreoCaixa((Vector3){ -4.00f, 0.96f, -2.95f }, (Vector3){ 0.88f, 1.92f, 0.78f }, 0.84f, 0.76f, 0.66f, 0.18f);
+    TerreoCaixa((Vector3){ -3.66f, 1.25f, -2.52f }, (Vector3){ 0.04f, 0.42f, 0.04f }, 0.24f, 0.20f, 0.20f, -1.0f);
 
     // Bancada da copa + cafeteira + micro-ondas
-    TerreoCaixa((Vector3){ -0.60f, 0.44f, -2.90f }, (Vector3){ 4.30f, 0.88f, 0.76f }, 0.68f, 0.54f, 0.46f, 0.14f);
-    TerreoCaixa((Vector3){ -1.45f, 1.06f, -2.90f }, (Vector3){ 0.56f, 0.36f, 0.42f }, 0.26f, 0.20f, 0.18f, 0.10f);
-    TerreoCaixa((Vector3){  0.35f, 1.06f, -2.90f }, (Vector3){ 0.36f, 0.38f, 0.34f }, 0.22f, 0.16f, 0.14f, 0.10f);
+    TerreoCaixa((Vector3){ -1.25f, 0.44f, -3.00f }, (Vector3){ 3.60f, 0.88f, 0.78f }, 0.68f, 0.54f, 0.46f, 0.14f);
+    TerreoCaixa((Vector3){ -2.05f, 1.06f, -3.00f }, (Vector3){ 0.56f, 0.36f, 0.42f }, 0.26f, 0.20f, 0.18f, 0.10f);
+    TerreoCaixa((Vector3){ -0.35f, 1.06f, -3.00f }, (Vector3){ 0.36f, 0.38f, 0.34f }, 0.22f, 0.16f, 0.14f, 0.10f);
 
     // Bebedouro
-    TerreoBebedouro((Vector3){ 3.10f, 0.0f, -2.90f });
+    TerreoBebedouro((Vector3){ 3.75f, 0.0f, -3.00f });
 
-    // Mesa redonda + 3 banquetas
-    TerreoMesaRedonda((Vector3){ 0.40f, 0.0f, 1.00f }, 0.62f, 0.76f);
-    TerreoBanqueta((Vector3){ -0.45f, 0.0f, 1.00f }, 0.56f);
-    TerreoBanqueta((Vector3){  1.25f, 0.0f, 1.00f }, 0.56f);
-    TerreoBanqueta((Vector3){  0.40f, 0.0f, 0.15f }, 0.56f);
+    // Mesa redonda 1 (esquerda) + 3 cadeiras confortaveis acolchoadas
+    TerreoMesaRedonda((Vector3){ -2.10f, 0.0f, 1.15f }, 0.62f, 0.76f);
+    TerreoCadeiraConfortavel((Vector3){ -2.95f, 0.0f, 1.15f },  90.0f);
+    TerreoCadeiraConfortavel((Vector3){ -1.25f, 0.0f, 1.15f }, -90.0f);
+    TerreoCadeiraConfortavel((Vector3){ -2.10f, 0.0f, 0.30f },   0.0f);
+
+    // Mesa redonda 2 (direita) + 3 cadeiras confortaveis acolchoadas
+    TerreoMesaRedonda((Vector3){ 1.35f, 0.0f, 1.15f }, 0.62f, 0.76f);
+    TerreoCadeiraConfortavel((Vector3){ 0.50f, 0.0f, 1.15f },  90.0f);
+    TerreoCadeiraConfortavel((Vector3){ 2.20f, 0.0f, 1.15f }, -90.0f);
+    TerreoCadeiraConfortavel((Vector3){ 1.35f, 0.0f, 0.30f },   0.0f);
 }
 
 static const TerreoSalaDef SALA_COPA_1_DEF = {
     .id = TERREO_SALA_COPA_1,
     .camera = {
-        .position   = { 0.0f, 5.25f, 7.80f },
+        .position   = { 0.0f, 5.45f, 8.10f },
         .target     = { 0.0f, 0.75f, -0.25f },
         .up         = { 0.0f, 1.00f,  0.00f },
-        .fovy       = 39.0f,
+        .fovy       = 40.0f,
         .projection = CAMERA_PERSPECTIVE
     },
     .boundsXZ         = { COPA1_MIN_X, COPA1_MIN_Z, COPA1_MAX_X - COPA1_MIN_X, COPA1_MAX_Z - COPA1_MIN_Z },
     .bgColor          = { 24, 22, 24, 255 },
-    .defaultSpawnPos  = { 3.55f, 0.0f, 0.45f },
+    .defaultSpawnPos  = { 3.95f, 0.0f, 0.45f },
     .defaultSpawnYaw  = -PI * 0.5f,
     .colliders        = COPA1_COLLIDERS,
     .numColliders     = (int)(sizeof(COPA1_COLLIDERS) / sizeof(COPA1_COLLIDERS[0])),

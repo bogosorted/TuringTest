@@ -1,4 +1,5 @@
 #include "terreo_3d.h"
+#include "game_state.h"
 #include "rlgl.h"
 
 #ifndef PI
@@ -54,7 +55,6 @@ static const SalaPorta CB1_PORTAS[] = {
 };
 
 static void DesenharCiber1(float tempo, bool evRelatoriosAtiva) {
-    (void)tempo;
     (void)evRelatoriosAtiva;
     float w = CB1_MAX_X - CB1_MIN_X;
     float d = CB1_MAX_Z - CB1_MIN_Z;

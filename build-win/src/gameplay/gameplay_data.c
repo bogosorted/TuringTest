@@ -7,10 +7,10 @@ const InfoLocal LOCAIS[NUM_LOCAIS] = {
     { "CANTINA",         "LANCHONETE DA RASEC",    "",             "assets/sprites/locais/terreo/spr_background_cantina.png" },
     { "RH",              "RH DA RASEC",            "Vazio",        "assets/sprites/locais/1_andar/spr_background_rh.png" },
     { "CONTAB.",         "SETOR DE CONTABILIDADE", "Vazio",        "assets/sprites/locais/1_andar/spr_background_contabilidade.png" },
-    { "AUDIT.",          "AUDITÓRIO",              "Vazio",        "assets/sprites/locais/2_andar/spr_background_sala_reuniao.png" },
-    { "COPA",            "COPA DO 4º ANDAR",       "Vazio",        "assets/sprites/locais/2_andar/spr_background_geladeira_coffe.png" },
+    { "REUNIÃO",         "SALA DE REUNIÃO",        "Vazio",        "assets/sprites/locais/2_andar/spr_background_sala_reuniao.png" },
+    { "COPA",            "COPA DO 1º ANDAR",       "Vazio",        "assets/sprites/locais/2_andar/spr_background_geladeira_coffe.png" },
     { "ESCADA",          "ESCADARIA - TÉRREO",     "Escadas",      FUNDO_ESCADA_MEIO },
-    { "ESCADA",          "ESCADARIA - 1º ANDAR",   "Escadas",      FUNDO_ESCADA_MEIO },
+    { "ESCADA",          "ESCADARIA - 1º ANDAR",   "Último andar", FUNDO_ESCADA_ULTIMO },
     { "ESCADA",          "ESCADARIA - 2º ANDAR",   "Escadas",      FUNDO_ESCADA_MEIO },
     { "SUBSOLO",         "SUBSOLO - ENTRADA",      "Vazio",        "assets/sprites/locais/subsolo/local_comeco.png" },
     { "BIFURC.",         "SUBSOLO - ESCOLHA",      "Vazio",        "assets/sprites/locais/subsolo/local_escolha.png" },
@@ -24,6 +24,7 @@ const InfoLocal LOCAIS[NUM_LOCAIS] = {
     { "CONTAB. 1",       "CONTABILIDADE 1",        "",             "assets/sprites/locais/1_andar/spr_background_mesa_maria.png" },
     { "CONTAB. 2",       "CONTABILIDADE 2",        "",             "assets/sprites/locais/1_andar/spr_background_mesa_maria.png" },
     { "ARQUIVO",         "ARQUIVO CONTÁBIL",       "",             "assets/sprites/locais/1_andar/spr_background_rh.png" },
+    { "CÂMERAS",         "SALA DAS CÂMERAS",       "",             "assets/sprites/locais/1_andar/spr_background_rh.png" },
     { "COPA",            "COPA DO 1º ANDAR",       "",             "assets/sprites/locais/2_andar/spr_background_geladeira_coffe.png" },
     { "CONVÍVIO",        "ÁREA DE CONVÍVIO",       "",             "assets/sprites/locais/terreo/spr_background_teste.png" },
     { "HALL 2º",         "2º ANDAR - CIBERSEG.",   "",             "assets/sprites/locais/2_andar/spr_background_sala_reuniao.png" },
@@ -92,6 +93,7 @@ const HoloSala HOLO_SALAS[NUM_LOCAIS] = {
     { 1, 1, { { 3.95f, 2.05f, 1.90f, 1.75f } }, false },  // LOCAL_CONTABILIDADE_1
     { 1, 1, { { 5.95f, 2.05f, 1.45f, 1.75f } }, false },  // LOCAL_CONTABILIDADE_2
     { 1, 1, { { 3.95f, 0.20f, 1.90f, 1.75f } }, false },  // LOCAL_ARQUIVO_1
+    { 1, 1, { { 5.95f, 0.20f, 1.45f, 1.75f } }, false },  // LOCAL_SALA_CAMERAS (ao lado do Arquivo)
     { 1, 1, { { 0.20f, 1.35f, 1.45f, 2.45f } }, false },  // LOCAL_COPA_1
     { 0, 1, { { 3.95f, 0.20f, 1.90f, 1.75f } }, false },  // LOCAL_CONVIVIO (Terreo, acima Adm 1)
     // 2o ANDAR (Ciberseguranca + Salas de Servidores, alinhado acima do 1o Andar):
@@ -156,32 +158,22 @@ const int NUM_HOLO_CORREDORES = (int)(sizeof HOLO_CORREDORES / sizeof HOLO_CORRE
 const HoloSala HOLO_SALAS_2D[NUM_LOCAIS_2D] = {
     [LOCAL_ESCRITORIO]          = { 0, 2, { { 1.6f, 0.2f, 3.2f, 1.1f }, { 1.6f, 1.3f, 0.9f, 0.45f } }, false },
     [LOCAL_CANTINA]             = { 0, 1, { { 0.2f, 0.9f, 1.2f, 2.1f } }, false },
-    [LOCAL_RH]                  = { 1, 2, { { 0.2f, 0.3f, 1.2f, 1.3f }, { 0.2f, 1.6f, 0.75f, 1.3f } }, false },
-    [LOCAL_MESA_MARIA]          = { 1, 1, { { 1.9f, 0.2f, 2.5f, 1.15f } }, false },
-    [LOCAL_SALA_REUNIAO]        = { 4, 1, { { 1.6f, 0.2f, 3.3f, 1.25f } }, false },
-    [LOCAL_COPA]                = { 4, 1, { { 0.2f, 1.2f, 1.2f, 1.6f } }, false },
+    [LOCAL_RH]                  = { 1, 1, { { 0.2f, 0.2f, 1.2f, 1.3f } }, false },
+    [LOCAL_MESA_MARIA]          = { 1, 1, { { 1.8f, 0.2f, 2.7f, 1.1f } }, false },
+    [LOCAL_SALA_REUNIAO]        = { 1, 1, { { 1.8f, 1.8f, 2.7f, 1.1f } }, false },
+    [LOCAL_COPA]                = { 1, 1, { { 0.2f, 1.7f, 1.2f, 1.3f } }, false },
     [LOCAL_ESCADA_TERREO]       = { 0, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
     [LOCAL_ESCADA_1]            = { 1, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
-    [LOCAL_ESCADA_2]            = { 2, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
     [LOCAL_SUBSOLO_COMECO]      = { -1, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, false },
     [LOCAL_SUBSOLO_ESCOLHA]     = { -1, 1, { { 2.4f, 1.3f, 1.4f, 1.3f } }, false },
     [LOCAL_SUBSOLO_LAST_OFFICE] = { -1, 1, { { 0.2f, 1.2f, 1.4f, 1.5f } }, false },
     [LOCAL_SUBSOLO_VEREDITO]    = { -1, 1, { { 2.4f, 0.15f, 1.4f, 0.85f } }, false },
     [LOCAL_SUBSOLO_RECREACAO]   = { -1, 1, { { 0.2f, 0.15f, 1.4f, 0.85f } }, false },
-    [LOCAL_ESCADA_3]            = { 3, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
-    [LOCAL_ESCADA_4]            = { 4, 1, { { 5.1f, 0.2f, 0.9f, 2.8f } }, true },
-    [LOCAL_2D_CIBER]            = { 2, 1, { { 1.8f, 0.2f, 2.8f, 1.2f } }, false },
-    [LOCAL_2D_SERVIDORES]       = { 2, 1, { { 0.2f, 0.8f, 1.2f, 2.0f } }, false },
-    [LOCAL_2D_TREINO_1]         = { 3, 1, { { 1.7f, 0.2f, 3.0f, 1.2f } }, false },
-    [LOCAL_2D_TREINO_2]         = { 3, 1, { { 0.2f, 0.5f, 1.2f, 2.3f } }, false },
 };
 
 const HoloCorredor HOLO_CORREDORES_2D[] = {
     { 0, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 0, { 2.9f, 1.3f,  0.45f, 0.65f } },
-    { 1, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 1, { 2.9f, 1.35f, 0.45f, 0.6f } },
-    { 2, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 2, { 2.9f, 1.40f, 0.45f, 0.55f } },
-    { 3, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 3, { 2.9f, 1.40f, 0.45f, 0.55f } },
-    { 4, { 1.4f, 1.95f, 3.7f, 0.55f } }, { 4, { 2.9f, 1.45f, 0.45f, 0.5f } },
+    { 1, { 1.4f, 1.30f, 3.7f, 0.50f } }, { 1, { 1.4f, 0.60f, 0.40f, 1.90f } },
     { -1, { 3.8f, 1.75f, 1.3f, 0.45f } },
     { -1, { 1.6f, 1.75f, 0.8f, 0.45f } },
     { -1, { 2.9f, 1.0f,  0.4f, 0.3f } },
@@ -226,7 +218,8 @@ int GameplayDestinoEscadaSubir(int de) {
     const HoloSala *salas = GameplayHoloSalasAtivas();
     if (!salas[de].escada) return -1;
     int andar = salas[de].andar;
-    return (andar + 1 < HOLO_NUM_ANDARES) ? (int)GameplayPlantaAndar(andar + 1, POS_ESCADA) : -1;
+    int maxAndar = GameStateIs3DMode() ? HOLO_NUM_ANDARES : 2; // Modo 2D limitado ao Terreo (0) e 1o Andar (1)
+    return (andar + 1 < maxAndar) ? (int)GameplayPlantaAndar(andar + 1, POS_ESCADA) : -1;
 }
 
 int GameplayDestinoEscadaDescer(int de) {
@@ -265,6 +258,29 @@ int GameplayDestinoSeta(int de, int seta) {
         if (!SettingsGetDevMode()) return -1;
         return (seta == SETA_BAIXO) ? LOCAL_SUBSOLO_LAST_OFFICE : -1;
     }
+    if (!GameStateIs3DMode()) {
+        if (de == LOCAL_MESA_MARIA) {
+            if (seta == SETA_ESQUERDA) return LOCAL_RH;
+            if (seta == SETA_DIREITA)  return LOCAL_ESCADA_1;
+            if (seta == SETA_BAIXO)    return LOCAL_SALA_REUNIAO;
+            return -1;
+        }
+        if (de == LOCAL_RH) {
+            if (seta == SETA_DIREITA)  return LOCAL_MESA_MARIA;
+            if (seta == SETA_BAIXO)    return LOCAL_COPA;
+            return -1;
+        }
+        if (de == LOCAL_SALA_REUNIAO) {
+            if (seta == SETA_CIMA)     return LOCAL_MESA_MARIA;
+            if (seta == SETA_ESQUERDA) return LOCAL_COPA;
+            return -1;
+        }
+        if (de == LOCAL_COPA) {
+            if (seta == SETA_CIMA)     return LOCAL_RH;
+            if (seta == SETA_DIREITA)  return LOCAL_SALA_REUNIAO;
+            return -1;
+        }
+    }
     const HoloSala *salas = GameplayHoloSalasAtivas();
     int andar = salas[de].andar;
     int central = (int)GameplayPlantaAndar(andar, POS_CIMA);
@@ -291,7 +307,8 @@ uint64_t GameplayLocaisAcessiveis(int de) {
         if (de == LOCAL_HALL_1)             return (1ULL << LOCAL_RECEPCAO) | (1ULL << LOCAL_COPA_1) | (1ULL << LOCAL_CONTABILIDADE_1);
         if (de == LOCAL_CONTABILIDADE_1)    return (1ULL << LOCAL_HALL_1) | (1ULL << LOCAL_ARQUIVO_1) | (1ULL << LOCAL_CONTABILIDADE_2);
         if (de == LOCAL_CONTABILIDADE_2)    return (1ULL << LOCAL_CONTABILIDADE_1);
-        if (de == LOCAL_ARQUIVO_1)          return (1ULL << LOCAL_CONTABILIDADE_1);
+        if (de == LOCAL_ARQUIVO_1)          return (1ULL << LOCAL_CONTABILIDADE_1) | (1ULL << LOCAL_SALA_CAMERAS);
+        if (de == LOCAL_SALA_CAMERAS)       return (1ULL << LOCAL_ARQUIVO_1);
         if (de == LOCAL_COPA_1)             return (1ULL << LOCAL_HALL_1);
         if (de == LOCAL_HALL_2)             return (1ULL << LOCAL_HALL_1) | (1ULL << LOCAL_CIBER_1) | (1ULL << LOCAL_CIBER_2);
         if (de == LOCAL_CIBER_1)            return (1ULL << LOCAL_HALL_2);
@@ -340,17 +357,20 @@ bool GameplayLocalEhTerreo3D(LocalRasec loc) {
            loc == LOCAL_ESCRITORIO_2       || loc == LOCAL_CONVIVIO ||
            loc == LOCAL_HALL_1             || loc == LOCAL_CONTABILIDADE_1 ||
            loc == LOCAL_CONTABILIDADE_2    || loc == LOCAL_ARQUIVO_1 ||
+           loc == LOCAL_SALA_CAMERAS       ||
            loc == LOCAL_COPA_1             || loc == LOCAL_HALL_2 ||
            loc == LOCAL_CIBER_1            || loc == LOCAL_CIBER_2 ||
            loc == LOCAL_SERVER_1           || loc == LOCAL_SERVER_2 ||
            loc == LOCAL_HALL_3             || loc == LOCAL_TREINO_ESCRITORIO ||
            loc == LOCAL_TREINO_IA          || loc == LOCAL_GARAGEM_PROTOTIPOS ||
            loc == LOCAL_HALL_4             || loc == LOCAL_AUDITORIO ||
-           loc == LOCAL_REUNIAO_1          || loc == LOCAL_REUNIAO_2;
+           loc == LOCAL_REUNIAO_1          || loc == LOCAL_REUNIAO_2 ||
+           loc == LOCAL_SUBSOLO_COMECO;
 }
 
 TerreoSalaId GameplayTerreoSalaPorLocal(LocalRasec loc) {
     switch (loc) {
+        case LOCAL_SUBSOLO_COMECO:     return TERREO_SALA_SUBSOLO;
         case LOCAL_RECEPCAO:           return TERREO_SALA_RECEPCAO;
         case LOCAL_CANTINA:            return TERREO_SALA_LANCHONETE;
         case LOCAL_JARDIM:             return TERREO_SALA_JARDIM;
@@ -363,6 +383,7 @@ TerreoSalaId GameplayTerreoSalaPorLocal(LocalRasec loc) {
         case LOCAL_CONTABILIDADE_1:    return TERREO_SALA_CONTABILIDADE_1;
         case LOCAL_CONTABILIDADE_2:    return TERREO_SALA_CONTABILIDADE_2;
         case LOCAL_ARQUIVO_1:          return TERREO_SALA_ARQUIVO_1;
+        case LOCAL_SALA_CAMERAS:       return TERREO_SALA_CAMERAS;
         case LOCAL_COPA_1:             return TERREO_SALA_COPA_1;
         case LOCAL_HALL_2:             return TERREO_SALA_HALL_2;
         case LOCAL_CIBER_1:            return TERREO_SALA_CIBER_1;
@@ -383,6 +404,7 @@ TerreoSalaId GameplayTerreoSalaPorLocal(LocalRasec loc) {
 
 TerreoDestino GameplayTerreoDestinoPorLocal(LocalRasec loc) {
     switch (loc) {
+        case LOCAL_SUBSOLO_COMECO:     return TERREO_DEST_SUBSOLO;
         case LOCAL_RECEPCAO:           return TERREO_DEST_RECEPCAO;
         case LOCAL_CANTINA:            return TERREO_DEST_LANCHONETE;
         case LOCAL_JARDIM:             return TERREO_DEST_JARDIM;
@@ -395,6 +417,7 @@ TerreoDestino GameplayTerreoDestinoPorLocal(LocalRasec loc) {
         case LOCAL_CONTABILIDADE_1:    return TERREO_DEST_CONTABILIDADE_1;
         case LOCAL_CONTABILIDADE_2:    return TERREO_DEST_CONTABILIDADE_2;
         case LOCAL_ARQUIVO_1:          return TERREO_DEST_ARQUIVO_1;
+        case LOCAL_SALA_CAMERAS:       return TERREO_DEST_SALA_CAMERAS;
         case LOCAL_COPA_1:             return TERREO_DEST_COPA_1;
         case LOCAL_HALL_2:             return TERREO_DEST_HALL_2;
         case LOCAL_CIBER_1:            return TERREO_DEST_CIBER_1;
@@ -415,6 +438,7 @@ TerreoDestino GameplayTerreoDestinoPorLocal(LocalRasec loc) {
 
 LocalRasec GameplayLocalPorTerreoDestino(TerreoDestino dest) {
     switch (dest) {
+        case TERREO_DEST_SUBSOLO:            return LOCAL_SUBSOLO_COMECO;
         case TERREO_DEST_RECEPCAO:           return LOCAL_RECEPCAO;
         case TERREO_DEST_LANCHONETE:         return LOCAL_CANTINA;
         case TERREO_DEST_JARDIM:             return LOCAL_JARDIM;
@@ -425,8 +449,9 @@ LocalRasec GameplayLocalPorTerreoDestino(TerreoDestino dest) {
         case TERREO_DEST_ESCADA_1:           return LOCAL_ESCADA_1;
         case TERREO_DEST_HALL_1:             return LOCAL_HALL_1;
         case TERREO_DEST_CONTABILIDADE_1:    return LOCAL_CONTABILIDADE_1;
-        case TERREO_DEST_CONTABILIDADE_2:    return TERREO_DEST_CONTABILIDADE_2;
+        case TERREO_DEST_CONTABILIDADE_2:    return LOCAL_CONTABILIDADE_2;
         case TERREO_DEST_ARQUIVO_1:          return LOCAL_ARQUIVO_1;
+        case TERREO_DEST_SALA_CAMERAS:       return LOCAL_SALA_CAMERAS;
         case TERREO_DEST_COPA_1:             return LOCAL_COPA_1;
         case TERREO_DEST_HALL_2:             return LOCAL_HALL_2;
         case TERREO_DEST_CIBER_1:            return LOCAL_CIBER_1;

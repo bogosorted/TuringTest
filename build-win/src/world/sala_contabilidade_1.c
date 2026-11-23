@@ -1,4 +1,5 @@
 #include "terreo_3d.h"
+#include "game_state.h"
 #include "rlgl.h"
 
 #ifndef PI
@@ -22,6 +23,15 @@ static const PlayerColliderBox C1_COLLIDERS[] = {
 };
 
 static const SalaInteractable C1_INTERACTABLES[] = {
+    {
+        "ev_maria_devolvidos",
+        "Protocolo de Relatórios Devolvidos",
+        { 1.55f, 0.90f, 1.25f },
+        { 0.95f, 0.85f, 0.95f },
+        2.10f,
+        true,
+        "Protocolo de devolução com 14 relatórios rejeitados e anotações manuais de Maria Bianca."
+    },
     {
         "baias_contabilidade_1",
         "Baias da Contabilidade",
@@ -94,7 +104,6 @@ static void DesenharBaiaContabilidade(Vector3 centro, bool comPlantas) {
 }
 
 static void DesenharContabilidade1(float tempo, bool evRelatoriosAtiva) {
-    (void)tempo;
     (void)evRelatoriosAtiva;
     float w = C1_MAX_X - C1_MIN_X;
     float d = C1_MAX_Z - C1_MIN_Z;
@@ -128,7 +137,10 @@ static void DesenharContabilidade1(float tempo, bool evRelatoriosAtiva) {
         TerreoArmario((Vector3){  1.80f + i * 1.15f, 0.0f, -3.55f }, 0.0f, 1.05f, 1.85f, 0.60f);
     }
 
-    DesenharBaiaContabilidade((Vector3){ -0.10f, 0.0f,  1.25f }, true);
+    DesenharBaiaContabilidade((Vector3){ -0.10f, 0.0f,  1.25f }, false);
+    if (GameStateEvidenciaDisponivelHoje(0, "EV-02") && !GameStateTemEvidencia(0, "EV-02")) {
+        TerreoEvidenciaBrilhante((Vector3){ 1.55f, 0.77f, 1.25f }, tempo, 1);
+    }
     DesenharBaiaContabilidade((Vector3){ -0.10f, 0.0f, -1.35f }, false);
     TerreoSilhuetaSombra((Vector3){ -1.80f, 0.0f, -1.90f }, 0.0f, true);
 }

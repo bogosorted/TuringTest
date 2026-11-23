@@ -28,13 +28,37 @@ void SettingsApplyWindowMode(void);   // aplica na janela (chamar depois do Init
 bool SettingsGetTutorial(void);
 void SettingsSetTutorial(bool ligado);
 
+// Balao flutuante E/Enter perto do player ao aproximar de interagiveis no modo 3D (padrao ativado)
+bool SettingsGetBalaoInteracao(void);
+void SettingsSetBalaoInteracao(bool ligado);
+
 // Modo Desenvolvedor / Dev Tools (persiste ate ser desativado manualmente)
 bool SettingsGetDevMode(void);
 void SettingsSetDevMode(bool ligado);
 
-// Efeito CRT (TV de tubo) - OFF por padrao
+// Efeito CRT (TV de tubo)
 bool SettingsGetCRT(void);
 void SettingsSetCRT(bool ligado);
+
+// Opcoes exclusivas do Modo Dev (ambas OFF por padrao):
+// - Auto-Reset: ao iniciar, reseta configuracoes/paleta e inicia com CRT ligado
+// - Tech Night: temporizador suave 08:00 -> 17:00 (permanece ativo mesmo se Dev Mode for desligado)
+bool SettingsGetAutoReset(void);
+void SettingsSetAutoReset(bool ligado);
+void SettingsResetToDefaultWithCRT(void);
+bool SettingsGetTechNight(void);
+void SettingsSetTechNight(bool ligado);
+bool SettingsGetDevUnlockSubsolo(void);
+void SettingsSetDevUnlockSubsolo(bool ligado);
+bool SettingsGetDevUnlockUpperFloors(void);
+void SettingsSetDevUnlockUpperFloors(bool ligado);
+bool SettingsGetDevFirstPerson(void);
+void SettingsSetDevFirstPerson(bool ligado);
+
+// Reinicio completo da aplicacao (usado pelo botao Dev Mode)
+void SettingsRequestAppRestart(void);
+bool SettingsIsAppRestartRequested(void);
+bool SettingsConsumeAppRestart(void);
 
 // Camera 3D: false = padrao (segue o player), true = fixa com tracking
 bool SettingsGetCamera3DFixa(void);
@@ -43,9 +67,15 @@ void SettingsSetCamera3DFixa(bool fixa);
 // Paletas de cor. A 0 e a original do jogo (sem pos-processamento).
 int          SettingsPaletteCount(void);
 int          SettingsGetPalette(void);
-void         SettingsSetPalette(int indice);          // da a volta (aceita -1 e count)
+void         SettingsSetPalette(int indice);          // da a volta (aceita -1 e count), pula paletas secretas bloqueadas
 const char  *SettingsPaletteName(int indice);
 const Color *SettingsPaletteStops(int indice);        // PALETTE_NUM_STOPS cores
 const Color *SettingsOriginalStops(void);             // rampa original (paleta 0)
+bool         SettingsIsPaletteSecret(int indice);
+bool         SettingsIsPaletteUnlocked(int indice);
+bool         SettingsUnlockPaletteByKey(const char *chave);
+void         SettingsResetSecretPalettes(void);
+int          SettingsUnlockedPaletteCount(void);
+int          SettingsUnlockedPaletteOrder(int indice);
 
 #endif
