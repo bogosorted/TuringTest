@@ -34,7 +34,7 @@ static const SalaInteractable REC_INTERACTABLES[] = {
         { 2.60f, 1.90f, 1.70f },
         2.65f,
         false,
-        "Boa tarde. Seja bem-vindo à RASEC, os setores ficam pelas portas laterais."
+        "Boa tarde! Os setores ficam pelas portas laterais."
     },
     {
         "area_espera",

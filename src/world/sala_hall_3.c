@@ -30,7 +30,7 @@ static const SalaInteractable H3_INTERACTABLES[] = {
         { 1.45f, 1.35f, 1.05f },
         1.95f,
         false,
-        "Recepcionista: \"Bem-vindo ao 3º Andar — Treinamento de IA. À esquerda fica o Escritório de Treinamento; à direita ficam o Setor de Treinamento de IA e a Garagem de Protótipos.\""
+        "3º Andar — Treinamento de IA. Escritório à esquerda; Treino de IA e Garagem à direita."
     },
     {
         "diretorio_andar_3",

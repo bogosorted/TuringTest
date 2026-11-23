@@ -258,6 +258,7 @@ void SettingsSetAutoReset(bool ligado) {
 
 static bool g_devUnlockSubsolo = false;
 static bool g_devUnlockUpperFloors = false;
+static bool g_devFirstPerson = false;
 
 bool SettingsGetTechNight(void) { return g_techNight; }
 void SettingsSetTechNight(bool ligado) { g_techNight = ligado; }
@@ -265,6 +266,8 @@ bool SettingsGetDevUnlockSubsolo(void) { return g_devUnlockSubsolo; }
 void SettingsSetDevUnlockSubsolo(bool ligado) { g_devUnlockSubsolo = ligado; }
 bool SettingsGetDevUnlockUpperFloors(void) { return g_devUnlockUpperFloors; }
 void SettingsSetDevUnlockUpperFloors(bool ligado) { g_devUnlockUpperFloors = ligado; }
+bool SettingsGetDevFirstPerson(void) { return g_devFirstPerson; }
+void SettingsSetDevFirstPerson(bool ligado) { g_devFirstPerson = ligado; }
 
 void SettingsRequestAppRestart(void) { g_restartApp = true; }
 bool SettingsIsAppRestartRequested(void) { return g_restartApp; }

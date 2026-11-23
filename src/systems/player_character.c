@@ -1,5 +1,6 @@
 #include "player_character.h"
 #include "../core/game_state.h"
+#include "../core/settings.h"
 #include "raymath.h"
 #include "rlgl.h"
 #include <math.h>
@@ -272,11 +273,12 @@ void PlayerCharacterUpdate(PlayerCharacter *p,
 
     float inRight = 0.0f;
     float inFwd   = 0.0f;
+    bool fpAtivo = SettingsGetDevMode() && SettingsGetDevFirstPerson();
     if (!travadoAnim && allowKeys) {
-        if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) inRight += 1.0f;
-        if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))  inRight -= 1.0f;
-        if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))    inFwd   += 1.0f;
-        if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))  inFwd   -= 1.0f;
+        if (IsKeyDown(KEY_D) || (!fpAtivo && IsKeyDown(KEY_RIGHT))) inRight += 1.0f;
+        if (IsKeyDown(KEY_A) || (!fpAtivo && IsKeyDown(KEY_LEFT)))  inRight -= 1.0f;
+        if (IsKeyDown(KEY_W) || (!fpAtivo && IsKeyDown(KEY_UP)))    inFwd   += 1.0f;
+        if (IsKeyDown(KEY_S) || (!fpAtivo && IsKeyDown(KEY_DOWN)))  inFwd   -= 1.0f;
     }
 
     Vector2 targetVel = { 0.0f, 0.0f };

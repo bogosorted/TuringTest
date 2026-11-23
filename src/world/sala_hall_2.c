@@ -30,7 +30,7 @@ static const SalaInteractable H2_INTERACTABLES[] = {
         { 1.45f, 1.35f, 1.05f },
         1.95f,
         false,
-        "Recepcionista: \"Bem-vindo ao 2º Andar — Cibersegurança. À esquerda fica o Escritório 1; à direita ficam o Escritório 2 e as Salas de Servidores.\""
+        "2º Andar — Cibersegurança. Escritório 1 à esquerda; Escritório 2 e Servidores à direita."
     },
     {
         "diretorio_andar_2",

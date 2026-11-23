@@ -52,6 +52,8 @@ bool SettingsGetDevUnlockSubsolo(void);
 void SettingsSetDevUnlockSubsolo(bool ligado);
 bool SettingsGetDevUnlockUpperFloors(void);
 void SettingsSetDevUnlockUpperFloors(bool ligado);
+bool SettingsGetDevFirstPerson(void);
+void SettingsSetDevFirstPerson(bool ligado);
 
 // Reinicio completo da aplicacao (usado pelo botao Dev Mode)
 void SettingsRequestAppRestart(void);

@@ -205,6 +205,9 @@ static const TerreoSalaDef *g_salas[TERREO_NUM_SALAS] = { 0 };
 static TerreoSalaId         g_salaAtual = TERREO_SALA_RECEPCAO;
 static PlayerCharacter      g_player = { 0 };
 static Camera3D             g_camAtual = { 0 };
+static float                g_fpYaw = 0.0f;
+static float                g_fpPitch = 0.0f;
+static bool                 g_fpPrevAtivo = false;
 static bool                 g_evRelatoriosAtiva = false;
 static bool                 g_suspeitosNaSala[3] = { false, false, false };
 static float                g_cooldownEntrada = 0.0f;
@@ -870,8 +873,52 @@ void Terreo3DUnload(void) {
     g_pronto = false;
 }
 
+static bool DevPrimeiraPessoaAtiva(void) {
+    return SettingsGetDevMode() && SettingsGetDevFirstPerson();
+}
+
+static void AtualizarCameraPrimeiraPessoa(const TerreoSalaDef *def, float dt, bool bloqueado) {
+    if (!def) return;
+    if (!bloqueado) {
+        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+            Vector2 md = GetMouseDelta();
+            g_fpYaw   -= md.x * 0.0045f;
+            g_fpPitch -= md.y * 0.0045f;
+        }
+        const float yawSpd = 2.25f;
+        const float pitchSpd = 1.65f;
+        if (IsKeyDown(KEY_LEFT))  g_fpYaw   += yawSpd * dt;
+        if (IsKeyDown(KEY_RIGHT)) g_fpYaw   -= yawSpd * dt;
+        if (IsKeyDown(KEY_UP))    g_fpPitch += pitchSpd * dt;
+        if (IsKeyDown(KEY_DOWN))  g_fpPitch -= pitchSpd * dt;
+        g_fpPitch = Clamp(g_fpPitch, -1.25f, 1.25f);
+    }
+
+    if (g_player.interactType != PLAYER_ANIM_COMPUTER || g_player.interactTimer <= 0.0f) {
+        g_player.facingYaw = g_fpYaw;
+    }
+
+    bool sentadoComp = (g_player.interactType == PLAYER_ANIM_COMPUTER && g_player.interactTimer > 0.0f);
+    float headBob = sentadoComp ? 0.0f : sinf(g_player.walkCycle * 2.0f) * 0.032f * g_player.moveBlend;
+    float eyeY = g_player.position.y + (sentadoComp ? 1.22f : 1.62f) + headBob;
+    Vector3 eyePos = { g_player.position.x, eyeY, g_player.position.z };
+
+    float cp = cosf(g_fpPitch);
+    Vector3 fwd = { sinf(g_fpYaw) * cp, sinf(g_fpPitch), cosf(g_fpYaw) * cp };
+
+    g_camAtual.position   = eyePos;
+    g_camAtual.target     = (Vector3){ eyePos.x + fwd.x, eyePos.y + fwd.y, eyePos.z + fwd.z };
+    g_camAtual.up         = (Vector3){ 0.0f, 1.0f, 0.0f };
+    g_camAtual.fovy       = 68.0f;
+    g_camAtual.projection = CAMERA_PERSPECTIVE;
+}
+
 static void AtualizarCameraSeguindo(const TerreoSalaDef *def, float dt, bool snap) {
     if (!def) return;
+    if (DevPrimeiraPessoaAtiva()) {
+        AtualizarCameraPrimeiraPessoa(def, dt, true);
+        return;
+    }
     float cx = def->boundsXZ.x + def->boundsXZ.width * 0.5f;
     float cz = def->boundsXZ.y + def->boundsXZ.height * 0.5f;
     float halfW = def->boundsXZ.width * 0.5f;
@@ -1145,6 +1192,8 @@ void Terreo3DDefinirSala(TerreoSalaId sala, TerreoDestino vindoDe) {
     }
 
     PlayerCharacterInit(&g_player, pos, yaw);
+    g_fpYaw = yaw;
+    g_fpPitch = 0.0f;
     AtualizarCameraSeguindo(def, 0.0f, true);
     g_cooldownEntrada = 0.45f;
     g_mouseSobreInteragivel = false;
@@ -1494,6 +1543,15 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
         }
     }
 
+    if (SettingsGetDevMode() && !bloqueado && IsKeyPressed(KEY_F1)) {
+        SettingsSetDevFirstPerson(!SettingsGetDevFirstPerson());
+    }
+    bool fpAtivo = DevPrimeiraPessoaAtiva();
+    if (fpAtivo && !g_fpPrevAtivo) {
+        g_fpYaw = g_player.facingYaw;
+        g_fpPitch = 0.0f;
+    }
+
     PlayerCharacterUpdate(&g_player, dt, g_camAtual.position, g_camAtual.target,
                           def->boundsXZ, allCols, numAllCols, bloqueado);
     if (def->heightFunc) {
@@ -1501,7 +1559,12 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
     } else {
         g_player.position.y = 0.0f;
     }
-    AtualizarCameraSeguindo(def, dt, false);
+    if (fpAtivo) {
+        AtualizarCameraPrimeiraPessoa(def, dt, bloqueado);
+    } else {
+        AtualizarCameraSeguindo(def, dt, !fpAtivo && g_fpPrevAtivo);
+    }
+    g_fpPrevAtivo = fpAtivo;
 
     if (bloqueado) {
         return res;
@@ -1547,8 +1610,9 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
         float d = hypotf(dx, dz);
         bool ehEv = it->id && (strncmp(it->id, "ev_", 3) == 0 || strcmp(it->id, "mesa_relatorios") == 0);
         bool ehRecep = it->id && strncmp(it->id, "recepcionista", 13) == 0;
-        float maxR = ehRecep ? fminf(it->interactRadius, 2.35f)
-                             : (ehEv ? fminf(it->interactRadius, 1.40f) : fminf(it->interactRadius, 1.35f));
+        bool ehFonte = it->id && strcmp(it->id, "fonte_jardim") == 0;
+        float maxR = (ehRecep || ehFonte) ? fminf(it->interactRadius, 2.35f)
+                                          : (ehEv ? fminf(it->interactRadius, 1.40f) : fminf(it->interactRadius, 1.35f));
         float effDist = ehEv ? (d - 0.25f) : d; // prioriza evidencias sobre moveis proximos
         if (d <= maxR && effDist < melhorDist) {
             if (ehEv && d > 0.15f) {
@@ -1939,7 +2003,9 @@ void Terreo3DRender(float tempo) {
     }
     PlayerCharacterSetShadowBounds(def->boundsXZ);
     g_player.isFemale = GameStateIsPlayerFemale();
-    PlayerCharacterDraw3D(&g_player, g_camAtual.position);
+    if (!DevPrimeiraPessoaAtiva()) {
+        PlayerCharacterDraw3D(&g_player, g_camAtual.position);
+    }
 
     EndMode3D();
     EndTextureMode();
@@ -1972,6 +2038,9 @@ bool Terreo3DHasProxInteragivel(void) {
 
 Vector2 Terreo3DPlayerHeadScreenPos(void) {
     if (!g_pronto) return (Vector2){ 149.0f, 110.0f };
+    if (DevPrimeiraPessoaAtiva()) {
+        return (Vector2){ g_largura * 0.5f, g_altura * 0.72f };
+    }
     Vector3 head = { g_player.position.x, g_player.position.y + 1.92f, g_player.position.z };
     return GetWorldToScreenEx(head, g_camAtual, g_largura, g_altura);
 }

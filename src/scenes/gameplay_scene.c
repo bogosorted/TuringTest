@@ -154,6 +154,8 @@ static float      g_paletaToastTimer        = 0.0f;
 static char       g_paletaToastPendente[96] = "";
 static int        g_recepHall1Clicks        = 0;
 static int        g_camerasClicks           = 0;
+static bool       g_cafeteiraTokenGanho     = false;
+static bool       g_fonteTokenGanho         = false;
 static int        g_andar3Tentativas        = 0;
 static bool       g_andar3DesbloqueadoSecreto = false;
 static bool       g_elevadorForcadoSair     = false;
@@ -1267,6 +1269,9 @@ static bool             g_inspecaoEvAberta       = false; // true apos clicar pa
 static float            g_inspecaoEvAnim         = 0.0f;  // 0.0 -> 1.0 animacao suave
 static bool             g_inspecaoEvReg          = false; // true quando ja registrou a evidencia
 static bool             g_inspecaoEvTextoVisivel = false; // janela de texto explicativo sobreposta
+static bool             g_evPopup2DAtivo         = false;
+static int              g_evPopup2DSusp          = -1;
+static const char      *g_evPopup2DId            = NULL;
 static EstadoCameraHoloEv g_inspCam              = { 0 };
 static bool             g_inspArrastandoEsq      = false;
 static bool             g_inspArrastandoDir      = false;
@@ -3570,6 +3575,58 @@ static void DesenharInspecaoEv3D(void) {
     }
 }
 
+static bool UpdateEvPopup2D(void) {
+    if (!g_evPopup2DAtivo) return false;
+    Vector2 mouse = RayCanvasGetMousePosition();
+    bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    bool hovFechar = CheckCollisionPointRec(mouse, ParaTela(INSP_POP_FECHAR));
+    bool hovOk     = CheckCollisionPointRec(mouse, ParaTela(INSP_POP_ANALISAR));
+    if ((hovFechar && clicou) || (hovOk && clicou) ||
+        IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_E)) {
+        TocarSomHover();
+        g_evPopup2DAtivo = false;
+    }
+    return true;
+}
+
+static void DesenharEvPopup2D(void) {
+    if (!g_evPopup2DAtivo) return;
+    Color cClaro   = (Color){ 255, 242, 230, 255 };
+    Color cAmarelo = (Color){ 245, 212, 132, 255 };
+
+    DrawRectangleRec(GetTelaRect(), Fade(BLACK, 0.58f));
+    DrawRectangleRec(ParaTela((Rectangle){ INSP_POP_CAIXA.x + 3, INSP_POP_CAIXA.y + 3, INSP_POP_CAIXA.width, INSP_POP_CAIXA.height }), Fade(BLACK, 0.72f));
+    DrawRectangleRec(ParaTela(INSP_POP_CAIXA), (Color){ 22, 20, 22, 248 });
+    DrawRectangleLinesEx(ParaTela(INSP_POP_CAIXA), 1.8f, cClaro);
+    DesenharBotaoFecharPadrao(INSP_POP_FECHAR);
+
+    const char *txt = GetEvidenciaTextoInspecao(g_evPopup2DSusp, g_evPopup2DId);
+    char buf[1024];
+    snprintf(buf, sizeof buf, "%s", txt ? txt : "");
+    float curY = INSP_POP_CAIXA.y + 14.0f;
+    char *p = buf;
+    int idxL = 0;
+    while (p && *p && curY < INSP_POP_CAIXA.y + INSP_POP_CAIXA.height - 34.0f) {
+        char *nl = strchr(p, '\n');
+        if (nl) *nl = '\0';
+        if (*p) {
+            Color corL = (idxL == 0) ? cAmarelo : cClaro;
+            DrawTextWrappedLeftAligned(p, (Vector2){ INSP_POP_CAIXA.x + 12.0f, curY }, INSP_POP_CAIXA.width - 32.0f, 9, corL);
+            curY += MedirAlturaTextoQuebrado(p, INSP_POP_CAIXA.width - 32.0f, 9) + 2.0f;
+            idxL++;
+        } else {
+            curY += 6.0f;
+        }
+        if (!nl) break;
+        p = nl + 1;
+    }
+
+    bool hovOk = CheckCollisionPointRec(RayCanvasGetMousePosition(), ParaTela(INSP_POP_ANALISAR));
+    DrawRectangleRec(ParaTela(INSP_POP_ANALISAR), hovOk ? (Color){ 78, 70, 72, 255 } : (Color){ 44, 40, 42, 255 });
+    DrawRectangleLinesEx(ParaTela(INSP_POP_ANALISAR), 1.5f, hovOk ? cAmarelo : cClaro);
+    DrawTextInArea("FECHAR", INSP_POP_ANALISAR, 9, hovOk ? cAmarelo : cClaro);
+}
+
 static bool UpdateConfirmarAvancar(void) {
     if (!g_confirmarAvancarDia) return false;
 
@@ -4373,6 +4430,16 @@ static bool UpdateAbaDev(bool *hoverOut) {
             return true;
         }
     }
+
+    Rectangle rFp = { x0, yTp + 29.0f, totW, 24.0f };
+    if (CheckCollisionPointRec(mouse, ParaTela(rFp))) {
+        if (hoverOut) *hoverOut = true;
+        if (clicou) {
+            TocarSomHover();
+            SettingsSetDevFirstPerson(!SettingsGetDevFirstPerson());
+            return true;
+        }
+    }
     return false;
 }
 
@@ -4449,6 +4516,13 @@ static void DesenharAbaDev(Rectangle rCorpo) {
     DrawRectangleRec(ParaTela(rIr), hI ? cAtHov : cAtivo);
     DrawRectangleLinesEx(ParaTela(rIr), 1.4f, hI ? cClaro : cBorda);
     DrawTextInArea("IR", rIr, 9, cClaro);
+
+    Rectangle rFp = { x0, yTp + 29.0f, totW, 24.0f };
+    bool fpAtivo = SettingsGetDevFirstPerson();
+    bool hFp = CheckCollisionPointRec(mouse, ParaTela(rFp));
+    DrawRectangleRec(ParaTela(rFp), fpAtivo ? (hFp ? cAtHov : cAtivo) : (hFp ? cBtnHov : cBtn));
+    DrawRectangleLinesEx(ParaTela(rFp), hFp ? 1.8f : 1.1f, hFp ? cClaro : cBorda);
+    DrawTextInArea(fpAtivo ? "1ª PESSOA (F1): ON" : "1ª PESSOA (F1): OFF", rFp, 8, cClaro);
 }
 
 static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
@@ -5029,6 +5103,8 @@ void GameplaySceneResetDialogues(void) {
         g_paletaToastPendente[0]  = '\0';
         g_recepHall1Clicks        = 0;
         g_camerasClicks           = 0;
+        g_cafeteiraTokenGanho     = false;
+        g_fonteTokenGanho         = false;
         g_andar3Tentativas        = 0;
         g_andar3DesbloqueadoSecreto = false;
         g_elevadorForcadoSair     = false;
@@ -5045,6 +5121,7 @@ void GameplaySceneResetDialogues(void) {
     if (GameStateGetDay() <= 1) LogicHintResetRun();
     else LogicHintResetDay();
     g_testeEspecialHoje = false;
+    g_evPopup2DAtivo = false;
     g_deepfakeAberto = false;
     g_pranchetaAberta = false;
     g_pranchetaMinimizada = false;
@@ -7581,7 +7658,10 @@ static void UpdateGameplay(void) {
             if (clicou) {
                 g_tutEvidenciaColetaVisto = true;
                 RegistrarEvidenciaPorId(evSuspAlvo, evAlvo);
-                DispararMonologoInterno(GetEvidenciaTextoInspecao(evSuspAlvo, evAlvo));
+                g_evPopup2DAtivo = true;
+                g_evPopup2DSusp  = evSuspAlvo;
+                g_evPopup2DId    = evAlvo;
+                LimparMonologoInterno();
                 return;
             }
         }
@@ -7867,12 +7947,28 @@ static void UpdateGameplay(void) {
                     } else if (tRes.objetoId && strcmp(tRes.objetoId, "banco_jardim") == 0) {
                         DispararMonologoInterno("Olhar pra essa fonte, te enche de determinação... quê? Jogo errado?");
                         TentarDesbloquearPaleta("carmesim", "CARMESIM", false);
+                    } else if (tRes.objetoId && strcmp(tRes.objetoId, "fonte_jardim") == 0) {
+                        if (!g_fonteTokenGanho) {
+                            g_fonteTokenGanho = true;
+                            global_tokens++;
+                            DispararMonologoInterno("Ao observar o ambiente ao seu redor, você sente... algo... +1 Token");
+                        } else {
+                            DispararMonologoInterno(tRes.flavorText);
+                        }
+                    } else if (tRes.objetoId && strcmp(tRes.objetoId, "cafeteira_copa_1") == 0) {
+                        if (!g_cafeteiraTokenGanho) {
+                            g_cafeteiraTokenGanho = true;
+                            global_tokens++;
+                            DispararMonologoInterno("Você toma um gole de café recém-passado e se sente mais desperto... +1 Token");
+                        } else {
+                            DispararMonologoInterno(tRes.flavorText);
+                        }
                     } else if (tRes.objetoId && strcmp(tRes.objetoId, "sofa_convivio") == 0) {
                         DispararMonologoInterno("Eles estão no próprio mundinho, ignorando todos e qualquer riscos...");
                         TentarDesbloquearPaleta("espaco-mental", "ESPAÇO MENTAL", false);
                     } else {
                         if (tRes.objetoId && strcmp(tRes.objetoId, "geladeira_copa_1") == 0) {
-                            TentarDesbloquearPaleta("noite-azul", "NOITE AZUL", true);
+                            TentarDesbloquearPaleta("noite-azul", "NOITE AZUL", false);
                         }
                         DispararMonologoInterno(tRes.flavorText);
                     }
@@ -8383,7 +8479,7 @@ void UpdateDrawGameplayScene(void) {
 
     // Inspecao 3D bloqueia apenas movimento do player e cliques de fundo, sem congelar o tempo
     bool inspecaoBloq = UpdateInspecaoEv3D();
-    if (!emTransicao && !g_mapaCompletoAberto && !UpdatePopupEvidencia() && !UpdateMenuElevador() && !UpdateConfirmarAbandonar() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
+    if (!emTransicao && !g_mapaCompletoAberto && !UpdateEvPopup2D() && !UpdatePopupEvidencia() && !UpdateMenuElevador() && !UpdateConfirmarAbandonar() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
         if (SettingsGetTechNight()) {
             GameStateUpdateTechNightClock(GetFrameTime());
         }
@@ -9015,6 +9111,7 @@ void UpdateDrawGameplayScene(void) {
 
     // Popup central obrigatorio ao adquirir nova evidencia
     DesenharPopupEvidencia();
+    DesenharEvPopup2D();
 
     // 10) Tutorial contextual (aparece conforme o jogador avanca na investigacao)
     DesenharTutorialContextual();

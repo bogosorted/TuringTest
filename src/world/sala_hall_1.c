@@ -31,7 +31,7 @@ static const SalaInteractable H1_INTERACTABLES[] = {
         { 1.45f, 1.35f, 1.05f },
         1.95f,
         false,
-        "Recepcionista: \"Bem-vindo ao 1º Andar — Setor de Contabilidade. À esquerda fica a Copa dos funcionários; à direita ficam as salas de Contabilidade 1 e 2 e o Arquivo.\""
+        "1º Andar — Contabilidade. Copa à esquerda; Contabilidade 1, 2 e Arquivo à direita."
     },
     {
         "diretorio_andar_1",
