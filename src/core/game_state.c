@@ -27,7 +27,7 @@ static int            g_evUnlockDay[6] = { 1, 1, 2, 2, 3, 1 };
 static int            g_ev06CollectedDay = 0;
 static float          g_techNightHours = 8.0f;
 static int            g_tokensRestantesTotal = 0;
-static int          g_dicasUsadasTotal = 0;
+static int            g_dicasUsadasTotal = 0;
 
 static int ParseEvIndex(const char *ev_id) {
     if (!ev_id) return -1;

@@ -197,7 +197,7 @@ static const StaticNode NODES_S0_FIRST[] = {
     { "EV2", "Maria", "Pois é, eu cansei de fingir que aquilo é normal. Tem número e projeto ali que nem existe.", true, VISAO_CONFIANCA, "", -1, FLAG_S0_CONFRONTOU_EV02, 0, { {0} } },
     { "EV4", "Maria", "É sério isso?! O coitado se matando pra segurar as pontas e ela faz isso? Que absurdo.", true, VISAO_CONFIANCA, "", -1, FLAG_S0_CONFRONTOU_EV04, 0, { {0} } },
     { "A1_1", "Maria", "Coisa esquisita... número que não existe. Mas enfim, preciso voltar pras pastas.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_FALOU_RELATORIOS, 0, { {0} } },
-    { "A1_2", "Maria", "Pois é, a gente tenta relevar. Bom trabalho aí.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
+    { "A1_2", "Maria", "Pois é, foco nas entregas, alinhamento com a equipe e bom trabalho. Desculpa, tô respondendo no automático hoje.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
     { "A2_1", "Maria", "Obrigada. Qualquer coisa te chamo sim.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
     { "A2_2", "Maria", "Melhor não ficar procurando pelo em ovo logo de cara. Tenho que ir.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } },
     { "B1_1", "Maria", "Basicamente. Metade volta pra refazer. Depois a gente conversa melhor.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_FALOU_RELATORIOS, 0, { {0} } },
@@ -259,7 +259,7 @@ static const StaticNode NODES_S0_RETURN[] = {
         CH("Retrabalho por quê?", "FB_A1"),
         CH("Tomara que alivie logo.", "FB_A2")
     } },
-    { "FB_A1", "Maria", "Relatórios chegando fora do padrão toda hora. Enfim, deixa eu fechar isso logo.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_FALOU_RELATORIOS, 0, { {0} } },
+    { "FB_A1", "Maria", "Relatórios chegando fora do padrão toda hora. Acho que o Arthur mandou os de ontem antes de eu fechar a pasta de sexta... ou foi o contrário? Tô tão exausta que já troquei a ordem.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_FALOU_RELATORIOS, 0, { {0} } },
     { "FB_A2", "Maria", "Tomara mesmo. Só quero fechar esse expediente em paz.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } },
     { "FB_B", "Maria", "Me dava. Últimas semanas ficou difícil conversar com a Ana Lúcia, parece outra pessoa.", false, VISAO_DUVIDA, "", -1, FLAG_MARIA_FALOU_ANALU_MUDOU, 2, {
         CH("Ela tá pegando no seu pé?", "FB_B1"),
@@ -314,7 +314,7 @@ static const StaticNode NODES_S1_FIRST[] = {
     { "EV6", "Arthur", "Cibersegurança?! A gente nem tem acesso lá em cima! Por que diabos ela ia querer entrar lá de madrugada?", true, VISAO_CONFIANCA, "", -1, FLAG_S1_CONFRONTOU_EV06, 0, { {0} } },
     { "B2", "Arthur", "Suave, brother. Se precisar de algo, tô por aqui.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
     { "A1_1", "Arthur", "Não! Ela era super justa quando entrei. Vai ver tá passando por algo. Vou correr aqui!", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_ANALU, 0, { {0} } },
-    { "A1_2", "Arthur", "Pois é, mas prefiro segurar o rojão do que criar clima. Valeu!", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_ANALU, 0, { {0} } },
+    { "A1_2", "Arthur", "Pois é, mas prefiro segurar o rojão do que criar clima. E foi mal se pareci seco antes, tô sem dormir e meu humor tá virando do nada hoje. Valeu!", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_ANALU, 0, { {0} } },
     { "A2_1", "Arthur", "Sei lá, cobrança de prazo. Aqui na RASEC ninguém reclama muito, só sorri e entrega. Até mais!", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
     { "A2_2", "Arthur", "Tamo junto, qualquer coisa chama.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
     { "B1_1", "Arthur", "Prefiro não queimar ninguém logo de cara. Depois a gente troca ideia.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } },
@@ -372,7 +372,7 @@ static const StaticNode NODES_S1_RETURN[] = {
     } },
     { "FL_ATR_1", "Arthur", "Aqui na RASEC quem reclama some do mapa. Melhor só entregar.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
     { "FL_ATR_2", "Arthur", "Valeu, brother.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } },
-    { "FB_A", "Arthur", "Corrido demais. Tô só o pó, maluco. Se a supervisão mandar refazer mais uma planilha hoje eu surto.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_FALOU_ATRASO, 0, { {0} } },
+    { "FB_A", "Arthur", "Corrido demais. Tô só o pó, maluco, não lembro nem o que almocei hoje nem se mandei o e-mail de ontem. Se a supervisão mandar refazer mais uma planilha eu surto.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_FALOU_ATRASO, 0, { {0} } },
     { "FB_B", "Arthur", "Faz um tempinho já. A Analu já tava aqui quando eu entrei, e a Maria chegou logo depois. A gente sempre se deu bem até esse mês.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_ANALU, 0, { {0} } }
 };
 

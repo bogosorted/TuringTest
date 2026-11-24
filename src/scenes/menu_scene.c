@@ -766,24 +766,27 @@ static void UpdateDrawModo(void) {
     const float cardY = 166.0f;
 
     for (int m = 0; m < 2; m++) {
+        bool devBloq = SettingsGetDevMode() && ((m == 0 && SettingsGetDevDisable2D()) || (m == 1 && SettingsGetDevDisable3D()));
         Rectangle rCard = { OPC_LABEL_X + m * (cardW + cardGap), cardY, cardW, cardH };
-        bool hov = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, rCard);
+        bool hov = !devBloq && interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, rCard);
         if (hov) hovModo = m;
 
         Rectangle rTela = ParaTela(rCard);
         float esc = rTela.height / cardH;
         DrawRectangleRec(ParaTela((Rectangle){ rCard.x + 2.5f, rCard.y + 3.0f, cardW, cardH }), Fade(BLACK, 0.5f * a));
-        DrawRectangleRec(rTela, hov ? fundoH : fundo);
-        DrawRectangleLinesEx(rTela, (hov ? 2.2f : 1.4f) * esc, hov ? claro : medio);
+        DrawRectangleRec(rTela, devBloq ? Fade(fundo, 0.55f) : (hov ? fundoH : fundo));
+        DrawRectangleLinesEx(rTela, (hov ? 2.2f : 1.4f) * esc, devBloq ? medio : (hov ? claro : medio));
 
         Vector2 tamTit = MeasureTextEx(g_fonte, TITULOS[m], 26.0f, 1.0f);
-        TextoOpcoes(TITULOS[m], rCard.x + (cardW - tamTit.x) * 0.5f, rCard.y + 30.0f, 26.0f, hov ? claro : bege);
+        TextoOpcoes(TITULOS[m], rCard.x + (cardW - tamTit.x) * 0.5f, rCard.y + 30.0f, 26.0f, devBloq ? medio : (hov ? claro : bege));
 
-        Vector2 tamL1 = MeasureTextEx(g_fonte, LINHA1[m], 15.0f, 0.5f);
-        TextoOpcoes(LINHA1[m], rCard.x + (cardW - tamL1.x) * 0.5f, rCard.y + 62.0f, 15.0f, claro);
+        const char *l1 = devBloq ? "DESATIVADO" : LINHA1[m];
+        const char *l2 = devBloq ? "nas opções Dev" : LINHA2[m];
+        Vector2 tamL1 = MeasureTextEx(g_fonte, l1, 15.0f, 0.5f);
+        TextoOpcoes(l1, rCard.x + (cardW - tamL1.x) * 0.5f, rCard.y + 62.0f, 15.0f, devBloq ? (Color){ 210, 76, 76, 255 } : claro);
 
-        Vector2 tamL2 = MeasureTextEx(g_fonte, LINHA2[m], 15.0f, 0.5f);
-        TextoOpcoes(LINHA2[m], rCard.x + (cardW - tamL2.x) * 0.5f, rCard.y + 80.0f, 15.0f, medio);
+        Vector2 tamL2 = MeasureTextEx(g_fonte, l2, 15.0f, 0.5f);
+        TextoOpcoes(l2, rCard.x + (cardW - tamL2.x) * 0.5f, rCard.y + 80.0f, 15.0f, medio);
 
         if (hov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             GameStateSetMode((m == 0) ? MODO_2D : MODO_3D);
@@ -846,9 +849,9 @@ static void UpdateDrawControle(void) {
 
     int hovCtrl = -1;
     const float cardW = 122.0f;
-    const float cardH = 108.0f;
+    const float cardH = 92.0f;
     const float cardGap = 11.0f;
-    const float cardY = 166.0f;
+    const float cardY = 160.0f;
 
     for (int c = 0; c < 3; c++) {
         Rectangle rCard = { OPC_LABEL_X + c * (cardW + cardGap), cardY, cardW, cardH };
@@ -880,9 +883,30 @@ static void UpdateDrawControle(void) {
     if (hovCtrl >= 0 && hovCtrl != g_hoverCtrlAnt) TocarSomHover();
     g_hoverCtrlAnt = hovCtrl;
 
+    // Opcao extra: Seta Guiando
+    Rectangle rSetaOpt = { OPC_LABEL_X, 258.0f, 388.0f, 30.0f };
+    bool hovSetaOpt = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, rSetaOpt);
+    Rectangle rSetaTela = ParaTela(rSetaOpt);
+    float escS = rSetaTela.height / rSetaOpt.height;
+    DrawRectangleRec(rSetaTela, hovSetaOpt ? fundoH : fundo);
+    DrawRectangleLinesEx(rSetaTela, 1.2f * escS, hovSetaOpt ? claro : medio);
+    Rectangle rBoxS = ParaTela((Rectangle){ rSetaOpt.x + 7.0f, rSetaOpt.y + 8.0f, 14.0f, 14.0f });
+    DrawRectangleLinesEx(rBoxS, 1.4f * escS, claro);
+    if (SettingsGetSetaGuiando()) {
+        DrawRectangleRec(ParaTela((Rectangle){ rSetaOpt.x + 10.0f, rSetaOpt.y + 11.0f, 8.0f, 8.0f }), claro);
+    }
+    TextoOpcoes("Seta Guiando", rSetaOpt.x + 26.0f, rSetaOpt.y + 4.0f, 13.0f, claro);
+    TextoOpcoes("Ative essa opção se não estiver familiarizado com jogos (pode desativar nas configs a qualquer momento).",
+                rSetaOpt.x + 26.0f, rSetaOpt.y + 17.0f, 8.5f, medio);
+    if (hovSetaOpt && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        SettingsSetSetaGuiando(!SettingsGetSetaGuiando());
+        SettingsSave();
+        TocarSomHover();
+    }
+
     float bw = (float)g_botao.width * BOTAO_ESCALA;
     float bh = (float)g_botao.height * BOTAO_ESCALA;
-    const float yVoltar = 292.0f;
+    const float yVoltar = 296.0f;
     Rectangle hitVoltar = { BOTAO_X, yVoltar, bw - 22.0f, bh };
     bool hoverVoltar = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, hitVoltar);
     if (hoverVoltar && !g_voltarHoverAnt) TocarSomHover();
@@ -894,7 +918,7 @@ static void UpdateDrawControle(void) {
     }
 
     if (g_ctrlAberto) {
-        bool algumHov = hoverVoltar || (hovCtrl >= 0);
+        bool algumHov = hoverVoltar || (hovCtrl >= 0) || hovSetaOpt;
         SetMouseCursor(algumHov ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
     }
 }

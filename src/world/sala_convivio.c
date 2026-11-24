@@ -116,6 +116,10 @@ static void DesenharConvivio(float tempo, bool evRelatoriosAtiva) {
     TerreoBebedouro((Vector3){ 4.20f, 0.0f, -2.80f });
     TerreoPlanta((Vector3){ -4.15f, 0.0f, -2.75f }, 1.35f);
     TerreoPlanta((Vector3){  4.15f, 0.0f,  2.65f }, 1.25f);
+
+    // Dois funcionarios conversando entre si (animados)
+    TerreoDesenharNPCAtividade(1, 7 /* NPC_ATIV_CONVERSANDO */, (Vector3){ -2.10f, 0.0f, 0.95f },  68.0f, tempo);
+    TerreoDesenharNPCAtividade(2, 7 /* NPC_ATIV_CONVERSANDO */, (Vector3){ -1.25f, 0.0f, 1.18f }, -112.0f, tempo + 1.4f);
 }
 
 static const TerreoSalaDef SALA_CONVIVIO_DEF = {

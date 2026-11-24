@@ -10,12 +10,35 @@
 #define TELA_W 640
 #define TELA_H 360
 
-enum { HOVER_NENHUM = -1, HOVER_ANT = 0, HOVER_PROX = 1, HOVER_TELA_CHEIA = 2, HOVER_TUTORIAL = 3, HOVER_DEV_BTN = 4, HOVER_CRT = 5, HOVER_CAM3D = 6, HOVER_BALAO = 7, HOVER_DEV_AUTORESET = 8, HOVER_DEV_TECHNIGHT = 9, HOVER_DEV_RESTART = 10 };
+enum {
+    HOVER_NENHUM = -1,
+    HOVER_ANT = 0,
+    HOVER_PROX = 1,
+    HOVER_TELA_CHEIA = 2,
+    HOVER_TUTORIAL = 3,
+    HOVER_DEV_BTN = 4,
+    HOVER_CRT = 5,
+    HOVER_CAM3D = 6,
+    HOVER_BALAO = 7,
+    HOVER_DEV_AUTORESET = 8,
+    HOVER_DEV_TECHNIGHT = 9,
+    HOVER_DEV_RESTART = 10,
+    HOVER_DEV_EXPANDED3D = 11,
+    HOVER_DEV_SUBSOLO = 12,
+    HOVER_DEV_ANDARES = 13,
+    HOVER_DEV_FP = 14,
+    HOVER_DEV_BACK = 15,
+    HOVER_DEV_DISABLE = 16,
+    HOVER_DEV_NO2D = 17,
+    HOVER_DEV_NO3D = 18,
+    HOVER_SETA_GUIANDO = 19
+};
 
 static int   g_sliderArrastando = -1;   // -1 = nenhum, 0 = musica, 1 = efeitos
 static int   g_hoverAnt = HOVER_NENHUM; // botao que estava com o mouse em cima no frame anterior
 static int   g_devClicks = 0;           // cliques consecutivos no botaozinho escondido (3 abre a senha)
 static bool  g_devModalAberto = false;  // modal pedindo a senha "RED"
+static bool  g_devPaginaAberta = false; // pagina dedicada de configuracoes exclusivas do Modo Dev
 static char  g_devSenhaInput[12] = "";
 static float g_devErroTimer = 0.0f;
 
@@ -24,6 +47,7 @@ void OptionsUiReset(void) {
     g_hoverAnt = HOVER_NENHUM;
     g_devClicks = 0;
     g_devModalAberto = false;
+    g_devPaginaAberta = false;
     g_devSenhaInput[0] = '\0';
     g_devErroTimer = 0.0f;
 }
@@ -182,8 +206,143 @@ static bool Caixinha(bool marcada, float x, float yCentro, float larguraNome, in
     return hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 }
 
+// Checkbox com hitbox exata na propria area (usado na pagina dedicada do Modo Dev)
+static bool DevCheckbox(bool marcada, float x, float yCentro, float larguraArea, const char *rotulo,
+                        int idHover, const OptionsUiEstilo *est, float a, bool interativo,
+                        bool *algumHover, void (*tocarHover)(void)) {
+    Rectangle area = { x, yCentro - 9.0f, larguraArea, 18.0f };
+    bool hover = interativo && CheckCollisionPointRec(MouseVirtual(), area);
+    if (hover) {
+        *algumHover = true;
+        if (g_hoverAnt != idHover && tocarHover) tocarHover();
+        g_hoverAnt = idHover;
+    }
+    Rectangle box = { x, yCentro - 7.0f, 14.0f, 14.0f };
+    DrawRectangleRec(ParaTela(box), ComAlpha(hover ? est->setaBordaHover : est->setaBorda, a));
+    DrawRectangleRec(ParaTela((Rectangle){ box.x + 1, box.y + 1, box.width - 2, box.height - 2 }),
+                     ComAlpha(hover ? est->setaFundoHover : est->setaFundo, a));
+    if (marcada) {
+        DrawRectangleRec(ParaTela((Rectangle){ box.x + 3.5f, box.y + 3.5f, box.width - 7.0f, box.height - 7.0f }),
+                         ComAlpha(hover ? est->preenchidoAtivo : est->preenchido, a));
+    }
+    Texto(est, rotulo, x + 20.0f, yCentro, hover ? est->valorAtivo : est->valor, a, 0);
+    return hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+}
+
+// Botao retangular simples na pagina dedicada do Modo Dev
+static bool DevActionButton(Rectangle r, const char *lbl, Color fundo, Color fundoHov, Color borda,
+                            int idHover, float a, bool interativo, bool *algumHover, void (*tocarHover)(void)) {
+    bool hover = interativo && CheckCollisionPointRec(MouseVirtual(), r);
+    if (hover) {
+        *algumHover = true;
+        if (g_hoverAnt != idHover && tocarHover) tocarHover();
+        g_hoverAnt = idHover;
+    }
+    Rectangle rt = ParaTela(r);
+    float esc = rt.height / r.height;
+    DrawRectangleRec(rt, ComAlpha(hover ? fundoHov : fundo, a));
+    DrawRectangleLinesEx(rt, (hover ? 1.5f : 1.1f) * esc, ComAlpha(borda, a));
+    int fz = (int)(8.0f * esc);
+    if (fz < 1) fz = 1;
+    int tw = MeasureText(lbl, fz);
+    DrawText(lbl, (int)(rt.x + (rt.width - tw) * 0.5f),
+             (int)(rt.y + (rt.height - fz) * 0.5f), fz, ComAlpha((Color){ 255, 242, 230, 255 }, a));
+    return hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+}
+
+static bool DesenharPaginaDev(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
+                              float a, bool interativo, void (*tocarHover)(void)) {
+    bool algumHover = false;
+    float xL = lay->x;
+    float wTot = lay->direita - lay->x;
+    float colW = (wTot - 12.0f) * 0.5f;
+    float xR = xL + colW + 12.0f;
+
+    float yHeader = lay->yPrimeira - 4.0f;
+    Texto(est, "MODO DEV — CONFIGURAÇÕES", xL, yHeader, est->nomePaleta, a, 0);
+
+    Rectangle rVoltar = { lay->direita - 64.0f, yHeader - 8.0f, 64.0f, 16.0f };
+    if (DevActionButton(rVoltar, "< VOLTAR", (Color){ 64, 58, 60, 255 }, (Color){ 96, 86, 88, 255 },
+                        (Color){ 255, 242, 230, 255 }, HOVER_DEV_BACK, a, interativo, &algumHover, tocarHover)) {
+        g_devPaginaAberta = false;
+    }
+
+    // Linha divisoria sob o cabecalho
+    DrawRectangleRec(ParaTela((Rectangle){ xL, yHeader + 12.0f, wTot, 1.0f }), ComAlpha(est->trilhoBorda, a));
+
+    float y1 = lay->yPrimeira + lay->passoY * 0.85f;
+    float y2 = y1 + lay->passoY * 0.82f;
+    float y3 = y2 + lay->passoY * 0.82f;
+    float y4 = y3 + lay->passoY * 0.82f;
+    float y5 = y4 + lay->passoY * 1.05f;
+
+    if (DevCheckbox(SettingsGetAutoReset(), xL, y1, colW, "Auto-Reset",
+                    HOVER_DEV_AUTORESET, est, a, interativo, &algumHover, tocarHover)) {
+        SettingsSetAutoReset(!SettingsGetAutoReset());
+        SettingsSave();
+    }
+    if (DevCheckbox(SettingsGetTechNight(), xR, y1, colW, "Tech Night (08h-17h)",
+                    HOVER_DEV_TECHNIGHT, est, a, interativo, &algumHover, tocarHover)) {
+        SettingsSetTechNight(!SettingsGetTechNight());
+        SettingsSave();
+    }
+
+    if (DevCheckbox(SettingsGetDevUnlockSubsolo(), xL, y2, colW, "Subsolo liberado",
+                    HOVER_DEV_SUBSOLO, est, a, interativo, &algumHover, tocarHover)) {
+        SettingsSetDevUnlockSubsolo(!SettingsGetDevUnlockSubsolo());
+    }
+    if (DevCheckbox(SettingsGetDevUnlockUpperFloors(), xR, y2, colW, "Andares 2-4 liberados",
+                    HOVER_DEV_ANDARES, est, a, interativo, &algumHover, tocarHover)) {
+        SettingsSetDevUnlockUpperFloors(!SettingsGetDevUnlockUpperFloors());
+    }
+
+    if (DevCheckbox(SettingsGetDevFirstPerson(), xL, y3, colW, "1ª Pessoa (F1)",
+                    HOVER_DEV_FP, est, a, interativo, &algumHover, tocarHover)) {
+        SettingsSetDevFirstPerson(!SettingsGetDevFirstPerson());
+    }
+    if (DevCheckbox(SettingsGetDevExpanded3D(), xR, y3, colW, "Tela 3D expandida (BETA)",
+                    HOVER_DEV_EXPANDED3D, est, a, interativo, &algumHover, tocarHover)) {
+        SettingsSetDevExpanded3D(!SettingsGetDevExpanded3D());
+        SettingsSave();
+    }
+
+    if (DevCheckbox(SettingsGetDevDisable2D(), xL, y4, colW, "Desativar Modo 2D (Menu)",
+                    HOVER_DEV_NO2D, est, a, interativo, &algumHover, tocarHover)) {
+        SettingsSetDevDisable2D(!SettingsGetDevDisable2D());
+        SettingsSave();
+    }
+    if (DevCheckbox(SettingsGetDevDisable3D(), xR, y4, colW, "Desativar Modo 3D (Menu)",
+                    HOVER_DEV_NO3D, est, a, interativo, &algumHover, tocarHover)) {
+        SettingsSetDevDisable3D(!SettingsGetDevDisable3D());
+        SettingsSave();
+    }
+
+    Rectangle rDesligar = { xL, y5 - 8.0f, 114.0f, 17.0f };
+    if (DevActionButton(rDesligar, "DESATIVAR MODO DEV", (Color){ 90, 46, 48, 255 }, (Color){ 142, 56, 58, 255 },
+                        (Color){ 255, 242, 230, 255 }, HOVER_DEV_DISABLE, a, interativo, &algumHover, tocarHover)) {
+        SettingsSetDevMode(false);
+        SettingsSave();
+        g_devPaginaAberta = false;
+        g_devClicks = 0;
+    }
+
+    Rectangle rRestart = { lay->direita - 98.0f, y5 - 8.0f, 98.0f, 17.0f };
+    if (DevActionButton(rRestart, "REINICIAR APP", (Color){ 112, 42, 44, 255 }, (Color){ 165, 62, 64, 255 },
+                        (Color){ 255, 242, 230, 255 }, HOVER_DEV_RESTART, a, interativo, &algumHover, tocarHover)) {
+        SettingsSave();
+        SettingsRequestAppRestart();
+    }
+
+    if (!algumHover) g_hoverAnt = HOVER_NENHUM;
+    return algumHover;
+}
+
 bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
                          float a, bool interativo, void (*tocarHover)(void)) {
+    if (g_devPaginaAberta && SettingsGetDevMode()) {
+        return DesenharPaginaDev(lay, est, a, interativo, tocarHover);
+    }
+    if (!SettingsGetDevMode()) g_devPaginaAberta = false;
     const char *nomes[4] = { "Música", "Efeitos", "Tela cheia", "Paleta" };
 
     // A coluna dos controles comeca logo depois do nome mais largo.
@@ -309,6 +468,31 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
             SettingsSave();
         }
         Texto(est, SettingsGetBalaoInteracao() ? "Ligado" : "Desligado", balaoCaixaX + 24.0f, yBalao, est->valor, a, 0);
+
+        const char *lblGuia = "Seta Guiando";
+        float guiaCaixaX = lay->direita - 16.0f;
+        float wGuia = MeasureTextEx(est->fonte, lblGuia, est->tamFonte, est->espacamento).x;
+        float guiaAreaX = guiaCaixaX - 8.0f - wGuia;
+        Rectangle guiaCaixa = { guiaCaixaX, yBalao - 8.0f, 16.0f, 16.0f };
+        Rectangle guiaArea  = { guiaAreaX, yBalao - 10.0f, lay->direita - guiaAreaX, 20.0f };
+        bool guiaHov = interativoControles && CheckCollisionPointRec(MouseVirtual(), guiaArea);
+        if (guiaHov) {
+            hoverSeta = true;
+            if (g_hoverAnt != HOVER_SETA_GUIANDO && tocarHover) tocarHover();
+            g_hoverAnt = HOVER_SETA_GUIANDO;
+        }
+        Texto(est, lblGuia, guiaCaixaX - 8.0f, yBalao, est->nome, a, 2);
+        DrawRectangleRec(ParaTela(guiaCaixa), ComAlpha(guiaHov ? est->setaBordaHover : est->setaBorda, a));
+        DrawRectangleRec(ParaTela((Rectangle){ guiaCaixa.x + 1, guiaCaixa.y + 1, guiaCaixa.width - 2, guiaCaixa.height - 2 }),
+                         ComAlpha(guiaHov ? est->setaFundoHover : est->setaFundo, a));
+        if (SettingsGetSetaGuiando()) {
+            DrawRectangleRec(ParaTela((Rectangle){ guiaCaixa.x + 4, guiaCaixa.y + 4, guiaCaixa.width - 8, guiaCaixa.height - 8 }),
+                             ComAlpha(guiaHov ? est->preenchidoAtivo : est->preenchido, a));
+        }
+        if (guiaHov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            SettingsSetSetaGuiando(!SettingsGetSetaGuiando());
+            SettingsSave();
+        }
     }
 
     // Paleta: [<]  Nome  [>]  3/8
@@ -339,55 +523,13 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
         DrawRectangleRec(ParaTela(q), ComAlpha(tons[i], a));
     }
 
-    // Opcoes exclusivas do Modo Dev (abaixo das amostras de paleta)
-    if (SettingsGetDevMode()) {
-        float yDevRow = yAmostra + 13.0f;
-        float xDev = lay->x;
-        bool autoR = SettingsGetAutoReset();
-        if (Caixinha(autoR, xDev, yDevRow, 98.0f, HOVER_DEV_AUTORESET, lay, est, a, interativoControles, &hoverSeta, tocarHover)) {
-            SettingsSetAutoReset(!autoR);
-            SettingsSave();
-        }
-        Texto(est, "Auto-Reset", xDev + 20.0f, yDevRow, est->valor, a, 0);
-
-        float xTech = xDev + 104.0f;
-        bool techN = SettingsGetTechNight();
-        if (Caixinha(techN, xTech, yDevRow, 96.0f, HOVER_DEV_TECHNIGHT, lay, est, a, interativoControles, &hoverSeta, tocarHover)) {
-            SettingsSetTechNight(!techN);
-            SettingsSave();
-        }
-        Texto(est, "Tech Night", xTech + 20.0f, yDevRow, est->valor, a, 0);
-
-        Rectangle rAppRestart = { lay->direita - 86.0f, yDevRow - 1.0f, 86.0f, 15.0f };
-        bool hovRestart = interativoControles && CheckCollisionPointRec(MouseVirtual(), rAppRestart);
-        if (hovRestart) {
-            hoverSeta = true;
-            if (g_hoverAnt != HOVER_DEV_RESTART && tocarHover) tocarHover();
-            g_hoverAnt = HOVER_DEV_RESTART;
-        }
-        Rectangle rAppTela = ParaTela(rAppRestart);
-        float escR = rAppTela.height / rAppRestart.height;
-        DrawRectangleRec(rAppTela, ComAlpha(hovRestart ? (Color){ 165, 62, 64, 255 } : (Color){ 112, 42, 44, 255 }, a));
-        DrawRectangleLinesEx(rAppTela, 1.1f * escR, ComAlpha((Color){ 255, 242, 230, 255 }, a));
-        int fzR = (int)(8.0f * escR);
-        if (fzR < 1) fzR = 1;
-        const char *lblR = "REINICIAR APP";
-        int twR = MeasureText(lblR, fzR);
-        DrawText(lblR, (int)(rAppTela.x + (rAppTela.width - twR) * 0.5f),
-                 (int)(rAppTela.y + (rAppTela.height - fzR) * 0.5f), fzR, ComAlpha((Color){ 255, 242, 230, 255 }, a));
-        if (hovRestart && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            SettingsSave();
-            SettingsRequestAppRestart();
-        }
-    }
-
-    // Botaozinho escondido de Dev Tools no canto inferior direito das configuracoes:
+    // Botao de acesso ao Modo Dev no canto inferior direito das configuracoes:
     // - Quando desligado: um pequeno botao discreto que ao ser clicado 3 vezes pede a senha "RED".
-    // - Quando ligado: mostra "[DEV: ON]" para desativar em 1 clique.
+    // - Quando ligado: mostra "MODO DEV >>" para abrir a pagina dedicada de configuracoes Dev.
     {
         bool devLigado = SettingsGetDevMode();
         Rectangle rDevBtn = devLigado
-            ? (Rectangle){ lay->direita - 56.0f, yAmostra - 2.0f, 56.0f, 13.0f }
+            ? (Rectangle){ lay->direita - 84.0f, yAmostra - 3.0f, 84.0f, 15.0f }
             : (Rectangle){ lay->direita - 13.0f, yAmostra - 1.0f, 13.0f, 11.0f };
         bool hovDev = interativoControles && CheckCollisionPointRec(MouseVirtual(), rDevBtn);
         if (hovDev) {
@@ -404,14 +546,13 @@ bool OptionsUiUpdateDraw(const OptionsUiLayout *lay, const OptionsUiEstilo *est,
             DrawRectangleLinesEx(rDevTela, 1.2f * esc, ComAlpha((Color){ 255, 242, 230, 255 }, a));
             int fz = (int)(8.0f * esc);
             if (fz < 1) fz = 1;
-            const char *lbl = "DEV: ON";
+            const char *lbl = "MODO DEV >>";
             int tw = MeasureText(lbl, fz);
             DrawText(lbl, (int)(rDevTela.x + (rDevTela.width - tw) * 0.5f),
                      (int)(rDevTela.y + (rDevTela.height - fz) * 0.5f), fz, ComAlpha((Color){ 255, 242, 230, 255 }, a));
             if (hovDev && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                SettingsSetDevMode(false);
-                SettingsSave();
-                g_devClicks = 0;
+                g_devPaginaAberta = true;
+                g_hoverAnt = HOVER_NENHUM;
             }
         } else {
             // Discreto nas configuracoes (parece um pequeno parafuso/terminal de manutencao)

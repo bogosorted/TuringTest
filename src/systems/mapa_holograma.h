@@ -36,6 +36,7 @@ void      MapaHoloUnload(void);
 // Configura filtro de exibicao: apenas o andar atual (zoom amplo na planta) ou predio inteiro,
 // alem da mascara de salas que possuem suspeitos para exibir marcadores amarelos.
 void      MapaHoloSetFiltro(bool apenasAndarAtual, int andarFoco, uint64_t salasComSuspeitos);
+void      MapaHoloSetEvidenciasMask(uint64_t salasComEvidencias);
 
 // Desenha a cena numa textura do tamanho pedido (recriada se o tamanho mudar).
 // "acessiveis" tem um bit por sala: salas fora dele aparecem apagadas.

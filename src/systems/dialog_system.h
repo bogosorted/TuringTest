@@ -53,7 +53,6 @@ typedef struct {
 extern int global_tokens;
 
 // Modo desenvolvedor: true = tokens ilimitados (nao bloqueia e nao gasta).
-// Ligado/desligado pelo botao secreto do menu (digite "treloso").
 extern bool global_infinite_tokens;
 
 // true se ainda ha tokens para gastar (ou se o modo ilimitado esta ligado)

@@ -6,6 +6,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
 #ifndef PI
@@ -60,6 +61,41 @@ static Vector3              s_mousePendPos  = { 0 };
 static Vector3              s_pathPts[32];
 static int                  s_pathCount = 0;
 static int                  s_pathIdx   = 0;
+
+static Sound                g_sndPasso3D = { 0 };
+static Sound                g_sndPorta3D = { 0 };
+static float                g_passoTimer = 0.0f;
+static float                g_portaAnimTimer = 0.0f;
+static TerreoDestino        g_portaDestPendente = TERREO_DEST_NENHUM;
+static Vector3              g_portaAlvoPos = { 0 };
+
+static Sound CriarSomProcedural3D(int sampleCount, float freqIni, float freqFim, float noiseMix, float amp) {
+    Wave w = { 0 };
+    w.frameCount = (unsigned int)sampleCount;
+    w.sampleRate = 22050;
+    w.sampleSize = 16;
+    w.channels   = 1;
+    short *data = (short *)RL_MALLOC((size_t)sampleCount * sizeof(short));
+    if (!data) return (Sound){ 0 };
+    float phase = 0.0f;
+    unsigned int seed = 1337u;
+    for (int i = 0; i < sampleCount; i++) {
+        float t = (float)i / (float)sampleCount;
+        float env = (t < 0.08f) ? (t / 0.08f) : expf(-5.5f * (t - 0.08f));
+        float freq = freqIni + (freqFim - freqIni) * t;
+        phase += 2.0f * PI * freq / 22050.0f;
+        seed = seed * 1664525u + 1013904223u;
+        float rnd = ((float)((seed >> 16) & 0xFFFF) / 32767.5f) - 1.0f;
+        float s = (sinf(phase) * (1.0f - noiseMix) + rnd * noiseMix) * env * amp;
+        if (s > 1.0f) s = 1.0f;
+        if (s < -1.0f) s = -1.0f;
+        data[i] = (short)(s * 32767.0f);
+    }
+    w.data = data;
+    Sound snd = LoadSoundFromWave(w);
+    UnloadWave(w);
+    return snd;
+}
 
 static bool EvidenciaDisponivelPorId(const char *id) {
     if (!id) return true;
@@ -381,7 +417,7 @@ void TerreoBalcaoRecepcaoU(Vector3 pos) {
         DrawTriangle3D(i0B, i1B, i1T, cIn);  DrawTriangle3D(i0B, i1T, i0T, cIn);
         DrawTriangle3D(i0T, o1T, o0T, cTop); DrawTriangle3D(i0T, i1T, o1T, cTop);
     }
-    TerreoMonitor((Vector3){ -0.35f, 1.02f, 0.66f }, 12.0f);
+    TerreoMonitor((Vector3){ -0.35f, 1.02f, 0.66f }, 192.0f);
     TerreoCadeira((Vector3){ 0.0f, 0.0f, -0.35f }, 0.0f);
 
     rlPopMatrix();
@@ -716,21 +752,84 @@ void TerreoPlanta(Vector3 pos, float escala) {
     DrawCylinder((Vector3){ 0.0f, 0.27f, 0.0f }, 0.18f, 0.17f, 0.045f, 16, TerreoLum(0.32f));
     DrawCylinder((Vector3){ 0.0f, 0.30f, 0.0f }, 0.15f, 0.15f, 0.015f, 14, TerreoLum(0.14f));
 
-    // Folhas organicas caidas em camadas (samambaia / palmeira de escritorio)
-    for (int i = 0; i < 7; i++) {
-        float ang = (float)i * (2.0f * PI / 7.0f) + 0.25f;
+    // Galhos finos com bifurcacoes em ziguezague (estilo relampago) e folhas finas
+    for (int i = 0; i < 6; i++) {
+        float ang = (float)i * (2.0f * PI / 6.0f) + 0.25f;
         float ca = cosf(ang), sa = sinf(ang);
-        Vector3 base = { ca * 0.03f, 0.31f, sa * 0.03f };
-        Vector3 mid  = { ca * 0.16f, 0.48f + (i % 2) * 0.05f, sa * 0.16f };
-        Vector3 tip  = { ca * 0.28f, 0.36f + (i % 2) * 0.04f, sa * 0.28f };
-        float lum = 0.34f + (float)(i % 3) * 0.08f;
-        DrawCapsule(base, mid, 0.030f, 5, 8, TerreoLum(lum));
-        DrawCapsule(mid, tip, 0.022f, 5, 8, TerreoLum(lum + 0.08f));
+        float px = -sa, pz = ca;
+        Vector3 base = { ca * 0.02f, 0.31f, sa * 0.02f };
+        Vector3 k1   = { ca * 0.09f + px * 0.04f, 0.44f, sa * 0.09f + pz * 0.04f };
+        Vector3 k2   = { ca * 0.19f - px * 0.03f, 0.54f + (i % 2) * 0.04f, sa * 0.19f - pz * 0.03f };
+        Vector3 tipA = { ca * 0.28f + px * 0.05f, 0.48f + (i % 2) * 0.03f, sa * 0.28f + pz * 0.05f };
+        Vector3 tipB = { ca * 0.23f - px * 0.08f, 0.62f, sa * 0.23f - pz * 0.08f };
+        DrawCylinderEx(base, k1, 0.012f, 0.009f, 5, TerreoLum(0.18f));
+        DrawCylinderEx(k1, k2,   0.009f, 0.006f, 5, TerreoLum(0.18f));
+        DrawCylinderEx(k2, tipA, 0.006f, 0.003f, 4, TerreoLum(0.20f));
+        DrawCylinderEx(k2, tipB, 0.006f, 0.003f, 4, TerreoLum(0.20f));
+        float lum = 0.34f + (float)(i % 3) * 0.07f;
+        DrawCapsule(k2, tipA, 0.011f, 4, 6, TerreoLum(lum));
+        DrawCapsule(k2, tipB, 0.010f, 4, 6, TerreoLum(lum + 0.08f));
     }
-    // Broto central elevado
-    DrawCapsule((Vector3){ 0.0f, 0.31f, 0.0f }, (Vector3){ 0.02f, 0.58f, -0.02f }, 0.028f, 5, 8, TerreoLum(0.48f));
+    DrawCylinderEx((Vector3){ 0.0f, 0.31f, 0.0f }, (Vector3){ 0.02f, 0.50f, -0.01f }, 0.013f, 0.008f, 5, TerreoLum(0.18f));
+    DrawCapsule((Vector3){ 0.02f, 0.50f, -0.01f }, (Vector3){ 0.06f, 0.66f, 0.03f }, 0.011f, 4, 6, TerreoLum(0.46f));
+    DrawCapsule((Vector3){ 0.02f, 0.50f, -0.01f }, (Vector3){ -0.04f, 0.63f, -0.05f }, 0.010f, 4, 6, TerreoLum(0.42f));
 
     rlPopMatrix();
+}
+
+void TerreoGabinetePC(Vector3 pos, float rotYDeg) {
+    rlPushMatrix();
+    rlTranslatef(pos.x, pos.y, pos.z);
+    rlRotatef(rotYDeg, 0.0f, 1.0f, 0.0f);
+    TerreoCaixa((Vector3){ 0.0f, 0.19f, 0.0f }, (Vector3){ 0.17f, 0.38f, 0.36f }, 0.24f, 0.18f, 0.20f, 0.38f);
+    TerreoCaixa((Vector3){ 0.0f, 0.28f, 0.182f }, (Vector3){ 0.13f, 0.10f, 0.01f }, 0.30f, 0.28f, 0.28f, -1.0f);
+    TerreoCaixa((Vector3){ 0.0f, 0.11f, 0.182f }, (Vector3){ 0.12f, 0.14f, 0.01f }, 0.14f, 0.12f, 0.12f, -1.0f);
+    DrawSphere((Vector3){ 0.045f, 0.34f, 0.186f }, 0.010f, (Color){ 255, 224, 48, 255 });
+    rlPopMatrix();
+}
+
+void TerreoGeladeira(Vector3 pos, float rotYDeg) {
+    rlPushMatrix();
+    rlTranslatef(pos.x, pos.y, pos.z);
+    rlRotatef(rotYDeg, 0.0f, 1.0f, 0.0f);
+    DrawCylinder((Vector3){ -0.34f, 0.0f,  0.28f }, 0.03f, 0.03f, 0.05f, 8, TerreoLum(0.18f));
+    DrawCylinder((Vector3){  0.34f, 0.0f,  0.28f }, 0.03f, 0.03f, 0.05f, 8, TerreoLum(0.18f));
+    DrawCylinder((Vector3){ -0.34f, 0.0f, -0.28f }, 0.03f, 0.03f, 0.05f, 8, TerreoLum(0.18f));
+    DrawCylinder((Vector3){  0.34f, 0.0f, -0.28f }, 0.03f, 0.03f, 0.05f, 8, TerreoLum(0.18f));
+    TerreoCaixa((Vector3){ 0.0f, 0.68f, 0.0f }, (Vector3){ 0.84f, 1.24f, 0.74f }, 0.80f, 0.72f, 0.64f, 0.18f);
+    TerreoCaixa((Vector3){ 0.0f, 1.62f, 0.0f }, (Vector3){ 0.84f, 0.56f, 0.74f }, 0.86f, 0.76f, 0.68f, 0.18f);
+    TerreoCaixa((Vector3){ 0.33f, 0.96f, 0.39f }, (Vector3){ 0.035f, 0.44f, 0.04f }, 0.30f, 0.24f, 0.24f, -1.0f);
+    TerreoCaixa((Vector3){ 0.33f, 1.60f, 0.39f }, (Vector3){ 0.035f, 0.24f, 0.04f }, 0.30f, 0.24f, 0.24f, -1.0f);
+    TerreoCaixa((Vector3){ -0.10f, 1.02f, 0.375f }, (Vector3){ 0.22f, 0.28f, 0.02f }, 0.18f, 0.14f, 0.14f, 0.42f);
+    rlPopMatrix();
+}
+
+void TerreoCafeteira(Vector3 pos, float rotYDeg) {
+    rlPushMatrix();
+    rlTranslatef(pos.x, pos.y, pos.z);
+    rlRotatef(rotYDeg, 0.0f, 1.0f, 0.0f);
+    TerreoCaixa((Vector3){ 0.0f, 0.025f, 0.0f }, (Vector3){ 0.34f, 0.05f, 0.32f }, 0.28f, 0.20f, 0.18f, 0.12f);
+    TerreoCaixa((Vector3){ 0.0f, 0.21f, -0.08f }, (Vector3){ 0.32f, 0.34f, 0.14f }, 0.24f, 0.18f, 0.16f, 0.14f);
+    TerreoCaixa((Vector3){ 0.0f, 0.34f,  0.03f }, (Vector3){ 0.30f, 0.09f, 0.24f }, 0.30f, 0.22f, 0.20f, 0.14f);
+    DrawCylinder((Vector3){ 0.0f, 0.05f, 0.04f }, 0.085f, 0.095f, 0.16f, 12, TerreoLum(0.14f));
+    DrawCylinder((Vector3){ 0.0f, 0.055f, 0.04f }, 0.090f, 0.090f, 0.03f, 12, TerreoLum(0.56f));
+    DrawSphere((Vector3){ 0.10f, 0.34f, 0.155f }, 0.012f, (Color){ 255, 224, 48, 255 });
+    rlPopMatrix();
+}
+
+void TerreoMicroondas(Vector3 pos, float rotYDeg) {
+    rlPushMatrix();
+    rlTranslatef(pos.x, pos.y, pos.z);
+    rlRotatef(rotYDeg, 0.0f, 1.0f, 0.0f);
+    TerreoCaixa((Vector3){ 0.0f, 0.17f, 0.0f }, (Vector3){ 0.56f, 0.34f, 0.40f }, 0.72f, 0.62f, 0.56f, 0.16f);
+    TerreoCaixa((Vector3){ -0.07f, 0.17f, 0.205f }, (Vector3){ 0.34f, 0.24f, 0.015f }, 0.14f, 0.10f, 0.10f, 0.40f);
+    TerreoCaixa((Vector3){  0.19f, 0.17f, 0.205f }, (Vector3){ 0.11f, 0.24f, 0.015f }, 0.26f, 0.20f, 0.20f, 0.32f);
+    TerreoCaixa((Vector3){  0.19f, 0.24f, 0.215f }, (Vector3){ 0.08f, 0.04f, 0.01f }, 0.85f, 0.85f, 0.85f, -1.0f);
+    rlPopMatrix();
+}
+
+void TerreoDesenharNPCAtividade(int variantId, int ativ, Vector3 pos, float yawDeg, float tempo) {
+    PlayerCharacterDrawNpc3DEx(pos, yawDeg, (NpcAtividade)ativ, variantId, tempo, g_camAtual.position);
 }
 
 void TerreoSofaCurvo(Vector3 pos, float rotYDeg, float largura) {
@@ -816,6 +915,11 @@ static void GarantirTexturas(int largura, int altura) {
     g_texPronta = true;
 }
 
+void Terreo3DSetViewportSize(int largura, int altura) {
+    if (!g_pronto) return;
+    GarantirTexturas(largura, altura);
+}
+
 void Terreo3DInit(int largura, int altura) {
     Terreo3DUnload();
 
@@ -855,11 +959,18 @@ void Terreo3DInit(int largura, int altura) {
     g_hasProxInteragivel = false;
     g_hasClosestMouseTarget = false;
     g_dicaAcao[0] = '\0';
+    g_passoTimer = 0.0f;
+    g_portaAnimTimer = 0.0f;
+    g_portaDestPendente = TERREO_DEST_NENHUM;
+    if (g_sndPasso3D.frameCount == 0) g_sndPasso3D = CriarSomProcedural3D(980, 150.0f, 70.0f, 0.55f, 0.35f);
+    if (g_sndPorta3D.frameCount == 0) g_sndPorta3D = CriarSomProcedural3D(2400, 220.0f, 110.0f, 0.40f, 0.45f);
     g_pronto = true;
 }
 
 void Terreo3DUnload(void) {
     if (!g_pronto) return;
+    if (g_sndPasso3D.frameCount > 0) { UnloadSound(g_sndPasso3D); g_sndPasso3D = (Sound){ 0 }; }
+    if (g_sndPorta3D.frameCount > 0) { UnloadSound(g_sndPorta3D); g_sndPorta3D = (Sound){ 0 }; }
     if (g_texPronta) {
         UnloadRenderTexture(g_cena);
         UnloadRenderTexture(g_final);
@@ -1224,6 +1335,19 @@ void Terreo3DTriggerComputerExit(void) {
     PlayerCharacterTriggerComputerExit(&g_player);
 }
 
+void Terreo3DTriggerPaperPickup(Vector3 paperPos, float duracao) {
+    PlayerCharacterTriggerPaperPickup(&g_player, paperPos, duracao);
+}
+
+void Terreo3DTriggerPaperDrop(Vector3 paperPos, float duracao) {
+    PlayerCharacterTriggerPaperDrop(&g_player, paperPos, duracao);
+}
+
+void Terreo3DSetGuiaInfo(bool suspeitoNaSala, int andarAlvo) {
+    (void)suspeitoNaSala;
+    (void)andarAlvo;
+}
+
 float Terreo3DGetChairPull(Vector3 chairPos) {
     return PlayerCharacterGetChairPull(&g_player, chairPos);
 }
@@ -1301,10 +1425,10 @@ static void PosicaoSuspeitoNaSala(TerreoSalaId sala, int s, Vector3 *outPos, flo
     }
 
     // Todos os suspeitos ficam sempre em pe com comportamento proprio:
-    // 0 = Maria (supervisionando arquivos), 1 = Arthur (carregando papeis), 2 = Ana Lucia (desconfiada)
+    // 0 = Maria (supervisionando arquivos), 1 = Arthur (carregando papeis ou cocando a cabeca na copa/lanchonete), 2 = Ana Lucia (desconfiada)
     NpcAtividade ativ = NPC_ATIV_EM_PE;
     if (s == 0)      ativ = NPC_ATIV_LENDO;
-    else if (s == 1) ativ = NPC_ATIV_CARREGANDO_PAPEIS;
+    else if (s == 1) ativ = (sala == TERREO_SALA_COPA_1 || sala == TERREO_SALA_LANCHONETE) ? NPC_ATIV_COCANDO_CABECA : NPC_ATIV_CARREGANDO_PAPEIS;
     else             ativ = NPC_ATIV_DESCONFIADA;
 
     if (outPos)    *outPos = p;
@@ -1553,7 +1677,43 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
     }
 
     PlayerCharacterUpdate(&g_player, dt, g_camAtual.position, g_camAtual.target,
-                          def->boundsXZ, allCols, numAllCols, bloqueado);
+                          def->boundsXZ, allCols, numAllCols, bloqueado || (g_portaAnimTimer > 0.0f));
+    if (g_portaAnimTimer > 0.0f) {
+        g_portaAnimTimer -= dt;
+        // Passo suave atravessando a porta durante a animacao
+        float dxP = g_portaAlvoPos.x - g_player.position.x;
+        float dzP = g_portaAlvoPos.z - g_player.position.z;
+        float distP = hypotf(dxP, dzP);
+        if (distP > 0.05f) {
+            float step = fminf(distP, 2.2f * dt);
+            g_player.position.x += (dxP / distP) * step;
+            g_player.position.z += (dzP / distP) * step;
+            g_player.moveBlend = 0.70f;
+            g_player.walkCycle += dt * 9.0f;
+        }
+        if (g_portaAnimTimer <= 0.0f) {
+            g_portaAnimTimer = 0.0f;
+            res.acionouDestino = true;
+            res.destino = g_portaDestPendente;
+            g_portaDestPendente = TERREO_DEST_NENHUM;
+            return res;
+        }
+        return res;
+    }
+    if (g_player.isMoving && !bloqueado) {
+        float intervalo = (g_player.runBlend > 0.5f) ? 0.25f : 0.36f;
+        g_passoTimer += dt;
+        if (g_passoTimer >= intervalo) {
+            g_passoTimer = 0.0f;
+            if (g_sndPasso3D.frameCount > 0) {
+                SetSoundVolume(g_sndPasso3D, 0.14f * SettingsGetSfxVolume());
+                SetSoundPitch(g_sndPasso3D, 0.92f + ((float)GetRandomValue(0, 16) / 100.0f));
+                PlaySound(g_sndPasso3D);
+            }
+        }
+    } else {
+        g_passoTimer = 0.28f;
+    }
     if (def->heightFunc) {
         g_player.position.y = def->heightFunc(g_player.position.x, g_player.position.z);
     } else {
@@ -1693,6 +1853,7 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
                 bestHit         = hit.distance;
                 hoverPorta      = def->portas[i].destino;
                 hoverPortaLabel = def->portas[i].label;
+                hoverSusp       = -1;
             }
         }
         for (int i = 0; i < def->numInteractables; i++) {
@@ -1701,11 +1862,15 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
             if (!EvidenciaDisponivelPorId(def->interactables[i].id)) continue;
             // No modo Mouse/Ambos, ignora decoracoes para nao atrapalhar o andar por cliques
             if (!EhObjetoInterativoReal(def->interactables[i].id)) continue;
-            RayCollision hit = GetRayCollisionBox(ray, BoxInteractable(&def->interactables[i]));
+            const SalaInteractable *it = &def->interactables[i];
+            RayCollision hit = (it->id && strcmp(it->id, "fonte_jardim") == 0)
+                ? GetRayCollisionSphere(ray, (Vector3){ it->position.x, it->position.y, it->position.z }, 1.38f)
+                : GetRayCollisionBox(ray, BoxInteractable(it));
             if (hit.hit && hit.distance < bestHit) {
                 bestHit    = hit.distance;
                 hoverObj   = i;
                 hoverPorta = TERREO_DEST_NENHUM;
+                hoverSusp  = -1;
             }
         }
         g_mouseSobreInteragivel = (hoverPorta != TERREO_DEST_NENHUM) || (hoverObj >= 0) || (hoverSusp >= 0);
@@ -1806,14 +1971,22 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
             return res;
         }
         if (proxPorta != TERREO_DEST_NENHUM) {
+            Vector3 alvoP = g_player.position;
             for (int i = 0; i < def->numPortas; i++) {
                 if (def->portas[i].destino == proxPorta) {
-                    PlayerCharacterTriggerInteractEx(&g_player, def->portas[i].triggerCenter, PLAYER_ANIM_DOOR, 0.35f);
+                    alvoP = def->portas[i].triggerCenter;
                     break;
                 }
             }
-            res.acionouDestino = true;
-            res.destino        = proxPorta;
+            PlayerCharacterTriggerInteractEx(&g_player, alvoP, PLAYER_ANIM_DOOR, 0.28f);
+            if (g_sndPorta3D.frameCount > 0) {
+                SetSoundVolume(g_sndPorta3D, 0.22f * SettingsGetSfxVolume());
+                SetSoundPitch(g_sndPorta3D, 0.96f);
+                PlaySound(g_sndPorta3D);
+            }
+            g_portaAnimTimer = 0.22f;
+            g_portaDestPendente = proxPorta;
+            g_portaAlvoPos = alvoP;
             return res;
         }
         if (proxObj >= 0) {
@@ -1861,8 +2034,19 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
                 s_mousePendTipo = 0;
                 s_pathCount = 0;
                 PlayerCharacterClearMoveTarget(&g_player);
-                res.acionouDestino = true;
-                res.destino        = hoverPorta;
+                Vector3 alvoP = g_player.position;
+                for (int i = 0; i < def->numPortas; i++) {
+                    if (def->portas[i].destino == hoverPorta) { alvoP = def->portas[i].triggerCenter; break; }
+                }
+                PlayerCharacterTriggerInteractEx(&g_player, alvoP, PLAYER_ANIM_DOOR, 0.28f);
+                if (g_sndPorta3D.frameCount > 0) {
+                    SetSoundVolume(g_sndPorta3D, 0.22f * SettingsGetSfxVolume());
+                    SetSoundPitch(g_sndPorta3D, 0.96f);
+                    PlaySound(g_sndPorta3D);
+                }
+                g_portaAnimTimer = 0.22f;
+                g_portaDestPendente = hoverPorta;
+                g_portaAlvoPos = alvoP;
                 return res;
             }
             for (int i = 0; i < def->numPortas; i++) {
@@ -1960,8 +2144,15 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
         } else if (s_mousePendTipo == 2 && proxPorta == s_mousePendDest) {
             s_mousePendTipo = 0;
             PlayerCharacterClearMoveTarget(&g_player);
-            res.acionouDestino = true;
-            res.destino        = proxPorta;
+            PlayerCharacterTriggerInteractEx(&g_player, s_mousePendPos, PLAYER_ANIM_DOOR, 0.28f);
+            if (g_sndPorta3D.frameCount > 0) {
+                SetSoundVolume(g_sndPorta3D, 0.22f * SettingsGetSfxVolume());
+                SetSoundPitch(g_sndPorta3D, 0.96f);
+                PlaySound(g_sndPorta3D);
+            }
+            g_portaAnimTimer = 0.22f;
+            g_portaDestPendente = proxPorta;
+            g_portaAlvoPos = s_mousePendPos;
             return res;
         } else if (s_mousePendTipo == 3 && proxSusp == s_mousePendIdx) {
             Vector3 sp = { 0 };
@@ -2005,6 +2196,54 @@ void Terreo3DRender(float tempo) {
     g_player.isFemale = GameStateIsPlayerFemale();
     if (!DevPrimeiraPessoaAtiva()) {
         PlayerCharacterDraw3D(&g_player, g_camAtual.position);
+    }
+
+    // Seta guiando flutuante acima do player (aponta para evidencia, suspeito, elevador ou porta)
+    if (SettingsGetSetaGuiando()) {
+        Vector3 alvo = { 0 };
+        bool temAlvo = false;
+        float bestD = 1e9f;
+        for (int i = 0; i < def->numInteractables; i++) {
+            const SalaInteractable *it = &def->interactables[i];
+            if (!it->id || strncmp(it->id, "ev_", 3) != 0) continue;
+            if (!EvidenciaDisponivelPorId(it->id)) continue;
+            float d = hypotf(it->position.x - g_player.position.x, it->position.z - g_player.position.z);
+            if (d < bestD) { bestD = d; alvo = it->position; temAlvo = true; }
+        }
+        if (!temAlvo) {
+            for (int s = 0; s < 3; s++) {
+                if (!g_suspeitosNaSala[s]) continue;
+                Vector3 sp = { 0 };
+                PosicaoSuspeitoNaSala(g_salaAtual, s, &sp, NULL, NULL);
+                float d = hypotf(sp.x - g_player.position.x, sp.z - g_player.position.z);
+                if (d < bestD) { bestD = d; alvo = sp; temAlvo = true; }
+            }
+        }
+        if (!temAlvo) {
+            for (int i = 0; i < def->numInteractables; i++) {
+                if (def->interactables[i].id && strcmp(def->interactables[i].id, "elevador") == 0) {
+                    alvo = def->interactables[i].position; temAlvo = true; break;
+                }
+            }
+        }
+        if (!temAlvo && def->numPortas > 0) {
+            for (int i = 0; i < def->numPortas; i++) {
+                float d = hypotf(def->portas[i].triggerCenter.x - g_player.position.x, def->portas[i].triggerCenter.z - g_player.position.z);
+                if (d < bestD) { bestD = d; alvo = def->portas[i].triggerCenter; temAlvo = true; }
+            }
+        }
+        if (temAlvo) {
+            float dx = alvo.x - g_player.position.x;
+            float dz = alvo.z - g_player.position.z;
+            float ang = atan2f(dx, dz) * RAD2DEG;
+            float bob = sinf(tempo * 5.0f) * 0.06f;
+            rlPushMatrix();
+            rlTranslatef(g_player.position.x, g_player.position.y + 2.15f + bob, g_player.position.z);
+            rlRotatef(ang, 0.0f, 1.0f, 0.0f);
+            DrawCylinderEx((Vector3){ 0.0f, 0.0f, -0.18f }, (Vector3){ 0.0f, 0.0f, 0.06f }, 0.035f, 0.035f, 6, (Color){ 255, 224, 48, 255 });
+            DrawCylinderEx((Vector3){ 0.0f, 0.0f,  0.04f }, (Vector3){ 0.0f, 0.0f, 0.24f }, 0.095f, 0.005f, 8, (Color){ 255, 240, 120, 255 });
+            rlPopMatrix();
+        }
     }
 
     EndMode3D();

@@ -183,9 +183,18 @@ void  TerreoElevador(Vector3 pos, float rotYDeg);
 void  TerreoRackServidor(Vector3 pos, float rotYDeg);
 void  TerreoRoboPrototipo(Vector3 pos, float rotYDeg);
 void  TerreoEvidenciaBrilhante(Vector3 pos, float tempo, int tipoModelo);
+void  TerreoGabinetePC(Vector3 pos, float rotYDeg);
+void  TerreoGeladeira(Vector3 pos, float rotYDeg);
+void  TerreoCafeteira(Vector3 pos, float rotYDeg);
+void  TerreoMicroondas(Vector3 pos, float rotYDeg);
+void  TerreoDesenharNPCAtividade(int variantId, int ativ, Vector3 pos, float yawDeg, float tempo);
+void  Terreo3DTriggerPaperPickup(Vector3 paperPos, float duracao);
+void  Terreo3DTriggerPaperDrop(Vector3 paperPos, float duracao);
+void  Terreo3DSetGuiaInfo(bool suspeitoNaSala, int andarAlvo);
 
 // Ciclo de vida e loop da cena 3D do Terreo
 void Terreo3DInit(int largura, int altura);
+void Terreo3DSetViewportSize(int largura, int altura);
 void Terreo3DUnload(void);
 void Terreo3DDefinirSala(TerreoSalaId sala, TerreoDestino vindoDe);
 void Terreo3DSetEvidenciaAtiva(bool evRelatoriosAtiva);

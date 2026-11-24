@@ -115,8 +115,15 @@ static void DesenharLanchonete(float tempo, bool evRelatoriosAtiva) {
                 (Vector3){ 0.16f, LAN_WALL_H, d }, 0.32f, 0.36f, 0.38f, 0.12f);
 
     // Portas de vidro transparentes na parede direita (bem separadas: Jardim ao fundo, Recepcao a frente)
+    // + pequena porta decorativa de cozinha/preparo na parede direita (sem interacao/acesso)
     TerreoPortaModelo((Vector3){ LAN_MAX_X - 0.04f, 0.0f,  4.20f }, -90.0f, PORTA_TIPO_VIDRO);
     TerreoPortaModelo((Vector3){ LAN_MAX_X - 0.04f, 0.0f, -4.20f }, -90.0f, PORTA_TIPO_VIDRO);
+    rlPushMatrix();
+    rlTranslatef(LAN_MAX_X - 0.04f, 0.0f, -1.75f);
+    rlRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
+    rlScalef(0.76f, 0.88f, 1.0f);
+    TerreoPortaModelo((Vector3){ 0.0f, 0.0f, 0.0f }, 0.0f, PORTA_TIPO_ESCRITORIO);
+    rlPopMatrix();
 
     // TVs corporativas na lanchonete (parede do fundo e parede direita entre as portas)
     TerreoTV((Vector3){ -0.35f, 2.05f, LAN_MIN_Z + 0.08f },   0.0f, tempo);
@@ -136,11 +143,11 @@ static void DesenharLanchonete(float tempo, bool evRelatoriosAtiva) {
     // Vitrines, caixa e cafeteira sobre a bancada vertical
     TerreoCaixa((Vector3){ -4.00f, 1.28f,  2.35f }, (Vector3){ 0.48f, 0.40f, 1.45f }, 0.80f, 0.72f, 0.66f, 0.20f);
     TerreoCaixa((Vector3){ -4.00f, 1.22f, -0.25f }, (Vector3){ 0.34f, 0.28f, 0.36f }, 0.22f, 0.18f, 0.16f, 0.35f);
-    TerreoCaixa((Vector3){ -4.10f, 1.30f, -2.85f }, (Vector3){ 0.44f, 0.48f, 0.56f }, 0.28f, 0.20f, 0.18f, 0.12f);
+    TerreoCafeteira((Vector3){ -4.10f, 1.09f, -2.85f }, 90.0f);
 
-    // 2 vendedores atras da bancada
-    TerreoSilhuetaSombra((Vector3){ -4.95f, 0.0f, -1.85f }, 90.0f, false);
-    TerreoSilhuetaSombra((Vector3){ -4.95f, 0.0f,  1.75f }, 90.0f, false);
+    // 2 trabalhadores atras da bancada: um cansado e outro mexendo no caixa
+    TerreoDesenharNPCAtividade(1, 8 /* NPC_ATIV_CANSADO */, (Vector3){ -4.90f, 0.0f, -1.85f }, 90.0f, tempo);
+    TerreoDesenharNPCAtividade(3, 9 /* NPC_ATIV_CAIXA */,   (Vector3){ -4.85f, 0.0f, -0.25f }, 90.0f, tempo);
 
     // 6 banquinhos alinhados ao longo da bancada vertical
     for (int b = 0; b < 6; b++) {

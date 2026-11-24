@@ -54,6 +54,14 @@ bool SettingsGetDevUnlockUpperFloors(void);
 void SettingsSetDevUnlockUpperFloors(bool ligado);
 bool SettingsGetDevFirstPerson(void);
 void SettingsSetDevFirstPerson(bool ligado);
+bool SettingsGetDevExpanded3D(void);
+void SettingsSetDevExpanded3D(bool ligado);
+bool SettingsGetDevDisable2D(void);
+void SettingsSetDevDisable2D(bool ligado);
+bool SettingsGetDevDisable3D(void);
+void SettingsSetDevDisable3D(bool ligado);
+bool SettingsGetSetaGuiando(void);
+void SettingsSetSetaGuiando(bool ligado);
 
 // Reinicio completo da aplicacao (usado pelo botao Dev Mode)
 void SettingsRequestAppRestart(void);

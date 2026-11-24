@@ -88,11 +88,20 @@ void PlayerCharacterInit(PlayerCharacter *p, Vector3 startPos, float startYaw) {
     p->facingYaw         = startYaw;
     p->walkCycle         = 0.0f;
     p->moveBlend         = 0.0f;
+    p->runBlend          = 0.0f;
     p->idleTime          = 0.0f;
     p->interactTimer     = 0.0f;
     p->interactDur       = 0.42f;
     p->interactType      = PLAYER_ANIM_NONE;
+    p->interactStartPos  = startPos;
+    p->interactSeatPos   = startPos;
+    p->interactLookPos   = startPos;
     p->computerExitTimer = 0.0f;
+    p->moveTarget        = startPos;
+    p->moveGoalFinal     = startPos;
+    p->hasMoveTarget     = false;
+    p->mouseRunToggle    = false;
+    p->stuckTimer        = 0.0f;
     p->isMoving          = false;
     p->isFemale          = false;
 }
@@ -165,6 +174,32 @@ void PlayerCharacterTriggerComputerExit(PlayerCharacter *p) {
     p->computerExitTimer = 0.72f;
 }
 
+void PlayerCharacterTriggerPaperPickup(PlayerCharacter *p, Vector3 paperPos, float duracao) {
+    if (!p) return;
+    p->interactStartPos = p->position;
+    p->interactLookPos  = paperPos;
+    float dx = p->position.x - paperPos.x;
+    float dz = p->position.z - paperPos.z;
+    float dist = hypotf(dx, dz);
+    float standDist = 0.56f;
+    if (dist > 0.05f) {
+        p->interactSeatPos = (Vector3){
+            paperPos.x + (dx / dist) * standDist,
+            p->position.y,
+            paperPos.z + (dz / dist) * standDist
+        };
+    } else {
+        p->interactSeatPos = p->position;
+    }
+    p->interactType  = PLAYER_ANIM_PAPER_WALK;
+    p->interactDur   = (duracao > 0.1f) ? duracao : 0.72f;
+    p->interactTimer = p->interactDur;
+}
+
+void PlayerCharacterTriggerPaperDrop(PlayerCharacter *p, Vector3 paperPos, float duracao) {
+    PlayerCharacterTriggerInteractEx(p, paperPos, PLAYER_ANIM_PAPER, (duracao > 0.1f) ? duracao : 0.45f);
+}
+
 float PlayerCharacterGetChairPull(const PlayerCharacter *p, Vector3 chairPos) {
     if (!p) return 0.0f;
     float dx = chairPos.x - p->interactSeatPos.x;
@@ -211,11 +246,24 @@ void PlayerCharacterUpdate(PlayerCharacter *p,
             p->moveBlend = 0.0f;
         } else {
             float u = 1.0f - (p->computerExitTimer / 0.72f);
-            float stepOut = Clamp((u - 0.38f) / 0.62f, 0.0f, 1.0f);
+            float stepOut = Clamp((u - 0.36f) / 0.64f, 0.0f, 1.0f);
             float smooth = stepOut * stepOut * (3.0f - 2.0f * stepOut);
-            p->position.x = p->interactSeatPos.x + (p->interactStartPos.x - p->interactSeatPos.x) * smooth;
-            p->position.z = p->interactSeatPos.z + (p->interactStartPos.z - p->interactSeatPos.z) * smooth;
-            if (u > 0.38f) {
+            // Sai suavemente para o lado da cadeira (sem pular de volta para a ultima posicao)
+            float fx = p->interactLookPos.x - p->interactSeatPos.x;
+            float fz = p->interactLookPos.z - p->interactSeatPos.z;
+            float fl = hypotf(fx, fz);
+            float sideX = (fl > 1e-4f) ? (-fz / fl) : 1.0f;
+            float sideZ = (fl > 1e-4f) ? ( fx / fl) : 0.0f;
+            float sideExitX = Clamp(p->interactSeatPos.x + sideX * 0.56f,
+                                    roomBoundsXZ.x + p->radius, roomBoundsXZ.x + roomBoundsXZ.width - p->radius);
+            float sideExitZ = Clamp(p->interactSeatPos.z + sideZ * 0.56f,
+                                    roomBoundsXZ.y + p->radius, roomBoundsXZ.y + roomBoundsXZ.height - p->radius);
+            p->position.x = p->interactSeatPos.x + (sideExitX - p->interactSeatPos.x) * smooth;
+            p->position.z = p->interactSeatPos.z + (sideExitZ - p->interactSeatPos.z) * smooth;
+            if (u > 0.36f) {
+                float exitYaw = atan2f(sideExitX - p->interactSeatPos.x, sideExitZ - p->interactSeatPos.z);
+                float diffE = WrapAngleRad(exitYaw - p->facingYaw);
+                p->facingYaw = WrapAngleRad(p->facingYaw + diffE * (1.0f - expf(-12.0f * dt)));
                 p->walkCycle += dt * 7.5f;
                 if (p->walkCycle > 2.0f * PI) p->walkCycle -= 2.0f * PI;
                 p->moveBlend = sinf(stepOut * PI) * 0.65f;
@@ -225,6 +273,34 @@ void PlayerCharacterUpdate(PlayerCharacter *p,
         }
     }
     bool inComputerWalk = false;
+    if (p->interactType == PLAYER_ANIM_PAPER_WALK && p->interactTimer > 0.0f && p->interactDur > 0.01f) {
+        float u = 1.0f - (p->interactTimer / p->interactDur);
+        if (u < 0.55f) {
+            inComputerWalk = true;
+            float w = Clamp(u / 0.55f, 0.0f, 1.0f);
+            float smooth = w * w * (3.0f - 2.0f * w);
+            float dxW = p->interactSeatPos.x - p->interactStartPos.x;
+            float dzW = p->interactSeatPos.z - p->interactStartPos.z;
+            p->position.x = p->interactStartPos.x + dxW * smooth;
+            p->position.z = p->interactStartPos.z + dzW * smooth;
+            if (hypotf(dxW, dzW) > 0.05f) {
+                float walkYaw = atan2f(dxW, dzW);
+                float diffW = WrapAngleRad(walkYaw - p->facingYaw);
+                p->facingYaw = WrapAngleRad(p->facingYaw + diffW * (1.0f - expf(-12.0f * dt)));
+                p->walkCycle += dt * 8.5f;
+                if (p->walkCycle > 2.0f * PI) p->walkCycle -= 2.0f * PI;
+                p->moveBlend = sinf(w * PI) * 0.75f;
+            }
+        } else {
+            p->position.x = p->interactSeatPos.x;
+            p->position.z = p->interactSeatPos.z;
+            p->moveBlend *= (1.0f - expf(-14.0f * dt));
+            float targetYaw = atan2f(p->interactLookPos.x - p->interactSeatPos.x,
+                                     p->interactLookPos.z - p->interactSeatPos.z);
+            float diffYaw = WrapAngleRad(targetYaw - p->facingYaw);
+            p->facingYaw = WrapAngleRad(p->facingYaw + diffYaw * (1.0f - expf(-12.0f * dt)));
+        }
+    }
     if (p->interactType == PLAYER_ANIM_COMPUTER && p->interactTimer > 0.0f && p->interactDur > 0.01f) {
         float u = 1.0f - (p->interactTimer / p->interactDur);
         if (u < 0.45f) {
@@ -1549,8 +1625,8 @@ static void DrawContextualHuman(int styleId, bool fem, Vector3 pos, float yawDeg
 
         if (ativ == NPC_ATIV_COMPUTADOR) {
             float typeOsc = sinf(tempo * 9.5f + (float)side * 2.2f);
-            armAng   = -36.0f + typeOsc * 2.5f;
-            elbowAng = -62.0f + typeOsc * 5.0f;
+            armAng   = -56.0f + typeOsc * 2.0f;
+            elbowAng = -38.0f + typeOsc * 4.0f;
             armYaw   = (float)side * -14.0f;
         } else if (ativ == NPC_ATIV_COMENDO) {
             if (side > 0) {
@@ -1574,14 +1650,50 @@ static void DrawContextualHuman(int styleId, bool fem, Vector3 pos, float yawDeg
             }
         } else if (ativ == NPC_ATIV_CARREGANDO_PAPEIS) {
             float carryBob = sinf(tempo * 2.8f) * 1.5f;
-            armAng   = -32.0f + carryBob;
-            elbowAng = -82.0f;
-            armYaw   = (float)side * -22.0f;
+            armAng   = -38.0f + carryBob;
+            elbowAng = -76.0f;
+            armYaw   = (float)side * -26.0f;
         } else if (ativ == NPC_ATIV_DESCONFIADA) {
             // Postura executiva ereta e controlada: bracos cruzados / maos juntas a frente
             armAng   = -16.0f;
             elbowAng = -68.0f + sinf(tempo * 1.1f) * 1.0f;
             armYaw   = (float)side * -24.0f;
+        } else if (ativ == NPC_ATIV_CONVERSANDO) {
+            float talkOsc = sinf(tempo * 4.2f + (float)styleId * 1.3f + (float)side);
+            if (side > 0) {
+                armAng   = -28.0f + talkOsc * 14.0f;
+                elbowAng = -62.0f + talkOsc * 18.0f;
+                armYaw   = -18.0f;
+            } else {
+                armAng   = -16.0f - talkOsc * 8.0f;
+                elbowAng = -44.0f + talkOsc * 10.0f;
+                armYaw   = 14.0f;
+            }
+        } else if (ativ == NPC_ATIV_CANSADO) {
+            if (side > 0) {
+                armAng   = -44.0f + sinf(tempo * 1.4f) * 3.0f;
+                elbowAng = -92.0f;
+                armYaw   = -12.0f;
+            } else {
+                armAng   = -8.0f;
+                elbowAng = -16.0f;
+            }
+        } else if (ativ == NPC_ATIV_CAIXA) {
+            float tap = sinf(tempo * 8.0f + (float)side * 1.8f);
+            armAng   = -42.0f + tap * 3.0f;
+            elbowAng = -56.0f + tap * 6.0f;
+            armYaw   = (float)side * -14.0f;
+        } else if (ativ == NPC_ATIV_COCANDO_CABECA) {
+            if (side > 0) {
+                float scratch = sinf(tempo * 6.8f) * 6.0f;
+                armAng   = -118.0f + scratch;
+                elbowAng = -104.0f + scratch * 0.6f;
+                armYaw   = -18.0f;
+            } else {
+                armAng   = -12.0f;
+                elbowAng = -26.0f;
+                armYaw   = 8.0f;
+            }
         } else if (ativ == NPC_ATIV_SENTADO) {
             armAng   = -18.0f;
             elbowAng = -48.0f + sinf(phase) * 2.0f;
@@ -1618,10 +1730,10 @@ static void DrawContextualHuman(int styleId, bool fem, Vector3 pos, float yawDeg
     }
 
     if (ativ == NPC_ATIV_CARREGANDO_PAPEIS) {
-        // Pilha de papeis e pastas carregada por Arthur nos bracos
+        // Pilha de papeis e pastas carregada por Arthur nos bracos (alinhada com as maos)
         rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(torsoBase));
-        rlTranslatef(0.0f, -0.02f, 0.25f);
+        rlTranslatef(0.0f, -0.05f, 0.23f);
         rlRotatef(4.0f, 0.0f, 1.0f, 0.0f);
         DrawCube((Vector3){ 0.0f, 0.00f, 0.0f }, 0.28f, 0.025f, 0.22f, (Color){ 175, 164, 150, 255 });
         DrawCube((Vector3){ 0.01f, 0.025f, 0.0f }, 0.26f, 0.022f, 0.21f, (Color){ 238, 232, 222, 255 });
@@ -1828,6 +1940,22 @@ void PlayerCharacterDrawVariant3D(int variantId, PlayerPreviewAnim anim, Vector3
     }
 
     DrawBadgeDetails(torsoBase, 0.04f);
+
+    // Pequena mochila nas costas (exclusiva das variantes do Subsolo, nao no modelo principal)
+    {
+        float packBob = sinf(walkCycle * 2.0f) * 0.012f * blend;
+        float packTilt = sinf(walkCycle) * 4.0f * blend;
+        rlPushMatrix();
+        rlMultMatrixf(MatrixToFloat(torsoBase));
+        rlTranslatef(0.0f, 0.03f + packBob, -0.145f);
+        rlRotatef(packTilt, 0.0f, 0.0f, 1.0f);
+        DrawCube((Vector3){ 0.0f, 0.0f, 0.0f }, 0.20f, 0.25f, 0.09f, (Color){ 54, 48, 50, 255 });
+        DrawCubeWires((Vector3){ 0.0f, 0.0f, 0.0f }, 0.20f, 0.25f, 0.09f, (Color){ 20, 18, 20, 255 });
+        DrawCube((Vector3){ 0.0f, -0.05f, -0.045f }, 0.15f, 0.11f, 0.03f, (Color){ 78, 70, 72, 255 });
+        DrawCube((Vector3){ -0.075f, 0.03f, 0.06f }, 0.024f, 0.22f, 0.04f, (Color){ 36, 32, 34, 255 });
+        DrawCube((Vector3){  0.075f, 0.03f, 0.06f }, 0.024f, 0.22f, 0.04f, (Color){ 36, 32, 34, 255 });
+        rlPopMatrix();
+    }
 
     // Barra do sobretudo (longa em V0/V2, blazer curto em V1/V3)
     float coatSway = -sinf(walkCycle) * (10.5f * strideMult) * blend - (13.5f + 7.5f * runB) * blend - 18.0f * sitFactor;

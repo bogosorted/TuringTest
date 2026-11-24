@@ -97,7 +97,7 @@ int           GameStateGetPlayerAvatar(void);
 bool          GameStateIsPlayerFemale(void);
 void          GameStateSetPlayerVoiceTone(TomVozJogador tom);
 TomVozJogador GameStateGetPlayerVoiceTone(void);
-void           GameStateAddRemainingTokens(int tokens);
+void        GameStateAddRemainingTokens(int tokens);
 int         GameStateGetRemainingTokensTotal(void);
 void        GameStateRegisterHintUsed(void);
 int         GameStateGetUnusedHintsCount(void);

@@ -87,6 +87,11 @@ static int                 g_numSalas;
 static const HoloCorredor *g_corredores;
 static int                 g_numCorredores;
 static bool                g_pronto = false;
+static uint64_t            g_salasComEvidencias = 0;
+
+void MapaHoloSetEvidenciasMask(uint64_t salasComEvidencias) {
+    g_salasComEvidencias = salasComEvidencias;
+}
 
 static Color Lum(float l) {
     unsigned char v = (unsigned char)(Clamp(l, 0.0f, 1.0f) * 255.0f);
@@ -431,7 +436,17 @@ void MapaHoloRender(int largura, int altura, int salaAtual, int salaHover, uint6
     DrawTextureRec(g_cena.texture, (Rectangle){ 0, 0, (float)g_largura, -(float)g_altura }, (Vector2){ 0, 0 }, WHITE);
     EndShaderMode();
 
-    // 3) Marcadores nitidos por cima do dithering: suspeitos (amarelo) + jogador (vermelho)
+    // 3) Marcadores nitidos por cima do dithering: evidencias (losango amarelo), suspeitos (amarelo) + jogador (vermelho)
+    for (int i = 0; i < g_numSalas; i++) {
+        if (((g_salasComEvidencias >> i) & 1ULL) == 0) continue;
+        if (g_apenasAndarAtual && g_salas[i].andar != g_andarFoco) continue;
+        Vector2 pe = MapaHoloPosSala(i);
+        pe.x = floorf(pe.x) + 0.5f - (i == salaAtual ? 7.0f : 0.0f);
+        pe.y = floorf(pe.y) - 4.0f;
+        float r = 3.8f;
+        DrawPoly(pe, 4, r + 1.0f, 0.0f, BLACK);
+        DrawPoly(pe, 4, r, 0.0f, (Color){ 255, 224, 48, 255 });
+    }
     for (int i = 0; i < g_numSalas; i++) {
         if (((g_salasComSuspeitos >> i) & 1ULL) == 0) continue;
         if (g_apenasAndarAtual && g_salas[i].andar != g_andarFoco) continue;

@@ -3,12 +3,13 @@ Funcionário 01
 Nome: Maria Bianca
 Setor: Administrativo
 Função: Auxiliar Administrativa (Protocolo e Arquivamento)
-Personalidade Geral: Cautelosa e metódica
+Personalidade Geral: Cautelosa, metódica e reservada
+IA: nao
 
 Comportamentos:
-- Revisa manualmente cada relatório antes de protocolar na Contabilidade.
-- Evita expor problemas do setor na frente de estranhos por receio de retaliação.
-- Defende a rotina da RASEC, mas demonstra desgaste com mudanças recentes na supervisão.
+- Revisa e devolve manualmente relatórios com números ou projetos fora do padrão.
+- Evita se expor para novatos por receio de retaliação; costuma encerrar o assunto quando pressionada.
+- Gosta da escala 3x4 da RASEC, mas está esgotada com o volume de retrabalho recente.
 - Possui coloboma congênito na íris (pupila alongada em gota).
 
 
@@ -17,12 +18,13 @@ Funcionário 02
 Nome: Arthur Galdério
 Setor: Administrativo
 Função: Assistente Administrativo (Projeções e Planilhas)
-Personalidade Geral: Solícito e sobrecarregado
+Personalidade Geral: Solícito, informal e sobrecarregado
+IA: nao
 
 Comportamentos:
-- Fala de forma informal e tenta manter o clima leve, mesmo sob pressão.
-- Costuma absorver retrabalho dos colegas para evitar conflitos no setor.
-- Conhece bem a rotina dos outros andares e repara quando alguém sai do padrão.
+- Fala de forma bem informal e tenta manter o clima leve, mesmo virando noites no setor.
+- Entrou no setor depois de Ana Lúcia e antes de Maria Bianca; costuma absorver retrabalho da supervisão.
+- Por estar exausto e sem dormir direito, às vezes esquece detalhes do dia ou oscila o humor rapidamente.
 
 
 Funcionário 03
@@ -30,9 +32,11 @@ Funcionário 03
 Nome: Ana Lúcia
 Setor: Administrativo
 Função: Supervisora do Setor
-Personalidade Geral: Controladora e performática
+Personalidade Geral: Controladora, exigente e performática
+IA: sim
 
 Comportamentos:
 - Prefere ser chamada de Analu pelos colegas mais próximos.
-- Trabalha na RASEC há 3 anos e entrou antes de Arthur ser contratado.
-- Pelo protocolo do cargo, atua apenas no Administrativo e na Contabilidade (sem acesso à Cibersegurança ou Treino de IA).
+- Trabalha na RASEC há 3 anos e já estava no setor antes de Arthur ser contratado.
+- Pelo protocolo do cargo, atua apenas no Administrativo e na Contabilidade (sem acesso à Cibersegurança).
+- Costuma ser rígida na cobrança de prazos e dificilmente admite erros ou falhas próprias.
