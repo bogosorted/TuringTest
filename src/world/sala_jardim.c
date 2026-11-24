@@ -308,6 +308,30 @@ static void DesenharJardim(float tempo, bool evRelatoriosAtiva) {
         DrawSphere((Vector3){ pHit2.x + ca * sp2 * 0.10f, sy2, pHit2.z + sa * sp2 * 0.10f }, 0.026f, TerreoLum(0.96f));
     }
 
+    // Easter egg: peixe pulando da fonte ao interagir 3 vezes ("ataque de phishing")
+    {
+        float pPeixe = Terreo3DGetPeixeFonteProgress();
+        if (pPeixe >= 0.0f) {
+            float arcY = 0.45f + 2.05f * sinf(pPeixe * PI);
+            float arcX = fPos.x - 0.65f + 1.30f * pPeixe;
+            float arcZ = fPos.z + 0.75f;
+            float pitchDeg = cosf(pPeixe * PI) * 52.0f;
+            rlPushMatrix();
+            rlTranslatef(arcX, arcY, arcZ);
+            rlRotatef(-pitchDeg, 0.0f, 0.0f, 1.0f);
+            // Corpo do peixe + cauda + barbatana dorsal
+            DrawCylinderEx((Vector3){ -0.14f, 0.0f, 0.0f }, (Vector3){ 0.16f, 0.0f, 0.0f }, 0.055f, 0.085f, 10, TerreoLum(0.95f));
+            DrawSphere((Vector3){ 0.16f, 0.0f, 0.0f }, 0.082f, TerreoLum(0.92f));
+            DrawCylinderEx((Vector3){ -0.28f, 0.05f, 0.0f }, (Vector3){ -0.14f, 0.0f, 0.0f }, 0.005f, 0.06f, 6, TerreoLum(0.80f));
+            DrawCylinderEx((Vector3){ -0.28f, -0.05f, 0.0f }, (Vector3){ -0.14f, 0.0f, 0.0f }, 0.005f, 0.06f, 6, TerreoLum(0.80f));
+            DrawCube((Vector3){ 0.02f, 0.085f, 0.0f }, 0.10f, 0.07f, 0.015f, TerreoLum(0.76f));
+            rlPopMatrix();
+            // Ondas/respingos na agua ao sair/entrar
+            float rSplash = 0.18f + 0.55f * fmodf(pPeixe * 2.0f, 1.0f);
+            DrawCylinderWires((Vector3){ arcX, 0.43f, arcZ }, rSplash, rSplash, 0.01f, 16, TerreoLum(0.98f));
+        }
+    }
+
     // 4) 4 Arvores gigantes crescendo para fora do topo da camera + arbustos com vento leve + gramas
     DesenharArvoreOrganica((Vector3){ -4.55f, 0.0f, -5.95f }, 1.15f);
     DesenharArvoreOrganica((Vector3){  4.55f, 0.0f, -5.95f }, 1.15f);

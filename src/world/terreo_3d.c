@@ -70,6 +70,10 @@ static TerreoDestino        g_portaDestPendente = TERREO_DEST_NENHUM;
 static Vector3              g_portaAlvoPos = { 0 };
 static bool                 g_guiaTemAlgoNoAndar = true;
 static uint64_t             g_guiaSalasAlvoMask  = 0ULL;
+static uint64_t             g_guiaEvSalasMask    = 0ULL;
+static uint64_t             g_guiaSuspSalasMask  = 0ULL;
+static bool                 g_suspsComDialogo[3] = { true, true, true };
+static float                g_peixeFonteTimer    = -1.0f;
 
 static Sound CriarSomProcedural3D(int sampleCount, float freqIni, float freqFim, float noiseMix, float amp) {
     Wave w = { 0 };
@@ -101,12 +105,12 @@ static Sound CriarSomProcedural3D(int sampleCount, float freqIni, float freqFim,
 
 static bool EvidenciaDisponivelPorId(const char *id) {
     if (!id) return true;
-    if (strcmp(id, "ev_maria_queixa") == 0)     return GameStateEvidenciaDisponivelHoje(0, "EV-01");
-    if (strcmp(id, "ev_maria_devolvidos") == 0) return GameStateEvidenciaDisponivelHoje(0, "EV-02");
-    if (strcmp(id, "ev_arthur_sobrecarga") == 0)return GameStateEvidenciaDisponivelHoje(1, "EV-03");
-    if (strcmp(id, "ev_arthur_demissao") == 0)  return GameStateEvidenciaDisponivelHoje(1, "EV-04");
-    if (strcmp(id, "ev_analu_terminal") == 0)   return GameStateEvidenciaDisponivelHoje(2, "EV-05");
-    if (strcmp(id, "ev_jardim_sombras") == 0)   return GameStateEvidenciaDisponivelHoje(2, "EV-06");
+    if (strcmp(id, "ev_maria_queixa") == 0)     return GameStateEvidenciaDisponivelHoje(0, "EV-01") && !GameStateTemEvidencia(0, "EV-01");
+    if (strcmp(id, "ev_maria_devolvidos") == 0) return GameStateEvidenciaDisponivelHoje(0, "EV-02") && !GameStateTemEvidencia(0, "EV-02");
+    if (strcmp(id, "ev_arthur_sobrecarga") == 0)return GameStateEvidenciaDisponivelHoje(1, "EV-03") && !GameStateTemEvidencia(1, "EV-03");
+    if (strcmp(id, "ev_arthur_demissao") == 0)  return GameStateEvidenciaDisponivelHoje(1, "EV-04") && !GameStateTemEvidencia(1, "EV-04");
+    if (strcmp(id, "ev_analu_terminal") == 0)   return GameStateEvidenciaDisponivelHoje(2, "EV-05") && !GameStateTemEvidencia(2, "EV-05");
+    if (strcmp(id, "ev_jardim_sombras") == 0)   return GameStateEvidenciaDisponivelHoje(2, "EV-06") && !GameStateTemEvidencia(2, "EV-06");
     return true;
 }
 
@@ -984,7 +988,7 @@ void Terreo3DInit(int largura, int altura) {
     g_passoTimer = 0.0f;
     g_portaAnimTimer = 0.0f;
     g_portaDestPendente = TERREO_DEST_NENHUM;
-    if (g_sndPasso3D.frameCount == 0) g_sndPasso3D = CriarSomProcedural3D(980, 150.0f, 70.0f, 0.55f, 0.35f);
+    if (g_sndPasso3D.frameCount == 0) g_sndPasso3D = CriarSomProcedural3D(720, 82.0f, 36.0f, 0.16f, 0.20f);
     if (g_sndPorta3D.frameCount == 0) g_sndPorta3D = CriarSomProcedural3D(2400, 220.0f, 110.0f, 0.40f, 0.45f);
     g_pronto = true;
 }
@@ -1371,9 +1375,25 @@ void Terreo3DTriggerPaperDrop(Vector3 paperPos, float duracao) {
     PlayerCharacterTriggerPaperDrop(&g_player, paperPos, duracao);
 }
 
-void Terreo3DSetGuiaInfo(bool temAlgoNoAndar, uint64_t salasAlvoMask) {
-    g_guiaTemAlgoNoAndar = temAlgoNoAndar;
-    g_guiaSalasAlvoMask  = salasAlvoMask;
+void Terreo3DSetGuiaInfo(uint64_t evSalasMask, uint64_t suspSalasMask, const bool suspsComDialogo[3]) {
+    g_guiaEvSalasMask    = evSalasMask;
+    g_guiaSuspSalasMask  = suspSalasMask;
+    g_guiaSalasAlvoMask  = evSalasMask | suspSalasMask;
+    g_guiaTemAlgoNoAndar = (g_guiaSalasAlvoMask != 0ULL);
+    for (int i = 0; i < 3; i++) {
+        g_suspsComDialogo[i] = suspsComDialogo ? suspsComDialogo[i] : true;
+    }
+}
+
+void Terreo3DDispararPeixeFonte(void) {
+    g_peixeFonteTimer = 0.0f;
+}
+
+float Terreo3DGetPeixeFonteProgress(void) {
+    if (g_peixeFonteTimer < 0.0f) return -1.0f;
+    float p = g_peixeFonteTimer / 1.45f;
+    if (p > 1.0f) return -1.0f;
+    return p;
 }
 
 static TerreoSalaId SalaPorDestino3D(TerreoDestino d) {
@@ -1772,6 +1792,10 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
 
     if (dt < 0.0f) dt = 0.0f;
     if (dt > 0.05f) dt = 0.05f;
+    if (g_peixeFonteTimer >= 0.0f) {
+        g_peixeFonteTimer += dt;
+        if (g_peixeFonteTimer >= 1.45f) g_peixeFonteTimer = -1.0f;
+    }
     if (g_cooldownEntrada > 0.0f) g_cooldownEntrada -= dt;
     g_mouseSobreInteragivel = false;
     g_hasProxInteragivel = false;
@@ -1867,8 +1891,8 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
         if (g_passoTimer >= intervalo) {
             g_passoTimer = 0.0f;
             if (g_sndPasso3D.frameCount > 0) {
-                SetSoundVolume(g_sndPasso3D, 0.14f * SettingsGetSfxVolume());
-                SetSoundPitch(g_sndPasso3D, 0.92f + ((float)GetRandomValue(0, 16) / 100.0f));
+                SetSoundVolume(g_sndPasso3D, 0.06f * SettingsGetSfxVolume());
+                SetSoundPitch(g_sndPasso3D, 0.94f + ((float)GetRandomValue(0, 12) / 100.0f));
                 PlaySound(g_sndPasso3D);
             }
         }
@@ -2366,11 +2390,13 @@ void Terreo3DRender(float tempo) {
         PlayerCharacterDraw3D(&g_player, g_camAtual.position);
     }
 
-    // Seta guiando flutuante acima do player (aponta para evidencia, suspeito, elevador ou porta)
+    // Seta guiando flutuante acima do player
+    // Prioridade: 1) Evidencia na sala -> 2) Evidencia no andar -> 3) Suspeito na sala (com dialogo) -> 4) Suspeito no andar -> 5) Elevador
     if (SettingsGetSetaGuiando()) {
         Vector3 alvo = { 0 };
         bool temAlvo = false;
         float bestD = 1e9f;
+        // 1) Evidencia nao coletada na sala atual
         for (int i = 0; i < def->numInteractables; i++) {
             const SalaInteractable *it = &def->interactables[i];
             if (!it->id || strncmp(it->id, "ev_", 3) != 0) continue;
@@ -2378,23 +2404,34 @@ void Terreo3DRender(float tempo) {
             float d = hypotf(it->position.x - g_player.position.x, it->position.z - g_player.position.z);
             if (d < bestD) { bestD = d; alvo = it->position; temAlvo = true; }
         }
+        // 2) Evidencia disponivel em outra sala do andar atual
+        if (!temAlvo && g_guiaEvSalasMask != 0ULL && def->numPortas > 0) {
+            int pIdx = GuiaEncontrarPortaBFS(g_salaAtual, g_guiaEvSalasMask, false);
+            if (pIdx >= 0 && pIdx < def->numPortas) {
+                alvo = def->portas[pIdx].triggerCenter;
+                temAlvo = true;
+            }
+        }
+        // 3) Suspeito na sala atual que ainda tem dialogo disponivel
         if (!temAlvo) {
             for (int s = 0; s < 3; s++) {
-                if (!g_suspeitosNaSala[s]) continue;
+                if (!g_suspeitosNaSala[s] || !g_suspsComDialogo[s]) continue;
                 Vector3 sp = { 0 };
                 PosicaoSuspeitoNaSala(g_salaAtual, s, &sp, NULL, NULL);
                 float d = hypotf(sp.x - g_player.position.x, sp.z - g_player.position.z);
                 if (d < bestD) { bestD = d; alvo = sp; temAlvo = true; }
             }
         }
-        if (!temAlvo && g_guiaTemAlgoNoAndar && def->numPortas > 0) {
-            int pIdx = GuiaEncontrarPortaBFS(g_salaAtual, g_guiaSalasAlvoMask, false);
+        // 4) Suspeito em outra sala do andar atual com dialogo disponivel
+        if (!temAlvo && g_guiaSuspSalasMask != 0ULL && def->numPortas > 0) {
+            int pIdx = GuiaEncontrarPortaBFS(g_salaAtual, g_guiaSuspSalasMask, false);
             if (pIdx >= 0 && pIdx < def->numPortas) {
                 alvo = def->portas[pIdx].triggerCenter;
                 temAlvo = true;
             }
         }
-        if (!temAlvo && !g_guiaTemAlgoNoAndar) {
+        // 5) Elevador (sempre por ultimo)
+        if (!temAlvo) {
             for (int i = 0; i < def->numInteractables; i++) {
                 if (def->interactables[i].id && strcmp(def->interactables[i].id, "elevador") == 0) {
                     alvo = def->interactables[i].position; temAlvo = true; break;

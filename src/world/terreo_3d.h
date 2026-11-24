@@ -197,7 +197,9 @@ void  TerreoMicroondas(Vector3 pos, float rotYDeg);
 void  TerreoDesenharNPCAtividade(int variantId, int ativ, Vector3 pos, float yawDeg, float tempo);
 void  Terreo3DTriggerPaperPickup(Vector3 paperPos, float duracao);
 void  Terreo3DTriggerPaperDrop(Vector3 paperPos, float duracao);
-void  Terreo3DSetGuiaInfo(bool temAlgoNoAndar, uint64_t salasAlvoMask);
+void  Terreo3DSetGuiaInfo(uint64_t evSalasMask, uint64_t suspSalasMask, const bool suspsComDialogo[3]);
+void  Terreo3DDispararPeixeFonte(void);
+float Terreo3DGetPeixeFonteProgress(void);
 
 // Ciclo de vida e loop da cena 3D do Terreo
 void Terreo3DInit(int largura, int altura);

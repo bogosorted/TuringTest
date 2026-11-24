@@ -54,6 +54,10 @@ static Sound     g_sndPassos;               // passos ao trocar de local pelas s
 static Music     g_musLanchonete          = { 0 };
 static bool      g_musLanchoneteCarregada = false;
 static float     g_lanchoneteVol          = 0.0f;
+static Sound     g_sndSinoRotacao         = { 0 };
+static float     g_rotacaoSuspeitosTimer  = 0.0f;
+static char      g_avisoRotacaoTexto[96]  = "";
+static float     g_avisoRotacaoTimer      = 0.0f;
 static Sound     g_sndElevadorPlim;         // som "Plim" ao apertar o botao do elevador
 static Sound     g_sndElevadorChegou;       // som "Plim" mais agudo ao chegar no andar
 // Transicao entre locais: escurece, fica preto com os passos e clareia ja no destino
@@ -173,7 +177,8 @@ static char       g_paletaToastPendente[96] = "";
 static int        g_recepHall1Clicks        = 0;
 static int        g_camerasClicks           = 0;
 static bool       g_cafeteiraTokenGanho     = false;
-static bool       g_fonteTokenGanho         = false;
+static int        g_fonteClicks             = 0;
+static bool       g_phishingPopupAberto     = false;
 static int        g_andar3Tentativas        = 0;
 static bool       g_andar3DesbloqueadoSecreto = false;
 static bool       g_elevadorForcadoSair     = false;
@@ -1432,13 +1437,13 @@ static const bool CHECKLIST_CORRETO[3][NUM_CAIXAS] = {
 static uint64_t ObterMascaraSalasComEvidencia(void) {
     uint64_t mask = 0;
     if (GameStateEvidenciaDisponivelHoje(0, "EV-01") && !GameStateTemEvidencia(0, "EV-01")) {
-        mask |= (1ULL << (GameStateIs3DMode() ? LOCAL_COPA_1 : LOCAL_COPA));
+        mask |= (1ULL << (GameStateIs3DMode() ? LOCAL_ESCRITORIO : LOCAL_COPA));
     }
     if (GameStateEvidenciaDisponivelHoje(0, "EV-02") && !GameStateTemEvidencia(0, "EV-02")) {
         mask |= (1ULL << LOCAL_CONTABILIDADE_1);
     }
     if (GameStateEvidenciaDisponivelHoje(1, "EV-03") && !GameStateTemEvidencia(1, "EV-03")) {
-        mask |= (1ULL << LOCAL_ESCRITORIO);
+        mask |= (1ULL << (GameStateIs3DMode() ? LOCAL_ESCRITORIO_2 : LOCAL_ESCRITORIO));
     }
     if (GameStateEvidenciaDisponivelHoje(1, "EV-04") && !GameStateTemEvidencia(1, "EV-04")) {
         mask |= (1ULL << LOCAL_ARQUIVO_1);
@@ -5301,7 +5306,11 @@ void GameplaySceneResetDialogues(void) {
         g_recepHall1Clicks        = 0;
         g_camerasClicks           = 0;
         g_cafeteiraTokenGanho     = false;
-        g_fonteTokenGanho         = false;
+        g_fonteClicks             = 0;
+        g_phishingPopupAberto     = false;
+        g_rotacaoSuspeitosTimer   = 0.0f;
+        g_avisoRotacaoTimer       = 0.0f;
+        g_avisoRotacaoTexto[0]    = '\0';
         g_andar3Tentativas        = 0;
         g_andar3DesbloqueadoSecreto = false;
         g_elevadorForcadoSair     = false;
@@ -5759,6 +5768,14 @@ bool InitGameplayScene(void) {
                 samples[i] = (short)(mix * 32767.0f);
             }
             g_sndElevadorChegou = LoadSoundFromWave(w);
+            // Sino suave de rotacao de suspeitos (acorde leve 880Hz + 1760Hz)
+            for (int i = 0; i < frames; i++) {
+                float t = (float)i / (float)sr;
+                float env = expf(-t * 8.5f);
+                float mix = (sinf(2.0f * PI * 880.0f * t) * 0.55f + sinf(2.0f * PI * 1760.0f * t) * 0.25f) * env * 0.30f;
+                samples[i] = (short)(mix * 32767.0f);
+            }
+            g_sndSinoRotacao = LoadSoundFromWave(w);
             MemFree(samples);
         }
     }
@@ -6739,14 +6756,20 @@ static void DesenharDeepfake(void) {
         1.5f, corBorda
     );
     float ledPulso = 0.5f + 0.5f * sinf((float)GetTime() * 4.5f);
-    Rectangle rLed = ParaTela((Rectangle){ area.x + 11.0f * s, area.y + 11.5f * s, 2.6f * s, 2.6f * s });
+    Rectangle rLed = ParaTela((Rectangle){ area.x + 12.0f * s, area.y + 2.0f + hdrH * 0.5f, 2.6f * s, 2.6f * s });
     DrawCircleV((Vector2){ rLed.x, rLed.y }, rLed.height, Fade(corBranco, 0.55f + 0.45f * ledPulso));
-    DrawTextLeftAligned("SCANNER BIOMÉTRICO // DEEPFAKE", (Vector2){ area.x + 18.0f * s, area.y + 6.5f * s }, 8.0f * s, corBranco);
+    DrawTextInArea("SCANNER BIOMÉTRICO // DEEPFAKE",
+                   (Rectangle){ area.x + 20.0f * s, area.y + 2.0f, area.width - 42.0f * s, hdrH },
+                   7.5f * s, corBranco);
 
-    // Faixa de status do alvo
+    // Faixa de status do alvo (alinhamento uniforme na mesma linha)
     const char *nomeAlvo = (g_dialogLoaded && g_suspeitoAtual >= 0 && g_suspeitoAtual < 3) ? NOMES_SUSPEITOS[g_suspeitoAtual] : "---";
-    DrawTextLeftAligned(TextFormat("ALVO: %s", nomeAlvo), (Vector2){ area.x + 12.0f * s, area.y + 26.5f * s }, 7.5f * s, corClaro);
-    DrawTextInArea("[BIOMETRIA ATIVA]", (Rectangle){ area.x + area.width - 122.0f * s, area.y + 25.5f * s, 110.0f * s, 11.0f * s }, 7.0f * s, corBorda);
+    DrawTextInArea(TextFormat("ALVO: %s", nomeAlvo),
+                   (Rectangle){ area.x + 12.0f * s, area.y + 25.0f * s, 180.0f * s, 12.0f * s },
+                   7.5f * s, corClaro);
+    DrawTextInArea("[BIOMETRIA ATIVA]",
+                   (Rectangle){ area.x + area.width - 134.0f * s, area.y + 25.0f * s, 122.0f * s, 12.0f * s },
+                   7.5f * s, corBorda);
 
     Rectangle sRosto   = NoDeepfake(DEEPFAKE_SLOT_MAOS);
     Rectangle sRetina  = NoDeepfake(DEEPFAKE_SLOT_RETINA);
@@ -8133,7 +8156,7 @@ static void UpdateGameplay(void) {
                     g_transDestino = DestinoSeta(g_localAtual, g_setaHover);
                     g_transTempo = 0.0f;   // o local muda no meio da tela preta
                     if (g_sndPassos.frameCount > 0) {
-                        SetSoundVolume(g_sndPassos, 0.7f * SettingsGetSfxVolume());
+                        SetSoundVolume(g_sndPassos, 0.30f * SettingsGetSfxVolume());
                         PlaySound(g_sndPassos);
                     }
                     g_setaHover = -1;
@@ -8187,7 +8210,7 @@ static void UpdateGameplay(void) {
                     g_transDestino = dest;
                     g_transTempo = 0.0f;
                     if (g_sndPassos.frameCount > 0) {
-                        SetSoundVolume(g_sndPassos, 0.7f * SettingsGetSfxVolume());
+                        SetSoundVolume(g_sndPassos, 0.30f * SettingsGetSfxVolume());
                         PlaySound(g_sndPassos);
                     }
                     g_escadaHover = -1;
@@ -8396,10 +8419,15 @@ static void UpdateGameplay(void) {
                         DispararMonologoInterno("Olhar pra essa fonte, te enche de determinação... quê? Jogo errado?");
                         TentarDesbloquearPaleta("carmesim", "CARMESIM", false);
                     } else if (tRes.objetoId && strcmp(tRes.objetoId, "fonte_jardim") == 0) {
-                        if (!g_fonteTokenGanho) {
-                            g_fonteTokenGanho = true;
+                        g_fonteClicks++;
+                        if (g_fonteClicks == 1) {
                             global_tokens++;
                             DispararMonologoInterno("Ao observar o ambiente ao seu redor, você sente... algo... +1 Token");
+                        } else if (g_fonteClicks == 3) {
+                            if (global_tokens > 0) global_tokens--;
+                            Terreo3DDispararPeixeFonte();
+                            LimparMonologoInterno();
+                            g_phishingPopupAberto = true;
                         } else {
                             DispararMonologoInterno(tRes.flavorText);
                         }
@@ -8531,6 +8559,7 @@ static void ProcessarTeclaEsc(void) {
         else FecharInspecaoEv3D();
         return;
     }
+    if (g_phishingPopupAberto) { g_phishingPopupAberto = false; return; }
     if (g_mapaCompletoAberto)    { g_mapaCompletoAberto = false;    return; }
     if (g_evToastCount > 0)      { FecharPopupEvidenciaAtual();      return; }
     if (g_galeriaHoloAberta)     { g_galeriaHoloAberta = false;      return; }
@@ -8842,6 +8871,105 @@ static void DesenharRotuloObjetoInterativoSala(void) {
     DrawTextInArea(textoDica, tip, 8, (Color){ 255, 242, 230, 255 });
 }
 
+static bool SuspeitoTemDialogoDisponivel(int s) {
+    if (s < 0 || s >= 3 || !g_treesLoaded) return false;
+    if (g_chatBloqueado[s]) return false;
+    DialogChoice tmp[MAX_CHOICES];
+    return GetAvailableChoices(&g_trees[s], tmp) > 0;
+}
+
+static void AtualizarRotacaoSuspeitos(float dt) {
+    if (dt < 0.0f) dt = 0.0f;
+    if (dt > 0.05f) dt = 0.05f;
+    g_rotacaoSuspeitosTimer += dt;
+    if (g_rotacaoSuspeitosTimer < 180.0f) return;
+    g_rotacaoSuspeitosTimer = 0.0f;
+
+    bool modo3D = GameStateIs3DMode();
+    int dia = GameStateGetDay();
+    bool moveuAlguem = false;
+
+    for (int i = 0; i < 3; i++) {
+        // Nunca move um suspeito se o player esta na mesma sala que ele
+        if (g_suspeitoLocal[i] == g_localAtual) continue;
+
+        LocalRasec candidatos[NUM_LOCAIS];
+        int nCand = 0;
+        for (int l = 0; l < NUM_LOCAIS; l++) {
+            LocalRasec loc = (LocalRasec)l;
+            if (loc == g_localAtual) continue;       // nao aparece do nada na sala do player
+            if (loc == g_suspeitoLocal[i]) continue; // precisa realmente mudar de sala
+            if (modo3D) {
+                if (HOLO_SALAS[l].numPartes == 0 || HOLO_SALAS[l].escada) continue;
+            } else {
+                if (HOLO_SALAS_2D[l].numPartes == 0 || HOLO_SALAS_2D[l].escada) continue;
+            }
+            if (dia == 1 && (loc == LOCAL_ESCRITORIO || (!modo3D && loc == LOCAL_CANTINA))) continue;
+            bool ocupado = false;
+            for (int j = 0; j < 3; j++) {
+                if (j != i && g_suspeitoLocal[j] == loc) { ocupado = true; break; }
+            }
+            if (!ocupado) candidatos[nCand++] = loc;
+        }
+        if (nCand > 0) {
+            g_suspeitoLocal[i] = candidatos[GetRandomValue(0, nCand - 1)];
+            moveuAlguem = true;
+        }
+    }
+
+    if (moveuAlguem) {
+        if (g_sndSinoRotacao.frameCount > 0) {
+            SetSoundVolume(g_sndSinoRotacao, 0.28f * SettingsGetSfxVolume());
+            PlaySound(g_sndSinoRotacao);
+        }
+        snprintf(g_avisoRotacaoTexto, sizeof g_avisoRotacaoTexto, "Os suspeitos mudaram de setor...");
+        g_avisoRotacaoTimer = 4.2f;
+    }
+}
+
+static bool UpdatePhishingPopup(void) {
+    if (!g_phishingPopupAberto) return false;
+    Vector2 mouse = RayCanvasGetMousePosition();
+    Rectangle rBtn = { 268.0f, 206.0f, 104.0f, 22.0f };
+    bool hov = CheckCollisionPointRec(mouse, ParaTela(rBtn));
+    SetMouseCursor(hov ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+    if ((hov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) || IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_E)) {
+        TocarSomHover();
+        g_phishingPopupAberto = false;
+    }
+    return true;
+}
+
+static void DesenharPhishingPopup(void) {
+    if (!g_phishingPopupAberto) return;
+    Rectangle painel = { 155.0f, 110.0f, 330.0f, 130.0f };
+    Rectangle rBtn   = { 268.0f, 206.0f, 104.0f, 22.0f };
+    Color corFundo   = {  30,  27,  29, 250 };
+    Color corBorda   = { 189, 181, 168, 255 };
+    Color corBranco  = { 255, 242, 230, 255 };
+
+    DrawRectangleRec(GetTelaRect(), Fade(BLACK, 0.55f));
+    DrawRectangleRec(ParaTela((Rectangle){ painel.x + 4, painel.y + 4, painel.width, painel.height }), Fade(BLACK, 0.65f));
+    DrawRectangleRec(ParaTela(painel), corFundo);
+    DrawRectangleLinesEx(ParaTela(painel), 2.0f, corBorda);
+
+    DrawRectangleRec(ParaTela((Rectangle){ painel.x, painel.y, painel.width, 20.0f }), (Color){ 42, 38, 40, 255 });
+    DrawTextInArea("FONTE DO JARDIM // EVENTO", (Rectangle){ painel.x, painel.y, painel.width, 20.0f }, 8.5f, corBranco);
+
+    DrawTextWrappedLeftAligned(
+        "O que...? Um peixe pulou da fonte e pegou seu token? Isso foi um ataque de phishing...? -1 token",
+        (Vector2){ painel.x + 16.0f, painel.y + 34.0f },
+        painel.width - 32.0f,
+        9.5f,
+        corBranco
+    );
+
+    bool hov = CheckCollisionPointRec(RayCanvasGetMousePosition(), ParaTela(rBtn));
+    DrawRectangleRec(ParaTela(rBtn), hov ? (Color){ 96, 86, 88, 255 } : (Color){ 58, 52, 54, 255 });
+    DrawRectangleLinesEx(ParaTela(rBtn), 1.5f, hov ? corBranco : corBorda);
+    DrawTextInArea("ENTENDI", rBtn, 9.0f, corBranco);
+}
+
 void UpdateDrawGameplayScene(void) {
     // O mapa 3D vai para uma textura propria, entao precisa ser desenhado antes do
     // RayCanvasBegin (que pode estar desenhando o frame inteiro em outra textura)
@@ -8861,22 +8989,26 @@ void UpdateDrawGameplayScene(void) {
                 const HoloSala *hs = GameplayHoloSalasAtivas();
                 int andarAt = hs[g_localAtual].andar;
                 uint64_t evM = ObterMascaraSalasComEvidencia();
-                uint64_t salasAlvoMask = 0ULL;
+                uint64_t evSalasMask = 0ULL;
+                uint64_t suspSalasMask = 0ULL;
+                bool suspsComDialogo[3] = { false, false, false };
                 for (int s = 0; s < 3; s++) {
+                    suspsComDialogo[s] = SuspeitoTemDialogoDisponivel(s);
+                    if (!suspsComDialogo[s]) continue;
                     LocalRasec sLoc = g_suspeitoLocal[s];
                     if (sLoc >= 0 && sLoc < NUM_LOCAIS && hs[sLoc].andar == andarAt && LocalEhTerreo3D(sLoc)) {
                         TerreoSalaId sid = TerreoSalaPorLocal(sLoc);
-                        if (sid >= 0 && sid < TERREO_NUM_SALAS) salasAlvoMask |= (1ULL << (int)sid);
+                        if (sid >= 0 && sid < TERREO_NUM_SALAS) suspSalasMask |= (1ULL << (int)sid);
                     }
                 }
                 int nS = GameplayNumHoloSalasAtivas();
                 for (int idx = 0; idx < nS; idx++) {
                     if (((evM >> idx) & 1ULL) != 0 && hs[idx].andar == andarAt && LocalEhTerreo3D((LocalRasec)idx)) {
                         TerreoSalaId sid = TerreoSalaPorLocal((LocalRasec)idx);
-                        if (sid >= 0 && sid < TERREO_NUM_SALAS) salasAlvoMask |= (1ULL << (int)sid);
+                        if (sid >= 0 && sid < TERREO_NUM_SALAS) evSalasMask |= (1ULL << (int)sid);
                     }
                 }
-                Terreo3DSetGuiaInfo(salasAlvoMask != 0ULL, salasAlvoMask);
+                Terreo3DSetGuiaInfo(evSalasMask, suspSalasMask, suspsComDialogo);
             }
             Terreo3DRender((float)GetTime());
         }
@@ -8983,7 +9115,10 @@ void UpdateDrawGameplayScene(void) {
 
     // Inspecao 3D bloqueia apenas movimento do player e cliques de fundo, sem congelar o tempo
     bool inspecaoBloq = UpdateInspecaoEv3D();
-    if (!emTransicao && !g_mapaCompletoAberto && !UpdateEvPopup2D() && !UpdatePopupEvidencia() && !UpdateMenuElevador() && !UpdateConfirmarAbandonar() && !UpdateConfirmarAvancar() && !UpdateConfirmarFerramenta() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
+    if (!emTransicao && !g_dialogLoaded && !g_confirmarAbandonarRun && !g_phishingPopupAberto && !g_elevadorAberto) {
+        AtualizarRotacaoSuspeitos(GetFrameTime());
+    }
+    if (!emTransicao && !g_mapaCompletoAberto && !UpdatePhishingPopup() && !UpdateEvPopup2D() && !UpdatePopupEvidencia() && !UpdateMenuElevador() && !UpdateConfirmarAbandonar() && !UpdateConfirmarAvancar() && !UpdateConfirmarFerramenta() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
         if (SettingsGetTechNight()) {
             GameStateUpdateTechNightClock(GetFrameTime());
         }
@@ -9621,7 +9756,7 @@ void UpdateDrawGameplayScene(void) {
                     g_transPlimFinalTocado = false;
                     g_transModoSaltoMapa   = true;
                     if (g_sndPassos.frameCount > 0) {
-                        SetSoundVolume(g_sndPassos, 0.7f * SettingsGetSfxVolume());
+                        SetSoundVolume(g_sndPassos, 0.30f * SettingsGetSfxVolume());
                         PlaySound(g_sndPassos);
                     }
                 }
@@ -9661,9 +9796,22 @@ void UpdateDrawGameplayScene(void) {
     // Popup central obrigatorio ao adquirir nova evidencia
     DesenharPopupEvidencia();
     DesenharEvPopup2D();
+    DesenharPhishingPopup();
 
     // 10) Tutorial contextual (aparece conforme o jogador avanca na investigacao)
     DesenharTutorialContextual();
+
+    if (g_avisoRotacaoTimer > 0.0f) {
+        g_avisoRotacaoTimer -= GetFrameTime();
+        float alphaR = (g_avisoRotacaoTimer < 0.6f) ? (g_avisoRotacaoTimer / 0.6f) : 1.0f;
+        if (alphaR < 0.0f) alphaR = 0.0f;
+        float ry = (g_paletaToastTimer > 0.0f) ? 40.0f : 12.0f;
+        Rectangle rAviso = { 185.0f, ry, 270.0f, 22.0f };
+        DrawRectangleRec(ParaTela((Rectangle){ rAviso.x + 2, rAviso.y + 2, rAviso.width, rAviso.height }), Fade(BLACK, 0.55f * alphaR));
+        DrawRectangleRec(ParaTela(rAviso), Fade((Color){ 28, 25, 27, 255 }, 0.94f * alphaR));
+        DrawRectangleLinesEx(ParaTela(rAviso), 1.5f, Fade((Color){ 189, 181, 168, 255 }, alphaR));
+        DrawTextInArea(g_avisoRotacaoTexto, rAviso, 8.5f, Fade((Color){ 255, 242, 230, 255 }, alphaR));
+    }
 
     if (g_paletaToastTimer > 0.0f) {
         g_paletaToastTimer -= GetFrameTime();
@@ -9750,6 +9898,7 @@ void UnloadGameplayScene(void) {
     Terreo3DUnload();
     g_transTempo = -1.0f;
     if (g_sndPassos.frameCount > 0) UnloadSound(g_sndPassos);
+    if (g_sndSinoRotacao.frameCount > 0) UnloadSound(g_sndSinoRotacao);
     g_sndPassos = (Sound){ 0 };
     if (g_sndElevadorPlim.frameCount > 0) UnloadSound(g_sndElevadorPlim);
     g_sndElevadorPlim = (Sound){ 0 };
