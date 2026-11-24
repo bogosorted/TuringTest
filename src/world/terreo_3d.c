@@ -1703,10 +1703,18 @@ void TerreoEvidenciaBrilhante(Vector3 pos, float tempo, int tipoModelo) {
         DrawCube((Vector3){ pos.x, pos.y + 0.11f, pos.z - 0.05f }, 0.28f, 0.09f, 0.025f, cForte);
         DrawCubeWires((Vector3){ pos.x, pos.y + 0.07f, pos.z }, 0.36f, 0.14f, 0.26f, cBorda);
     } else if (tipoModelo == 2) {
-        // Oficio / Envelope fino lacrado
-        DrawCube((Vector3){ pos.x, pos.y + 0.022f, pos.z }, 0.32f, 0.022f, 0.22f, cForte);
-        DrawCube((Vector3){ pos.x, pos.y + 0.038f, pos.z + 0.02f }, 0.08f, 0.012f, 0.06f, cBorda);
-        DrawCubeWires((Vector3){ pos.x, pos.y + 0.024f, pos.z }, 0.34f, 0.035f, 0.24f, cBrilho);
+        // Oficio / Envelope fino lacrado com aba em V e selo de cera
+        DrawCube((Vector3){ pos.x, pos.y + 0.018f, pos.z }, 0.36f, 0.020f, 0.24f, cForte);
+        DrawCubeWires((Vector3){ pos.x, pos.y + 0.019f, pos.z }, 0.37f, 0.024f, 0.25f, cBrilho);
+        // Linhas da aba triangular e dobras do envelope no topo
+        float yTop = pos.y + 0.030f;
+        DrawLine3D((Vector3){ pos.x - 0.175f, yTop, pos.z - 0.115f }, (Vector3){ pos.x, yTop, pos.z + 0.030f }, cBorda);
+        DrawLine3D((Vector3){ pos.x + 0.175f, yTop, pos.z - 0.115f }, (Vector3){ pos.x, yTop, pos.z + 0.030f }, cBorda);
+        DrawLine3D((Vector3){ pos.x - 0.175f, yTop, pos.z + 0.115f }, (Vector3){ pos.x - 0.055f, yTop, pos.z - 0.010f }, cBrilho);
+        DrawLine3D((Vector3){ pos.x + 0.175f, yTop, pos.z + 0.115f }, (Vector3){ pos.x + 0.055f, yTop, pos.z - 0.010f }, cBrilho);
+        // Selo circular de lacre na ponta da aba
+        DrawCylinder((Vector3){ pos.x, pos.y + 0.030f, pos.z + 0.030f }, 0.036f, 0.038f, 0.010f, 14, cBorda);
+        DrawCylinder((Vector3){ pos.x, pos.y + 0.036f, pos.z + 0.030f }, 0.022f, 0.022f, 0.006f, 12, cForte);
     } else if (tipoModelo == 1) {
         // Prancheta / Livro fino de Protocolo
         DrawCube((Vector3){ pos.x, pos.y + 0.028f, pos.z }, 0.30f, 0.036f, 0.38f, cBrilho);

@@ -51,6 +51,9 @@ static int       g_typewriterLetterCount = 0;
 static Texture2D g_ditherTile;              // padrão Bayer 25% para escurecer mensagens anteriores
 static Sound     g_sndHover;
 static Sound     g_sndPassos;               // passos ao trocar de local pelas setas
+static Music     g_musLanchonete          = { 0 };
+static bool      g_musLanchoneteCarregada = false;
+static float     g_lanchoneteVol          = 0.0f;
 static Sound     g_sndElevadorPlim;         // som "Plim" ao apertar o botao do elevador
 static Sound     g_sndElevadorChegou;       // som "Plim" mais agudo ao chegar no andar
 // Transicao entre locais: escurece, fica preto com os passos e clareia ja no destino
@@ -157,8 +160,11 @@ static bool       g_tutFichaVisto           = false;
 static bool       g_tutEvidenciaColetaVisto = false;
 static bool       g_tutHologramaVisto       = false;
 static bool       g_tutDicaVisto            = false;  // abriu a Dica Logica pela primeira vez
-static int        g_tutDialogoEtapa         = 0;      // 0=Tokens, 1=1a Pergunta, 2=Ficha+Checklist, 3=Ferramentas
+static int        g_tutDialogoEtapa         = 0;      // 0=Tokens, 1=1a Pergunta, 2=Ficha+Checklist, 3=Dica Logica
 static bool       g_tutDialogoCompleto      = false;
+static bool       g_tutFerramentaVisto[3]   = { false, false, false }; // 0=Deepfake, 1=Enviesar, 2=Injecao
+static int        g_tutFerramentaPendente   = -1;     // -1=nenhum, 0..2=explicando ferramenta clicada no Dia 1
+static int        g_confirmarFerramentaIdx  = -1;     // -1=fechado, 3=Deepfake, 4=Enviesar, 5=Injecao
 static float      g_dialogoClickPausaTimer  = 0.0f;   // evita double-click pular dialogos
 static bool       g_consumiuCliqueDialogo   = false;
 static char       g_paletaToastTexto[96]    = "";
@@ -1312,9 +1318,11 @@ static bool UpdateInspecaoEv3D(void);
 static void DesenharInspecaoEv3D(void);
 
 // Ferramenta Scanner Deepfake (160x73 escalado em 2x -> 320x146) arrastavel
-static float     g_deepfakeScale      = 2.0f;
+static float     g_deepfakeScale      = 1.05f;
 static bool      g_redimDeepfake      = false;
 #define DEEPFAKE_SCALE g_deepfakeScale
+#define DEEPFAKE_BASE_W 336.0f
+#define DEEPFAKE_BASE_H 176.0f
 static Texture2D g_deepfakeJanela;
 static Texture2D g_dfMaos[3];               // 0=Patricia, 1=Andre, 2=Lucas (quadrado esquerdo: as 2 maos)
 static Texture2D g_dfRetina[3];             // 0=Patricia, 1=Andre, 2=Lucas (quadrado do meio: retina)
@@ -1555,6 +1563,8 @@ static void FecharJanelasFerramentas(void) {
     g_avisoCantina          = false;
     g_deepfakeAberto        = false;
     g_arrastandoDeepfake    = false;
+    g_confirmarFerramentaIdx = -1;
+    g_tutFerramentaPendente  = -1;
 }
 
 static void SetExpressaoSuspeito(int suspeito, ExpressaoFacial expr, bool iniciarFala);
@@ -1605,32 +1615,9 @@ static bool TesteEspecialDisponivel(int suspeito) {
     return true;
 }
 
-static void OnClickEnviesar(void) {
-    TraceLog(LOG_INFO, "Ferramenta Enviesar Dados clicada!");
-    if (!g_dialogLoaded || g_suspeitoAtual < 0 || g_suspeitoAtual >= 3) {
-        DefinirAlertaFerramenta(1.2f, "Selecione um suspeito na sala antes de usar a ferramenta!");
-        return;
-    }
+static void ExecutarEnviesar(void) {
+    if (!g_dialogLoaded || g_suspeitoAtual < 0 || g_suspeitoAtual >= 3) return;
     bool dev = SettingsGetDevMode();
-    // Enviesamento indisponivel no Dia 3 (nao ha dia seguinte para observar a IA absorvendo a informacao falsa)
-    if (!dev && GameStateGetDay() >= GAME_NUM_DAYS) {
-        DefinirAlertaFerramenta(1.6f, "Enviesamento indisponível no Dia 3!");
-        AdicionarMensagemChat(
-            g_suspeitoAtual,
-            "- SISTEMA -",
-            "Enviesamento indisponível no Dia 3: não há dia seguinte para verificar se o alvo absorveu o dado falso.",
-            false
-        );
-        return;
-    }
-    if ((!dev && g_enviesarUsado[g_suspeitoAtual]) || !TesteEspecialDisponivel(g_suspeitoAtual)) {
-        DefinirAlertaFerramenta(1.4f, "Limite de ferramenta atingido hoje ou neste suspeito!");
-        return;
-    }
-    if (!TemTokensParaFerramenta(2)) {
-        DefinirAlertaFerramenta(1.6f, "Tokens insuficientes! Enviesar gasta 2 Tokens.");
-        return;
-    }
     GastarTokensFerramenta(2);
     GameStateSetViesUsado(g_suspeitoAtual, true);
     if (!dev) {
@@ -1662,25 +1649,44 @@ static void OnClickEnviesar(void) {
     else if (g_suspeitoAtual == 1) SetExpressaoSuspeito(1, EXPR_RAIVA, true);
     else SetExpressaoSuspeito(2, EXPR_FELIZ, true);
 }
-static void OnClickDeepfake(void) {
-    if (g_deepfakeAberto) {
-        g_deepfakeAberto = false;
-        return;
-    }
+
+static void OnClickEnviesar(void) {
+    TraceLog(LOG_INFO, "Ferramenta Enviesar Dados clicada!");
     if (!g_dialogLoaded || g_suspeitoAtual < 0 || g_suspeitoAtual >= 3) {
         DefinirAlertaFerramenta(1.2f, "Selecione um suspeito na sala antes de usar a ferramenta!");
         return;
     }
     bool dev = SettingsGetDevMode();
+    // Enviesamento indisponivel no Dia 3 (nao ha dia seguinte para observar a IA absorvendo a informacao falsa)
+    if (!dev && GameStateGetDay() >= GAME_NUM_DAYS) {
+        DefinirAlertaFerramenta(1.6f, "Enviesamento indisponível no Dia 3!");
+        AdicionarMensagemChat(
+            g_suspeitoAtual,
+            "- SISTEMA -",
+            "Enviesamento indisponível no Dia 3: não há dia seguinte para verificar se o alvo absorveu o dado falso.",
+            false
+        );
+        return;
+    }
+    if ((!dev && g_enviesarUsado[g_suspeitoAtual]) || !TesteEspecialDisponivel(g_suspeitoAtual)) {
+        DefinirAlertaFerramenta(1.4f, "Limite de ferramenta atingido hoje ou neste suspeito!");
+        return;
+    }
+    if (!TemTokensParaFerramenta(2)) {
+        DefinirAlertaFerramenta(1.6f, "Tokens insuficientes! Enviesar gasta 2 Tokens.");
+        return;
+    }
+    if (TutorialAtivo() && GameStateGetDay() == 1 && !g_tutFerramentaVisto[1]) {
+        g_tutFerramentaPendente = 1;
+        return;
+    }
+    g_confirmarFerramentaIdx = 4;
+}
+
+static void ExecutarDeepfake(void) {
+    if (!g_dialogLoaded || g_suspeitoAtual < 0 || g_suspeitoAtual >= 3) return;
+    bool dev = SettingsGetDevMode();
     if (!g_deepfakeUsado[g_suspeitoAtual] && !dev) {
-        if (!TesteEspecialDisponivel(g_suspeitoAtual)) {
-            DefinirAlertaFerramenta(1.4f, "Limite de ferramenta atingido hoje ou neste suspeito!");
-            return;
-        }
-        if (!TemTokensParaFerramenta(1)) {
-            DefinirAlertaFerramenta(1.6f, "Tokens insuficientes! Deepfake gasta 1 Token.");
-            return;
-        }
         GastarTokensFerramenta(1);
         g_deepfakeUsado[g_suspeitoAtual] = true;
         g_testeEspecialHoje = true;
@@ -1701,21 +1707,39 @@ static void OnClickDeepfake(void) {
     g_deepfakeAberto = true;
     TraceLog(LOG_INFO, "Scanner Deepfake aberto");
 }
-static void OnClickInjecao(void) {
-    TraceLog(LOG_INFO, "Ferramenta Injecao de Prompt clicada!");
+
+static void OnClickDeepfake(void) {
+    if (g_deepfakeAberto) {
+        g_deepfakeAberto = false;
+        return;
+    }
     if (!g_dialogLoaded || g_suspeitoAtual < 0 || g_suspeitoAtual >= 3) {
         DefinirAlertaFerramenta(1.2f, "Selecione um suspeito na sala antes de usar a ferramenta!");
         return;
     }
     bool dev = SettingsGetDevMode();
-    if ((!dev && g_injecaoUsada[g_suspeitoAtual]) || !TesteEspecialDisponivel(g_suspeitoAtual)) {
-        DefinirAlertaFerramenta(1.4f, "Limite de ferramenta atingido hoje ou neste suspeito!");
+    if (!g_deepfakeUsado[g_suspeitoAtual] && !dev) {
+        if (!TesteEspecialDisponivel(g_suspeitoAtual)) {
+            DefinirAlertaFerramenta(1.4f, "Limite de ferramenta atingido hoje ou neste suspeito!");
+            return;
+        }
+        if (!TemTokensParaFerramenta(1)) {
+            DefinirAlertaFerramenta(1.6f, "Tokens insuficientes! Deepfake gasta 1 Token.");
+            return;
+        }
+        if (TutorialAtivo() && GameStateGetDay() == 1 && !g_tutFerramentaVisto[0]) {
+            g_tutFerramentaPendente = 0;
+            return;
+        }
+        g_confirmarFerramentaIdx = 3;
         return;
     }
-    if (!TemTokensParaFerramenta(3)) {
-        DefinirAlertaFerramenta(1.6f, "Tokens insuficientes! Injeção gasta 3 Tokens.");
-        return;
-    }
+    ExecutarDeepfake();
+}
+
+static void ExecutarInjecao(void) {
+    if (!g_dialogLoaded || g_suspeitoAtual < 0 || g_suspeitoAtual >= 3) return;
+    bool dev = SettingsGetDevMode();
     GastarTokensFerramenta(3);
     GameStateSetInjecaoUsada(g_suspeitoAtual, true);
     if (!dev) {
@@ -1746,6 +1770,28 @@ static void OnClickInjecao(void) {
     if (g_suspeitoAtual == 0) SetExpressaoSuspeito(0, EXPR_SURPRESA, true);
     else if (g_suspeitoAtual == 1) SetExpressaoSuspeito(1, EXPR_RAIVA, true);
     else SetExpressaoSuspeito(2, EXPR_SURPRESA, true);
+}
+
+static void OnClickInjecao(void) {
+    TraceLog(LOG_INFO, "Ferramenta Injecao de Prompt clicada!");
+    if (!g_dialogLoaded || g_suspeitoAtual < 0 || g_suspeitoAtual >= 3) {
+        DefinirAlertaFerramenta(1.2f, "Selecione um suspeito na sala antes de usar a ferramenta!");
+        return;
+    }
+    bool dev = SettingsGetDevMode();
+    if ((!dev && g_injecaoUsada[g_suspeitoAtual]) || !TesteEspecialDisponivel(g_suspeitoAtual)) {
+        DefinirAlertaFerramenta(1.4f, "Limite de ferramenta atingido hoje ou neste suspeito!");
+        return;
+    }
+    if (!TemTokensParaFerramenta(3)) {
+        DefinirAlertaFerramenta(1.6f, "Tokens insuficientes! Injeção gasta 3 Tokens.");
+        return;
+    }
+    if (TutorialAtivo() && GameStateGetDay() == 1 && !g_tutFerramentaVisto[2]) {
+        g_tutFerramentaPendente = 2;
+        return;
+    }
+    g_confirmarFerramentaIdx = 5;
 }
 
 static void DesenharFundoShaderQuadrante(Rectangle rVirt, float escurecimento) {
@@ -1814,8 +1860,8 @@ static bool MouseSobreFicha(void) {
     }
     if (g_deepfakeAberto) {
         Rectangle area = { g_deepfakePos.x, g_deepfakePos.y,
-                           (float)g_deepfakeJanela.width * DEEPFAKE_SCALE,
-                           (float)g_deepfakeJanela.height * DEEPFAKE_SCALE };
+                           DEEPFAKE_BASE_W * DEEPFAKE_SCALE,
+                           DEEPFAKE_BASE_H * DEEPFAKE_SCALE };
         if (CheckCollisionPointRec(m, area)) return true;
     }
     if (g_pranchetaAberta) {
@@ -3270,30 +3316,59 @@ static void RenderInspecaoEv3DCena(void) {
             }
         }
     } else if (g_inspecaoEvTipo == INSP_ENVELOPE_OFICIO) {
-        // 4) Envelope fino lacrado com aba triangular articulada + folha deslizando
-        DesenharCuboComBorda3D((Vector3){ 0.0f, -0.05f, 0.25f }, (Vector3){ 1.86f, 0.036f, 1.22f }, cClaro, cMedio);
+        // 4) Envelope confidencial lacrado com dobras, selo de cera e oficio detalhado deslizando
+        // Base/corpo do envelope (frente e verso com espessura realista e borda)
+        DesenharCuboComBorda3D((Vector3){ 0.0f, -0.06f, 0.25f }, (Vector3){ 1.90f, 0.032f, 1.24f }, cClaro, cMedio);
+        // Borda interna da abertura do envelope
+        DrawCube((Vector3){ 0.0f, -0.038f, -0.34f }, 1.82f, 0.012f, 0.05f, cEscuro);
+
+        // Costuras/dobras diagonais da parte de tras do envelope
+        DrawLine3D((Vector3){ -0.94f, -0.042f,  0.86f }, (Vector3){ -0.24f, -0.042f, 0.16f }, cMedio);
+        DrawLine3D((Vector3){  0.94f, -0.042f,  0.86f }, (Vector3){  0.24f, -0.042f, 0.16f }, cMedio);
+        DrawLine3D((Vector3){ -0.94f, -0.042f, -0.36f }, (Vector3){ -0.24f, -0.042f, 0.16f }, cMedio);
+        DrawLine3D((Vector3){  0.94f, -0.042f, -0.36f }, (Vector3){  0.24f, -0.042f, 0.16f }, cMedio);
+
+        // Etiqueta discreta de "CONFIDENCIAL" no canto inferior esquerdo do envelope
+        DrawCube((Vector3){ -0.56f, -0.041f, 0.66f }, 0.54f, 0.006f, 0.14f, cEscuro);
+        DrawCube((Vector3){ -0.56f, -0.037f, 0.66f }, 0.46f, 0.004f, 0.05f, cMarfim);
+
+        // Folha do oficio que desliza para fora conforme a aba abre
         if (ease > 0.05f) {
-            float zSlide = 0.22f - 1.10f * ease;
-            float ySlide = 0.01f + 0.16f * ease;
-            DesenharCuboComBorda3D((Vector3){ 0.0f, ySlide, zSlide }, (Vector3){ 1.54f, 0.014f, 1.04f }, cMarfim, cMedio);
-            for (int l = 0; l < 4; l++) {
-                DrawCube((Vector3){ 0.0f, ySlide + 0.011f, zSlide - 0.30f + l * 0.18f }, 1.16f, 0.006f, 0.026f, (l == 0) ? cEscuro : cMedio);
+            float zSlide = 0.22f - 1.16f * ease;
+            float ySlide = 0.005f + 0.17f * ease;
+            DesenharCuboComBorda3D((Vector3){ 0.0f, ySlide, zSlide }, (Vector3){ 1.56f, 0.014f, 1.08f }, cMarfim, cMedio);
+            // Cabecalho oficial RASEC + emblema no topo do documento
+            DrawCube((Vector3){ -0.46f, ySlide + 0.010f, zSlide - 0.39f }, 0.16f, 0.006f, 0.12f, cEscuro);
+            DrawCube((Vector3){  0.14f, ySlide + 0.010f, zSlide - 0.41f }, 0.88f, 0.006f, 0.042f, cEscuro);
+            DrawCube((Vector3){  0.04f, ySlide + 0.010f, zSlide - 0.35f }, 0.68f, 0.006f, 0.022f, cMedio);
+            // Linha divisoria e corpo do texto do oficio
+            DrawCube((Vector3){ 0.0f, ySlide + 0.010f, zSlide - 0.27f }, 1.24f, 0.005f, 0.012f, cMedio);
+            for (int l = 0; l < 5; l++) {
+                float lw = (l == 4) ? 0.64f : (l == 2 ? 1.04f : 1.20f);
+                float lx = -0.60f + lw * 0.5f;
+                DrawCube((Vector3){ lx, ySlide + 0.010f, zSlide - 0.16f + l * 0.115f }, lw, 0.006f, 0.024f, (l == 0) ? cEscuro : cMedio);
             }
+            // Carimbo e linha de assinatura na base do oficio
+            DrawCube((Vector3){ -0.34f, ySlide + 0.010f, zSlide + 0.38f }, 0.48f, 0.006f, 0.016f, cEscuro);
+            DrawCylinder((Vector3){ 0.38f, ySlide + 0.009f, zSlide + 0.36f }, 0.11f, 0.11f, 0.006f, 18, cEscuro);
+            DrawCylinder((Vector3){ 0.38f, ySlide + 0.012f, zSlide + 0.36f }, 0.08f, 0.08f, 0.006f, 18, cMarfim);
         }
+
+        // Aba triangular articulada + selo de cera que acompanha a aba ao abrir
         rlPushMatrix();
-        rlTranslatef(0.0f, -0.025f, -0.36f);
-        rlRotatef(-145.0f * ease, 1.0f, 0.0f, 0.0f);
-        Vector3 a = { -0.92f, 0.0f, 0.0f };
-        Vector3 b = {  0.92f, 0.0f, 0.0f };
-        Vector3 c = {  0.00f, 0.0f, 0.65f };
+        rlTranslatef(0.0f, -0.028f, -0.37f);
+        rlRotatef(-152.0f * ease, 1.0f, 0.0f, 0.0f);
+        Vector3 a = { -0.94f, 0.0f, 0.0f };
+        Vector3 b = {  0.94f, 0.0f, 0.0f };
+        Vector3 c = {  0.00f, 0.0f, 0.66f };
         DrawTriangle3D(a, c, b, cClaro);
-        DrawTriangle3D(a, b, c, cClaro);
+        DrawTriangle3D(a, b, c, cMarfim);
         DrawLine3D(a, c, cMedio);
         DrawLine3D(b, c, cMedio);
         DrawLine3D(a, b, cMedio);
-        if (ease < 0.35f) {
-            DrawCylinder((Vector3){ 0.0f, 0.008f, 0.54f }, 0.10f, 0.10f, 0.018f, 16, cEscuro);
-        }
+        // Selo de cera na ponta da aba (permanece preso a aba)
+        DrawCylinder((Vector3){ 0.0f, 0.010f, 0.54f }, 0.115f, 0.125f, 0.020f, 18, cEscuro);
+        DrawCylinder((Vector3){ 0.0f, 0.020f, 0.54f }, 0.075f, 0.075f, 0.010f, 16, cMedio);
         rlPopMatrix();
     } else if (g_inspecaoEvTipo == INSP_ESCUTA_JARDIM) {
         // 5) Mesa redonda + 2 personagens 3D arredondados conversando com aneis de som na paleta do jogo
@@ -5215,6 +5290,9 @@ void GameplaySceneResetDialogues(void) {
         g_tutDicaVisto            = false;
         g_tutDialogoEtapa         = 0;
         g_tutDialogoCompleto      = false;
+        memset(g_tutFerramentaVisto, 0, sizeof g_tutFerramentaVisto);
+        g_tutFerramentaPendente   = -1;
+        g_confirmarFerramentaIdx  = -1;
         g_dialogoClickPausaTimer  = 0.0f;
         g_consumiuCliqueDialogo   = false;
         g_paletaToastTimer        = 0.0f;
@@ -5249,6 +5327,8 @@ void GameplaySceneResetDialogues(void) {
     g_avancarDia = false;
     g_irParaVeredito = false;
     g_confirmarAvancarDia = false;
+    g_confirmarFerramentaIdx = -1;
+    g_tutFerramentaPendente = -1;
     g_elevadorAberto = false;
     g_inspecaoEvAtiva = false;
     g_confirmarAbandonarRun = false;
@@ -5410,6 +5490,8 @@ bool InitGameplayScene(void) {
     g_avancarDia = false;
     g_irParaVeredito = false;
     g_confirmarAvancarDia = false;
+    g_confirmarFerramentaIdx = -1;
+    g_tutFerramentaPendente = -1;
     g_elevadorAberto = false;
     g_inspecaoEvAtiva = false;
     g_confirmarAbandonarRun = false;
@@ -5639,6 +5721,14 @@ bool InitGameplayScene(void) {
         Terreo3DInit((int)JANELA_AREA.width, (int)JANELA_AREA.height);
     }
     g_sndPassos = FileExists("assets/audio/passos_2.wav") ? LoadSound("assets/audio/passos_2.wav") : (Sound){ 0 };
+    g_musLanchoneteCarregada = false;
+    g_lanchoneteVol = 0.0f;
+    if (IsAudioDeviceReady() && FileExists("assets/audio/lanchonete.mp3")) {
+        g_musLanchonete = LoadMusicStream("assets/audio/lanchonete.mp3");
+        g_musLanchonete.looping = true;
+        SetMusicVolume(g_musLanchonete, 0.0f);
+        g_musLanchoneteCarregada = true;
+    }
     // Sintetiza o som "Plim" do elevador (acorde C6 -> E6 limpo)
     {
         int sr = 44100;
@@ -5731,7 +5821,8 @@ bool InitGameplayScene(void) {
     SetTextureFilter(g_deepfakeJanela, TEXTURE_FILTER_POINT);
     g_deepfakeAberto = false;
     g_arrastandoDeepfake = false;
-    g_deepfakePos = (Vector2){ 150, 70 };
+    g_deepfakeScale = 1.05f;
+    g_deepfakePos = (Vector2){ 142, 62 };
 
     const char *dfNomes[3] = {
         "maria",
@@ -6512,10 +6603,11 @@ static bool UpdatePrancheta(void) {
 // - Quadrado 1 (Esquerda): As 2 mãos abertas (o próprio jogador conta os dedos e analisa)
 // - Quadrado 2 (Meio):     A retina / íris do suspeito
 // - Retângulo 3 (Direita): A impressão digital do suspeito
-#define DEEPFAKE_SLOT_MAOS    ((Rectangle){  14 * DEEPFAKE_SCALE, 15 * DEEPFAKE_SCALE, 50 * DEEPFAKE_SCALE, 43 * DEEPFAKE_SCALE })
-#define DEEPFAKE_SLOT_RETINA  ((Rectangle){  76 * DEEPFAKE_SCALE, 14 * DEEPFAKE_SCALE, 23 * DEEPFAKE_SCALE, 23 * DEEPFAKE_SCALE })
-#define DEEPFAKE_SLOT_DIGITAL ((Rectangle){ 110 * DEEPFAKE_SCALE,  4 * DEEPFAKE_SCALE, 36 * DEEPFAKE_SCALE, 65 * DEEPFAKE_SCALE })
-#define DEEPFAKE_FECHAR       ((Rectangle){ 147 * DEEPFAKE_SCALE,  2 * DEEPFAKE_SCALE, 11 * DEEPFAKE_SCALE, 11 * DEEPFAKE_SCALE })
+// Slots dentro da janela terminal Deepfake (base 336x176 escalada por DEEPFAKE_SCALE)
+#define DEEPFAKE_SLOT_MAOS    ((Rectangle){  12 * DEEPFAKE_SCALE, 40 * DEEPFAKE_SCALE, 98 * DEEPFAKE_SCALE, 102 * DEEPFAKE_SCALE })
+#define DEEPFAKE_SLOT_RETINA  ((Rectangle){ 119 * DEEPFAKE_SCALE, 40 * DEEPFAKE_SCALE, 98 * DEEPFAKE_SCALE, 102 * DEEPFAKE_SCALE })
+#define DEEPFAKE_SLOT_DIGITAL ((Rectangle){ 226 * DEEPFAKE_SCALE, 40 * DEEPFAKE_SCALE, 98 * DEEPFAKE_SCALE, 102 * DEEPFAKE_SCALE })
+#define DEEPFAKE_FECHAR       ((Rectangle){ (DEEPFAKE_BASE_W - 19) * DEEPFAKE_SCALE, 3 * DEEPFAKE_SCALE, 15 * DEEPFAKE_SCALE, 15 * DEEPFAKE_SCALE })
 
 static Rectangle NoDeepfake(Rectangle r) {
     return (Rectangle){ g_deepfakePos.x + r.x, g_deepfakePos.y + r.y, r.width, r.height };
@@ -6525,8 +6617,8 @@ static bool UpdateDeepfake(void) {
     if (!g_deepfakeAberto) return false;
 
     Vector2 mouse = MouseNaImagem();
-    float w = (float)g_deepfakeJanela.width  * DEEPFAKE_SCALE;
-    float h = (float)g_deepfakeJanela.height * DEEPFAKE_SCALE;
+    float w = DEEPFAKE_BASE_W * DEEPFAKE_SCALE;
+    float h = DEEPFAKE_BASE_H * DEEPFAKE_SCALE;
     Rectangle area = { g_deepfakePos.x, g_deepfakePos.y, w, h };
     Rectangle grip = AlcaRedimJanela(area);
 
@@ -6553,11 +6645,11 @@ static bool UpdateDeepfake(void) {
             g_redimDeepfake = false;
         } else {
             float nw = mouse.x - g_deepfakePos.x;
-            float s = nw / (float)g_deepfakeJanela.width;
-            if (s < 1.25f) s = 1.25f;
-            if (s > 2.65f) s = 2.65f;
-            if (g_deepfakePos.x + g_deepfakeJanela.width * s > g_interface.width) s = (g_interface.width - g_deepfakePos.x) / g_deepfakeJanela.width;
-            if (g_deepfakePos.y + g_deepfakeJanela.height * s > g_interface.height) s = (g_interface.height - g_deepfakePos.y) / g_deepfakeJanela.height;
+            float s = nw / DEEPFAKE_BASE_W;
+            if (s < 0.78f) s = 0.78f;
+            if (s > 1.50f) s = 1.50f;
+            if (g_deepfakePos.x + DEEPFAKE_BASE_W * s > g_interface.width) s = (g_interface.width - g_deepfakePos.x) / DEEPFAKE_BASE_W;
+            if (g_deepfakePos.y + DEEPFAKE_BASE_H * s > g_interface.height) s = (g_interface.height - g_deepfakePos.y) / DEEPFAKE_BASE_H;
             g_deepfakeScale = s;
             SetMouseCursor(MOUSE_CURSOR_RESIZE_NWSE);
         }
@@ -6595,27 +6687,81 @@ static bool UpdateDeepfake(void) {
     return true;
 }
 
+static void DesenharCantosTerminal(Rectangle rVirt, float tamCanto, Color cor) {
+    Rectangle r = ParaTela(rVirt);
+    float len = tamCanto * (r.width / rVirt.width);
+    if (len < 3.0f) len = 3.0f;
+    float t = 1.6f;
+    // Top-left
+    DrawLineEx((Vector2){ r.x, r.y }, (Vector2){ r.x + len, r.y }, t, cor);
+    DrawLineEx((Vector2){ r.x, r.y }, (Vector2){ r.x, r.y + len }, t, cor);
+    // Top-right
+    DrawLineEx((Vector2){ r.x + r.width - len, r.y }, (Vector2){ r.x + r.width, r.y }, t, cor);
+    DrawLineEx((Vector2){ r.x + r.width, r.y }, (Vector2){ r.x + r.width, r.y + len }, t, cor);
+    // Bottom-left
+    DrawLineEx((Vector2){ r.x, r.y + r.height }, (Vector2){ r.x + len, r.y + r.height }, t, cor);
+    DrawLineEx((Vector2){ r.x, r.y + r.height - len }, (Vector2){ r.x, r.y + r.height }, t, cor);
+    // Bottom-right
+    DrawLineEx((Vector2){ r.x + r.width - len, r.y + r.height }, (Vector2){ r.x + r.width, r.y + r.height }, t, cor);
+    DrawLineEx((Vector2){ r.x + r.width, r.y + r.height - len }, (Vector2){ r.x + r.width, r.y + r.height }, t, cor);
+}
+
 static void DesenharDeepfake(void) {
     if (!g_deepfakeAberto) return;
 
-    float w = (float)g_deepfakeJanela.width  * DEEPFAKE_SCALE;
-    float h = (float)g_deepfakeJanela.height * DEEPFAKE_SCALE;
+    float s = DEEPFAKE_SCALE;
+    float w = DEEPFAKE_BASE_W * s;
+    float h = DEEPFAKE_BASE_H * s;
     Rectangle area   = { g_deepfakePos.x, g_deepfakePos.y, w, h };
-    Rectangle origem = { 0, 0, (float)g_deepfakeJanela.width, (float)g_deepfakeJanela.height };
+    Rectangle rTela  = ParaTela(area);
+
+    Color corFundo   = {  24,  21,  23, 248 };
+    Color corBarra   = {  36,  32,  34, 255 };
+    Color corBorda   = { 160, 147, 142, 255 }; // mesmo padrao de borda do checklist
+    Color corSubBorda= {  92,  83,  84, 235 };
+    Color corBranco  = { 255, 242, 230, 255 };
+    Color corClaro   = { 189, 181, 168, 255 };
+
+    // Sombra + chassi estilo terminal futuristico (bordas no modelo do checklist)
+    DrawRectangleRec(ParaTela((Rectangle){ area.x + 3.0f, area.y + 3.0f, area.width, area.height }), Fade(BLACK, 0.60f));
+    DrawRectangleRec(rTela, corFundo);
+    DrawRectangleLinesEx(rTela, 2.0f, corBorda);
+    DrawRectangleLinesEx(ParaTela((Rectangle){ area.x + 2.5f, area.y + 2.5f, area.width - 5.0f, area.height - 5.0f }), 1.0f, corSubBorda);
+    DesenharCantosTerminal(area, 8.0f * s, corBranco);
+
+    // Cabecalho do terminal
+    float hdrH = 21.0f * s;
+    Rectangle rHdr = { area.x + 2.0f, area.y + 2.0f, area.width - 4.0f, hdrH };
+    DrawRectangleRec(ParaTela(rHdr), corBarra);
+    DrawLineEx(
+        (Vector2){ rTela.x + 2.0f, ParaTela((Rectangle){ 0, area.y + hdrH + 2.0f, 1, 1 }).y },
+        (Vector2){ rTela.x + rTela.width - 2.0f, ParaTela((Rectangle){ 0, area.y + hdrH + 2.0f, 1, 1 }).y },
+        1.5f, corBorda
+    );
+    float ledPulso = 0.5f + 0.5f * sinf((float)GetTime() * 4.5f);
+    Rectangle rLed = ParaTela((Rectangle){ area.x + 11.0f * s, area.y + 11.5f * s, 2.6f * s, 2.6f * s });
+    DrawCircleV((Vector2){ rLed.x, rLed.y }, rLed.height, Fade(corBranco, 0.55f + 0.45f * ledPulso));
+    DrawTextLeftAligned("SCANNER BIOMÉTRICO // DEEPFAKE", (Vector2){ area.x + 18.0f * s, area.y + 6.5f * s }, 8.0f * s, corBranco);
+
+    // Faixa de status do alvo
+    const char *nomeAlvo = (g_dialogLoaded && g_suspeitoAtual >= 0 && g_suspeitoAtual < 3) ? NOMES_SUSPEITOS[g_suspeitoAtual] : "---";
+    DrawTextLeftAligned(TextFormat("ALVO: %s", nomeAlvo), (Vector2){ area.x + 12.0f * s, area.y + 26.5f * s }, 7.5f * s, corClaro);
+    DrawTextInArea("[BIOMETRIA ATIVA]", (Rectangle){ area.x + area.width - 122.0f * s, area.y + 25.5f * s, 110.0f * s, 11.0f * s }, 7.0f * s, corBorda);
 
     Rectangle sRosto   = NoDeepfake(DEEPFAKE_SLOT_MAOS);
     Rectangle sRetina  = NoDeepfake(DEEPFAKE_SLOT_RETINA);
     Rectangle sDigital = NoDeepfake(DEEPFAKE_SLOT_DIGITAL);
 
-    // Preenche o fundo dos 3 visores (bege claro no rosto igual a ficha; escuro nos sensores biometricos)
-    DrawRectangleRec(ParaTela(sRosto),   (Color){ 189, 181, 168, 255 });
-    DrawRectangleRec(ParaTela(sRetina),  (Color){  32,  29,  31, 255 });
-    DrawRectangleRec(ParaTela(sDigital), (Color){  32,  29,  31, 255 });
+    Vector2 mImg = MouseNaImagem();
+    bool hovRet = !g_arrastandoDeepfake && CheckCollisionPointRec(mImg, sRetina);
+    bool hovDig = !g_arrastandoDeepfake && CheckCollisionPointRec(mImg, sDigital);
 
-    // Desenha as 3 imagens simultaneamente nos 3 visores:
-    // 1) ROSTO (mesma foto cadastral da ficha do funcionario)
-    // 2) OLHO / RETINA (macro com dither)
-    // 3) DIGITAL (polegar com dither)
+    // Fundo dos 3 visores
+    DrawRectangleRec(ParaTela(sRosto),   (Color){ 189, 181, 168, 255 });
+    DrawRectangleRec(ParaTela(sRetina),  (Color){  18,  16,  18, 255 });
+    DrawRectangleRec(ParaTela(sDigital), (Color){  18,  16,  18, 255 });
+
+    // Conteudo dos 3 visores: Rosto, Retina e Digital
     if (g_dialogLoaded && g_suspeitoAtual >= 0 && g_suspeitoAtual < 3) {
         Texture2D tFoto = g_fichaFotos[g_suspeitoAtual];
         Texture2D tR    = g_dfRetina[g_suspeitoAtual];
@@ -6633,53 +6779,56 @@ static void DesenharDeepfake(void) {
                 srcW = newW;
             } else {
                 float newH = srcW / aspect;
-                srcY = (srcH - newH) * 0.35f; // foca bem no rosto
+                srcY = (srcH - newH) * 0.35f;
                 srcH = newH;
             }
             DrawTexturePro(tFoto, (Rectangle){ srcX, srcY, srcW, srcH }, ParaTela(sRosto), (Vector2){ 0, 0 }, 0.0f, WHITE);
         }
         if (tR.id > 0) {
-            DrawTexturePro(tR, (Rectangle){ 0, 0, (float)tR.width, (float)tR.height }, ParaTela(sRetina),  (Vector2){ 0, 0 }, 0.0f, WHITE);
+            DrawTexturePro(tR, (Rectangle){ 0, 0, (float)tR.width, (float)tR.height }, ParaTela(sRetina), (Vector2){ 0, 0 }, 0.0f, WHITE);
         }
         if (tD.id > 0) {
             DrawTexturePro(tD, (Rectangle){ 0, 0, (float)tD.width, (float)tD.height }, ParaTela(sDigital), (Vector2){ 0, 0 }, 0.0f, WHITE);
         }
     } else {
-        DrawTextInArea("SEM SUSPEITO", sRosto,   9, (Color){ 32, 29, 31, 255 });
-        DrawTextInArea("---",          sRetina,  9, COR_FICHA_ROTULO);
-        DrawTextInArea("SEM DADOS",    sDigital, 8, COR_FICHA_ROTULO);
+        DrawTextInArea("SEM SUSPEITO", sRosto,   8.0f * s, (Color){ 32, 29, 31, 255 });
+        DrawTextInArea("---",          sRetina,  8.0f * s, COR_FICHA_ROTULO);
+        DrawTextInArea("SEM DADOS",    sDigital, 8.0f * s, COR_FICHA_ROTULO);
     }
 
-    // Moldura do sprite spr_deepfake_ferramenta por cima (ampliada em 2x: 320x146)
-    DrawTexturePro(g_deepfakeJanela, origem, ParaTela(area), (Vector2){ 0, 0 }, 0.0f, WHITE);
+    // Linhas sutis de scanner + molduras individuais estilo terminal
+    Rectangle slots[3] = { sRosto, sRetina, sDigital };
+    const char *tags[3] = { "[01] ROSTO", "[02] RETINA", "[03] DIGITAL" };
+    bool hovs[3] = { false, hovRet, hovDig };
+    for (int i = 0; i < 3; i++) {
+        Rectangle sl = slots[i];
+        DrawRectangleLinesEx(ParaTela(sl), hovs[i] ? 2.0f : 1.5f, hovs[i] ? corBranco : corBorda);
+        DesenharCantosTerminal(sl, 5.0f * s, hovs[i] ? corBranco : corClaro);
+        Rectangle rTag = { sl.x, sl.y + sl.height + 2.0f * s, sl.width, 13.0f * s };
+        DrawRectangleRec(ParaTela(rTag), corBarra);
+        DrawRectangleLinesEx(ParaTela(rTag), 1.0f, hovs[i] ? corBranco : corSubBorda);
+        DrawTextInArea(tags[i], rTag, 7.5f * s, hovs[i] ? corBranco : corClaro);
+    }
 
-    // Legendas discretas na moldura preta abaixo de cada visor (e tarja discreta na base da digital)
-    DrawTextInArea("ROSTO",  (Rectangle){ sRosto.x,  sRosto.y + sRosto.height + 4.0f,   sRosto.width,  12.0f }, 8, COR_FICHA_ROTULO);
-    DrawTextInArea("RETINA", (Rectangle){ sRetina.x - 6.0f, sRetina.y + sRetina.height + 4.0f, sRetina.width + 12.0f, 12.0f }, 8, COR_FICHA_ROTULO);
-    DrawTextInArea("(passe o mouse p/ lupa)", (Rectangle){ sRetina.x - 20.0f, sRetina.y + sRetina.height + 16.0f, sRetina.width + 40.0f, 11.0f }, 7, (Color){ 90, 83, 83, 255 });
+    // Rodape informativo
+    DrawTextInArea("Passe o mouse sobre RETINA ou DIGITAL para lupa 2x",
+                   (Rectangle){ area.x + 10.0f * s, area.y + area.height - 15.0f * s, area.width - 24.0f * s, 11.0f * s },
+                   6.8f * s, corBorda);
 
-    Rectangle tarjaDig = { sDigital.x + 1.0f, sDigital.y + sDigital.height - 11.0f, sDigital.width - 2.0f, 10.0f };
-    DrawRectangleRec(ParaTela(tarjaDig), Fade((Color){ 0, 0, 0, 255 }, 0.72f));
-    DrawTextInArea("DIGITAL", tarjaDig, 7, COR_FICHA_TEXTO);
-
-    // Botao [X] padronizado no canto superior direito da janela deepfake
+    // Botao [X] padronizado e alca de redimensionamento
     DesenharBotaoFecharPadrao(NoDeepfake(DEEPFAKE_FECHAR));
     DesenharAlcaRedim(area);
 
     // Lupa automatica 2x ao passar o mouse sobre RETINA ou DIGITAL para inspecionar detalhes com nitidez total
     if (!g_arrastandoDeepfake && g_dialogLoaded && g_suspeitoAtual >= 0 && g_suspeitoAtual < 3) {
-        Vector2 mImg = MouseNaImagem();
-        bool hovRet = CheckCollisionPointRec(mImg, sRetina);
-        bool hovDig = CheckCollisionPointRec(mImg, sDigital);
         if (hovRet || hovDig) {
             Texture2D texZ = hovRet ? g_dfRetina[g_suspeitoAtual] : g_dfDigital[g_suspeitoAtual];
             if (texZ.id > 0) {
-                float zw = hovRet ? 92.0f  : 108.0f;
-                float zh = hovRet ? 92.0f  : 195.0f;
-                float padZ = 5.0f;
+                float zw = hovRet ? 96.0f  : 108.0f;
+                float zh = hovRet ? 96.0f  : 195.0f;
+                float padZ = 6.0f;
                 float totW = zw + padZ * 2.0f;
-                float totH = zh + padZ * 2.0f + 14.0f;
-                // Abre ao lado esquerdo da janela do scanner (ou direito se estiver encostada na esquerda)
+                float totH = zh + padZ * 2.0f + 16.0f;
                 float zx = (area.x >= totW + 8.0f) ? (area.x - totW - 6.0f) : (area.x + area.width + 6.0f);
                 if (zx + totW > VIRTUAL_W - 4.0f) zx = VIRTUAL_W - 4.0f - totW;
                 if (zx < 4.0f) zx = 4.0f;
@@ -6690,15 +6839,16 @@ static void DesenharDeepfake(void) {
                 Rectangle boxZ = { zx, zy, totW, totH };
                 Rectangle rBoxZ = ParaTela(boxZ);
                 DrawRectangleRec(ParaTela((Rectangle){ zx + 3.0f, zy + 3.0f, totW, totH }), Fade(BLACK, 0.65f));
-                DrawRectangleRec(rBoxZ, (Color){ 0, 0, 0, 252 });
-                DrawRectangleLinesEx(rBoxZ, 2.0f, COR_FICHA_TEXTO);
+                DrawRectangleRec(rBoxZ, corFundo);
+                DrawRectangleLinesEx(rBoxZ, 2.0f, corBorda);
+                DesenharCantosTerminal(boxZ, 6.0f, corBranco);
 
-                Rectangle imgZ = { zx + padZ, zy + 15.0f, zw, zh };
+                Rectangle imgZ = { zx + padZ, zy + 17.0f, zw, zh };
                 DrawTexturePro(texZ, (Rectangle){ 0, 0, (float)texZ.width, (float)texZ.height },
                                ParaTela(imgZ), (Vector2){ 0, 0 }, 0.0f, WHITE);
-                DrawRectangleLinesEx(ParaTela(imgZ), 1.0f, COR_FICHA_ROTULO);
-                DrawTextInArea(hovRet ? "ZOOM: ÍRIS / RETINA" : "ZOOM: DIGITAL",
-                               (Rectangle){ zx, zy + 2.0f, totW, 12.0f }, 8, COR_FICHA_TEXTO);
+                DrawRectangleLinesEx(ParaTela(imgZ), 1.2f, corSubBorda);
+                DrawTextInArea(hovRet ? "LUPA 2X // RETINA" : "LUPA 2X // DIGITAL",
+                               (Rectangle){ zx, zy + 3.0f, totW, 12.0f }, 7.5f, corBranco);
             }
         }
     }
@@ -7007,8 +7157,8 @@ static void DesenharGlossarioMapaBox(float x, float y, float w) {
 }
 
 static void DesenharTutorialContextual(void) {
-    bool modaisBloq = g_confirmarAbandonarRun || g_confirmarAvancarDia || g_galeriaHoloAberta ||
-                      g_dicaAberta || g_deepfakeAberto || g_transTempo >= 0.0f ||
+    bool modaisBloq = g_confirmarAbandonarRun || g_confirmarAvancarDia || (g_confirmarFerramentaIdx >= 0) ||
+                      g_galeriaHoloAberta || g_dicaAberta || g_deepfakeAberto || g_transTempo >= 0.0f ||
                       g_mapaCompletoAberto || g_elevadorAberto || g_inspecaoEvAtiva;
 
     // Balaozinho E/ENTER perto do player ao aproximar de interagiveis (desativavel nas opcoes)
@@ -7023,7 +7173,8 @@ static void DesenharTutorialContextual(void) {
 
     if (g_tutMovimentoVisto && (!GameStateIs3DMode() || (g_tutInteracaoVisto && g_tutMapaVisto)) &&
         g_tutDialogoPerguntaFeita && g_tutChecklistVisto &&
-        g_tutEvidenciaColetaVisto && g_tutHologramaVisto && g_tutDicaVisto) {
+        g_tutEvidenciaColetaVisto && g_tutHologramaVisto && g_tutDicaVisto &&
+        g_tutFerramentaVisto[0] && g_tutFerramentaVisto[1] && g_tutFerramentaVisto[2]) {
         GameStateCompleteTutorial();
         return;
     }
@@ -7073,9 +7224,47 @@ static void DesenharTutorialContextual(void) {
         return;
     }
 
-    // 3) Em interrogatorio: 0=Tokens, 1=1a Pergunta, 2=Ficha+Checklist, 3=Ferramentas
+    // 3) Em interrogatorio: 0=Tokens, 1=1a Pergunta, 2=Ficha+Checklist, 3=Dica Logica
+    //    Explicacao das ferramentas especiais apenas no Dia 2, ou quando o player clicar em uma no Dia 1
     if (g_dialogLoaded) {
-        if (!DialogTutorialAtivo()) return;
+        static const char *TUT_T_TIT[3] = {
+            "NÍVEL 1 — SCANNER DEEPFAKE (1 TOKEN)",
+            "NÍVEL 2 — ENVIESAR DADOS (2 TOKENS)",
+            "NÍVEL 3 — INJEÇÃO DE PROMPT (3 TOKENS)"
+        };
+        static const char *TUT_T_MSG[3] = {
+            "Analisa rosto, íris/retina e digital do suspeito.\nFique atento: humanos também podem gerar falsos positivos!",
+            "Injeta um dado falso na conversa para ver se o alvo concorda ou reage nos dias seguintes.",
+            "Faz uma pergunta/comando sutil para tentar expor a IA.\nDica: Quanto menos ferramentas usar e mais Tokens guardar, mais pontos no final!"
+        };
+
+        // Dia 1: jogador clicou numa ferramenta especial pela primeira vez -> explica antes de confirmar
+        if (g_tutFerramentaPendente >= 0 && g_tutFerramentaPendente < 3) {
+            int k = g_tutFerramentaPendente;
+            if (!g_menuAberto) g_menuAberto = true;
+            Rectangle rIco = IconeMenu(3 + k);
+            DesenharAlvoPulsanteDia0(rIco);
+            DesenharBalaoGuiaDia0(318.0f, 136.0f, 312.0f, TUT_T_TIT[k], TUT_T_MSG[k]);
+            DesenharSetaGuiaDia0((Vector2){ rIco.x + rIco.width * 0.5f, 216.0f },
+                                 (Vector2){ rIco.x + rIco.width * 0.5f, rIco.y - 4.0f });
+
+            Rectangle rBtnOk = { 536.0f, 206.0f, 90.0f, 18.0f };
+            Vector2 mv = RayCanvasGetMousePosition();
+            bool hovOk = CheckCollisionPointRec(mv, ParaTela(rBtnOk));
+            DrawRectangleRec(ParaTela(rBtnOk), hovOk ? (Color){ 96, 86, 88, 255 } : (Color){ 52, 46, 48, 255 });
+            DrawRectangleLinesEx(ParaTela(rBtnOk), 1.4f, (Color){ 255, 242, 230, 255 });
+            DrawTextInArea("ENTENDI >>", rBtnOk, 8, (Color){ 255, 242, 230, 255 });
+            if (hovOk && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && g_dialogoClickPausaTimer <= 0.0f) {
+                g_dialogoClickPausaTimer = 0.22f;
+                TocarSomHover();
+                g_tutFerramentaVisto[k] = true;
+                g_tutFerramentaPendente = -1;
+                g_confirmarFerramentaIdx = 3 + k;
+            }
+            return;
+        }
+
+        if (DialogTutorialAtivo()) {
 
         // Se o jogador ja fez 1 pergunta e concluiu a etapa 1, avanca para Ficha+Checklist
         if (g_tutDialogoEtapa == 1 && g_tutDialogoPerguntaFeita && !g_falaPlayerPendente) {
@@ -7199,7 +7388,7 @@ static void DesenharTutorialContextual(void) {
 
         if (g_tutDialogoEtapa == 3) {
             if (g_tutDicaVisto && !g_dicaAberta) {
-                g_tutDialogoEtapa = 4;
+                g_tutDialogoCompleto = true;
             } else {
                 if (!g_menuAberto) g_menuAberto = true;
                 Rectangle rDica = IconeMenu(2);
@@ -7214,41 +7403,36 @@ static void DesenharTutorialContextual(void) {
                 return;
             }
         }
+        }
 
-        if (g_tutDialogoEtapa >= 4 && g_tutDialogoEtapa <= 6) {
-            if (!g_menuAberto) g_menuAberto = true;
-            int toolIdx = 3 + (g_tutDialogoEtapa - 4); // 3=Deepfake, 4=Enviesar, 5=Injecao
-            Rectangle rIco = IconeMenu(toolIdx);
-            DesenharAlvoPulsanteDia0(rIco);
+        // Dia 2+: explica as ferramentas especiais que ainda nao foram vistas no Dia 1
+        if (GameStateGetDay() >= 2 && !g_falaPlayerPendente) {
+            int kPend = -1;
+            int restantes = 0;
+            for (int k = 0; k < 3; k++) {
+                if (!g_tutFerramentaVisto[k]) {
+                    if (kPend < 0) kPend = k;
+                    restantes++;
+                }
+            }
+            if (kPend >= 0) {
+                if (!g_menuAberto) g_menuAberto = true;
+                Rectangle rIco = IconeMenu(3 + kPend);
+                DesenharAlvoPulsanteDia0(rIco);
+                DesenharBalaoGuiaDia0(318.0f, 136.0f, 312.0f, TUT_T_TIT[kPend], TUT_T_MSG[kPend]);
+                DesenharSetaGuiaDia0((Vector2){ rIco.x + rIco.width * 0.5f, 216.0f },
+                                     (Vector2){ rIco.x + rIco.width * 0.5f, rIco.y - 4.0f });
 
-            static const char *TUT_T_TIT[3] = {
-                "NÍVEL 1 — SCANNER DEEPFAKE (1 TOKEN)",
-                "NÍVEL 2 — ENVIESAR DADOS (2 TOKENS)",
-                "NÍVEL 3 — INJEÇÃO DE PROMPT (3 TOKENS)"
-            };
-            static const char *TUT_T_MSG[3] = {
-                "Analisa rosto, íris/retina e digital do suspeito.\nFique atento: humanos também podem gerar falsos positivos!",
-                "Injeta um dado falso na conversa para ver se o alvo concorda ou reage nos dias seguintes.",
-                "Faz uma pergunta/comando sutil para tentar expor a IA.\nDica: Quanto menos ferramentas usar e mais Tokens guardar, mais pontos no final!"
-            };
-            int k = g_tutDialogoEtapa - 4;
-            DesenharBalaoGuiaDia0(318.0f, 136.0f, 312.0f, TUT_T_TIT[k], TUT_T_MSG[k]);
-            DesenharSetaGuiaDia0((Vector2){ rIco.x + rIco.width * 0.5f, 216.0f },
-                                 (Vector2){ rIco.x + rIco.width * 0.5f, rIco.y - 4.0f });
-
-            Rectangle rBtnOk = { 536.0f, 206.0f, 90.0f, 18.0f };
-            Vector2 mv = RayCanvasGetMousePosition();
-            bool hovOk = CheckCollisionPointRec(mv, ParaTela(rBtnOk));
-            DrawRectangleRec(ParaTela(rBtnOk), hovOk ? (Color){ 96, 86, 88, 255 } : (Color){ 52, 46, 48, 255 });
-            DrawRectangleLinesEx(ParaTela(rBtnOk), 1.4f, (Color){ 255, 242, 230, 255 });
-            DrawTextInArea((g_tutDialogoEtapa < 6) ? "PRÓXIMO >>" : "CONCLUIR >>", rBtnOk, 8, (Color){ 255, 242, 230, 255 });
-            if (hovOk && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && g_dialogoClickPausaTimer <= 0.0f) {
-                g_dialogoClickPausaTimer = 0.22f;
-                TocarSomHover();
-                if (g_tutDialogoEtapa < 6) {
-                    g_tutDialogoEtapa++;
-                } else {
-                    g_tutDialogoCompleto = true;
+                Rectangle rBtnOk = { 536.0f, 206.0f, 90.0f, 18.0f };
+                Vector2 mv = RayCanvasGetMousePosition();
+                bool hovOk = CheckCollisionPointRec(mv, ParaTela(rBtnOk));
+                DrawRectangleRec(ParaTela(rBtnOk), hovOk ? (Color){ 96, 86, 88, 255 } : (Color){ 52, 46, 48, 255 });
+                DrawRectangleLinesEx(ParaTela(rBtnOk), 1.4f, (Color){ 255, 242, 230, 255 });
+                DrawTextInArea((restantes > 1) ? "PRÓXIMO >>" : "CONCLUIR >>", rBtnOk, 8, (Color){ 255, 242, 230, 255 });
+                if (hovOk && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && g_dialogoClickPausaTimer <= 0.0f) {
+                    g_dialogoClickPausaTimer = 0.22f;
+                    TocarSomHover();
+                    g_tutFerramentaVisto[kPend] = true;
                 }
             }
         }
@@ -7657,6 +7841,106 @@ static void DesenharTooltipFerramenta(void) {
         DrawTextInArea(TOOL_NAMES[hoveredIdx], (Rectangle){ boxX + 4, boxY + 2, boxW - 8, 13 }, 8, (Color){ 255, 242, 230, 255 });
         DrawTextInArea(TOOL_DESCS[hoveredIdx], (Rectangle){ boxX + 4, boxY + 16, boxW - 8, 13 }, 8, (Color){ 189, 181, 168, 255 });
     }
+}
+
+static const Rectangle CONFIRMAR_TOOL_PAINEL = { 170, 108, 300, 144 };
+static const Rectangle CONFIRMAR_TOOL_NAO    = { 192, 214, 114, 24 };
+static const Rectangle CONFIRMAR_TOOL_SIM    = { 334, 214, 114, 24 };
+
+static bool UpdateConfirmarFerramenta(void) {
+    if (g_confirmarFerramentaIdx < 3 || g_confirmarFerramentaIdx > 5) return false;
+
+    Vector2 mouse = RayCanvasGetMousePosition();
+    bool clicou = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    bool hover = false;
+
+    Rectangle rNao = ParaTela(CONFIRMAR_TOOL_NAO);
+    Rectangle rSim = ParaTela(CONFIRMAR_TOOL_SIM);
+    Rectangle btnFechar = { CONFIRMAR_TOOL_PAINEL.x + CONFIRMAR_TOOL_PAINEL.width - 19, CONFIRMAR_TOOL_PAINEL.y + 3, 16, 16 };
+    Rectangle rFechar = ParaTela(btnFechar);
+
+    if (CheckCollisionPointRec(mouse, rNao) || CheckCollisionPointRec(mouse, rFechar)) {
+        hover = true;
+        if (clicou) {
+            TocarSomHover();
+            g_confirmarFerramentaIdx = -1;
+            return true;
+        }
+    } else if (CheckCollisionPointRec(mouse, rSim)) {
+        hover = true;
+        if (clicou) {
+            int idx = g_confirmarFerramentaIdx;
+            g_confirmarFerramentaIdx = -1;
+            TocarSomHover();
+            if (idx == 3) ExecutarDeepfake();
+            else if (idx == 4) ExecutarEnviesar();
+            else if (idx == 5) ExecutarInjecao();
+            return true;
+        }
+    }
+
+    SetMouseCursor(hover ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+    return true;
+}
+
+static void DesenharConfirmarFerramenta(void) {
+    if (g_confirmarFerramentaIdx < 3 || g_confirmarFerramentaIdx > 5) return;
+
+    int idx = g_confirmarFerramentaIdx;
+    Vector2 mouse = RayCanvasGetMousePosition();
+    Color corEscura   = {  32,  29,  31, 255 };
+    Color corFundo    = {  42,  38,  40, 252 };
+    Color corDestaque = { 189, 181, 168, 255 };
+    Color corBranco   = { 255, 242, 230, 255 };
+
+    DrawRectangleRec(GetTelaRect(), Fade(BLACK, 0.58f));
+
+    Rectangle sombra = { CONFIRMAR_TOOL_PAINEL.x + 4, CONFIRMAR_TOOL_PAINEL.y + 4, CONFIRMAR_TOOL_PAINEL.width, CONFIRMAR_TOOL_PAINEL.height };
+    DrawRectangleRec(ParaTela(sombra), Fade(BLACK, 0.65f));
+
+    Rectangle rPainel = ParaTela(CONFIRMAR_TOOL_PAINEL);
+    DrawRectangleRec(rPainel, corFundo);
+    DrawRectangleLinesEx(rPainel, 2.0f, corDestaque);
+
+    Rectangle barraTitulo = { CONFIRMAR_TOOL_PAINEL.x, CONFIRMAR_TOOL_PAINEL.y, CONFIRMAR_TOOL_PAINEL.width, 22 };
+    DrawRectangleRec(ParaTela(barraTitulo), corEscura);
+    DrawTextInArea("CONFIRMAR USO DA FERRAMENTA", (Rectangle){ CONFIRMAR_TOOL_PAINEL.x, CONFIRMAR_TOOL_PAINEL.y, CONFIRMAR_TOOL_PAINEL.width - 22, 22 }, 9, corBranco);
+
+    Rectangle btnFechar = { CONFIRMAR_TOOL_PAINEL.x + CONFIRMAR_TOOL_PAINEL.width - 19, CONFIRMAR_TOOL_PAINEL.y + 3, 16, 16 };
+    DesenharBotaoFecharPadrao(btnFechar);
+
+    DrawTextInArea(TOOL_NAMES[idx], (Rectangle){ CONFIRMAR_TOOL_PAINEL.x + 12, CONFIRMAR_TOOL_PAINEL.y + 30, CONFIRMAR_TOOL_PAINEL.width - 24, 14 }, 10, corBranco);
+    DrawTextWrappedLeftAligned(
+        TOOL_DESCS[idx],
+        (Vector2){ CONFIRMAR_TOOL_PAINEL.x + 16, CONFIRMAR_TOOL_PAINEL.y + 50 },
+        CONFIRMAR_TOOL_PAINEL.width - 32,
+        9,
+        corDestaque
+    );
+
+    int custo = TOOL_COSTS[idx];
+    const char *custoStr = (global_infinite_tokens || SettingsGetDevMode())
+        ? "Modo livre/Dev: sem gasto de Tokens."
+        : TextFormat("Custo: %d %s  |  Seus Tokens: %d", custo, (custo == 1 ? "Token" : "Tokens"), global_tokens);
+    DrawTextInArea(custoStr, (Rectangle){ CONFIRMAR_TOOL_PAINEL.x + 12, CONFIRMAR_TOOL_PAINEL.y + 84, CONFIRMAR_TOOL_PAINEL.width - 24, 14 }, 9, COR_NEGACAO_CLARO);
+
+    DrawTextInArea("Limite: 1 ferramenta especial por dia / por suspeito.", (Rectangle){ CONFIRMAR_TOOL_PAINEL.x + 12, CONFIRMAR_TOOL_PAINEL.y + 100, CONFIRMAR_TOOL_PAINEL.width - 24, 12 }, 7, (Color){ 160, 147, 142, 255 });
+
+    // Botao CANCELAR
+    Rectangle rNao = ParaTela(CONFIRMAR_TOOL_NAO);
+    bool hovNao = CheckCollisionPointRec(mouse, rNao);
+    DrawRectangleRec(ParaTela((Rectangle){ CONFIRMAR_TOOL_NAO.x + 2, CONFIRMAR_TOOL_NAO.y + 2, CONFIRMAR_TOOL_NAO.width, CONFIRMAR_TOOL_NAO.height }), Fade(BLACK, 0.45f));
+    DrawRectangleRec(rNao, hovNao ? COR_NEGACAO : COR_NEGACAO_FUNDO);
+    DrawRectangleLinesEx(rNao, 1.5f, hovNao ? corBranco : COR_NEGACAO_CLARO);
+    DrawTextInArea("CANCELAR", CONFIRMAR_TOOL_NAO, 9, corBranco);
+
+    // Botao CONFIRMAR
+    Rectangle rSim = ParaTela(CONFIRMAR_TOOL_SIM);
+    bool hovSim = CheckCollisionPointRec(mouse, rSim);
+    DrawRectangleRec(ParaTela((Rectangle){ CONFIRMAR_TOOL_SIM.x + 2, CONFIRMAR_TOOL_SIM.y + 2, CONFIRMAR_TOOL_SIM.width, CONFIRMAR_TOOL_SIM.height }), Fade(BLACK, 0.45f));
+    DrawRectangleRec(rSim, hovSim ? (Color){ 96, 86, 88, 255 } : (Color){ 64, 58, 62, 255 });
+    DrawRectangleLinesEx(rSim, 1.5f, hovSim ? corBranco : corDestaque);
+    DrawTextInArea("CONFIRMAR", CONFIRMAR_TOOL_SIM, 9, corBranco);
 }
 
 static void AbrirDialogoSuspeito(int i) {
@@ -8257,6 +8541,7 @@ static void ProcessarTeclaEsc(void) {
     }
     if (g_elevadorAberto)        { if (!g_elevadorForcadoSair) g_elevadorAberto = false; return; }
     if (g_confirmarAvancarDia)   { g_confirmarAvancarDia = false;   return; }
+    if (g_confirmarFerramentaIdx >= 0) { g_confirmarFerramentaIdx = -1; return; }
     if (g_dicaAberta)            { FecharDica();                    return; }
     if (g_fichaAtual >= 0 || (g_pranchetaAberta && !g_pranchetaMinimizada) || g_deepfakeAberto) {
         FecharJanelasFerramentas();
@@ -8698,11 +8983,11 @@ void UpdateDrawGameplayScene(void) {
 
     // Inspecao 3D bloqueia apenas movimento do player e cliques de fundo, sem congelar o tempo
     bool inspecaoBloq = UpdateInspecaoEv3D();
-    if (!emTransicao && !g_mapaCompletoAberto && !UpdateEvPopup2D() && !UpdatePopupEvidencia() && !UpdateMenuElevador() && !UpdateConfirmarAbandonar() && !UpdateConfirmarAvancar() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
+    if (!emTransicao && !g_mapaCompletoAberto && !UpdateEvPopup2D() && !UpdatePopupEvidencia() && !UpdateMenuElevador() && !UpdateConfirmarAbandonar() && !UpdateConfirmarAvancar() && !UpdateConfirmarFerramenta() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
         if (SettingsGetTechNight()) {
             GameStateUpdateTechNightClock(GetFrameTime());
         }
-        if (!inspecaoBloq) {
+        if (!inspecaoBloq && g_tutFerramentaPendente < 0) {
             UpdateGameplay();
         } else if (LocalEhTerreo3D(g_localAtual) && g_closeupAtual == CLOSEUP_NENHUM) {
             Terreo3DUpdate(GetFrameTime(), (Vector2){ -1000.0f, -1000.0f }, false, false, true);
@@ -8713,6 +8998,24 @@ void UpdateDrawGameplayScene(void) {
     }
     if (g_localAtual == LOCAL_CANTINA) {
         g_subtaskLanchoneteVisto = true;
+    }
+    if (g_musLanchoneteCarregada) {
+        bool naCantina = (g_localAtual == LOCAL_CANTINA) && (g_transTempo < 0.0f);
+        if (naCantina && !IsMusicStreamPlaying(g_musLanchonete)) {
+            PlayMusicStream(g_musLanchonete);
+        }
+        if (IsMusicStreamPlaying(g_musLanchonete)) {
+            UpdateMusicStream(g_musLanchonete);
+            float aten = (g_dialogLoaded || g_confirmarAbandonarRun) ? 0.45f : 1.0f;
+            float targetVol = naCantina ? (0.55f * aten * SettingsGetSfxVolume()) : 0.0f;
+            float dtAudio = GetFrameTime();
+            if (dtAudio > 0.05f) dtAudio = 0.05f;
+            g_lanchoneteVol += (targetVol - g_lanchoneteVol) * fminf(dtAudio * 5.0f, 1.0f);
+            SetMusicVolume(g_musLanchonete, g_lanchoneteVol);
+            if (!naCantina && g_lanchoneteVol < 0.005f) {
+                StopMusicStream(g_musLanchonete);
+            }
+        }
     }
 
     // 1) Fundo na janela de cima (preenche sem distorcer) - cena 3D do terreo, foto do local atual ou close-up
@@ -9140,6 +9443,7 @@ void UpdateDrawGameplayScene(void) {
 
     // 9) Modal de confirmacao ("Voce tem certeza?") ao avancar dia com tokens restantes
     DesenharConfirmarAvancar();
+    DesenharConfirmarFerramenta();
 
     // 9a) Menu de andares do elevador 3D
     DesenharMenuElevador();
@@ -9471,6 +9775,10 @@ void UnloadGameplayScene(void) {
         UnloadTexture(g_iconeSilhuetas[i]);
     }
     UnloadTexture(g_deepfakeJanela);
+    if (g_musLanchoneteCarregada) {
+        UnloadMusicStream(g_musLanchonete);
+        g_musLanchoneteCarregada = false;
+    }
     UnloadTexture(g_prancheta);
     UnloadTexture(g_ficha);
     UnloadTexture(g_caixaVazia);

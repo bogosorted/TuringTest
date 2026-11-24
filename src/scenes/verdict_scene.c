@@ -583,8 +583,17 @@ static void RenderizarArma(Vector2 mouse) {
 // ---------------------------------------------------------------
 // Cena
 // ---------------------------------------------------------------
+static Music g_musSuspense          = { 0 };
+static bool  g_musSuspenseCarregada = false;
+static float g_suspenseVol          = 0.0f;
+
 bool VerdictSceneShouldRestart(void) {
     return g_tentarDeNovo;
+}
+
+bool VerdictSceneSuspenseAtivo(void) {
+    return g_musSuspenseCarregada &&
+           (g_estado == ESTADO_INTRO || g_estado == ESTADO_MIRANDO || g_estado == ESTADO_TIRO);
 }
 
 bool InitVerdictScene(void) {
@@ -618,6 +627,16 @@ bool InitVerdictScene(void) {
     g_sndHover = LoadSound("assets/audio/sfx_hover.wav");
     g_sndTiro  = CarregarSomOpcional(SOM_TIRO);
     for (int i = 0; i < 3; i++) g_sndGrito[i] = CarregarSomOpcional(SONS_GRITO[i]);
+
+    g_musSuspenseCarregada = false;
+    g_suspenseVol = 0.0f;
+    if (IsAudioDeviceReady() && FileExists("assets/audio/suspenseveredito.mp3")) {
+        g_musSuspense = LoadMusicStream("assets/audio/suspenseveredito.mp3");
+        g_musSuspense.looping = true;
+        PlayMusicStream(g_musSuspense);
+        SetMusicVolume(g_musSuspense, 0.0f);
+        g_musSuspenseCarregada = true;
+    }
 
     g_dither = LoadShaderFromMemory(NULL, DITHER_FS);
     g_sala = LoadTexture("assets/sprites/veredito/spr_veredito_sala.png");
@@ -1364,6 +1383,18 @@ void UpdateDrawVerdictScene(void) {
     g_tempo += dt;
     Vector2 mouse = MouseVirtual();
 
+    if (g_musSuspenseCarregada) {
+        UpdateMusicStream(g_musSuspense);
+        bool deveTocar = (g_estado == ESTADO_INTRO || g_estado == ESTADO_MIRANDO);
+        float targetVol = deveTocar ? (0.72f * SettingsGetMusicVolume()) : 0.0f;
+        float speed = deveTocar ? 3.5f : 10.0f;
+        g_suspenseVol += (targetVol - g_suspenseVol) * fminf(dt * speed, 1.0f);
+        SetMusicVolume(g_musSuspense, g_suspenseVol);
+        if (!deveTocar && g_suspenseVol < 0.01f && IsMusicStreamPlaying(g_musSuspense)) {
+            StopMusicStream(g_musSuspense);
+        }
+    }
+
     // A arma e renderizada antes do frame (textura propria)
     bool cenaVisivel = (g_estado == ESTADO_MIRANDO) || (g_estado == ESTADO_TIRO && g_tempo < TEMPO_CLARAO);
     if (cenaVisivel) RenderizarArma(mouse);
@@ -1534,6 +1565,10 @@ void UnloadVerdictScene(void) {
     if (g_texJornalista.id > 0) UnloadTexture(g_texJornalista);
     if (g_shaderJornalista.id > 0) UnloadShader(g_shaderJornalista);
     if (g_sndBlipJornalista.frameCount > 0) UnloadSound(g_sndBlipJornalista);
+    if (g_musSuspenseCarregada) {
+        UnloadMusicStream(g_musSuspense);
+        g_musSuspenseCarregada = false;
+    }
     UnloadRenderTexture(g_armaRT);
     UnloadRenderTexture(g_armaFinal);
     UnloadShader(g_dither);

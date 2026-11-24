@@ -129,8 +129,10 @@ int main(int argc, char **argv) {
         if (bgmCarregada) {
             UpdateMusicStream(bgm);
 
-            // Volume base: mais alto no menu/intro/veredito (0.60), mais baixo no gameplay (0.28)
-            float baseVol = (currentScene == SCENE_GAMEPLAY) ? 0.28f : 0.60f;
+            // Volume base: mais alto no menu/intro/veredito (0.60), mais baixo no gameplay (0.28),
+            // e mudo durante o suspense do veredito para dar espaco a suspenseveredito.mp3
+            float baseVol = (currentScene == SCENE_GAMEPLAY) ? 0.28f :
+                            (currentScene == SCENE_VERDICT && VerdictSceneSuspenseAtivo()) ? 0.0f : 0.60f;
 
             // Durante transições (fade e tela de texto entre dias), atenua o volume
             float fade = RayCanvasGetFade();
