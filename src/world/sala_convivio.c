@@ -9,11 +9,11 @@
 // - Acima do Escritorio Adm 1 (porta embaixo)
 // - A direita do Jardim (porta a esquerda)
 // - A esquerda dos Banheiros (porta decorativa a direita)
-static const float CONV_MIN_X = -4.80f;
-static const float CONV_MAX_X =  4.80f;
-static const float CONV_MIN_Z = -3.40f;
-static const float CONV_MAX_Z =  3.40f;
-static const float CONV_WALL_H = 2.95f;
+#define CONV_MIN_X -4.80f
+#define CONV_MAX_X 4.80f
+#define CONV_MIN_Z -3.40f
+#define CONV_MAX_Z 3.40f
+#define CONV_WALL_H 2.95f
 
 static const PlayerColliderBox CONV_COLLIDERS[] = {
     { -2.45f, -3.35f,  0.45f, -1.85f }, // Sofa redondo encostado na parede

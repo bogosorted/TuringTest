@@ -6,11 +6,11 @@
 #define PI 3.14159265358979323846f
 #endif
 
-static const float ESC_MIN_X = -5.80f;
-static const float ESC_MAX_X =  5.80f;
-static const float ESC_MIN_Z = -4.20f;
-static const float ESC_MAX_Z =  4.20f;
-static const float ESC_WALL_H = 3.00f;
+#define ESC_MIN_X -5.80f
+#define ESC_MAX_X 5.80f
+#define ESC_MIN_Z -4.20f
+#define ESC_MAX_Z 4.20f
+#define ESC_WALL_H 3.00f
 
 // Setor Administrativo 1:
 // - Gaveteiros + impressora AO LADO no canto esquerdo superior

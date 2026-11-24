@@ -7,11 +7,11 @@
 #define PI 3.14159265358979323846f
 #endif
 
-static const float REC_MIN_X = -5.80f;
-static const float REC_MAX_X =  5.80f;
-static const float REC_MIN_Z = -4.20f;
-static const float REC_MAX_Z =  4.20f;
-static const float REC_WALL_H = 4.20f;
+#define REC_MIN_X -5.80f
+#define REC_MAX_X 5.80f
+#define REC_MIN_Z -4.20f
+#define REC_MAX_Z 4.20f
+#define REC_WALL_H 4.20f
 
 // Recepcao ampla (sem portas de banheiro):
 // - Balcao grande em formato de U redondo conectado a parede do fundo (player nao entra)

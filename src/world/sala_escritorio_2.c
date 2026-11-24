@@ -6,11 +6,11 @@
 #define PI 3.14159265358979323846f
 #endif
 
-static const float ESC2_MIN_X = -5.80f;
-static const float ESC2_MAX_X =  5.80f;
-static const float ESC2_MIN_Z = -4.20f;
-static const float ESC2_MAX_Z =  4.20f;
-static const float ESC2_WALL_H = 3.00f;
+#define ESC2_MIN_X -5.80f
+#define ESC2_MAX_X 5.80f
+#define ESC2_MIN_Z -4.20f
+#define ESC2_MAX_Z 4.20f
+#define ESC2_WALL_H 3.00f
 
 // Setor Administrativo 2 (conectado ao Setor ADM 1 com porta para voltar na parede esquerda!):
 // - Caminho da porta (x=-5.8..-4.2, z=-2.0..0.0) totalmente LIVRE

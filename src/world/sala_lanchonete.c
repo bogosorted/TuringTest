@@ -7,11 +7,11 @@
 
 // Planta baixa do terreo (TerreoRASEC3D.png):
 // A Lanchonete/Cantina ocupa toda a altura vertical esquerda do terreo e cresce para a esquerda (<) para dar espaco as mesas.
-static const float LAN_MIN_X = -5.60f;
-static const float LAN_MAX_X =  3.90f;
-static const float LAN_MIN_Z = -6.20f;
-static const float LAN_MAX_Z =  6.20f;
-static const float LAN_WALL_H = 2.85f;
+#define LAN_MIN_X -5.60f
+#define LAN_MAX_X 3.90f
+#define LAN_MIN_Z -6.20f
+#define LAN_MAX_Z 6.20f
+#define LAN_WALL_H 2.85f
 
 static const PlayerColliderBox LAN_COLLIDERS[] = {
     { -5.60f, -6.20f, -3.20f,  6.20f }, // Divisao + bancada vertical na parede esquerda

@@ -6,10 +6,10 @@
 #define PI 3.14159265358979323846f
 #endif
 
-static const float JAR_MIN_X = -6.20f;
-static const float JAR_MAX_X =  6.20f;
-static const float JAR_MIN_Z = -7.60f;
-static const float JAR_MAX_Z =  4.40f;
+#define JAR_MIN_X -6.20f
+#define JAR_MAX_X 6.20f
+#define JAR_MIN_Z -7.60f
+#define JAR_MAX_Z 4.40f
 
 // Jardim amplo e aesthetic:
 // - Fonte circular grande melhorada no centro (x=0, z=-0.65)

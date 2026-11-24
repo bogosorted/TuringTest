@@ -8,11 +8,11 @@
 
 // Sala de Arquivo (3o escritorio do 1o Andar):
 // Repleta dos novos armarios/gabinetes (baseados em 3D_cabinet_7) + mesa de triagem e impressora.
-static const float ARQ_MIN_X = -4.60f;
-static const float ARQ_MAX_X =  4.60f;
-static const float ARQ_MIN_Z = -3.60f;
-static const float ARQ_MAX_Z =  3.60f;
-static const float ARQ_WALL_H = 2.95f;
+#define ARQ_MIN_X -4.60f
+#define ARQ_MAX_X 4.60f
+#define ARQ_MIN_Z -3.60f
+#define ARQ_MAX_Z 3.60f
+#define ARQ_WALL_H 2.95f
 
 static const PlayerColliderBox ARQ_COLLIDERS[] = {
     { -4.45f, -3.55f,  4.45f, -2.75f }, // Fileira de armarios ao fundo

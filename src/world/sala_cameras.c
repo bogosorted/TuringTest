@@ -9,11 +9,11 @@
 
 // Sala das Cameras (ao lado do Arquivo, 1o Andar):
 // Sala secreta de monitoramento sem itens interagiveis visiveis.
-static const float CAM_MIN_X = -3.40f;
-static const float CAM_MAX_X =  3.40f;
-static const float CAM_MIN_Z = -2.80f;
-static const float CAM_MAX_Z =  2.80f;
-static const float CAM_WALL_H = 2.95f;
+#define CAM_MIN_X -3.40f
+#define CAM_MAX_X 3.40f
+#define CAM_MIN_Z -2.80f
+#define CAM_MAX_Z 2.80f
+#define CAM_WALL_H 2.95f
 
 static const PlayerColliderBox CAM_COLLIDERS[] = {
     { -2.45f, -2.55f,  2.45f, -1.35f }, // Bancada com monitores de seguranca

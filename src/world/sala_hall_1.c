@@ -11,11 +11,11 @@
 // - Esquerda: porta para Copa
 // - Direita (frente): porta para Contabilidade 1
 // - Fundo-direito: Elevador conectando os andares (-1 bloqueado, 0, 1, 2, 3)
-static const float H1_MIN_X = -5.40f;
-static const float H1_MAX_X =  5.40f;
-static const float H1_MIN_Z = -3.40f;
-static const float H1_MAX_Z =  3.20f;
-static const float H1_WALL_H = 3.05f;
+#define H1_MIN_X -5.40f
+#define H1_MAX_X 5.40f
+#define H1_MIN_Z -3.40f
+#define H1_MAX_Z 3.20f
+#define H1_WALL_H 3.05f
 
 static const PlayerColliderBox H1_COLLIDERS[] = {
     { -1.95f,  0.65f,  1.05f,  1.75f }, // Sofa central compacto

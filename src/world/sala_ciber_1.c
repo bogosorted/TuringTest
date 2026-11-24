@@ -10,11 +10,11 @@
 // - Bancadas em L/curva ao longo das paredes com varios monitores e gabinetes
 // - Janelas claras ao fundo + duto de ar cilindrico no alto
 // - Armarios (3D_cabinet_7) na lateral
-static const float CB1_MIN_X = -5.40f;
-static const float CB1_MAX_X =  5.40f;
-static const float CB1_MIN_Z = -3.60f;
-static const float CB1_MAX_Z =  3.40f;
-static const float CB1_WALL_H = 3.00f;
+#define CB1_MIN_X -5.40f
+#define CB1_MAX_X 5.40f
+#define CB1_MIN_Z -3.60f
+#define CB1_MAX_Z 3.40f
+#define CB1_WALL_H 3.00f
 
 static const PlayerColliderBox CB1_COLLIDERS[] = {
     { -5.25f, -3.45f,  2.85f, -2.35f }, // Bancada longa ao fundo

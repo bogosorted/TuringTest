@@ -9,11 +9,11 @@
 // - Fileiras paralelas de mesas brancas com base cinza e multiplos monitores enfileirados
 // - Persianas claras nas janelas ao fundo
 // - Esquerda: volta ao Hall 2 | Fundo: porta industrial para Sala de Servidores 1
-static const float CB2_MIN_X = -5.60f;
-static const float CB2_MAX_X =  5.60f;
-static const float CB2_MIN_Z = -3.80f;
-static const float CB2_MAX_Z =  3.60f;
-static const float CB2_WALL_H = 3.00f;
+#define CB2_MIN_X -5.60f
+#define CB2_MAX_X 5.60f
+#define CB2_MIN_Z -3.80f
+#define CB2_MAX_Z 3.60f
+#define CB2_WALL_H 3.00f
 
 static const PlayerColliderBox CB2_COLLIDERS[] = {
     { -3.65f,  0.65f,  3.65f,  1.95f }, // Fileira 1 de estacoes

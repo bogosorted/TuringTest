@@ -10,11 +10,11 @@
 // - Esquerda: Escritorio Ciberseguranca 1 (entrada mais simples)
 // - Direita: Escritorio Ciberseguranca 2 (estacoes em fileiras)
 // - Fundo-direito: Elevador
-static const float H2_MIN_X = -5.20f;
-static const float H2_MAX_X =  5.20f;
-static const float H2_MIN_Z = -3.40f;
-static const float H2_MAX_Z =  3.20f;
-static const float H2_WALL_H = 3.05f;
+#define H2_MIN_X -5.20f
+#define H2_MAX_X 5.20f
+#define H2_MIN_Z -3.40f
+#define H2_MAX_Z 3.20f
+#define H2_WALL_H 3.05f
 
 static const PlayerColliderBox H2_COLLIDERS[] = {
     { -1.85f,  0.65f,  1.15f,  1.75f }, // Sofa central

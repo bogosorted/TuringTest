@@ -9,14 +9,14 @@
 // Subsolo 3D (area de testes/showcase de modelos do player):
 // 4 modelos aprimorados (2 Masculinos + 2 Femininos). Ao interagir com cada um,
 // ele cicla entre: Idle -> Andando -> Correndo -> Computador -> Papel/Mapa -> Porta.
-static const float SUB_MIN_X = -6.00f;
-static const float SUB_MAX_X =  6.00f;
-static const float SUB_MIN_Z = -4.20f;
-static const float SUB_MAX_Z =  4.20f;
-static const float SUB_WALL_H = 3.10f;
+#define SUB_MIN_X -6.00f
+#define SUB_MAX_X 6.00f
+#define SUB_MIN_Z -4.20f
+#define SUB_MAX_Z 4.20f
+#define SUB_WALL_H 3.10f
 
 static const float SUB_MODEL_X[4] = { -3.60f, -1.20f, 1.20f, 3.60f };
-static const float SUB_MODEL_Z    = -0.60f;
+#define SUB_MODEL_Z -0.60f
 
 static const PlayerColliderBox SUB_COLLIDERS[] = {
     { -4.05f, -1.05f, -3.15f, -0.15f }, // Modelo 0 (Masculino Noir)

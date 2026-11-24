@@ -8,11 +8,11 @@
 // Auditorio (4o Andar, baseado em auditorio.zip / IndoorEnvironmentHDRI017):
 // - Mesas brancas em U / fileiras com cadeiras escuras voltadas para o telao de projecao ao fundo
 // - Placas acusticas suspensas e pulpito de apresentacao
-static const float AUD_MIN_X = -6.00f;
-static const float AUD_MAX_X =  6.00f;
-static const float AUD_MIN_Z = -4.20f;
-static const float AUD_MAX_Z =  4.00f;
-static const float AUD_WALL_H = 3.40f;
+#define AUD_MIN_X -6.00f
+#define AUD_MAX_X 6.00f
+#define AUD_MIN_Z -4.20f
+#define AUD_MAX_Z 4.00f
+#define AUD_WALL_H 3.40f
 
 static const PlayerColliderBox AUD_COLLIDERS[] = {
     { -3.80f, -1.65f,  3.80f, -0.55f }, // Fileira frontal de mesas em U

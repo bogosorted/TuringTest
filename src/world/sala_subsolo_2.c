@@ -10,11 +10,11 @@
 // Subsolo 2 (Laboratorio Tecnologico de Prototipos de Player):
 // 6 modelos tecnologicos refinados, totalmente distintos entre si, com fisica secundaria.
 // Ao interagir com cada modelo, ele cicla entre: Idle -> Andando -> Correndo -> Computador -> Papel -> Porta.
-static const float SUB2_MIN_X = -7.20f;
-static const float SUB2_MAX_X =  7.20f;
-static const float SUB2_MIN_Z = -4.40f;
-static const float SUB2_MAX_Z =  4.40f;
-static const float SUB2_WALL_H = 3.20f;
+#define SUB2_MIN_X -7.20f
+#define SUB2_MAX_X 7.20f
+#define SUB2_MIN_Z -4.40f
+#define SUB2_MAX_Z 4.40f
+#define SUB2_WALL_H 3.20f
 
 static const float SUB2_MODEL_X[6] = { -5.00f, -3.00f, -1.00f, 1.00f, 3.00f, 5.00f };
 static const float SUB2_MODEL_Z    = -0.85f;

@@ -9,11 +9,11 @@
 // - Parede tecnica ao fundo com eletrocalhas, cabos, trilhos de disjuntores e caixas de medidores eletricos
 // - Prototipo humanoide branco articulado em destaque ao lado da bancada de testes
 // - Esquerda: Hall 3 | Fundo-direita: Garagem de Prototipos
-static const float TIA_MIN_X = -5.40f;
-static const float TIA_MAX_X =  5.40f;
-static const float TIA_MIN_Z = -3.80f;
-static const float TIA_MAX_Z =  3.60f;
-static const float TIA_WALL_H = 3.10f;
+#define TIA_MIN_X -5.40f
+#define TIA_MAX_X 5.40f
+#define TIA_MIN_Z -3.80f
+#define TIA_MAX_Z 3.60f
+#define TIA_WALL_H 3.10f
 
 static const PlayerColliderBox TIA_COLLIDERS[] = {
     { -4.60f, -3.65f, -1.60f, -2.55f }, // Quadros eletricos e caixas de energia na base da parede

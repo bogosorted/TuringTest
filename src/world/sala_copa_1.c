@@ -7,11 +7,11 @@
 
 // Copa do 1o Andar (Contabilidade):
 // Bancada com pia/cafeteira, geladeira corporativa, bebedouro, 2 mesas redondas e porta decorativa de banheiro.
-static const float COPA1_MIN_X = -4.80f;
-static const float COPA1_MAX_X =  4.80f;
-static const float COPA1_MIN_Z = -3.60f;
-static const float COPA1_MAX_Z =  3.60f;
-static const float COPA1_WALL_H = 2.95f;
+#define COPA1_MIN_X -4.80f
+#define COPA1_MAX_X 4.80f
+#define COPA1_MIN_Z -3.60f
+#define COPA1_MAX_Z 3.60f
+#define COPA1_WALL_H 2.95f
 
 static const PlayerColliderBox COPA1_COLLIDERS[] = {
     { -4.55f, -3.50f, -3.45f, -2.35f }, // Geladeira

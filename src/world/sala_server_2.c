@@ -8,11 +8,11 @@
 // Sala de Servidores 2 (ala restrita ao fundo, baseada em serverciberseguranca.jpg):
 // - Corredor estreito de racks de alta densidade + terminal de diagnostico
 // - Esquerda: volta para Sala de Servidores 1
-static const float SRV2_MIN_X = -4.20f;
-static const float SRV2_MAX_X =  4.20f;
-static const float SRV2_MIN_Z = -3.40f;
-static const float SRV2_MAX_Z =  3.40f;
-static const float SRV2_WALL_H = 3.05f;
+#define SRV2_MIN_X -4.20f
+#define SRV2_MAX_X 4.20f
+#define SRV2_MIN_Z -3.40f
+#define SRV2_MAX_Z 3.40f
+#define SRV2_WALL_H 3.05f
 
 static const PlayerColliderBox SRV2_COLLIDERS[] = {
     { -2.45f, -3.20f,  3.65f, -1.95f }, // Fileira de racks ao fundo

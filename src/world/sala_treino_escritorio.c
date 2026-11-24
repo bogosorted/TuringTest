@@ -8,11 +8,11 @@
 // Treinamento Escritorio (baseado em treinamentoiaescritorio.jpg):
 // - Mesas escuras de desenvolvimento com monitores (incluindo monitor vertical), gabinetes PC com ventoinhas e muitos cabos
 // - Luminarias pendentes pretas suspensas sobre as mesas e janelas amplas ao fundo
-static const float TE_MIN_X = -5.40f;
-static const float TE_MAX_X =  5.40f;
-static const float TE_MIN_Z = -3.60f;
-static const float TE_MAX_Z =  3.40f;
-static const float TE_WALL_H = 3.10f;
+#define TE_MIN_X -5.40f
+#define TE_MAX_X 5.40f
+#define TE_MIN_Z -3.60f
+#define TE_MAX_Z 3.40f
+#define TE_WALL_H 3.10f
 
 static const PlayerColliderBox TE_COLLIDERS[] = {
     { -3.55f, -1.95f,  2.55f, -0.55f }, // Ilha de desenvolvimento 1

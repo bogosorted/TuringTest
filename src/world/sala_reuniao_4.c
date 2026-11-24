@@ -11,11 +11,11 @@
 // - Quadro branco de brainstorm na parede
 // - Sala de Reuniao 1: Esquerda -> Hall 4 | Fundo -> Reuniao 2 | Direita -> Sala do CEO (Trancada)
 // - Sala de Reuniao 2: Frente (embaixo) -> Reuniao 1
-static const float RN_MIN_X = -4.80f;
-static const float RN_MAX_X =  4.80f;
-static const float RN_MIN_Z = -3.60f;
-static const float RN_MAX_Z =  3.40f;
-static const float RN_WALL_H = 3.15f;
+#define RN_MIN_X -4.80f
+#define RN_MAX_X 4.80f
+#define RN_MIN_Z -3.60f
+#define RN_MAX_Z 3.40f
+#define RN_WALL_H 3.15f
 
 static const PlayerColliderBox RN_COLLIDERS[] = {
     { -1.75f, -1.75f,  1.75f,  1.65f }, // Mesa grande redonda + cadeiras ao redor

@@ -8,11 +8,11 @@
 // Sala de Servidores 1 (baseada em serverciberseguranca.jpg):
 // - Corredor de racks pretos perfurados com cabos no teto e LEDs
 // - Embaixo: volta para Ciberseguranca 2 | Direita: Sala de Servidores 2
-static const float SRV1_MIN_X = -4.60f;
-static const float SRV1_MAX_X =  4.60f;
-static const float SRV1_MIN_Z = -3.60f;
-static const float SRV1_MAX_Z =  3.40f;
-static const float SRV1_WALL_H = 3.05f;
+#define SRV1_MIN_X -4.60f
+#define SRV1_MAX_X 4.60f
+#define SRV1_MIN_Z -3.60f
+#define SRV1_MAX_Z 3.40f
+#define SRV1_WALL_H 3.05f
 
 static const PlayerColliderBox SRV1_COLLIDERS[] = {
     { -3.75f, -2.55f, -2.45f,  2.15f }, // Fileira esquerda de racks
