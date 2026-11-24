@@ -86,6 +86,7 @@ static void DesenharServer2(float tempo, bool evRelatoriosAtiva) {
     // Bancada de diagnostico
     TerreoCaixa((Vector3){ 2.60f, 0.74f, 1.00f }, (Vector3){ 1.85f, 0.05f, 1.00f }, 0.60f, 0.44f, 0.40f, 0.14f);
     TerreoMonitor((Vector3){ 2.60f, 0.77f, 1.00f }, 180.0f);
+    TerreoGabinetePC((Vector3){ 2.12f, 0.77f, 1.00f }, 180.0f);
     TerreoCadeira((Vector3){ 2.60f, 0.0f, 0.15f }, 0.0f);
 }
 

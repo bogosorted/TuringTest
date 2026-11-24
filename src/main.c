@@ -12,7 +12,11 @@
 #include "settings.h"
 #include "ranking.h"
 #include <math.h>
+#ifdef _WIN32
+#include <process.h>
+#else
 #include <unistd.h>
+#endif
 
 // Lista das telas que o jogo tem
 typedef enum {
@@ -99,7 +103,7 @@ int main(int argc, char **argv) {
     // Música principal do jogo (toca continuamente com volume ajustado por cena e transição)
     Music bgm = { 0 };
     bool bgmCarregada = false;
-    if (FileExists("assets/audio/bgm_main.mp3")) {
+    if (IsAudioDeviceReady() && FileExists("assets/audio/bgm_main.mp3")) {
         bgm = LoadMusicStream("assets/audio/bgm_main.mp3");
         bgm.looping = true;
         PlayMusicStream(bgm);
@@ -142,7 +146,7 @@ int main(int argc, char **argv) {
         if (IsKeyPressed(KEY_F10) || ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_Q))) {
             break;
         }
-        if (IsKeyPressed(KEY_F11)) {
+        if (IsKeyPressed(KEY_F11) || ((IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT)) && IsKeyPressed(KEY_ENTER))) {
             SettingsSetFullscreen(!SettingsGetFullscreen());
             SettingsApplyWindowMode();
             SettingsSave();
@@ -245,11 +249,15 @@ int main(int argc, char **argv) {
     if (bgmCarregada) {
         UnloadMusicStream(bgm);
     }
-    CloseAudioDevice(); // Encerra dispositivo de som
+    if (IsAudioDeviceReady()) CloseAudioDevice(); // Encerra dispositivo de som
     RayCanvasShutdown();
     CloseWindow();
     if (SettingsConsumeAppRestart()) {
+#ifdef _WIN32
+        _execv(argv[0], (const char *const *)argv);
+#else
         execv("/proc/self/exe", argv);
+#endif
     }
     return 0;
 }

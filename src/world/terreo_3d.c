@@ -68,6 +68,8 @@ static float                g_passoTimer = 0.0f;
 static float                g_portaAnimTimer = 0.0f;
 static TerreoDestino        g_portaDestPendente = TERREO_DEST_NENHUM;
 static Vector3              g_portaAlvoPos = { 0 };
+static bool                 g_guiaTemAlgoNoAndar = true;
+static uint64_t             g_guiaSalasAlvoMask  = 0ULL;
 
 static Sound CriarSomProcedural3D(int sampleCount, float freqIni, float freqFim, float noiseMix, float amp) {
     Wave w = { 0 };
@@ -521,17 +523,25 @@ void TerreoSilhuetaSombra(Vector3 pos, float yawDeg, bool sentado) {
 #endif
 
 void TerreoBebedouro(Vector3 pos) {
-    // Bebedouro corporativo moderno: gabinete reto com nicho recuado, pingadeira, torneiras e galao
-    TerreoCaixa((Vector3){ pos.x, pos.y + 0.48f, pos.z }, (Vector3){ 0.38f, 0.96f, 0.38f }, 0.82f, 0.72f, 0.64f, 0.16f);
-    // Nicho escuro das torneiras + bandeja pingadeira
-    TerreoCaixa((Vector3){ pos.x - 0.14f, pos.y + 0.74f, pos.z }, (Vector3){ 0.12f, 0.24f, 0.24f }, 0.18f, 0.14f, 0.14f, -1.0f);
-    TerreoCaixa((Vector3){ pos.x - 0.16f, pos.y + 0.61f, pos.z }, (Vector3){ 0.10f, 0.02f, 0.22f }, 0.34f, 0.26f, 0.24f, 0.12f);
-    DrawCylinder((Vector3){ pos.x - 0.13f, pos.y + 0.80f, pos.z - 0.05f }, 0.012f, 0.012f, 0.05f, 8, TerreoLum(0.90f));
-    DrawCylinder((Vector3){ pos.x - 0.13f, pos.y + 0.80f, pos.z + 0.05f }, 0.012f, 0.012f, 0.05f, 8, TerreoLum(0.32f));
-    // Anel adaptador + galao de agua no topo
+    // Bebedouro corporativo detalhado: base, corpo metalico, nicho com grade, 2 alavancas, porta-copos lateral e galao curvado
+    TerreoCaixa((Vector3){ pos.x, pos.y + 0.04f, pos.z }, (Vector3){ 0.42f, 0.08f, 0.42f }, 0.22f, 0.18f, 0.16f, 0.08f);
+    TerreoCaixa((Vector3){ pos.x, pos.y + 0.52f, pos.z }, (Vector3){ 0.38f, 0.88f, 0.38f }, 0.84f, 0.74f, 0.66f, 0.16f);
+    // Friso frontal + nicho escuro das torneiras + grade pingadeira
+    TerreoCaixa((Vector3){ pos.x - 0.145f, pos.y + 0.74f, pos.z }, (Vector3){ 0.12f, 0.26f, 0.26f }, 0.16f, 0.12f, 0.12f, -1.0f);
+    TerreoCaixa((Vector3){ pos.x - 0.165f, pos.y + 0.60f, pos.z }, (Vector3){ 0.11f, 0.025f, 0.24f }, 0.38f, 0.28f, 0.26f, 0.12f);
+    // Torneiras (gelada e natural)
+    TerreoCaixa((Vector3){ pos.x - 0.15f, pos.y + 0.82f, pos.z - 0.055f }, (Vector3){ 0.05f, 0.04f, 0.03f }, 0.90f, 0.82f, 0.80f, -1.0f);
+    TerreoCaixa((Vector3){ pos.x - 0.15f, pos.y + 0.82f, pos.z + 0.055f }, (Vector3){ 0.05f, 0.04f, 0.03f }, 0.30f, 0.24f, 0.24f, -1.0f);
+    // Porta-copos cilindrico acoplado na lateral
+    DrawCylinder((Vector3){ pos.x, pos.y + 0.58f, pos.z + 0.23f }, 0.042f, 0.042f, 0.34f, 10, TerreoLum(0.78f));
+    DrawCylinder((Vector3){ pos.x, pos.y + 0.92f, pos.z + 0.23f }, 0.048f, 0.048f, 0.02f, 10, TerreoLum(0.24f));
+    // Anel adaptador + galao de agua com ombros arredondados e nivel de agua
     DrawCylinder((Vector3){ pos.x, pos.y + 0.96f, pos.z }, 0.14f, 0.16f, 0.05f, 16, TerreoLum(0.24f));
-    DrawCylinder((Vector3){ pos.x, pos.y + 1.01f, pos.z }, 0.18f, 0.18f, 0.38f, 16, TerreoLum(0.88f));
-    DrawCylinder((Vector3){ pos.x, pos.y + 1.39f, pos.z }, 0.07f, 0.18f, 0.08f, 14, TerreoLum(0.84f));
+    DrawCylinder((Vector3){ pos.x, pos.y + 1.01f, pos.z }, 0.175f, 0.185f, 0.28f, 18, TerreoLum(0.86f));
+    DrawCylinder((Vector3){ pos.x, pos.y + 1.29f, pos.z }, 0.175f, 0.175f, 0.10f, 18, TerreoLum(0.94f));
+    DrawCylinder((Vector3){ pos.x, pos.y + 1.39f, pos.z }, 0.065f, 0.175f, 0.09f, 16, TerreoLum(0.88f));
+    DrawCylinderWires((Vector3){ pos.x, pos.y + 1.15f, pos.z }, 0.182f, 0.182f, 0.01f, 16, TerreoLum(0.56f));
+    DrawCylinderWires((Vector3){ pos.x, pos.y + 1.25f, pos.z }, 0.182f, 0.182f, 0.01f, 16, TerreoLum(0.56f));
 }
 
 void TerreoImpressora(Vector3 pos, float rotYDeg) {
@@ -539,10 +549,21 @@ void TerreoImpressora(Vector3 pos, float rotYDeg) {
     rlTranslatef(pos.x, pos.y, pos.z);
     rlRotatef(rotYDeg, 0.0f, 1.0f, 0.0f);
 
-    // Gabinete base + corpo da multifuncional + bandeja superior com papel
-    TerreoCaixa((Vector3){ 0.0f, 0.38f, 0.0f }, (Vector3){ 0.72f, 0.76f, 0.56f }, 0.42f, 0.32f, 0.28f, 0.12f);
-    TerreoCaixa((Vector3){ 0.0f, 0.96f, 0.0f }, (Vector3){ 0.68f, 0.42f, 0.52f }, 0.84f, 0.70f, 0.62f, 0.16f);
-    TerreoCaixa((Vector3){ 0.0f, 1.20f, 0.02f }, (Vector3){ 0.42f, 0.05f, 0.34f }, 0.94f, 0.84f, 0.76f, 0.18f);
+    // Gabinete base com 2 gavetas de papel A4/A3 e puxadores
+    TerreoCaixa((Vector3){ 0.0f, 0.36f, 0.0f }, (Vector3){ 0.72f, 0.72f, 0.56f }, 0.42f, 0.32f, 0.28f, 0.12f);
+    TerreoCaixa((Vector3){ 0.0f, 0.20f, 0.285f }, (Vector3){ 0.58f, 0.24f, 0.015f }, 0.50f, 0.44f, 0.40f, 0.14f);
+    TerreoCaixa((Vector3){ 0.0f, 0.50f, 0.285f }, (Vector3){ 0.58f, 0.24f, 0.015f }, 0.50f, 0.44f, 0.40f, 0.14f);
+    TerreoCaixa((Vector3){ 0.0f, 0.20f, 0.298f }, (Vector3){ 0.16f, 0.025f, 0.015f }, 0.20f, 0.16f, 0.16f, -1.0f);
+    TerreoCaixa((Vector3){ 0.0f, 0.50f, 0.298f }, (Vector3){ 0.16f, 0.025f, 0.015f }, 0.20f, 0.16f, 0.16f, -1.0f);
+    // Corpo principal + nicho escuro de saida de folha + folha impressa
+    TerreoCaixa((Vector3){ 0.0f, 0.90f, -0.02f }, (Vector3){ 0.70f, 0.36f, 0.52f }, 0.84f, 0.70f, 0.62f, 0.16f);
+    TerreoCaixa((Vector3){ -0.08f, 0.86f, 0.245f }, (Vector3){ 0.38f, 0.12f, 0.02f }, 0.14f, 0.10f, 0.10f, -1.0f);
+    TerreoCaixa((Vector3){ -0.08f, 0.83f, 0.31f }, (Vector3){ 0.28f, 0.01f, 0.16f }, 0.96f, 0.92f, 0.88f, -1.0f);
+    // Tampa do scanner + alimentador automatico (ADF) + painel LCD inclinado com LED
+    TerreoCaixa((Vector3){ 0.0f, 1.11f, -0.02f }, (Vector3){ 0.68f, 0.06f, 0.50f }, 0.32f, 0.24f, 0.22f, 0.12f);
+    TerreoCaixa((Vector3){ -0.05f, 1.17f, -0.04f }, (Vector3){ 0.44f, 0.06f, 0.32f }, 0.88f, 0.78f, 0.70f, 0.16f);
+    TerreoCaixa((Vector3){  0.22f, 1.06f,  0.26f }, (Vector3){ 0.18f, 0.09f, 0.04f }, 0.22f, 0.16f, 0.16f, 0.38f);
+    DrawSphere((Vector3){ 0.28f, 1.07f, 0.285f }, 0.010f, (Color){ 255, 224, 48, 255 });
 
     rlPopMatrix();
 }
@@ -950,6 +971,7 @@ void Terreo3DInit(int largura, int altura) {
     g_salas[TERREO_SALA_REUNIAO_1]          = SalaReuniao1Def();
     g_salas[TERREO_SALA_REUNIAO_2]          = SalaReuniao2Def();
     g_salas[TERREO_SALA_SUBSOLO]            = SalaSubsoloDef();
+    g_salas[TERREO_SALA_SUBSOLO_2]          = SalaSubsolo2Def();
 
     GarantirTexturas(largura, altura);
     Terreo3DDefinirSala(TERREO_SALA_RECEPCAO, TERREO_DEST_NENHUM);
@@ -1114,9 +1136,15 @@ void Terreo3DDefinirSala(TerreoSalaId sala, TerreoDestino vindoDe) {
                    vindoDe == TERREO_DEST_HALL_2 ||
                    vindoDe == TERREO_DEST_HALL_3 ||
                    vindoDe == TERREO_DEST_HALL_4 ||
-                   vindoDe == TERREO_DEST_SUBSOLO) {
+                   vindoDe == TERREO_DEST_SUBSOLO ||
+                   vindoDe == TERREO_DEST_SUBSOLO_2) {
             pos = (Vector3){ 4.35f, 0.0f, -2.90f };
             yaw = 0.0f;
+        }
+    } else if (sala == TERREO_SALA_SUBSOLO) {
+        if (vindoDe == TERREO_DEST_SUBSOLO_2) {
+            pos = (Vector3){ 4.95f, 0.0f, 1.65f };
+            yaw = -PI * 0.5f;
         }
     } else if (sala == TERREO_SALA_LANCHONETE) {
         if (vindoDe == TERREO_DEST_RECEPCAO) {
@@ -1343,9 +1371,91 @@ void Terreo3DTriggerPaperDrop(Vector3 paperPos, float duracao) {
     PlayerCharacterTriggerPaperDrop(&g_player, paperPos, duracao);
 }
 
-void Terreo3DSetGuiaInfo(bool suspeitoNaSala, int andarAlvo) {
-    (void)suspeitoNaSala;
-    (void)andarAlvo;
+void Terreo3DSetGuiaInfo(bool temAlgoNoAndar, uint64_t salasAlvoMask) {
+    g_guiaTemAlgoNoAndar = temAlgoNoAndar;
+    g_guiaSalasAlvoMask  = salasAlvoMask;
+}
+
+static TerreoSalaId SalaPorDestino3D(TerreoDestino d) {
+    switch (d) {
+        case TERREO_DEST_RECEPCAO:           return TERREO_SALA_RECEPCAO;
+        case TERREO_DEST_LANCHONETE:         return TERREO_SALA_LANCHONETE;
+        case TERREO_DEST_JARDIM:             return TERREO_SALA_JARDIM;
+        case TERREO_DEST_ESCRITORIO:         return TERREO_SALA_ESCRITORIO;
+        case TERREO_DEST_ESCRITORIO_2:       return TERREO_SALA_ESCRITORIO_2;
+        case TERREO_DEST_CONVIVIO:           return TERREO_SALA_CONVIVIO;
+        case TERREO_DEST_HALL_1:             return TERREO_SALA_HALL_1;
+        case TERREO_DEST_CONTABILIDADE_1:    return TERREO_SALA_CONTABILIDADE_1;
+        case TERREO_DEST_CONTABILIDADE_2:    return TERREO_SALA_CONTABILIDADE_2;
+        case TERREO_DEST_ARQUIVO_1:          return TERREO_SALA_ARQUIVO_1;
+        case TERREO_DEST_SALA_CAMERAS:       return TERREO_SALA_CAMERAS;
+        case TERREO_DEST_COPA_1:             return TERREO_SALA_COPA_1;
+        case TERREO_DEST_HALL_2:             return TERREO_SALA_HALL_2;
+        case TERREO_DEST_CIBER_1:            return TERREO_SALA_CIBER_1;
+        case TERREO_DEST_CIBER_2:            return TERREO_SALA_CIBER_2;
+        case TERREO_DEST_SERVER_1:           return TERREO_SALA_SERVER_1;
+        case TERREO_DEST_SERVER_2:           return TERREO_SALA_SERVER_2;
+        case TERREO_DEST_HALL_3:             return TERREO_SALA_HALL_3;
+        case TERREO_DEST_TREINO_ESCRITORIO:  return TERREO_SALA_TREINO_ESCRITORIO;
+        case TERREO_DEST_TREINO_IA:          return TERREO_SALA_TREINO_IA;
+        case TERREO_DEST_GARAGEM_PROTOTIPOS: return TERREO_SALA_GARAGEM_PROTOTIPOS;
+        case TERREO_DEST_HALL_4:             return TERREO_SALA_HALL_4;
+        case TERREO_DEST_AUDITORIO:          return TERREO_SALA_AUDITORIO;
+        case TERREO_DEST_REUNIAO_1:          return TERREO_SALA_REUNIAO_1;
+        case TERREO_DEST_REUNIAO_2:          return TERREO_SALA_REUNIAO_2;
+        case TERREO_DEST_SUBSOLO:            return TERREO_SALA_SUBSOLO;
+        case TERREO_DEST_SUBSOLO_2:          return TERREO_SALA_SUBSOLO_2;
+        default:                             return TERREO_NUM_SALAS;
+    }
+}
+
+static bool SalaTemElevador(TerreoSalaId sid) {
+    if (sid < 0 || sid >= TERREO_NUM_SALAS || !g_salas[sid]) return false;
+    const TerreoSalaDef *d = g_salas[sid];
+    for (int i = 0; i < d->numInteractables; i++) {
+        if (d->interactables[i].id && strcmp(d->interactables[i].id, "elevador") == 0) return true;
+    }
+    return false;
+}
+
+// BFS no grafo de portas do andar atual: retorna o indice da porta em 'inicio'
+// que leva pelo caminho mais curto ate uma sala em salasAlvoMask (ou ao elevador).
+static int GuiaEncontrarPortaBFS(TerreoSalaId inicio, uint64_t salasAlvoMask, bool buscarElevador) {
+    if (inicio < 0 || inicio >= TERREO_NUM_SALAS || !g_salas[inicio]) return -1;
+    int firstDoor[TERREO_NUM_SALAS];
+    bool vis[TERREO_NUM_SALAS];
+    TerreoSalaId q[TERREO_NUM_SALAS];
+    for (int i = 0; i < TERREO_NUM_SALAS; i++) { firstDoor[i] = -1; vis[i] = false; }
+
+    int head = 0, tail = 0;
+    vis[inicio] = true;
+    const TerreoSalaDef *s0 = g_salas[inicio];
+    for (int p = 0; p < s0->numPortas; p++) {
+        TerreoSalaId nxt = SalaPorDestino3D(s0->portas[p].destino);
+        if (nxt < 0 || nxt >= TERREO_NUM_SALAS || !g_salas[nxt] || vis[nxt]) continue;
+        vis[nxt] = true;
+        firstDoor[nxt] = p;
+        q[tail++] = nxt;
+    }
+
+    while (head < tail) {
+        TerreoSalaId cur = q[head++];
+        if (buscarElevador) {
+            if (SalaTemElevador(cur)) return firstDoor[cur];
+        } else {
+            if (((salasAlvoMask >> (int)cur) & 1ULL) != 0) return firstDoor[cur];
+        }
+        const TerreoSalaDef *sc = g_salas[cur];
+        if (!sc) continue;
+        for (int p = 0; p < sc->numPortas; p++) {
+            TerreoSalaId nxt = SalaPorDestino3D(sc->portas[p].destino);
+            if (nxt < 0 || nxt >= TERREO_NUM_SALAS || !g_salas[nxt] || vis[nxt]) continue;
+            vis[nxt] = true;
+            firstDoor[nxt] = firstDoor[cur];
+            q[tail++] = nxt;
+        }
+    }
+    return -1;
 }
 
 float Terreo3DGetChairPull(Vector3 chairPos) {
@@ -1366,9 +1476,9 @@ static void PosicaoSuspeitoNaSala(TerreoSalaId sala, int s, Vector3 *outPos, flo
         static const float yaws[3]  = { -35.0f, 25.0f, -120.0f };
         p = pts[s]; yaw = yaws[s];
     } else if (sala == TERREO_SALA_LANCHONETE) {
-        // Cantina: em pe nos corredores amplos, bem longe das mesas
-        static const Vector3 pts[3] = { { -1.40f, 0, -2.10f }, { -1.10f, 0, -0.55f }, { -1.35f, 0, 3.35f } };
-        static const float yaws[3]  = { 35.0f, -25.0f, 25.0f };
+        // Cantina: Arthur mais no cantinho superior esquerdo, bem longe das mesas
+        static const Vector3 pts[3] = { { -1.40f, 0, -2.10f }, { -2.35f, 0, -4.85f }, { -1.35f, 0, 3.35f } };
+        static const float yaws[3]  = { 35.0f, 35.0f, 25.0f };
         p = pts[s]; yaw = yaws[s];
     } else if (sala == TERREO_SALA_JARDIM) {
         // Jardim: em pe pelas trilhas
@@ -1509,12 +1619,21 @@ static PlayerPreviewAnim g_subsoloAnims[4] = {
     PREVIEW_ANIM_IDLE, PREVIEW_ANIM_IDLE, PREVIEW_ANIM_IDLE, PREVIEW_ANIM_IDLE
 };
 
+static PlayerPreviewAnim g_subsolo2Anims[6] = {
+    PREVIEW_ANIM_IDLE, PREVIEW_ANIM_IDLE, PREVIEW_ANIM_IDLE,
+    PREVIEW_ANIM_IDLE, PREVIEW_ANIM_IDLE, PREVIEW_ANIM_IDLE
+};
+
 void TerreoDesenharPlayerPreview(bool isFemale, Vector3 pos, float yawDeg, float tempo) {
     PlayerCharacterDrawModelPreview3D(isFemale, pos, yawDeg, tempo, g_camAtual.position);
 }
 
 void TerreoDesenharPlayerVariant(int variantId, PlayerPreviewAnim anim, Vector3 pos, float yawDeg, float tempo) {
     PlayerCharacterDrawVariant3D(variantId, anim, pos, yawDeg, tempo, g_camAtual.position);
+}
+
+void TerreoDesenharPlayerTechVariant(int techId, PlayerPreviewAnim anim, Vector3 pos, float yawDeg, float tempo) {
+    PlayerCharacterDrawTechVariant3D(techId, anim, pos, yawDeg, tempo, g_camAtual.position);
 }
 
 PlayerPreviewAnim TerreoSubsoloGetAnim(int idx) {
@@ -1526,6 +1645,17 @@ PlayerPreviewAnim TerreoSubsoloCiclarAnim(int idx) {
     if (idx < 0 || idx >= 4) return PREVIEW_ANIM_IDLE;
     g_subsoloAnims[idx] = (PlayerPreviewAnim)((g_subsoloAnims[idx] + 1) % PREVIEW_ANIM_COUNT);
     return g_subsoloAnims[idx];
+}
+
+PlayerPreviewAnim TerreoSubsolo2GetAnim(int idx) {
+    if (idx < 0 || idx >= 6) return PREVIEW_ANIM_IDLE;
+    return g_subsolo2Anims[idx];
+}
+
+PlayerPreviewAnim TerreoSubsolo2CiclarAnim(int idx) {
+    if (idx < 0 || idx >= 6) return PREVIEW_ANIM_IDLE;
+    g_subsolo2Anims[idx] = (PlayerPreviewAnim)((g_subsolo2Anims[idx] + 1) % PREVIEW_ANIM_COUNT);
+    return g_subsolo2Anims[idx];
 }
 
 void Terreo3DAtualizarAvatarPlayer(void) {
@@ -1678,18 +1808,29 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
 
     PlayerCharacterUpdate(&g_player, dt, g_camAtual.position, g_camAtual.target,
                           def->boundsXZ, allCols, numAllCols, bloqueado || (g_portaAnimTimer > 0.0f));
+    // Colisao circular real para a fonte central do Jardim
+    if (g_salaAtual == TERREO_SALA_JARDIM) {
+        float fx = 0.0f, fz = -0.65f;
+        float dxF = g_player.position.x - fx;
+        float dzF = g_player.position.z - fz;
+        float distF = hypotf(dxF, dzF);
+        float minDistF = 1.44f + g_player.radius;
+        if (distF < minDistF) {
+            if (distF < 1e-4f) { dxF = 0.0f; dzF = 1.0f; distF = 1.0f; }
+            g_player.position.x = fx + (dxF / distF) * minDistF;
+            g_player.position.z = fz + (dzF / distF) * minDistF;
+        }
+    }
     if (g_portaAnimTimer > 0.0f) {
         g_portaAnimTimer -= dt;
-        // Passo suave atravessando a porta durante a animacao
+        // Passo suave e calmo atravessando a porta durante a animacao
         float dxP = g_portaAlvoPos.x - g_player.position.x;
         float dzP = g_portaAlvoPos.z - g_player.position.z;
         float distP = hypotf(dxP, dzP);
-        if (distP > 0.05f) {
-            float step = fminf(distP, 2.2f * dt);
+        if (distP > 0.08f) {
+            float step = fminf(distP, 0.85f * dt);
             g_player.position.x += (dxP / distP) * step;
             g_player.position.z += (dzP / distP) * step;
-            g_player.moveBlend = 0.70f;
-            g_player.walkCycle += dt * 9.0f;
         }
         if (g_portaAnimTimer <= 0.0f) {
             g_portaAnimTimer = 0.0f;
@@ -2219,17 +2360,25 @@ void Terreo3DRender(float tempo) {
                 if (d < bestD) { bestD = d; alvo = sp; temAlvo = true; }
             }
         }
-        if (!temAlvo) {
+        if (!temAlvo && g_guiaTemAlgoNoAndar && def->numPortas > 0) {
+            int pIdx = GuiaEncontrarPortaBFS(g_salaAtual, g_guiaSalasAlvoMask, false);
+            if (pIdx >= 0 && pIdx < def->numPortas) {
+                alvo = def->portas[pIdx].triggerCenter;
+                temAlvo = true;
+            }
+        }
+        if (!temAlvo && !g_guiaTemAlgoNoAndar) {
             for (int i = 0; i < def->numInteractables; i++) {
                 if (def->interactables[i].id && strcmp(def->interactables[i].id, "elevador") == 0) {
                     alvo = def->interactables[i].position; temAlvo = true; break;
                 }
             }
-        }
-        if (!temAlvo && def->numPortas > 0) {
-            for (int i = 0; i < def->numPortas; i++) {
-                float d = hypotf(def->portas[i].triggerCenter.x - g_player.position.x, def->portas[i].triggerCenter.z - g_player.position.z);
-                if (d < bestD) { bestD = d; alvo = def->portas[i].triggerCenter; temAlvo = true; }
+            if (!temAlvo && def->numPortas > 0) {
+                int pIdx = GuiaEncontrarPortaBFS(g_salaAtual, 0ULL, true);
+                if (pIdx >= 0 && pIdx < def->numPortas) {
+                    alvo = def->portas[pIdx].triggerCenter;
+                    temAlvo = true;
+                }
             }
         }
         if (temAlvo) {

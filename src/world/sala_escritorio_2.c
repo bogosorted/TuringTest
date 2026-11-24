@@ -200,14 +200,13 @@ static void DesenharEscritorio2(float tempo, bool evRelatoriosAtiva) {
                    (Vector3){ qx + 0.38f, 1.54f, ESC2_MIN_Z + 0.055f }, TerreoLum(0.28f));
     }
 
-    // Quadro de diretrizes/metas corporativas na parede do fundo à direita
+    // Quadro de diretrizes/metas corporativas + armario/gabinete detalhado de 4 gavetas
     TerreoCaixa((Vector3){ 2.30f, 1.70f, ESC2_MIN_Z + 0.03f },
                 (Vector3){ 1.40f, 0.90f, 0.04f }, 0.78f, 0.72f, 0.65f, 0.18f);
-    TerreoCaixa((Vector3){ 2.30f, 0.45f, -3.70f },
-                (Vector3){ 1.20f, 0.90f, 0.55f }, 0.40f, 0.32f, 0.28f, 0.12f);
+    TerreoArmario((Vector3){ 2.30f, 0.0f, -3.70f }, 0.0f, 1.20f, 0.92f, 0.55f);
 
-    // Gaveteiros + 3 Impressoras alinhadas ao lado no fundo-esquerdo
-    TerreoCaixa((Vector3){ -5.05f, 0.75f, -3.55f }, (Vector3){ 0.72f, 1.50f, 0.65f }, 0.40f, 0.30f, 0.28f, 0.12f);
+    // Gaveteiro detalhado + 3 Impressoras alinhadas ao lado no fundo-esquerdo
+    TerreoArmario((Vector3){ -5.05f, 0.0f, -3.55f }, 0.0f, 0.74f, 1.50f, 0.65f);
     TerreoImpressora((Vector3){ -4.05f, 0.0f, -3.55f }, 0.0f);
     TerreoImpressora((Vector3){ -3.10f, 0.0f, -3.55f }, 0.0f);
     TerreoImpressora((Vector3){ -2.15f, 0.0f, -3.55f }, 0.0f);

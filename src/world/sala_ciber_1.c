@@ -89,11 +89,13 @@ static void DesenharCiber1(float tempo, bool evRelatoriosAtiva) {
     for (int i = 0; i < 4; i++) {
         float mx = -3.80f + i * 1.85f;
         TerreoMonitor((Vector3){ mx, 0.77f, -3.10f }, 0.0f);
+        TerreoGabinetePC((Vector3){ mx + 0.46f, 0.77f, -3.05f }, 0.0f);
         TerreoCadeira((Vector3){ mx, 0.0f,  -2.05f }, 180.0f);
     }
     for (int j = 0; j < 2; j++) {
         float mz = -0.95f + j * 1.95f;
         TerreoMonitor((Vector3){ -4.90f, 0.77f, mz }, 90.0f);
+        TerreoGabinetePC((Vector3){ -4.85f, 0.77f, mz - 0.46f }, 90.0f);
         TerreoCadeira((Vector3){ -3.85f, 0.0f,  mz }, -90.0f);
     }
     TerreoSilhuetaSombra((Vector3){ -1.95f, 0.0f, -2.05f }, 180.0f, true);

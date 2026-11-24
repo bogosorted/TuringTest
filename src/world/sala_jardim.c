@@ -17,7 +17,7 @@ static const float JAR_MAX_Z =  4.40f;
 // - 4 arvores gigantes com galhos crescendo para fora do topo da camera (sem cimento)
 // - Mesas de descanso diretamente no gramado (sem quadrados de cimento ao redor)
 static const PlayerColliderBox JAR_COLLIDERS[] = {
-    { -1.45f, -2.10f,  1.45f,  0.80f }, // Fonte circular central
+    // Fonte central usa colisao circular real em terreo_3d.c!
     { -5.35f, -6.75f, -3.75f, -5.15f }, // Arvore gigante fundo-esquerdo
     {  3.75f, -6.75f,  5.35f, -5.15f }, // Arvore gigante fundo-direito
     { -5.20f,  1.75f, -3.70f,  3.25f }, // Arvore gigante frente-esquerdo
@@ -282,19 +282,51 @@ static void DesenharJardim(float tempo, bool evRelatoriosAtiva) {
     DrawCylinder((Vector3){ fPos.x, 1.02f, fPos.z }, 0.62f, 0.24f, 0.16f, 20, TerreoLum(0.78f));
     DrawCylinder((Vector3){ fPos.x, 1.18f, fPos.z }, 0.10f, 0.14f, 0.32f, 14, TerreoLum(0.68f));
     DrawCylinder((Vector3){ fPos.x, 1.48f, fPos.z }, 0.26f, 0.10f, 0.08f, 16, TerreoLum(0.82f));
+    // Jatos fixos (sem girar): caem na primeira bacia com respingos e transbordam para a bacia maior com respingos
     for (int j = 0; j < 8; j++) {
-        float ang = (float)j * (PI / 4.0f) + tempo * 0.45f;
-        Vector3 pTop = { fPos.x + cosf(ang) * 0.24f, 1.72f, fPos.z + sinf(ang) * 0.24f };
-        Vector3 pOut = { fPos.x + cosf(ang) * 0.92f, 0.43f, fPos.z + sinf(ang) * 0.92f };
-        DrawLine3D((Vector3){ fPos.x, 1.56f, fPos.z }, pTop, TerreoLum(0.96f));
-        DrawLine3D(pTop, pOut, TerreoLum(0.88f));
+        float ang = (float)j * (PI / 4.0f);
+        float ca = cosf(ang), sa = sinf(ang);
+        // 1o estagio: topo (1.56) -> 1a bacia (y=1.18, r=0.44)
+        Vector3 pMid1 = { fPos.x + ca * 0.22f, 1.66f, fPos.z + sa * 0.22f };
+        Vector3 pHit1 = { fPos.x + ca * 0.44f, 1.16f, fPos.z + sa * 0.44f };
+        DrawLine3D((Vector3){ fPos.x, 1.56f, fPos.z }, pMid1, TerreoLum(0.96f));
+        DrawLine3D(pMid1, pHit1, TerreoLum(0.90f));
+        // Respingo animado na 1a bacia
+        float sp1 = fmodf(tempo * 3.2f + (float)j * 0.37f, 1.0f);
+        float sy1 = 1.18f + sinf(sp1 * PI) * 0.14f;
+        DrawSphere((Vector3){ pHit1.x + ca * sp1 * 0.08f, sy1, pHit1.z + sa * sp1 * 0.08f }, 0.022f, TerreoLum(0.96f));
+
+        // 2o estagio: borda da 1a bacia (r=0.58, y=1.14) -> bacia maior (r=0.96, y=0.42)
+        Vector3 pRim  = { fPos.x + ca * 0.58f, 1.14f, fPos.z + sa * 0.58f };
+        Vector3 pMid2 = { fPos.x + ca * 0.78f, 0.90f, fPos.z + sa * 0.78f };
+        Vector3 pHit2 = { fPos.x + ca * 0.96f, 0.42f, fPos.z + sa * 0.96f };
+        DrawLine3D(pRim, pMid2, TerreoLum(0.90f));
+        DrawLine3D(pMid2, pHit2, TerreoLum(0.84f));
+        // Respingo animado na bacia maior
+        float sp2 = fmodf(tempo * 2.8f + (float)j * 0.53f, 1.0f);
+        float sy2 = 0.43f + sinf(sp2 * PI) * 0.16f;
+        DrawSphere((Vector3){ pHit2.x + ca * sp2 * 0.10f, sy2, pHit2.z + sa * sp2 * 0.10f }, 0.026f, TerreoLum(0.96f));
     }
 
-    // 4) 4 Arvores gigantes crescendo para fora do topo da camera + gramas aesthetic
+    // 4) 4 Arvores gigantes crescendo para fora do topo da camera + arbustos com vento leve + gramas
     DesenharArvoreOrganica((Vector3){ -4.55f, 0.0f, -5.95f }, 1.15f);
     DesenharArvoreOrganica((Vector3){  4.55f, 0.0f, -5.95f }, 1.15f);
     DesenharArvoreOrganica((Vector3){ -4.45f, 0.0f,  2.55f }, 1.05f);
     DesenharArvoreOrganica((Vector3){  4.45f, 0.0f,  2.55f }, 1.05f);
+    // Arbustos pequenos ao redor do jardim encostados nas paredes, com fisica de vento leve
+    static const Vector3 ARBUSTOS[] = {
+        { -5.75f, 0.0f, -4.10f }, { -5.75f, 0.0f, -2.55f }, { -5.75f, 0.0f,  1.60f }, { -5.75f, 0.0f,  3.50f },
+        {  5.75f, 0.0f, -4.10f }, {  5.75f, 0.0f, -2.55f }, {  5.75f, 0.0f,  1.60f }, {  5.75f, 0.0f,  3.50f },
+        { -2.60f, 0.0f, -7.15f }, { -1.10f, 0.0f, -7.15f }, {  1.10f, 0.0f, -7.15f }, {  2.60f, 0.0f, -7.15f },
+    };
+    for (int b = 0; b < (int)(sizeof(ARBUSTOS) / sizeof(ARBUSTOS[0])); b++) {
+        float sway = sinf(tempo * 2.1f + (float)b * 0.85f) * 0.045f;
+        Vector3 bp = ARBUSTOS[b];
+        DrawSphereEx((Vector3){ bp.x + sway * 0.6f, 0.24f, bp.z }, 0.30f, 7, 9, TerreoLum(0.24f));
+        DrawSphereEx((Vector3){ bp.x - 0.16f + sway, 0.28f, bp.z + 0.08f }, 0.22f, 6, 8, TerreoLum(0.30f));
+        DrawSphereEx((Vector3){ bp.x + 0.16f + sway, 0.26f, bp.z - 0.06f }, 0.20f, 6, 8, TerreoLum(0.28f));
+        DrawSphereEx((Vector3){ bp.x + sway * 1.2f, 0.40f, bp.z }, 0.18f, 6, 8, TerreoLum(0.36f));
+    }
     DesenharTufosGrama();
 
     // 5) Banco ripado de jardim + 2 mesas redondas de descanso + 2 silhuetas conversando na mesa direita

@@ -67,6 +67,7 @@ static void DesenharFileiraCiber(float zCentro) {
     for (int i = -2; i <= 2; i++) {
         float px = (float)i * 1.45f;
         TerreoMonitor((Vector3){ px, 0.77f, zCentro + 0.12f }, 180.0f);
+        TerreoGabinetePC((Vector3){ px - 0.44f, 0.77f, zCentro + 0.10f }, 180.0f);
         TerreoCadeira((Vector3){ px, 0.0f,  zCentro - 0.55f }, 0.0f);
     }
 }

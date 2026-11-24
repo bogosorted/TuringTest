@@ -4342,6 +4342,7 @@ static const DevTeleportAlvo DEV_TELEPORT_ALVOS[] = {
     { "CONTAB. 2",    LOCAL_CONTABILIDADE_2 },
     { "ARQUIVO",      LOCAL_ARQUIVO_1 },
     { "SUBSOLO",      LOCAL_SUBSOLO_COMECO },
+    { "SUBSOLO 2",    LOCAL_SUBSOLO_2 },
     { "HALL 2º",      LOCAL_HALL_2 },
     { "HALL 3º",      LOCAL_HALL_3 },
     { "HALL 4º",      LOCAL_HALL_4 },
@@ -7967,10 +7968,6 @@ static void UpdateGameplay(void) {
                 g_transDestino = (int)LocalPorTerreoDestino(tRes.destino);
                 g_transPretoDur = TRANS_PRETO;
                 g_transTempo = 0.0f;
-                if (g_sndPassos.frameCount > 0) {
-                    SetSoundVolume(g_sndPassos, 0.7f * SettingsGetSfxVolume());
-                    PlaySound(g_sndPassos);
-                }
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
                 return;
             }
@@ -8011,6 +8008,26 @@ static void UpdateGameplay(void) {
                         snprintf(s_msgSubsolo, sizeof(s_msgSubsolo), "%s — Animação: %s (interaja de novo p/ trocar)",
                                  NOMES_MOD[mIdx], NOMES_ANIM[novaAnim]);
                         DispararMonologoInterno(s_msgSubsolo);
+                    }
+                } else if (tRes.objetoId && strncmp(tRes.objetoId, "subsolo2_modelo_", 16) == 0) {
+                    int mIdx = atoi(tRes.objetoId + 16);
+                    if (mIdx >= 0 && mIdx < 6) {
+                        PlayerPreviewAnim novaAnim = TerreoSubsolo2CiclarAnim(mIdx);
+                        static const char *NOMES_MOD2[6] = {
+                            "Estilo 1: Pixar / Arcane (Estilizado 3D)",
+                            "Estilo 2: Anime / JRPG (Persona / NieR)",
+                            "Estilo 3: Realista Anatômico High-Poly",
+                            "Estilo 4: Modern Vinyl / Toy-3D (Zelda LA)",
+                            "Estilo 5: Androide Cerâmico (Detroit / Portal)",
+                            "Estilo 6: Sculpted Noir Indie (Dishonored / Inside)"
+                        };
+                        static const char *NOMES_ANIM2[PREVIEW_ANIM_COUNT] = {
+                            "IDLE", "ANDANDO", "CORRENDO", "COMPUTADOR", "INTERAGINDO (PAPEL/MAPA)", "INTERAGINDO (PORTA)"
+                        };
+                        static char s_msgSubsolo2[180];
+                        snprintf(s_msgSubsolo2, sizeof(s_msgSubsolo2), "%s — Animação: %s (interaja de novo p/ trocar)",
+                                 NOMES_MOD2[mIdx], NOMES_ANIM2[novaAnim]);
+                        DispararMonologoInterno(s_msgSubsolo2);
                     }
                 } else if (tRes.objetoId && strcmp(tRes.objetoId, "ev_maria_queixa") == 0) {
                     Terreo3DTriggerPaperPickup(tRes.objetoPos, 0.72f);
@@ -8488,6 +8505,27 @@ void UpdateDrawGameplayScene(void) {
                                       g_hotspotAtivoHoje[1] && !GameStateTemEvidencia(1, "EV-03"));
             Rectangle rJan = JanelaAreaAtual();
             Terreo3DSetViewportSize((int)rJan.width, (int)rJan.height);
+            {
+                const HoloSala *hs = GameplayHoloSalasAtivas();
+                int andarAt = hs[g_localAtual].andar;
+                uint64_t evM = ObterMascaraSalasComEvidencia();
+                uint64_t salasAlvoMask = 0ULL;
+                for (int s = 0; s < 3; s++) {
+                    LocalRasec sLoc = g_suspeitoLocal[s];
+                    if (sLoc >= 0 && sLoc < NUM_LOCAIS && hs[sLoc].andar == andarAt && LocalEhTerreo3D(sLoc)) {
+                        TerreoSalaId sid = TerreoSalaPorLocal(sLoc);
+                        if (sid >= 0 && sid < TERREO_NUM_SALAS) salasAlvoMask |= (1ULL << (int)sid);
+                    }
+                }
+                int nS = GameplayNumHoloSalasAtivas();
+                for (int idx = 0; idx < nS; idx++) {
+                    if (((evM >> idx) & 1ULL) != 0 && hs[idx].andar == andarAt && LocalEhTerreo3D((LocalRasec)idx)) {
+                        TerreoSalaId sid = TerreoSalaPorLocal((LocalRasec)idx);
+                        if (sid >= 0 && sid < TERREO_NUM_SALAS) salasAlvoMask |= (1ULL << (int)sid);
+                    }
+                }
+                Terreo3DSetGuiaInfo(salasAlvoMask != 0ULL, salasAlvoMask);
+            }
             Terreo3DRender((float)GetTime());
         }
         Rectangle holoArea = AreaMapaHolo();

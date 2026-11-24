@@ -78,14 +78,37 @@ static bool  g_vozManual         = false;
 static Texture2D g_playerMiniTex[GAME_NUM_PLAYERS] = { 0 };
 static int   g_hoverAvatarAnt    = -1;
 static int   g_hoverVozAnt       = -1;
+static Sound g_vozPreviewSnd[3]  = { {0}, {0}, {0} };
+static float g_vozPreviewTimer   = 0.0f;
+static float g_vozPreviewTick    = 0.0f;
+static bool  g_modoPulado        = false;
 static bool  g_voltarHoverAnt    = false;  // mouse estava no botao Voltar no frame anterior
 static bool  g_iniciarHoverAnt   = false;
 static bool  g_esperarSoltarMouse = false; // ignora os botoes do menu ate soltar o clique que abriu/fechou as opcoes
 
 static bool g_shouldStartGame = false;
+static void AbrirTelaControle(void);
+static void AbrirTelaNome(void);
+
 // Funcoes de clique de cada botao
 static void OnClickPlay(void) {
     TraceLog(LOG_INFO, "Botao JOGAR clicado!");
+    bool dev = SettingsGetDevMode();
+    bool sem2D = dev && SettingsGetDevDisable2D();
+    bool sem3D = dev && SettingsGetDevDisable3D();
+    if (sem2D && !sem3D) {
+        g_modoPulado = true;
+        GameStateSetMode(MODO_3D);
+        AbrirTelaControle();
+        return;
+    }
+    if (sem3D && !sem2D) {
+        g_modoPulado = true;
+        GameStateSetMode(MODO_2D);
+        AbrirTelaNome();
+        return;
+    }
+    g_modoPulado = false;
     g_modoAberto = true;
     g_hoverModoAnt = -1;
     g_voltarHoverAnt = false;
@@ -101,13 +124,20 @@ static void AbrirTelaControle(void) {
 }
 
 static void AbrirTelaNome(void) {
+    static const TomVozJogador VOZ_SUG[GAME_NUM_PLAYERS] = {
+        VOZ_SUAVE, VOZ_GRAVE, VOZ_SUAVE, VOZ_SUAVE, VOZ_GRAVE, VOZ_GRAVE
+    };
     g_modoAberto = false;
     g_ctrlAberto = false;
     g_nomeAberto = true;
     g_nomeInput[0] = '\0';
-    g_playerAvatarSel = GameStateGetPlayerAvatar();
-    g_playerVozSel = GameStateGetPlayerVoiceTone();
+    g_playerAvatarSel = GetRandomValue(0, GAME_NUM_PLAYERS - 1);
+    GameStateSetPlayerAvatar(g_playerAvatarSel);
+    g_playerVozSel = VOZ_SUG[g_playerAvatarSel];
+    GameStateSetPlayerVoiceTone(g_playerVozSel);
     g_vozManual = false;
+    g_vozPreviewTimer = 0.0f;
+    g_vozPreviewTick = 0.0f;
     g_hoverAvatarAnt = -1;
     g_hoverVozAnt = -1;
     g_voltarHoverAnt = false;
@@ -135,7 +165,7 @@ static void FecharModo(void) {
 
 static void FecharControle(void) {
     g_ctrlAberto = false;
-    g_modoAberto = true;
+    g_modoAberto = !g_modoPulado;
     g_hoverModoAnt = -1;
     g_voltarHoverAnt = false;
     g_esperarSoltarMouse = true;
@@ -143,11 +173,12 @@ static void FecharControle(void) {
 
 static void FecharNome(void) {
     g_nomeAberto = false;
+    g_vozPreviewTimer = 0.0f;
     if (GameStateIs3DMode()) {
         g_ctrlAberto = true;
         g_hoverCtrlAnt = -1;
     } else {
-        g_modoAberto = true;
+        g_modoAberto = !g_modoPulado;
         g_hoverModoAnt = -1;
     }
     g_voltarHoverAnt = false;
@@ -435,6 +466,9 @@ bool InitMenuScene(void) {
     if (FileExists("assets/audio/sfx_hover.wav")) {
         g_sndHover = LoadSound("assets/audio/sfx_hover.wav");
     }
+    if (FileExists("assets/audio/blip_andre.wav"))    g_vozPreviewSnd[VOZ_GRAVE] = LoadSound("assets/audio/blip_andre.wav");
+    if (FileExists("assets/audio/blip_lucas.wav"))    g_vozPreviewSnd[VOZ_MEDIA] = LoadSound("assets/audio/blip_lucas.wav");
+    if (FileExists("assets/audio/blip_patricia.wav")) g_vozPreviewSnd[VOZ_SUAVE] = LoadSound("assets/audio/blip_patricia.wav");
 
     for (int i = 0; i < NUM_BUTTONS; i++) {
         g_hover[i] = false;
@@ -514,12 +548,16 @@ static void UpdateMenuButtons(void) {
             if (g_jiggleTempo[i] < 0.0f) g_jiggleTempo[i] = 0.0f;
         }
 
-        // Fisica de mola (damped spring): desliza rapido e da um leve overshoot elastico no fim
+        // Fisica de mola (damped spring): cresce apenas para a direita, sem nunca sair para fora da foto na esquerda
         float alvoX = !menuAtivo ? BOTAO_X_ESCONDIDO : (g_hover[i] ? BOTAO_X : BOTAO_X_FECHADO);
         float forca = (alvoX - g_botaoPosX[i]) * SPRING_STIFF;
         g_botaoVelX[i] += forca * dt;
         g_botaoVelX[i] *= expf(-SPRING_DAMP * dt);
         g_botaoPosX[i] += g_botaoVelX[i] * dt;
+        if (menuAtivo && g_botaoPosX[i] > BOTAO_X) {
+            g_botaoPosX[i] = BOTAO_X;
+            if (g_botaoVelX[i] > 0.0f) g_botaoVelX[i] = 0.0f;
+        }
 
         if (!RayCanvasInputBlocked() && !g_esperarSoltarMouse && g_hover[i] &&
             (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonReleased(MOUSE_BUTTON_LEFT))) {
@@ -849,9 +887,9 @@ static void UpdateDrawControle(void) {
 
     int hovCtrl = -1;
     const float cardW = 122.0f;
-    const float cardH = 92.0f;
+    const float cardH = 108.0f;
     const float cardGap = 11.0f;
-    const float cardY = 160.0f;
+    const float cardY = 166.0f;
 
     for (int c = 0; c < 3; c++) {
         Rectangle rCard = { OPC_LABEL_X + c * (cardW + cardGap), cardY, cardW, cardH };
@@ -883,30 +921,9 @@ static void UpdateDrawControle(void) {
     if (hovCtrl >= 0 && hovCtrl != g_hoverCtrlAnt) TocarSomHover();
     g_hoverCtrlAnt = hovCtrl;
 
-    // Opcao extra: Seta Guiando
-    Rectangle rSetaOpt = { OPC_LABEL_X, 258.0f, 388.0f, 30.0f };
-    bool hovSetaOpt = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, rSetaOpt);
-    Rectangle rSetaTela = ParaTela(rSetaOpt);
-    float escS = rSetaTela.height / rSetaOpt.height;
-    DrawRectangleRec(rSetaTela, hovSetaOpt ? fundoH : fundo);
-    DrawRectangleLinesEx(rSetaTela, 1.2f * escS, hovSetaOpt ? claro : medio);
-    Rectangle rBoxS = ParaTela((Rectangle){ rSetaOpt.x + 7.0f, rSetaOpt.y + 8.0f, 14.0f, 14.0f });
-    DrawRectangleLinesEx(rBoxS, 1.4f * escS, claro);
-    if (SettingsGetSetaGuiando()) {
-        DrawRectangleRec(ParaTela((Rectangle){ rSetaOpt.x + 10.0f, rSetaOpt.y + 11.0f, 8.0f, 8.0f }), claro);
-    }
-    TextoOpcoes("Seta Guiando", rSetaOpt.x + 26.0f, rSetaOpt.y + 4.0f, 13.0f, claro);
-    TextoOpcoes("Ative essa opção se não estiver familiarizado com jogos (pode desativar nas configs a qualquer momento).",
-                rSetaOpt.x + 26.0f, rSetaOpt.y + 17.0f, 8.5f, medio);
-    if (hovSetaOpt && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        SettingsSetSetaGuiando(!SettingsGetSetaGuiando());
-        SettingsSave();
-        TocarSomHover();
-    }
-
     float bw = (float)g_botao.width * BOTAO_ESCALA;
     float bh = (float)g_botao.height * BOTAO_ESCALA;
-    const float yVoltar = 296.0f;
+    const float yVoltar = 292.0f;
     Rectangle hitVoltar = { BOTAO_X, yVoltar, bw - 22.0f, bh };
     bool hoverVoltar = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, hitVoltar);
     if (hoverVoltar && !g_voltarHoverAnt) TocarSomHover();
@@ -918,7 +935,7 @@ static void UpdateDrawControle(void) {
     }
 
     if (g_ctrlAberto) {
-        bool algumHov = hoverVoltar || (hovCtrl >= 0) || hovSetaOpt;
+        bool algumHov = hoverVoltar || (hovCtrl >= 0);
         SetMouseCursor(algumHov ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
     }
 }
@@ -1012,7 +1029,24 @@ static void UpdateDrawNome(void) {
         if (hovVz && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             g_playerVozSel = (TomVozJogador)v;
             g_vozManual = true;
+            g_vozPreviewTimer = 3.0f;
+            g_vozPreviewTick = 0.0f;
             TocarSomHover();
+        }
+    }
+    // Amostra de 3 segundos do tom de voz selecionado
+    if (g_nomeAberto && g_vozPreviewTimer > 0.0f) {
+        g_vozPreviewTimer -= dt;
+        g_vozPreviewTick -= dt;
+        if (g_vozPreviewTick <= 0.0f) {
+            g_vozPreviewTick = 0.085f;
+            int vi = (int)g_playerVozSel;
+            if (vi >= 0 && vi < 3 && g_vozPreviewSnd[vi].frameCount > 0) {
+                float basePitch = (vi == VOZ_SUAVE) ? 1.04f : (vi == VOZ_MEDIA ? 0.96f : 0.84f);
+                SetSoundPitch(g_vozPreviewSnd[vi], basePitch + ((float)GetRandomValue(-3, 4) / 100.0f));
+                SetSoundVolume(g_vozPreviewSnd[vi], 0.45f * SettingsGetSfxVolume());
+                PlaySound(g_vozPreviewSnd[vi]);
+            }
         }
     }
     if (hovVozAtual >= 0 && hovVozAtual != g_hoverVozAnt) TocarSomHover();
@@ -1131,6 +1165,12 @@ void UnloadMenuScene(void) {
     if (g_sndHover.frameCount > 0) {
         UnloadSound(g_sndHover);
         g_sndHover = (Sound){ 0 };
+    }
+    for (int v = 0; v < 3; v++) {
+        if (g_vozPreviewSnd[v].frameCount > 0) {
+            UnloadSound(g_vozPreviewSnd[v]);
+            g_vozPreviewSnd[v] = (Sound){ 0 };
+        }
     }
     for (int i = 0; i < GAME_NUM_PLAYERS; i++) {
         if (g_playerMiniTex[i].id > 0) {

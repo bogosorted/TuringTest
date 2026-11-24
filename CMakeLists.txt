@@ -84,6 +84,7 @@ add_executable(turing_test
     src/world/sala_auditorio.c
     src/world/sala_reuniao_4.c
     src/world/sala_subsolo.c
+    src/world/sala_subsolo_2.c
 )
 target_include_directories(turing_test PRIVATE
     ${CMAKE_SOURCE_DIR}/src

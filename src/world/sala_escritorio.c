@@ -136,6 +136,7 @@ static void DesenharBaiaCorporativa(Vector3 centro, int numPostos, float largura
         if (i < numPostos) {
             float cx = px + larguraPosto * 0.5f;
             TerreoMonitor((Vector3){ cx, 0.77f, centro.z - 0.16f }, 0.0f);
+            TerreoGabinetePC((Vector3){ cx + 0.42f, 0.77f, centro.z - 0.14f }, 0.0f);
             TerreoCadeira((Vector3){ cx, 0.0f, centro.z + profTotal * 0.5f + 0.24f }, 180.0f);
         }
     }
@@ -206,6 +207,7 @@ static void DesenharEscritorio(float tempo, bool evRelatoriosAtiva) {
     for (int k = 0; k < 2; k++) {
         float kz = 0.95f + k * 1.20f;
         TerreoMonitor((Vector3){ 5.45f, 0.77f, kz }, -90.0f);
+        TerreoGabinetePC((Vector3){ 5.40f, 0.77f, kz + 0.40f }, -90.0f);
         TerreoCadeira((Vector3){ 4.58f, 0.0f,  kz },  90.0f);
     }
     TerreoSilhuetaSombra((Vector3){ 4.62f, 0.0f, 2.15f }, 90.0f, true);

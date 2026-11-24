@@ -105,6 +105,7 @@ static void DesenharArquivo1(float tempo, bool evRelatoriosAtiva) {
         DrawCylinder((Vector3){ sx * 1.05f, 0.0f,  0.35f }, 0.035f, 0.035f, 0.72f, 8, TerreoLum(0.20f));
     }
     TerreoMonitor((Vector3){ -0.55f, 0.77f, -0.05f }, 0.0f);
+    TerreoGabinetePC((Vector3){ -0.98f, 0.77f, -0.05f }, 0.0f);
     TerreoImpressora((Vector3){ 0.65f, 0.0f, -0.05f }, 0.0f);
     if (GameStateEvidenciaDisponivelHoje(1, "EV-04") && !GameStateTemEvidencia(1, "EV-04")) {
         TerreoEvidenciaBrilhante((Vector3){ 0.05f, 0.79f, -0.05f }, tempo, 2);

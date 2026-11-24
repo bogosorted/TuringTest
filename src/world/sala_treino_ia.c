@@ -114,7 +114,9 @@ static void DesenharTreinoIA(float tempo, bool evRelatoriosAtiva) {
     // Bancada central de calibracao
     TerreoCaixa((Vector3){ -0.40f, 0.74f, 1.10f }, (Vector3){ 3.80f, 0.06f, 1.05f }, 0.64f, 0.48f, 0.42f, 0.14f);
     TerreoMonitor((Vector3){ -1.25f, 0.77f, 1.05f }, 0.0f);
+    TerreoGabinetePC((Vector3){ -1.72f, 0.77f, 1.05f }, 0.0f);
     TerreoMonitor((Vector3){  0.45f, 0.77f, 1.05f }, 0.0f);
+    TerreoGabinetePC((Vector3){  0.92f, 0.77f, 1.05f }, 0.0f);
     TerreoCadeira((Vector3){ -0.40f, 0.0f,  1.85f }, 180.0f);
 }
 

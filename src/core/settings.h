@@ -62,6 +62,8 @@ bool SettingsGetDevDisable3D(void);
 void SettingsSetDevDisable3D(bool ligado);
 bool SettingsGetSetaGuiando(void);
 void SettingsSetSetaGuiando(bool ligado);
+bool SettingsGetDevExperimentalPalettes(void);
+void SettingsSetDevExperimentalPalettes(bool ligado);
 
 // Reinicio completo da aplicacao (usado pelo botao Dev Mode)
 void SettingsRequestAppRestart(void);

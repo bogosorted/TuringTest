@@ -66,7 +66,9 @@ static void DesenharSalaCameras(float tempo, bool evRelatoriosAtiva) {
     TerreoCadeiraConfortavel((Vector3){ 0.0f, 0.0f, -0.72f }, 180.0f);
     TerreoRackServidor((Vector3){ 2.85f, 0.0f, -2.05f }, 0.0f);
 
-    // Fileira inferior e superior de monitores de CFTV
+    // Fileira inferior e superior de monitores de CFTV + gabinetes nas extremidades
+    TerreoGabinetePC((Vector3){ -2.05f, 0.775f, -2.05f }, 0.0f);
+    TerreoGabinetePC((Vector3){  2.05f, 0.775f, -2.05f }, 0.0f);
     for (int i = 0; i < 4; i++) {
         float mx = -1.50f + i * 1.00f;
         TerreoMonitor((Vector3){ mx, 0.78f, -2.05f }, 0.0f);

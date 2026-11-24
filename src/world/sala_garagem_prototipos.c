@@ -84,6 +84,7 @@ static void DesenharGaragemPrototipos(float tempo, bool evRelatoriosAtiva) {
     // Bancada de montagem + armarios de pecas (TerreoArmario)
     TerreoCaixa((Vector3){ -2.80f, 0.74f, -2.60f }, (Vector3){ 1.95f, 0.06f, 1.00f }, 0.60f, 0.44f, 0.40f, 0.14f);
     TerreoMonitor((Vector3){ -2.80f, 0.77f, -2.65f }, 0.0f);
+    TerreoGabinetePC((Vector3){ -2.32f, 0.77f, -2.62f }, 0.0f);
     TerreoArmario((Vector3){ 2.25f, 0.0f, -2.85f }, 0.0f, 1.05f, 1.85f, 0.60f);
     TerreoArmario((Vector3){ 3.45f, 0.0f, -2.85f }, 0.0f, 1.05f, 1.85f, 0.60f);
 }

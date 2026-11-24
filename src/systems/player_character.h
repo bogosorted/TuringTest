@@ -101,6 +101,7 @@ typedef enum {
 void PlayerCharacterDraw3D(const PlayerCharacter *p, Vector3 camPos);
 void PlayerCharacterDrawModelPreview3D(bool isFemale, Vector3 pos, float yawDeg, float tempo, Vector3 camPos);
 void PlayerCharacterDrawVariant3D(int variantId, PlayerPreviewAnim anim, Vector3 pos, float yawDeg, float tempo, Vector3 camPos);
+void PlayerCharacterDrawTechVariant3D(int techId, PlayerPreviewAnim anim, Vector3 pos, float yawDeg, float tempo, Vector3 camPos);
 void PlayerCharacterDrawSuspect3D(int suspeito, Vector3 pos, float yawDeg, float tempo, Vector3 camPos);
 void PlayerCharacterDrawSuspect3DEx(int suspeito, Vector3 pos, float yawDeg, NpcAtividade ativ, float tempo, Vector3 camPos);
 void PlayerCharacterDrawNpc3D(Vector3 pos, float yawDeg, bool sentado, float tempo, Vector3 camPos);

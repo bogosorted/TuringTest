@@ -59,8 +59,8 @@ static void DesenharIlhaDev(float zCentro) {
         TerreoMonitor((Vector3){ px - 0.18f, 0.77f, zCentro }, 0.0f);
         // Monitor vertical ao lado
         TerreoCaixa((Vector3){ px + 0.24f, 1.02f, zCentro + 0.04f }, (Vector3){ 0.24f, 0.44f, 0.04f }, 0.18f, 0.10f, 0.12f, 0.44f);
-        // Gabinete PC torre com detalhe frontal luminoso
-        TerreoCaixa((Vector3){ px + 0.55f, 0.96f, zCentro - 0.15f }, (Vector3){ 0.22f, 0.42f, 0.40f }, 0.16f, 0.12f, 0.12f, 0.58f);
+        // Gabinete PC torre detalhado
+        TerreoGabinetePC((Vector3){ px + 0.55f, 0.77f, zCentro - 0.10f }, 0.0f);
         TerreoCadeira((Vector3){ px, 0.0f, zCentro + 0.72f }, 180.0f);
     }
     // Luminarias pendentes pretas acima da mesa

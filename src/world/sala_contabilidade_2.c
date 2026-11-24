@@ -111,6 +111,7 @@ static void DesenharContabilidade2(float tempo, bool evRelatoriosAtiva) {
     for (int k = -1; k <= 1; k++) {
         float kx = 0.90f + k * 1.35f;
         TerreoMonitor((Vector3){ kx, 0.77f, -0.15f }, 0.0f);
+        TerreoGabinetePC((Vector3){ kx + 0.44f, 0.77f, -0.18f }, 0.0f);
         TerreoCadeira((Vector3){ kx, 0.0f, 0.95f }, 180.0f);
         TerreoCaixa((Vector3){ kx + 0.30f, 0.785f, 0.35f }, (Vector3){ 0.28f, 0.04f, 0.24f }, 0.76f, 0.66f, 0.58f, 0.20f);
     }

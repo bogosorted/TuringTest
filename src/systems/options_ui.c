@@ -31,7 +31,8 @@ enum {
     HOVER_DEV_DISABLE = 16,
     HOVER_DEV_NO2D = 17,
     HOVER_DEV_NO3D = 18,
-    HOVER_SETA_GUIANDO = 19
+    HOVER_SETA_GUIANDO = 19,
+    HOVER_DEV_EXP_PAL = 20
 };
 
 static int   g_sliderArrastando = -1;   // -1 = nenhum, 0 = musica, 1 = efeitos
@@ -270,11 +271,12 @@ static bool DesenharPaginaDev(const OptionsUiLayout *lay, const OptionsUiEstilo 
     // Linha divisoria sob o cabecalho
     DrawRectangleRec(ParaTela((Rectangle){ xL, yHeader + 12.0f, wTot, 1.0f }), ComAlpha(est->trilhoBorda, a));
 
-    float y1 = lay->yPrimeira + lay->passoY * 0.85f;
-    float y2 = y1 + lay->passoY * 0.82f;
-    float y3 = y2 + lay->passoY * 0.82f;
-    float y4 = y3 + lay->passoY * 0.82f;
-    float y5 = y4 + lay->passoY * 1.05f;
+    float y1 = lay->yPrimeira + lay->passoY * 0.78f;
+    float y2 = y1 + lay->passoY * 0.72f;
+    float y3 = y2 + lay->passoY * 0.72f;
+    float y4 = y3 + lay->passoY * 0.72f;
+    float y5 = y4 + lay->passoY * 0.72f;
+    float y6 = y5 + lay->passoY * 0.95f;
 
     if (DevCheckbox(SettingsGetAutoReset(), xL, y1, colW, "Auto-Reset",
                     HOVER_DEV_AUTORESET, est, a, interativo, &algumHover, tocarHover)) {
@@ -317,7 +319,13 @@ static bool DesenharPaginaDev(const OptionsUiLayout *lay, const OptionsUiEstilo 
         SettingsSave();
     }
 
-    Rectangle rDesligar = { xL, y5 - 8.0f, 114.0f, 17.0f };
+    if (DevCheckbox(SettingsGetDevExperimentalPalettes(), xL, y5, wTot, "Paletas Experimentais (Indexadas)",
+                    HOVER_DEV_EXP_PAL, est, a, interativo, &algumHover, tocarHover)) {
+        SettingsSetDevExperimentalPalettes(!SettingsGetDevExperimentalPalettes());
+        SettingsSave();
+    }
+
+    Rectangle rDesligar = { xL, y6 - 8.0f, 114.0f, 17.0f };
     if (DevActionButton(rDesligar, "DESATIVAR MODO DEV", (Color){ 90, 46, 48, 255 }, (Color){ 142, 56, 58, 255 },
                         (Color){ 255, 242, 230, 255 }, HOVER_DEV_DISABLE, a, interativo, &algumHover, tocarHover)) {
         SettingsSetDevMode(false);
@@ -326,7 +334,7 @@ static bool DesenharPaginaDev(const OptionsUiLayout *lay, const OptionsUiEstilo 
         g_devClicks = 0;
     }
 
-    Rectangle rRestart = { lay->direita - 98.0f, y5 - 8.0f, 98.0f, 17.0f };
+    Rectangle rRestart = { lay->direita - 98.0f, y6 - 8.0f, 98.0f, 17.0f };
     if (DevActionButton(rRestart, "REINICIAR APP", (Color){ 112, 42, 44, 255 }, (Color){ 165, 62, 64, 255 },
                         (Color){ 255, 242, 230, 255 }, HOVER_DEV_RESTART, a, interativo, &algumHover, tocarHover)) {
         SettingsSave();

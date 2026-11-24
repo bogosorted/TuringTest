@@ -93,6 +93,7 @@ static void DesenharBaiaContabilidade(Vector3 centro, bool comPlantas) {
     for (int i = -1; i <= 1; i++) {
         float px = centro.x + i * 1.70f;
         TerreoMonitor((Vector3){ px, 0.77f, centro.z + 0.25f }, 180.0f);
+        TerreoGabinetePC((Vector3){ px - 0.46f, 0.77f, centro.z + 0.22f }, 180.0f);
         TerreoCadeira((Vector3){ px, 0.0f, centro.z - 0.55f }, 0.0f);
     }
 

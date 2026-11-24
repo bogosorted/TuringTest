@@ -56,6 +56,7 @@ typedef enum {
     LOCAL_2D_SERVIDORES,
     LOCAL_2D_TREINO_1,
     LOCAL_2D_TREINO_2,
+    LOCAL_SUBSOLO_2,
     NUM_LOCAIS
 } LocalRasec;
 

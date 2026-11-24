@@ -991,6 +991,8 @@ static void EnsurePlayerAssets(void) {
     g_assets.initialized = true;
 }
 
+static void UnloadModern3DAssets(void);
+
 void PlayerCharacterUnload(void) {
     if (!g_assets.initialized) return;
 
@@ -1022,6 +1024,276 @@ void PlayerCharacterUnload(void) {
         UnloadShader(g_assets.shader);
     }
     memset(&g_assets, 0, sizeof(g_assets));
+    UnloadModern3DAssets();
+}
+
+// ============================================================================
+// Subsolo 2: Engine Moderna 3D High-Poly (Shader Studio PBR/Especular + Malhas 32-seg)
+// ============================================================================
+
+static const char *MODERN3D_FS =
+    "#version 330\n"
+    "in vec3 fragPos;\n"
+    "in vec3 fragNormal;\n"
+    "in vec3 localPos;\n"
+    "uniform vec4 colDiffuse;\n"
+    "uniform vec3 viewPos;\n"
+    "uniform float roughness;\n"
+    "uniform float metallic;\n"
+    "out vec4 finalColor;\n"
+    "void main() {\n"
+    "    vec3 N = normalize(fragNormal);\n"
+    "    vec3 V = normalize(viewPos - fragPos);\n"
+    "    vec3 Lkey  = normalize(vec3(0.45, 0.82, 0.58));\n"
+    "    vec3 Lfill = normalize(vec3(-0.68, 0.25, 0.55));\n"
+    "    vec3 Lrim  = normalize(vec3(-0.15, 0.55, -0.82));\n"
+    "    // Hemisferio suave (ceu/chao) para profundidade 3D moderna sem visual plano retro\n"
+    "    float hemi = N.y * 0.5 + 0.5;\n"
+    "    float amb  = mix(0.16, 0.38, hemi);\n"
+    "    float diffKey  = max(dot(N, Lkey), 0.0);\n"
+    "    float wrapKey  = max(dot(N, Lkey) * 0.55 + 0.45, 0.0);\n"
+    "    float diffFill = max(dot(N, Lfill), 0.0) * 0.30;\n"
+    "    // Blinn-Phong especular controlado por roughness\n"
+    "    vec3 H = normalize(Lkey + V);\n"
+    "    float shininess = mix(96.0, 8.0, clamp(roughness, 0.05, 1.0));\n"
+    "    float specPow = pow(max(dot(N, H), 0.0), shininess);\n"
+    "    float specInt = mix(0.68, 0.08, clamp(roughness, 0.05, 1.0)) * (1.0 + metallic * 0.65);\n"
+    "    float fresnel = pow(1.0 - max(dot(N, V), 0.0), 3.0);\n"
+    "    float rimLit  = fresnel * (0.38 + 0.42 * max(dot(N, Lrim), 0.0));\n"
+    "    float base = colDiffuse.r;\n"
+    "    float diffuse = base * (amb + 0.62 * diffKey + 0.22 * wrapKey + diffFill);\n"
+    "    float lit = diffuse + specPow * specInt + rimLit * (0.45 + 0.55 * base);\n"
+    "    lit = clamp(lit, 0.02, 0.98);\n"
+    "    finalColor = vec4(lit, lit, lit, 1.0);\n"
+    "}\n";
+
+typedef struct {
+    bool     initialized;
+    Shader   shader;
+    Material mat;
+    int      locViewPos;
+    int      locRoughness;
+    int      locMetallic;
+    Mesh     headAnat;
+    Mesh     headStylized;
+    Mesh     headAnime;
+    Mesh     headVinyl;
+    Mesh     torsoHero;
+    Mesh     torsoAnime;
+    Mesh     torsoAnat;
+    Mesh     torsoVinyl;
+    Mesh     torsoCeramic;
+    Mesh     coatFlared;
+    Mesh     limbOrganic;
+    Mesh     bootChunky;
+    Mesh     hatFedora;
+    Mesh     sphereHi;
+    Mesh     strandHair;
+} Modern3DAssets;
+
+static Modern3DAssets g_mod3d = { 0 };
+
+static void EnsureModern3DAssets(void) {
+    if (g_mod3d.initialized) return;
+
+    g_mod3d.shader       = LoadShaderFromMemory(PLAYER_VS, MODERN3D_FS);
+    g_mod3d.locViewPos   = GetShaderLocation(g_mod3d.shader, "viewPos");
+    g_mod3d.locRoughness = GetShaderLocation(g_mod3d.shader, "roughness");
+    g_mod3d.locMetallic  = GetShaderLocation(g_mod3d.shader, "metallic");
+    g_mod3d.mat          = LoadMaterialDefault();
+    g_mod3d.mat.shader   = g_mod3d.shader;
+
+    // 1) Cabeca Anatomica High-Poly (32 segs, 9 aneis suaves)
+    const RingSpec rHeadAnat[] = {
+        { -0.112f, 0.024f, 0.028f, 0.0f,  0.026f, 0.012f, 0.0f, 0.0f },
+        { -0.090f, 0.048f, 0.058f, 0.0f,  0.018f, 0.018f, 0.0f, 0.0f },
+        { -0.056f, 0.064f, 0.078f, 0.0f,  0.010f, 0.018f, 0.0f, 0.0f },
+        { -0.018f, 0.074f, 0.090f, 0.0f,  0.005f, 0.015f, 0.0f, 0.0f },
+        {  0.022f, 0.079f, 0.096f, 0.0f,  0.000f, 0.010f, 0.0f, 0.0f },
+        {  0.062f, 0.078f, 0.095f, 0.0f, -0.005f, 0.004f, 0.0f, 0.0f },
+        {  0.098f, 0.066f, 0.082f, 0.0f, -0.009f, 0.000f, 0.0f, 0.0f },
+        {  0.122f, 0.042f, 0.052f, 0.0f, -0.010f, 0.000f, 0.0f, 0.0f },
+        {  0.132f, 0.014f, 0.018f, 0.0f, -0.010f, 0.000f, 0.0f, 0.0f },
+    };
+    g_mod3d.headAnat = BuildLoftedMesh(rHeadAnat, 9, 32, true);
+
+    // 2) Cabeca Estilizada Pixar/Arcane (queixo suave expressivo, cranio mais amplo)
+    const RingSpec rHeadSty[] = {
+        { -0.118f, 0.028f, 0.032f, 0.0f,  0.028f, 0.016f, 0.0f, 0.0f },
+        { -0.088f, 0.058f, 0.066f, 0.0f,  0.018f, 0.022f, 0.0f, 0.0f },
+        { -0.045f, 0.082f, 0.092f, 0.0f,  0.008f, 0.018f, 0.0f, 0.0f },
+        {  0.005f, 0.092f, 0.104f, 0.0f,  0.002f, 0.012f, 0.0f, 0.0f },
+        {  0.055f, 0.094f, 0.106f, 0.0f, -0.004f, 0.004f, 0.0f, 0.0f },
+        {  0.102f, 0.080f, 0.092f, 0.0f, -0.008f, 0.000f, 0.0f, 0.0f },
+        {  0.134f, 0.046f, 0.054f, 0.0f, -0.008f, 0.000f, 0.0f, 0.0f },
+        {  0.146f, 0.015f, 0.018f, 0.0f, -0.008f, 0.000f, 0.0f, 0.0f },
+    };
+    g_mod3d.headStylized = BuildLoftedMesh(rHeadSty, 8, 32, true);
+
+    // 3) Cabeca Anime / JRPG (queixo delicado em V, bochechas suaves)
+    const RingSpec rHeadAni[] = {
+        { -0.108f, 0.016f, 0.020f, 0.0f,  0.030f, 0.018f, 0.0f, 0.0f },
+        { -0.078f, 0.044f, 0.054f, 0.0f,  0.018f, 0.016f, 0.0f, 0.0f },
+        { -0.036f, 0.068f, 0.078f, 0.0f,  0.008f, 0.012f, 0.0f, 0.0f },
+        {  0.015f, 0.078f, 0.090f, 0.0f,  0.000f, 0.006f, 0.0f, 0.0f },
+        {  0.068f, 0.076f, 0.088f, 0.0f, -0.006f, 0.000f, 0.0f, 0.0f },
+        {  0.110f, 0.056f, 0.066f, 0.0f, -0.008f, 0.000f, 0.0f, 0.0f },
+        {  0.128f, 0.020f, 0.024f, 0.0f, -0.008f, 0.000f, 0.0f, 0.0f },
+    };
+    g_mod3d.headAnime = BuildLoftedMesh(rHeadAni, 7, 32, true);
+
+    // 4) Cabeca Modern Vinyl / Toy-3D (esfera esculpida super lisa e carismatica)
+    const RingSpec rHeadVin[] = {
+        { -0.145f, 0.035f, 0.035f, 0.0f,  0.012f, 0.008f, 0.0f, 0.0f },
+        { -0.125f, 0.110f, 0.108f, 0.0f,  0.008f, 0.010f, 0.0f, 0.0f },
+        { -0.075f, 0.158f, 0.152f, 0.0f,  0.004f, 0.010f, 0.0f, 0.0f },
+        { -0.010f, 0.172f, 0.165f, 0.0f,  0.000f, 0.006f, 0.0f, 0.0f },
+        {  0.060f, 0.165f, 0.158f, 0.0f, -0.002f, 0.002f, 0.0f, 0.0f },
+        {  0.122f, 0.132f, 0.128f, 0.0f, -0.004f, 0.000f, 0.0f, 0.0f },
+        {  0.162f, 0.076f, 0.074f, 0.0f, -0.004f, 0.000f, 0.0f, 0.0f },
+        {  0.178f, 0.024f, 0.024f, 0.0f, -0.004f, 0.000f, 0.0f, 0.0f },
+    };
+    g_mod3d.headVinyl = BuildLoftedMesh(rHeadVin, 8, 32, true);
+
+    // 5) Torso Heroico Estilizado (ombros largos em V, cintura atletica)
+    const RingSpec rTorsoHero[] = {
+        { -0.22f, 0.128f, 0.095f, 0.0f, 0.000f, 0.006f, 0.0f, 0.0f },
+        { -0.14f, 0.116f, 0.088f, 0.0f, 0.002f, 0.008f, 0.0f, 0.0f },
+        { -0.04f, 0.142f, 0.102f, 0.0f, 0.006f, 0.014f, 0.0f, 0.0f },
+        {  0.06f, 0.188f, 0.118f, 0.0f, 0.008f, 0.018f, 0.0f, 0.0f },
+        {  0.15f, 0.218f, 0.116f, 0.0f, 0.002f, 0.010f, 0.0f, 0.0f },
+        {  0.21f, 0.165f, 0.092f, 0.0f, -0.004f, 0.000f, 0.0f, 0.0f },
+        {  0.24f, 0.072f, 0.068f, 0.0f, -0.004f, 0.000f, 0.0f, 0.0f },
+    };
+    g_mod3d.torsoHero = BuildLoftedMesh(rTorsoHero, 7, 32, true);
+
+    // 6) Torso Anime / JRPG (esguio e elegante)
+    const RingSpec rTorsoAni[] = {
+        { -0.22f, 0.118f, 0.086f, 0.0f, 0.000f, 0.004f, 0.0f, 0.0f },
+        { -0.12f, 0.092f, 0.072f, 0.0f, 0.002f, 0.006f, 0.0f, 0.0f },
+        { -0.01f, 0.115f, 0.086f, 0.0f, 0.008f, 0.014f, 0.0f, 0.0f },
+        {  0.08f, 0.138f, 0.095f, 0.0f, 0.010f, 0.016f, 0.0f, 0.0f },
+        {  0.16f, 0.152f, 0.088f, 0.0f, 0.002f, 0.006f, 0.0f, 0.0f },
+        {  0.21f, 0.110f, 0.070f, 0.0f, -0.004f, 0.000f, 0.0f, 0.0f },
+        {  0.23f, 0.054f, 0.052f, 0.0f, -0.004f, 0.000f, 0.0f, 0.0f },
+    };
+    g_mod3d.torsoAnime = BuildLoftedMesh(rTorsoAni, 7, 32, true);
+
+    // 7) Torso Realista Anatomico (peitoral/costelas/cintura naturais)
+    const RingSpec rTorsoAnat[] = {
+        { -0.23f, 0.142f, 0.102f, 0.0f, 0.000f, 0.005f, 0.0f, 0.0f },
+        { -0.14f, 0.130f, 0.096f, 0.0f, 0.002f, 0.006f, 0.0f, 0.0f },
+        { -0.05f, 0.146f, 0.104f, 0.0f, 0.005f, 0.012f, 0.0f, 0.0f },
+        {  0.05f, 0.168f, 0.114f, 0.0f, 0.008f, 0.016f, 0.0f, 0.0f },
+        {  0.14f, 0.186f, 0.110f, 0.0f, 0.002f, 0.010f, 0.0f, 0.0f },
+        {  0.20f, 0.148f, 0.088f, 0.0f, -0.004f, 0.000f, 0.0f, 0.0f },
+        {  0.23f, 0.068f, 0.064f, 0.0f, -0.004f, 0.000f, 0.0f, 0.0f },
+    };
+    g_mod3d.torsoAnat = BuildLoftedMesh(rTorsoAnat, 7, 32, true);
+
+    // 8) Torso Vinyl / Toy-3D (pera arredondada limpa)
+    const RingSpec rTorsoVin[] = {
+        { -0.18f, 0.112f, 0.102f, 0.0f, 0.0f, 0.005f, 0.0f, 0.0f },
+        { -0.11f, 0.145f, 0.132f, 0.0f, 0.0f, 0.008f, 0.0f, 0.0f },
+        { -0.02f, 0.148f, 0.134f, 0.0f, 0.0f, 0.008f, 0.0f, 0.0f },
+        {  0.07f, 0.134f, 0.120f, 0.0f, 0.0f, 0.004f, 0.0f, 0.0f },
+        {  0.14f, 0.105f, 0.096f, 0.0f, 0.0f, 0.000f, 0.0f, 0.0f },
+        {  0.18f, 0.058f, 0.056f, 0.0f, 0.0f, 0.000f, 0.0f, 0.0f },
+    };
+    g_mod3d.torsoVinyl = BuildLoftedMesh(rTorsoVin, 6, 32, true);
+
+    // 9) Torso Ceramico / Androide (placas curvas lisas de alta precisao)
+    const RingSpec rTorsoCer[] = {
+        { -0.22f, 0.118f, 0.088f, 0.0f, 0.000f, 0.008f, 0.0f, 0.0f },
+        { -0.13f, 0.104f, 0.082f, 0.0f, 0.002f, 0.010f, 0.0f, 0.0f },
+        { -0.02f, 0.138f, 0.098f, 0.0f, 0.006f, 0.018f, 0.0f, 0.0f },
+        {  0.08f, 0.172f, 0.112f, 0.0f, 0.010f, 0.022f, 0.0f, 0.0f },
+        {  0.16f, 0.182f, 0.106f, 0.0f, 0.004f, 0.012f, 0.0f, 0.0f },
+        {  0.22f, 0.120f, 0.082f, 0.0f, -0.002f, 0.000f, 0.0f, 0.0f },
+        {  0.24f, 0.062f, 0.060f, 0.0f, -0.002f, 0.000f, 0.0f, 0.0f },
+    };
+    g_mod3d.torsoCeramic = BuildLoftedMesh(rTorsoCer, 7, 32, true);
+
+    // 10) Barra de casaco ampla com pregas organicas suaves (32 segs)
+    const RingSpec rCoatFlared[] = {
+        { -0.56f, 0.275f, 0.225f, 0.0f, -0.018f, -0.020f, 0.048f, 6.0f },
+        { -0.40f, 0.238f, 0.192f, 0.0f, -0.012f, -0.014f, 0.036f, 6.0f },
+        { -0.22f, 0.195f, 0.155f, 0.0f, -0.006f, -0.008f, 0.020f, 6.0f },
+        { -0.06f, 0.158f, 0.122f, 0.0f, -0.002f,  0.000f, 0.008f, 6.0f },
+        {  0.00f, 0.145f, 0.110f, 0.0f,  0.000f,  0.000f, 0.000f, 0.0f },
+    };
+    g_mod3d.coatFlared = BuildLoftedMesh(rCoatFlared, 5, 32, false);
+
+    // 11) Membro organico esculpido (y = 0..-1, raio normalizado com curva muscular)
+    const RingSpec rLimbOrg[] = {
+        { -1.00f, 0.56f, 0.56f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+        { -0.82f, 0.64f, 0.68f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+        { -0.55f, 0.84f, 0.88f, 0.0f, -0.04f, 0.0f, 0.0f, 0.0f },
+        { -0.25f, 0.96f, 0.98f, 0.0f,  0.02f, 0.0f, 0.0f, 0.0f },
+        {  0.00f, 0.90f, 0.90f, 0.0f,  0.00f, 0.0f, 0.0f, 0.0f },
+    };
+    g_mod3d.limbOrganic = BuildLoftedMesh(rLimbOrg, 5, 28, true);
+
+    // 12) Bota moderna esculpida
+    const RingSpec rBoot[] = {
+        { -0.09f, 0.056f, 0.115f, 0.0f, 0.048f, 0.032f, 0.0f, 0.0f },
+        { -0.05f, 0.058f, 0.110f, 0.0f, 0.042f, 0.028f, 0.0f, 0.0f },
+        {  0.00f, 0.052f, 0.072f, 0.0f, 0.012f, 0.010f, 0.0f, 0.0f },
+        {  0.07f, 0.054f, 0.058f, 0.0f, 0.000f, 0.000f, 0.0f, 0.0f },
+    };
+    g_mod3d.bootChunky = BuildLoftedMesh(rBoot, 4, 24, true);
+
+    // 13) Chapeu Fedora esculpido suave (aba curva + copa moldada)
+    const RingSpec rFedora[] = {
+        { -0.010f, 0.195f, 0.215f, 0.0f, 0.012f,  0.015f, 0.0f, 0.0f },
+        {  0.005f, 0.185f, 0.205f, 0.0f, 0.010f,  0.012f, 0.0f, 0.0f },
+        {  0.012f, 0.105f, 0.118f, 0.0f, 0.000f,  0.004f, 0.0f, 0.0f },
+        {  0.068f, 0.096f, 0.110f, 0.0f, -0.002f, 0.006f, 0.0f, 0.0f },
+        {  0.105f, 0.082f, 0.094f, 0.0f, -0.004f, 0.004f, 0.0f, 0.0f },
+        {  0.112f, 0.032f, 0.042f, 0.0f, -0.004f, 0.000f, 0.0f, 0.0f },
+    };
+    g_mod3d.hatFedora = BuildLoftedMesh(rFedora, 6, 32, true);
+
+    // 14) Mecha de cabelo fluida afilada (y = 0..-0.34)
+    const RingSpec rStrand[] = {
+        { -0.34f, 0.006f, 0.005f, 0.0f, -0.018f, 0.0f, 0.0f, 0.0f },
+        { -0.22f, 0.022f, 0.014f, 0.0f, -0.008f, 0.0f, 0.0f, 0.0f },
+        { -0.10f, 0.032f, 0.018f, 0.0f, -0.002f, 0.0f, 0.0f, 0.0f },
+        {  0.00f, 0.028f, 0.018f, 0.0f,  0.000f, 0.0f, 0.0f, 0.0f },
+    };
+    g_mod3d.strandHair = BuildLoftedMesh(rStrand, 4, 16, true);
+
+    g_mod3d.sphereHi = GenMeshSphere(1.0f, 18, 24);
+    g_mod3d.initialized = true;
+}
+
+static void UnloadModern3DAssets(void) {
+    if (!g_mod3d.initialized) return;
+    Mesh *m3[] = {
+        &g_mod3d.headAnat, &g_mod3d.headStylized, &g_mod3d.headAnime, &g_mod3d.headVinyl,
+        &g_mod3d.torsoHero, &g_mod3d.torsoAnime, &g_mod3d.torsoAnat, &g_mod3d.torsoVinyl,
+        &g_mod3d.torsoCeramic, &g_mod3d.coatFlared, &g_mod3d.limbOrganic, &g_mod3d.bootChunky,
+        &g_mod3d.hatFedora, &g_mod3d.sphereHi, &g_mod3d.strandHair
+    };
+    for (int i = 0; i < (int)(sizeof(m3) / sizeof(m3[0])); i++) {
+        if (m3[i]->vboId != NULL || m3[i]->vaoId != 0) UnloadMesh(*m3[i]);
+    }
+    if (g_mod3d.shader.id > 0) UnloadShader(g_mod3d.shader);
+    memset(&g_mod3d, 0, sizeof(g_mod3d));
+}
+
+static void DrawMod3D(Mesh mesh, Matrix m, float lum, float rough, float metal, const Matrix *shadowProj) {
+    unsigned char v = (unsigned char)(Clamp(lum, 0.02f, 0.98f) * 255.0f);
+    g_mod3d.mat.maps[MATERIAL_MAP_DIFFUSE].color = (Color){ v, v, v, 255 };
+    SetShaderValue(g_mod3d.shader, g_mod3d.locRoughness, &rough, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(g_mod3d.shader, g_mod3d.locMetallic,  &metal, SHADER_UNIFORM_FLOAT);
+    DrawMesh(mesh, g_mod3d.mat, m);
+    if (shadowProj) {
+        g_assets.mat.maps[MATERIAL_MAP_DIFFUSE].color = (Color){ 6, 6, 6, 255 };
+        float fs = 0.0f;
+        SetShaderValue(g_assets.shader, g_assets.locFaceShadow, &fs, SHADER_UNIFORM_FLOAT);
+        DrawMesh(mesh, g_assets.mat, MatrixMultiply(m, *shadowProj));
+    }
 }
 
 // ============================================================================
@@ -1363,8 +1635,8 @@ void PlayerCharacterDraw3D(const PlayerCharacter *p, Vector3 camPos) {
             elbowAng = -68.0f * paperInspect + flipOsc * 8.0f;
             armYaw   = (float)side * -16.0f * paperInspect;
         } else if (side < 0 && reach > 0.01f) {
-            armAng = -64.0f * reach;
-            elbowAng = -16.0f * (1.0f - 0.4f * reach);
+            armAng = -26.0f * reach;
+            elbowAng = -34.0f * reach;
         }
 
         Matrix shM = MatrixMultiply(
@@ -1941,19 +2213,23 @@ void PlayerCharacterDrawVariant3D(int variantId, PlayerPreviewAnim anim, Vector3
 
     DrawBadgeDetails(torsoBase, 0.04f);
 
-    // Pequena mochila nas costas (exclusiva das variantes do Subsolo, nao no modelo principal)
+    // Bolsa carteiro / pasta lateral de escritorio (exclusiva das variantes do Subsolo, nao no modelo principal)
     {
-        float packBob = sinf(walkCycle * 2.0f) * 0.012f * blend;
-        float packTilt = sinf(walkCycle) * 4.0f * blend;
+        float bagSwing = sinf(walkCycle) * 10.0f * blend;
+        float bagBob   = sinf(walkCycle * 2.0f) * 0.010f * blend;
         rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(torsoBase));
-        rlTranslatef(0.0f, 0.03f + packBob, -0.145f);
-        rlRotatef(packTilt, 0.0f, 0.0f, 1.0f);
-        DrawCube((Vector3){ 0.0f, 0.0f, 0.0f }, 0.20f, 0.25f, 0.09f, (Color){ 54, 48, 50, 255 });
-        DrawCubeWires((Vector3){ 0.0f, 0.0f, 0.0f }, 0.20f, 0.25f, 0.09f, (Color){ 20, 18, 20, 255 });
-        DrawCube((Vector3){ 0.0f, -0.05f, -0.045f }, 0.15f, 0.11f, 0.03f, (Color){ 78, 70, 72, 255 });
-        DrawCube((Vector3){ -0.075f, 0.03f, 0.06f }, 0.024f, 0.22f, 0.04f, (Color){ 36, 32, 34, 255 });
-        DrawCube((Vector3){  0.075f, 0.03f, 0.06f }, 0.024f, 0.22f, 0.04f, (Color){ 36, 32, 34, 255 });
+        // Alca transversal cruzando o peito e as costas (ombro direito -> quadril esquerdo)
+        DrawCapsule((Vector3){  0.12f,  0.19f,  0.095f }, (Vector3){ -0.17f, -0.14f,  0.04f }, 0.013f, 4, 6, (Color){ 32, 28, 30, 255 });
+        DrawCapsule((Vector3){  0.12f,  0.19f, -0.095f }, (Vector3){ -0.17f, -0.14f, -0.04f }, 0.013f, 4, 6, (Color){ 32, 28, 30, 255 });
+        // Corpo da bolsa carteiro na lateral esquerda do quadril
+        rlTranslatef(-0.21f, -0.22f + bagBob, 0.00f);
+        rlRotatef(bagSwing, 1.0f, 0.0f, 0.0f);
+        DrawCube((Vector3){ 0.0f, 0.0f, 0.0f }, 0.085f, 0.21f, 0.27f, (Color){ 58, 50, 48, 255 });
+        DrawCubeWires((Vector3){ 0.0f, 0.0f, 0.0f }, 0.085f, 0.21f, 0.27f, (Color){ 20, 18, 20, 255 });
+        // Aba frontal dobrada + fivela metalica
+        DrawCube((Vector3){ -0.044f, 0.03f, 0.0f }, 0.014f, 0.12f, 0.26f, (Color){ 78, 68, 64, 255 });
+        DrawCube((Vector3){ -0.052f, -0.02f, 0.0f }, 0.010f, 0.03f, 0.04f, (Color){ 195, 182, 165, 255 });
         rlPopMatrix();
     }
 
@@ -2009,8 +2285,8 @@ void PlayerCharacterDrawVariant3D(int variantId, PlayerPreviewAnim anim, Vector3
             elbowAng = -68.0f * paperInspect + flipOsc * 6.5f;
             armYaw   = (float)side * -16.0f * paperInspect;
         } else if (side < 0 && reach > 0.01f) {
-            armAng = -66.0f * reach;
-            elbowAng = -16.0f * (1.0f - 0.4f * reach);
+            armAng = -26.0f * reach;
+            elbowAng = -34.0f * reach;
         }
 
         Matrix shM = MatrixMultiply(MakeLocal((Vector3){ (float)side * shXBase, 0.18f, 0.0f }, (Vector3){ armAng, armYaw, armOutZ }, (Vector3){ 1, 1, 1 }), torsoBase);
@@ -2083,6 +2359,382 @@ void PlayerCharacterDrawVariant3D(int variantId, PlayerPreviewAnim anim, Vector3
         DrawPart(g_assets.hairM, MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.006f, -0.004f }, (Vector3){ 0, 0, 0 }, (Vector3){ 1.06f, hairScaleY, 1.06f }), headM), 0.09f, false);
         DrawPart(g_assets.bangM1, MatrixMultiply(MakeLocal((Vector3){  0.014f, 0.074f, 0.082f }, (Vector3){ 10.0f + bangSway, -12.0f, -14.0f }, (Vector3){ 1.12f, 1.12f, 1.08f }), headM), 0.10f, false);
         DrawPart(g_assets.bangM2, MatrixMultiply(MakeLocal((Vector3){ -0.024f, 0.072f, 0.080f }, (Vector3){  8.0f - bangSway,  14.0f,  12.0f }, (Vector3){ 1.12f, 1.12f, 1.08f }), headM), 0.10f, false);
+    }
+}
+
+// 6 estilos 3D modernos completamente distintos no Subsolo 2 (malhas 32-seg + shader Studio PBR/Especular)
+// 0: Pixar / Arcane (Estilizado 3D com proporcoes heroicas, sobretudo fluido e fedora inclinado)
+// 1: Anime / JRPG Moderno (Persona / NieR - 1:7.8 esguio, 5 mechas de cabelo com fisica, jaqueta assimetrica)
+// 2: Realista Anatomico High-Poly (proporcoes 1:7.5 naturalistas, musculatura suave, blazer sob medida)
+// 3: Modern Vinyl / Toy-3D (Zelda LA / Splatoon - acabamento vinil brilhante, cabeca grande limpa, quique elastico)
+// 4: Androide Ceramico High-Tech (Detroit / Portal - placas de porcelana polida, juntas carbono, anel optico)
+// 5: Sculpted Noir Indie (Dishonored / Inside - silhueta alongada dramatica, capa dupla, fedora e lanterna)
+void PlayerCharacterDrawTechVariant3D(int techId, PlayerPreviewAnim anim, Vector3 pos, float yawDeg, float tempo, Vector3 camPos) {
+    EnsurePlayerAssets();
+    EnsureModern3DAssets();
+    if (!g_assets.initialized || !g_mod3d.initialized) return;
+
+    float viewArr[3] = { camPos.x, camPos.y, camPos.z };
+    SetShaderValue(g_mod3d.shader, g_mod3d.locViewPos, viewArr, SHADER_UNIFORM_VEC3);
+    SetShaderValue(g_assets.shader, g_assets.locViewPos, viewArr, SHADER_UNIFORM_VEC3);
+
+    int style = (techId < 0) ? 0 : (techId % 6);
+
+    float blend = 0.0f, runB = 0.0f, walkCycle = 0.0f;
+    float sitFactor = 0.0f, paperInspect = 0.0f, reach = 0.0f;
+    if (anim == PREVIEW_ANIM_WALK) {
+        blend = 1.0f; walkCycle = tempo * 6.4f;
+    } else if (anim == PREVIEW_ANIM_RUN) {
+        blend = 1.0f; runB = 1.0f; walkCycle = tempo * 10.6f;
+    } else if (anim == PREVIEW_ANIM_COMPUTER) {
+        sitFactor = 1.0f;
+    } else if (anim == PREVIEW_ANIM_PAPER) {
+        paperInspect = 0.85f + 0.15f * sinf(tempo * 2.2f);
+    } else if (anim == PREVIEW_ANIM_DOOR) {
+        float cyc = fmodf(tempo, 2.0f);
+        reach = (cyc < 1.0f) ? sinf(cyc * PI) : 0.0f;
+    }
+
+    float strideMult = 1.0f + 0.40f * runB;
+    float s  = sinf(walkCycle);
+    float c2 = cosf(2.0f * walkCycle);
+    float breeze = sinf(tempo * 2.1f + (float)style * 0.9f) * 0.48f + cosf(tempo * 3.3f) * 0.24f;
+    float pulso  = 0.5f + 0.5f * sinf(tempo * 3.8f + (float)style);
+
+    // Parametros anatomicos e de material exclusivos de cada estilo 3D
+    float rootScale  = 1.12f;
+    float legLen     = 0.40f;
+    float calfLen    = 0.39f;
+    float legRad     = 0.068f;
+    float armLen     = 0.27f;
+    float foreLen    = 0.25f;
+    float armRad     = 0.044f;
+    float hipX       = 0.095f;
+    float shX        = 0.205f;
+    float torsoH     = 0.24f;
+    float headY      = 0.20f;
+    float headScale  = 1.00f;
+    float coatLum    = 0.26f;
+    float pantLum    = 0.16f;
+    float skinLum    = 0.72f;
+    float roughCloth = 0.58f;
+    float roughSkin  = 0.48f;
+    float metalCloth = 0.08f;
+    Mesh  headMesh   = g_mod3d.headAnat;
+    Mesh  torsoMesh  = g_mod3d.torsoAnat;
+
+    switch (style) {
+        case 0: // Pixar / Arcane (Estilizado 3D heroico)
+            rootScale = 1.14f; legLen = 0.39f; calfLen = 0.38f; legRad = 0.072f;
+            armLen = 0.26f; foreLen = 0.25f; armRad = 0.048f; hipX = 0.098f; shX = 0.232f;
+            torsoH = 0.25f; headY = 0.21f; headScale = 1.14f;
+            coatLum = 0.30f; pantLum = 0.16f; skinLum = 0.74f;
+            roughCloth = 0.52f; roughSkin = 0.38f; metalCloth = 0.12f;
+            headMesh = g_mod3d.headStylized; torsoMesh = g_mod3d.torsoHero;
+            break;
+        case 1: // Anime / JRPG (Persona / NieR - esguio 1:7.8)
+            rootScale = 1.16f; legLen = 0.45f; calfLen = 0.44f; legRad = 0.052f;
+            armLen = 0.28f; foreLen = 0.26f; armRad = 0.035f; hipX = 0.078f; shX = 0.168f;
+            torsoH = 0.23f; headY = 0.19f; headScale = 0.96f;
+            coatLum = 0.16f; pantLum = 0.12f; skinLum = 0.80f;
+            roughCloth = 0.34f; roughSkin = 0.32f; metalCloth = 0.18f;
+            headMesh = g_mod3d.headAnime; torsoMesh = g_mod3d.torsoAnime;
+            break;
+        case 2: // Realista Anatomico High-Poly
+            rootScale = 1.14f; legLen = 0.42f; calfLen = 0.41f; legRad = 0.068f;
+            armLen = 0.28f; foreLen = 0.26f; armRad = 0.046f; hipX = 0.096f; shX = 0.205f;
+            torsoH = 0.25f; headY = 0.20f; headScale = 0.98f;
+            coatLum = 0.44f; pantLum = 0.20f; skinLum = 0.70f;
+            roughCloth = 0.68f; roughSkin = 0.54f; metalCloth = 0.05f;
+            headMesh = g_mod3d.headAnat; torsoMesh = g_mod3d.torsoAnat;
+            break;
+        case 3: // Modern Vinyl / Toy-3D (Zelda LA / Splatoon)
+            rootScale = 1.05f; legLen = 0.26f; calfLen = 0.24f; legRad = 0.072f;
+            armLen = 0.19f; foreLen = 0.17f; armRad = 0.052f; hipX = 0.088f; shX = 0.162f;
+            torsoH = 0.18f; headY = 0.26f; headScale = 1.38f;
+            coatLum = 0.62f; pantLum = 0.22f; skinLum = 0.82f;
+            roughCloth = 0.22f; roughSkin = 0.20f; metalCloth = 0.20f;
+            headMesh = g_mod3d.headVinyl; torsoMesh = g_mod3d.torsoVinyl;
+            break;
+        case 4: // Androide Ceramico (Detroit / Portal)
+            rootScale = 1.15f; legLen = 0.42f; calfLen = 0.41f; legRad = 0.062f;
+            armLen = 0.27f; foreLen = 0.26f; armRad = 0.042f; hipX = 0.092f; shX = 0.198f;
+            torsoH = 0.25f; headY = 0.20f; headScale = 1.00f;
+            coatLum = 0.86f; pantLum = 0.78f; skinLum = 0.88f;
+            roughCloth = 0.14f; roughSkin = 0.12f; metalCloth = 0.62f;
+            headMesh = g_mod3d.headAnat; torsoMesh = g_mod3d.torsoCeramic;
+            break;
+        case 5: // Sculpted Noir Indie (Dishonored / Inside)
+            rootScale = 1.18f; legLen = 0.46f; calfLen = 0.45f; legRad = 0.054f;
+            armLen = 0.30f; foreLen = 0.28f; armRad = 0.038f; hipX = 0.084f; shX = 0.215f;
+            torsoH = 0.26f; headY = 0.20f; headScale = 0.94f;
+            coatLum = 0.14f; pantLum = 0.10f; skinLum = 0.66f;
+            roughCloth = 0.46f; roughSkin = 0.50f; metalCloth = 0.14f;
+            headMesh = g_mod3d.headAnat; torsoMesh = g_mod3d.torsoHero;
+            break;
+    }
+
+    // Quique elastico extra para o estilo Vinyl/Toy-3D
+    float bounceMult = (style == 3) ? 1.65f : 1.0f;
+    float squashY = (style == 3) ? (1.0f + c2 * 0.045f * blend) : 1.0f;
+    float squashXZ = (style == 3) ? (1.0f - c2 * 0.025f * blend) : 1.0f;
+
+    float idleBreath  = sinf(tempo * 2.0f + (float)style) * 0.006f * (1.0f - blend);
+    float walkBob     = (-c2 * 0.022f * strideMult * bounceMult) * blend;
+    float bobY        = walkBob + idleBreath;
+    float pelvisYaw   = s * 5.8f * blend + 1.5f * (1.0f - blend);
+    float pelvisRoll  = s * 2.8f * blend + 1.2f * (1.0f - blend);
+    float torsoYaw    = -s * 6.4f * blend - 1.0f * (1.0f - blend);
+    float forwardLean = (6.5f + 7.5f * runB) * blend + ((style == 5) ? 4.0f : 1.2f) * (1.0f - blend);
+
+    Matrix root = MakeLocal(pos, (Vector3){ 0.0f, yawDeg, 0.0f }, (Vector3){ rootScale * squashXZ, rootScale * squashY, rootScale * squashXZ });
+    Matrix shadowProj = MakePlanarShadowMatrix(pos.y + 0.008f, pos);
+
+    float standPelvisY = legLen + calfLen + 0.08f;
+    float pelvY = (standPelvisY + bobY) * (1.0f - sitFactor) + 0.42f * sitFactor;
+    float pelvZ = -0.05f * sitFactor;
+    Matrix pelvisM = MatrixMultiply(
+        MakeLocal((Vector3){ 0.0f, pelvY, pelvZ },
+                  (Vector3){ 0.0f, pelvisYaw * (1.0f - sitFactor), pelvisRoll * (1.0f - sitFactor) },
+                  (Vector3){ 1, 1, 1 }),
+        root
+    );
+
+    // 1) Pernas organicas esculpidas (32-seg, sem usar g_assets antigos)
+    for (int side = -1; side <= 1; side += 2) {
+        float phase = (side < 0) ? walkCycle : (walkCycle + PI);
+        float sp = sinf(phase), cp = cosf(phase);
+        float swingPhase = fmaxf(0.0f, cp);
+        float legAng    = ((-sp * 25.0f * strideMult) * blend + ((side < 0) ? 2.5f : -2.5f) * (1.0f - blend)) * (1.0f - sitFactor) + (-86.0f * sitFactor);
+        float kneeBend  = ((swingPhase * 38.0f * strideMult + 3.0f) * blend + ((side < 0) ? 2.0f : 4.5f) * (1.0f - blend)) * (1.0f - sitFactor) + (86.0f * sitFactor);
+        float footPitch = ((-legAng * 0.50f - cp * 7.0f) * blend) * (1.0f - sitFactor);
+
+        Matrix hipM = MatrixMultiply(
+            MakeLocal((Vector3){ (float)side * hipX, 0.0f, 0.04f * sitFactor },
+                      (Vector3){ legAng, 0.0f, (float)side * (-1.0f + 4.5f * sitFactor) },
+                      (Vector3){ 1, 1, 1 }),
+            pelvisM
+        );
+        // Junta esferica suave no quadril (carbono escuro no Androide)
+        float jointLum = (style == 4) ? 0.14f : pantLum;
+        DrawMod3D(g_mod3d.sphereHi, MatrixMultiply(MatrixScale(legRad * 0.88f, legRad * 0.88f, legRad * 0.88f), hipM), jointLum, roughCloth, metalCloth, NULL);
+        DrawMod3D(g_mod3d.limbOrganic, MatrixMultiply(MatrixScale(legRad, legLen, legRad), hipM), pantLum, roughCloth, metalCloth, &shadowProj);
+
+        Matrix kneeM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, -legLen, 0.0f }, (Vector3){ kneeBend, 0, 0 }, (Vector3){ 1, 1, 1 }), hipM);
+        DrawMod3D(g_mod3d.sphereHi, MatrixMultiply(MatrixScale(legRad * 0.78f, legRad * 0.78f, legRad * 0.78f), kneeM), jointLum, (style == 4) ? 0.25f : roughCloth, metalCloth, NULL);
+        DrawMod3D(g_mod3d.limbOrganic, MatrixMultiply(MatrixScale(legRad * 0.84f, calfLen, legRad * 0.84f), kneeM), pantLum * 0.94f, roughCloth, metalCloth, &shadowProj);
+
+        Matrix ankleM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, -calfLen, 0.0f }, (Vector3){ footPitch - kneeBend * 0.45f * (1.0f - sitFactor), 0, 0 }, (Vector3){ 1, 1, 1 }), kneeM);
+        float bootSc = (style == 3) ? 1.18f : ((style == 0) ? 1.12f : 0.96f);
+        DrawMod3D(g_mod3d.bootChunky, MatrixMultiply(MatrixScale(bootSc, bootSc, bootSc), ankleM), (style == 4) ? 0.20f : 0.10f, 0.28f, 0.22f, &shadowProj);
+    }
+
+    // 2) Tronco esculpido + roupas/fisica exclusivas de cada estilo
+    float compLean = 8.0f * sitFactor + 7.0f * paperInspect;
+    Matrix torsoBase = MatrixMultiply(
+        MakeLocal((Vector3){ 0.0f, torsoH, 0.0f },
+                  (Vector3){ forwardLean * (1.0f - sitFactor) + compLean, torsoYaw * (1.0f - sitFactor), -pelvisRoll * 0.65f * (1.0f - sitFactor) },
+                  (Vector3){ 1, 1, 1 }),
+        pelvisM
+    );
+
+    DrawMod3D(torsoMesh, torsoBase, coatLum, roughCloth, metalCloth, &shadowProj);
+
+    // Camadas de vestuario e fisica secundaria por estilo
+    float coatSway = -sinf(walkCycle) * (10.0f * strideMult) * blend - (13.0f + 8.0f * runB) * blend - 18.0f * sitFactor + breeze * 4.0f;
+    float coatLag  = cosf(walkCycle) * 6.0f * blend;
+
+    if (style == 0) {
+        // PIXAR / ARCANE: sobretudo amplo com pregas organicas + gola estilizada + gravata suave
+        Matrix coatM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, -0.18f, -0.005f }, (Vector3){ coatSway, coatLag, -pelvisRoll * 0.7f }, (Vector3){ 1.05f, 1.00f, 1.02f }), torsoBase);
+        DrawMod3D(g_mod3d.coatFlared, coatM, coatLum * 0.92f, roughCloth, metalCloth, &shadowProj);
+        rlPushMatrix();
+        rlMultMatrixf(MatrixToFloat(torsoBase));
+        DrawCylinder((Vector3){ 0.0f, 0.21f, -0.01f }, 0.125f, 0.105f, 0.085f, 20, (Color){ 110, 102, 98, 255 });
+        DrawCapsule((Vector3){ 0.0f, 0.18f, 0.118f }, (Vector3){ 0.0f, -0.05f, 0.112f }, 0.018f, 6, 8, (Color){ 235, 226, 210, 255 });
+        rlPopMatrix();
+    } else if (style == 1) {
+        // ANIME / JRPG: casaco assimetrico longo com cauda dupla fluida + gola alta elegante
+        Matrix coatM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, -0.19f, -0.01f }, (Vector3){ coatSway * 1.15f, coatLag * 1.2f, 0 }, (Vector3){ 0.86f, 1.12f, 0.88f }), torsoBase);
+        DrawMod3D(g_mod3d.coatFlared, coatM, coatLum + 0.04f, roughCloth, metalCloth, &shadowProj);
+        rlPushMatrix();
+        rlMultMatrixf(MatrixToFloat(torsoBase));
+        DrawCylinder((Vector3){ 0.0f, 0.20f, -0.005f }, 0.095f, 0.088f, 0.090f, 20, (Color){ 225, 218, 208, 255 });
+        DrawCapsule((Vector3){ -0.07f, 0.16f, 0.095f }, (Vector3){ 0.05f, -0.14f, 0.092f }, 0.014f, 6, 8, (Color){ 242, 232, 180, 255 });
+        rlPopMatrix();
+    } else if (style == 2) {
+        // REALISTA ANATOMICO: blazer moderno sob medida + gola alta fina + cinto
+        Matrix blazerM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, -0.18f, -0.005f }, (Vector3){ coatSway * 0.5f, 0, 0 }, (Vector3){ 0.94f, 0.42f, 0.94f }), torsoBase);
+        DrawMod3D(g_mod3d.coatFlared, blazerM, coatLum, roughCloth, metalCloth, &shadowProj);
+        rlPushMatrix();
+        rlMultMatrixf(MatrixToFloat(torsoBase));
+        DrawCylinder((Vector3){ 0.0f, 0.21f, 0.0f }, 0.088f, 0.092f, 0.068f, 20, (Color){ 42, 38, 40, 255 });
+        DrawCylinder((Vector3){ 0.0f, -0.18f, 0.0f }, 0.142f, 0.142f, 0.036f, 22, (Color){ 32, 28, 30, 255 });
+        rlPopMatrix();
+    } else if (style == 3) {
+        // MODERN VINYL / TOY-3D: casaco arredondado + cachecol gordinho com balanco elastico
+        Matrix coatV = MatrixMultiply(MakeLocal((Vector3){ 0.0f, -0.13f, 0.0f }, (Vector3){ coatSway * 0.6f, 0, 0 }, (Vector3){ 0.92f, 0.34f, 0.95f }), torsoBase);
+        DrawMod3D(g_mod3d.coatFlared, coatV, coatLum, 0.22f, 0.18f, &shadowProj);
+        rlPushMatrix();
+        rlMultMatrixf(MatrixToFloat(torsoBase));
+        DrawCylinder((Vector3){ 0.0f, 0.16f, 0.0f }, 0.125f, 0.132f, 0.075f, 22, (Color){ 240, 224, 150, 255 });
+        // Ponta gordinha do cachecol com fisica elastica
+        rlTranslatef(0.08f, 0.14f, 0.085f);
+        rlRotatef(14.0f + sinf(walkCycle) * 14.0f * blend + breeze * 6.0f, 1.0f, 0.0f, 0.0f);
+        DrawCapsule((Vector3){ 0, 0, 0 }, (Vector3){ 0.02f, -0.16f, 0.02f }, 0.042f, 8, 12, (Color){ 240, 224, 150, 255 });
+        rlPopMatrix();
+    } else if (style == 4) {
+        // ANDROIDE CERAMICO: coluna interna carbono + anel magnetico flutuante na clavicula + cabos suaves
+        rlPushMatrix();
+        rlMultMatrixf(MatrixToFloat(torsoBase));
+        DrawCylinder((Vector3){ 0.0f, -0.14f, 0.0f }, 0.110f, 0.115f, 0.090f, 20, (Color){ 28, 26, 30, 255 });
+        DrawSphereEx((Vector3){ 0.0f, 0.10f, 0.115f }, 0.028f + 0.003f * pulso, 14, 14, (Color){ 255, 232, 110, 255 });
+        // Aro magnetico flutuante ao redor do pescoco
+        float haloBob = sinf(tempo * 3.2f) * 0.008f;
+        DrawCylinderWires((Vector3){ 0.0f, 0.245f + haloBob, 0.0f }, 0.145f, 0.145f, 0.010f, 24, (Color){ 255, 236, 130, 255 });
+        for (int side = -1; side <= 1; side += 2) {
+            float cw = sinf(walkCycle + side) * 0.022f * blend + breeze * 0.012f;
+            DrawCapsule((Vector3){ side * 0.05f, 0.15f, -0.11f }, (Vector3){ side * 0.12f, 0.00f + cw, -0.14f }, 0.012f, 6, 10, (Color){ 32, 30, 34, 255 });
+            DrawCapsule((Vector3){ side * 0.12f, 0.00f + cw, -0.14f }, (Vector3){ side * 0.10f, -0.15f, -0.09f }, 0.012f, 6, 10, (Color){ 220, 215, 205, 255 });
+        }
+        rlPopMatrix();
+    } else if (style == 5) {
+        // SCULPTED NOIR INDIE: capa dupla dramatica longa + gola altissima + lanterna pendular no cinto
+        Matrix coatL = MatrixMultiply(MakeLocal((Vector3){ 0.0f, -0.17f, -0.01f }, (Vector3){ coatSway * 1.25f, coatLag * 1.1f, 0 }, (Vector3){ 1.15f, 1.32f, 1.10f }), torsoBase);
+        DrawMod3D(g_mod3d.coatFlared, coatL, 0.12f, 0.44f, 0.12f, &shadowProj);
+        Matrix capeTop = MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.20f, -0.01f }, (Vector3){ coatSway * 0.55f, 0, 0 }, (Vector3){ 1.32f, 0.55f, 1.25f }), torsoBase);
+        DrawMod3D(g_mod3d.coatFlared, capeTop, 0.18f, 0.42f, 0.12f, NULL);
+        rlPushMatrix();
+        rlMultMatrixf(MatrixToFloat(torsoBase));
+        // Lanterna/scanner pendular no quadril direito
+        rlTranslatef(0.18f, -0.18f, 0.05f);
+        rlRotatef(sinf(walkCycle) * 18.0f * blend + breeze * 8.0f, 1.0f, 0.0f, 0.0f);
+        DrawCylinder((Vector3){ 0, -0.07f, 0 }, 0.032f, 0.036f, 0.08f, 14, (Color){ 255, 224, 64, 255 });
+        rlPopMatrix();
+    }
+
+    // 3) Bracos organicos esculpidos com animacoes completas
+    for (int side = -1; side <= 1; side += 2) {
+        float legPhase = (side < 0) ? walkCycle : (walkCycle + PI);
+        float armPhase = legPhase - 0.35f;
+        float sp = sinf(armPhase);
+        float armAng   = (sp * 22.0f * strideMult) * blend + ((side > 0) ? -2.5f : 2.0f) * (1.0f - blend);
+        float elbowAng = (-18.0f - fmaxf(0.0f, -sp) * 22.0f * strideMult) * blend - (10.0f + sinf(tempo * 1.9f) * 1.5f) * (1.0f - blend);
+        float armOutZ  = (float)side * ((style == 3) ? 14.0f : 6.5f);
+        float armYaw   = 0.0f;
+
+        if (sitFactor > 0.05f) {
+            float typeOsc = sinf(tempo * 11.0f + (float)side * 2.2f);
+            armAng = -36.0f * sitFactor + typeOsc * 3.5f;
+            elbowAng = -62.0f * sitFactor + typeOsc * 6.0f;
+            armYaw = (float)side * -14.0f * sitFactor;
+        } else if (paperInspect > 0.05f) {
+            float flipOsc = sinf(tempo * 7.5f + (float)side * 1.4f);
+            armAng = -34.0f * paperInspect + flipOsc * 3.5f;
+            elbowAng = -68.0f * paperInspect + flipOsc * 6.5f;
+            armYaw = (float)side * -16.0f * paperInspect;
+        } else if (side < 0 && reach > 0.01f) {
+            armAng = -26.0f * reach;
+            elbowAng = -34.0f * reach;
+        }
+
+        float jointLum = (style == 4) ? 0.14f : coatLum;
+        Matrix shM = MatrixMultiply(MakeLocal((Vector3){ (float)side * shX, torsoH * 0.72f, 0.0f }, (Vector3){ armAng, armYaw, armOutZ }, (Vector3){ 1, 1, 1 }), torsoBase);
+        DrawMod3D(g_mod3d.sphereHi, MatrixMultiply(MatrixScale(armRad * 1.15f, armRad * 1.15f, armRad * 1.15f), shM), jointLum, roughCloth, metalCloth, NULL);
+        DrawMod3D(g_mod3d.limbOrganic, MatrixMultiply(MatrixScale(armRad, armLen, armRad), shM), coatLum + 0.03f, roughCloth, metalCloth, &shadowProj);
+
+        Matrix elbM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, -armLen, 0.0f }, (Vector3){ elbowAng, 0, (float)side * -2.5f }, (Vector3){ 1, 1, 1 }), shM);
+        DrawMod3D(g_mod3d.sphereHi, MatrixMultiply(MatrixScale(armRad * 0.88f, armRad * 0.88f, armRad * 0.88f), elbM), jointLum, roughCloth, metalCloth, NULL);
+        DrawMod3D(g_mod3d.limbOrganic, MatrixMultiply(MatrixScale(armRad * 0.84f, foreLen, armRad * 0.84f), elbM), coatLum + 0.02f, roughCloth, metalCloth, &shadowProj);
+
+        Matrix handM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, -foreLen, 0.006f }, (Vector3){ -8.0f - sp * 6.0f * blend, 0, 0 }, (Vector3){ 1, 1, 1 }), elbM);
+        float handRad = (style == 3) ? 0.056f : (armRad * 0.92f);
+        DrawMod3D(g_mod3d.sphereHi, MatrixMultiply(MatrixScale(handRad * 0.95f, handRad * 1.12f, handRad * 0.72f), handM), (style == 4) ? 0.16f : skinLum, roughSkin, (style == 4) ? 0.4f : 0.05f, NULL);
+
+        if (paperInspect > 0.3f && side > 0) {
+            rlPushMatrix();
+            rlMultMatrixf(MatrixToFloat(handM));
+            DrawCube((Vector3){ -0.05f, -0.04f, 0.05f }, 0.20f, 0.014f, 0.25f, (Color){ 235, 228, 214, 255 });
+            rlPopMatrix();
+        }
+    }
+
+    // 4) Pescoco, cabeca 32-seg, rosto expressivo moderno e cabelo/chapeu por estilo
+    Matrix neckM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, torsoH * 0.90f, 0.0f }, (Vector3){ -forwardLean * 0.55f, -torsoYaw * 0.5f, 0 }, (Vector3){ 1, 1, 1 }), torsoBase);
+    DrawMod3D(g_mod3d.limbOrganic, MatrixMultiply(MakeLocal((Vector3){ 0, 0.12f, 0 }, (Vector3){ 0, 0, 0 }, (Vector3){ 0.052f, 0.13f, 0.052f }), neckM), (style == 4) ? 0.16f : skinLum * 0.94f, roughSkin, 0.05f, NULL);
+
+    Matrix headM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, headY, 0.010f }, (Vector3){ 3.5f + 8.0f * paperInspect, 0.0f, 0.0f }, (Vector3){ headScale, headScale, headScale }), neckM);
+    DrawMod3D(headMesh, headM, skinLum, roughSkin, (style == 4) ? 0.55f : 0.04f, &shadowProj);
+
+    // Tracos faciais modernos + cabelo/chapeu exclusivos de cada estilo
+    rlPushMatrix();
+    rlMultMatrixf(MatrixToFloat(headM));
+    if (style == 0) {
+        // Pixar / Arcane: olhos expressivos esculpidos + sobrancelhas + nariz + fedora estiloso inclinado
+        DrawSphereEx((Vector3){ -0.036f, 0.018f, 0.096f }, 0.016f, 12, 12, (Color){ 242, 240, 236, 255 });
+        DrawSphereEx((Vector3){  0.036f, 0.018f, 0.096f }, 0.016f, 12, 12, (Color){ 242, 240, 236, 255 });
+        DrawSphereEx((Vector3){ -0.036f, 0.018f, 0.108f }, 0.008f, 10, 10, (Color){ 22, 20, 24, 255 });
+        DrawSphereEx((Vector3){  0.036f, 0.018f, 0.108f }, 0.008f, 10, 10, (Color){ 22, 20, 24, 255 });
+        DrawCapsule((Vector3){ 0.0f, 0.016f, 0.104f }, (Vector3){ 0.0f, -0.014f, 0.114f }, 0.011f, 6, 8, (Color){ 190, 182, 174, 255 });
+        DrawCapsule((Vector3){ -0.052f, 0.042f, 0.098f }, (Vector3){ -0.020f, 0.046f, 0.100f }, 0.006f, 5, 6, (Color){ 28, 25, 27, 255 });
+        DrawCapsule((Vector3){  0.020f, 0.044f, 0.100f }, (Vector3){  0.052f, 0.038f, 0.098f }, 0.006f, 5, 6, (Color){ 28, 25, 27, 255 });
+    } else if (style == 1) {
+        // Anime / JRPG: olhos grandes estilizados + 5 mechas longas com fisica independente
+        DrawSphereEx((Vector3){ -0.032f, 0.016f, 0.085f }, 0.015f, 12, 12, (Color){ 24, 22, 26, 255 });
+        DrawSphereEx((Vector3){  0.032f, 0.016f, 0.085f }, 0.015f, 12, 12, (Color){ 24, 22, 26, 255 });
+        DrawSphereEx((Vector3){ -0.028f, 0.022f, 0.096f }, 0.005f, 8, 8, (Color){ 255, 252, 246, 255 });
+        DrawSphereEx((Vector3){  0.036f, 0.022f, 0.096f }, 0.005f, 8, 8, (Color){ 255, 252, 246, 255 });
+    } else if (style == 2) {
+        // Realista Anatomico: nariz esculpido, orelhas, olhos naturais, cabelo curto penteado
+        DrawSphereEx((Vector3){ -0.032f, 0.018f, 0.090f }, 0.009f, 10, 10, (Color){ 26, 24, 26, 255 });
+        DrawSphereEx((Vector3){  0.032f, 0.018f, 0.090f }, 0.009f, 10, 10, (Color){ 26, 24, 26, 255 });
+        DrawCapsule((Vector3){ 0.0f, 0.016f, 0.096f }, (Vector3){ 0.0f, -0.012f, 0.104f }, 0.009f, 6, 8, (Color){ 176, 170, 164, 255 });
+        DrawSphereEx((Vector3){ -0.082f, 0.006f, 0.000f }, 0.018f, 10, 10, (Color){ 176, 170, 164, 255 });
+        DrawSphereEx((Vector3){  0.082f, 0.006f, 0.000f }, 0.018f, 10, 10, (Color){ 176, 170, 164, 255 });
+    } else if (style == 3) {
+        // Modern Vinyl / Toy-3D: olhos grandes redondos super limpos + brilho especular + boina/topete suave
+        DrawSphereEx((Vector3){ -0.058f, 0.008f, 0.155f }, 0.024f, 14, 14, (Color){ 20, 18, 22, 255 });
+        DrawSphereEx((Vector3){  0.058f, 0.008f, 0.155f }, 0.024f, 14, 14, (Color){ 20, 18, 22, 255 });
+        DrawSphereEx((Vector3){ -0.050f, 0.018f, 0.174f }, 0.008f, 10, 10, (Color){ 255, 255, 255, 255 });
+        DrawSphereEx((Vector3){  0.066f, 0.018f, 0.174f }, 0.008f, 10, 10, (Color){ 255, 255, 255, 255 });
+    } else if (style == 4) {
+        // Androide Ceramico: face lisa de porcelana + anel optico luminoso horizontal
+        DrawCapsule((Vector3){ -0.056f, 0.020f, 0.092f }, (Vector3){ 0.056f, 0.020f, 0.092f }, 0.012f, 8, 12, (Color){ 22, 20, 26, 255 });
+        DrawSphereEx((Vector3){ 0.0f, 0.020f, 0.102f }, 0.014f + 0.002f * pulso, 12, 12, (Color){ 255, 232, 100, 255 });
+    } else if (style == 5) {
+        // Sculpted Noir: olhos sombreados brilhantes sutis sob a aba do fedora
+        DrawSphereEx((Vector3){ -0.030f, 0.015f, 0.092f }, 0.007f, 8, 8, (Color){ 245, 235, 195, 255 });
+        DrawSphereEx((Vector3){  0.030f, 0.015f, 0.092f }, 0.007f, 8, 8, (Color){ 245, 235, 195, 255 });
+    }
+    rlPopMatrix();
+
+    // Cabelo / Chapeu de alta resolucao (32-seg)
+    if (style == 0) {
+        Matrix hatM = MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.088f, -0.005f }, (Vector3){ -8.0f, 0.0f, 9.0f }, (Vector3){ 1.05f, 1.02f, 1.05f }), headM);
+        DrawMod3D(g_mod3d.hatFedora, hatM, 0.18f, 0.45f, 0.10f, NULL);
+    } else if (style == 1) {
+        // Calota lisa + 5 mechas longas com fisica independente
+        DrawMod3D(g_mod3d.sphereHi, MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.032f, -0.008f }, (Vector3){ 0, 0, 0 }, (Vector3){ 0.090f, 0.095f, 0.102f }), headM), 0.12f, 0.24f, 0.22f, NULL);
+        for (int k = -2; k <= 2; k++) {
+            float angY = (float)k * 36.0f;
+            float lag = fabsf((float)k) * 0.35f;
+            float pSw = -14.0f * blend - 12.0f * runB + sinf(walkCycle - lag) * 11.0f * blend + breeze * 6.0f;
+            float rSw = -sinf(walkCycle - lag) * 7.0f * blend + cosf(tempo * 2.3f + k) * 3.5f;
+            Matrix stM = MatrixMultiply(MakeLocal((Vector3){ sinf(angY * DEG2RAD) * 0.075f, 0.02f, -cosf(angY * DEG2RAD) * 0.078f }, (Vector3){ pSw, angY, rSw }, (Vector3){ 1.15f, 1.25f, 1.10f }), headM);
+            DrawMod3D(g_mod3d.strandHair, stM, 0.11f, 0.22f, 0.24f, NULL);
+        }
+    } else if (style == 2) {
+        // Cabelo curto esculpido realista
+        DrawMod3D(g_mod3d.sphereHi, MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.042f, -0.012f }, (Vector3){ 0, 0, 0 }, (Vector3){ 0.088f, 0.088f, 0.100f }), headM), 0.16f, 0.56f, 0.08f, NULL);
+        DrawMod3D(g_mod3d.sphereHi, MatrixMultiply(MakeLocal((Vector3){ 0.025f, 0.105f, 0.032f }, (Vector3){ 12, -15, 0 }, (Vector3){ 0.056f, 0.032f, 0.068f }), headM), 0.18f, 0.52f, 0.08f, NULL);
+    } else if (style == 3) {
+        // Boina / chapeuzinho vinyl polido
+        Matrix hatV = MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.128f, -0.010f }, (Vector3){ -10.0f, 0.0f, -8.0f }, (Vector3){ 1.12f, 0.72f, 1.12f }), headM);
+        DrawMod3D(g_mod3d.hatFedora, hatV, 0.22f, 0.18f, 0.22f, NULL);
+    } else if (style == 5) {
+        // Fedora largo dramatico cobrindo a testa
+        Matrix hatN = MatrixMultiply(MakeLocal((Vector3){ 0.0f, 0.078f, 0.008f }, (Vector3){ 10.0f, 0.0f, -6.0f }, (Vector3){ 1.22f, 1.05f, 1.22f }), headM);
+        DrawMod3D(g_mod3d.hatFedora, hatN, 0.10f, 0.40f, 0.14f, NULL);
     }
 }
 
