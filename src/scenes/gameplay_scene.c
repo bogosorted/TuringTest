@@ -19,6 +19,7 @@
 #include "ui_common.h"
 #include "gameplay_data.h"
 #include "gameplay_logic_hint.h"
+#include "transition.h"
 #include <stddef.h>
 #include "rlgl.h"
 
@@ -58,6 +59,8 @@ static Sound     g_sndSinoRotacao         = { 0 };
 static float     g_rotacaoSuspeitosTimer  = 0.0f;
 static char      g_avisoRotacaoTexto[96]  = "";
 static float     g_avisoRotacaoTimer      = 0.0f;
+static float     g_hardDiaTimer           = 120.0f;
+static bool      g_hardForcouTransicao    = false;
 static Sound     g_sndElevadorPlim;         // som "Plim" ao apertar o botao do elevador
 static Sound     g_sndElevadorChegou;       // som "Plim" mais agudo ao chegar no andar
 // Transicao entre locais: escurece, fica preto com os passos e clareia ja no destino
@@ -530,36 +533,70 @@ static float     g_escadaAnim[2]          = { 0.0f, 0.0f };
 // Monologo interno / falas na caixa de dialogo inferior (ex.: flavor text, recepcionista)
 static const char *g_monologoTexto      = NULL;
 static const char *g_monologoSpeaker    = NULL;
+static const char *g_monologoProximoTexto   = NULL;
+static const char *g_monologoProximoSpeaker = NULL;
 static int         g_monologoChars      = 0;
 static float       g_monologoCharTimer  = 0.0f;
 static float       g_monologoVidaTimer  = 0.0f;
 static int         g_monologoBlipCount  = 0;
 
 static void LimparMonologoInterno(void) {
-    g_monologoTexto     = NULL;
-    g_monologoSpeaker   = NULL;
-    g_monologoChars     = 0;
-    g_monologoCharTimer = 0.0f;
-    g_monologoVidaTimer = 0.0f;
-    g_monologoBlipCount = 0;
+    g_monologoTexto          = NULL;
+    g_monologoSpeaker        = NULL;
+    g_monologoProximoTexto   = NULL;
+    g_monologoProximoSpeaker = NULL;
+    g_monologoChars          = 0;
+    g_monologoCharTimer      = 0.0f;
+    g_monologoVidaTimer      = 0.0f;
+    g_monologoBlipCount      = 0;
+}
+
+static void AvancarOuLimparMonologoInterno(void) {
+    if (g_monologoProximoTexto) {
+        g_monologoTexto          = g_monologoProximoTexto;
+        g_monologoSpeaker        = g_monologoProximoSpeaker;
+        g_monologoProximoTexto   = NULL;
+        g_monologoProximoSpeaker = NULL;
+        g_monologoChars          = 0;
+        g_monologoCharTimer      = 0.0f;
+        g_monologoVidaTimer      = 5.5f;
+        g_monologoBlipCount      = 0;
+    } else {
+        LimparMonologoInterno();
+    }
 }
 
 static void DispararMonologoInterno(const char *texto) {
-    g_monologoTexto     = texto;
-    g_monologoSpeaker   = NULL;
-    g_monologoChars     = 0;
-    g_monologoCharTimer = 0.0f;
-    g_monologoVidaTimer = 5.5f;
-    g_monologoBlipCount = 0;
+    g_monologoTexto          = texto;
+    g_monologoSpeaker        = NULL;
+    g_monologoProximoTexto   = NULL;
+    g_monologoProximoSpeaker = NULL;
+    g_monologoChars          = 0;
+    g_monologoCharTimer      = 0.0f;
+    g_monologoVidaTimer      = 5.5f;
+    g_monologoBlipCount      = 0;
+}
+
+static void DispararMonologoInternoSequencia(const char *texto1, const char *texto2) {
+    g_monologoTexto          = texto1;
+    g_monologoSpeaker        = NULL;
+    g_monologoProximoTexto   = texto2;
+    g_monologoProximoSpeaker = NULL;
+    g_monologoChars          = 0;
+    g_monologoCharTimer      = 0.0f;
+    g_monologoVidaTimer      = 5.5f;
+    g_monologoBlipCount      = 0;
 }
 
 static void DispararMonologoInternoComSpeaker(const char *texto, const char *speaker) {
-    g_monologoTexto     = texto;
-    g_monologoSpeaker   = speaker;
-    g_monologoChars     = 0;
-    g_monologoCharTimer = 0.0f;
-    g_monologoVidaTimer = 5.5f;
-    g_monologoBlipCount = 0;
+    g_monologoTexto          = texto;
+    g_monologoSpeaker        = speaker;
+    g_monologoProximoTexto   = NULL;
+    g_monologoProximoSpeaker = NULL;
+    g_monologoChars          = 0;
+    g_monologoCharTimer      = 0.0f;
+    g_monologoVidaTimer      = 5.5f;
+    g_monologoBlipCount      = 0;
 }
 
 // 1o Andar (intermediario)
@@ -5335,6 +5372,8 @@ void GameplaySceneResetDialogues(void) {
     g_avisoCantina = false;
     g_avancarDia = false;
     g_irParaVeredito = false;
+    g_hardDiaTimer = 120.0f;
+    g_hardForcouTransicao = false;
     g_confirmarAvancarDia = false;
     g_confirmarFerramentaIdx = -1;
     g_tutFerramentaPendente = -1;
@@ -5498,6 +5537,8 @@ bool InitGameplayScene(void) {
     g_irParaSelecao = false;
     g_avancarDia = false;
     g_irParaVeredito = false;
+    g_hardDiaTimer = 120.0f;
+    g_hardForcouTransicao = false;
     g_confirmarAvancarDia = false;
     g_confirmarFerramentaIdx = -1;
     g_tutFerramentaPendente = -1;
@@ -8230,7 +8271,7 @@ static void UpdateGameplay(void) {
                 if (g_monologoChars < totalLen) {
                     g_monologoChars = totalLen;
                 } else {
-                    LimparMonologoInterno();
+                    AvancarOuLimparMonologoInterno();
                 }
                 // Atualiza animacoes do personagem mesmo ao fechar o monologo
                 Terreo3DUpdate(GetFrameTime(), MouseNaJanela(mouse), false, false, true);
@@ -8416,7 +8457,10 @@ static void UpdateGameplay(void) {
                             DispararMonologoInternoComSpeaker(tRes.flavorText, "Recepcionista");
                         }
                     } else if (tRes.objetoId && strcmp(tRes.objetoId, "banco_jardim") == 0) {
-                        DispararMonologoInterno("Olhar pra essa fonte, te enche de determinação... quê? Jogo errado?");
+                        DispararMonologoInternoSequencia(
+                            "*Tem um quiche abandonado aqui... você se enche de DETERMINAÇÃO.",
+                            "O que? Jogo errado?"
+                        );
                         TentarDesbloquearPaleta("carmesim", "CARMESIM", false);
                     } else if (tRes.objetoId && strcmp(tRes.objetoId, "fonte_jardim") == 0) {
                         g_fonteClicks++;
@@ -8901,6 +8945,8 @@ static void AtualizarRotacaoSuspeitos(float dt) {
             if (loc == g_suspeitoLocal[i]) continue; // precisa realmente mudar de sala
             if (modo3D) {
                 if (HOLO_SALAS[l].numPartes == 0 || HOLO_SALAS[l].escada) continue;
+                // Garante que o suspeito nunca va para andares trancados (2, 3, 4 ou Subsolo)
+                if (HOLO_SALAS[l].andar != 0 && HOLO_SALAS[l].andar != 1) continue;
             } else {
                 if (HOLO_SALAS_2D[l].numPartes == 0 || HOLO_SALAS_2D[l].escada) continue;
             }
@@ -8918,6 +8964,7 @@ static void AtualizarRotacaoSuspeitos(float dt) {
     }
 
     if (moveuAlguem) {
+        if (GameStateIs3DMode()) Terreo3DRotacionarFigurantes();
         if (g_sndSinoRotacao.frameCount > 0) {
             SetSoundVolume(g_sndSinoRotacao, 0.28f * SettingsGetSfxVolume());
             PlaySound(g_sndSinoRotacao);
@@ -9113,12 +9160,37 @@ void UpdateDrawGameplayScene(void) {
         TocarSomHover();
     }
 
+    // Modo Hard: cronometro de 2:00 por dia que NUNCA pausa (nem em pausa, dialogo, mapa ou evidencia)
+    if (GameStateIsHardMode() && !g_hardForcouTransicao && !TransitionActive()) {
+        float dtHard = GetFrameTime();
+        if (dtHard > 0.05f) dtHard = 0.05f;
+        g_hardDiaTimer -= dtHard;
+        if (g_hardDiaTimer <= 0.0f) {
+            g_hardDiaTimer = 0.0f;
+            g_hardForcouTransicao = true;
+            FecharJanelasFerramentas();
+            g_dialogLoaded = false;
+            g_tree = NULL;
+            g_confirmarAbandonarRun = false;
+            g_confirmarAvancarDia = false;
+            g_confirmarFerramentaIdx = -1;
+            g_mapaCompletoAberto = false;
+            g_elevadorAberto = false;
+            g_inspecaoEvAtiva = false;
+            g_evToastCount = 0;
+            g_phishingPopupAberto = false;
+            FecharDica();
+            ExecutarAvancarDiaOuVeredito();
+        }
+    }
+
     // Inspecao 3D bloqueia apenas movimento do player e cliques de fundo, sem congelar o tempo
     bool inspecaoBloq = UpdateInspecaoEv3D();
-    if (!emTransicao && !g_dialogLoaded && !g_confirmarAbandonarRun && !g_phishingPopupAberto && !g_elevadorAberto) {
+    bool bloqueioGlobal = TransitionActive() || g_hardForcouTransicao;
+    if (!bloqueioGlobal && !emTransicao && !g_dialogLoaded && !g_confirmarAbandonarRun && !g_phishingPopupAberto && !g_elevadorAberto) {
         AtualizarRotacaoSuspeitos(GetFrameTime());
     }
-    if (!emTransicao && !g_mapaCompletoAberto && !UpdatePhishingPopup() && !UpdateEvPopup2D() && !UpdatePopupEvidencia() && !UpdateMenuElevador() && !UpdateConfirmarAbandonar() && !UpdateConfirmarAvancar() && !UpdateConfirmarFerramenta() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
+    if (!bloqueioGlobal && !emTransicao && !g_mapaCompletoAberto && !UpdatePhishingPopup() && !UpdateEvPopup2D() && !UpdatePopupEvidencia() && !UpdateMenuElevador() && !UpdateConfirmarAbandonar() && !UpdateConfirmarAvancar() && !UpdateConfirmarFerramenta() && !UpdateDica() && !UpdateDeepfake() && !UpdateFicha() && !UpdatePrancheta()) {
         if (SettingsGetTechNight()) {
             GameStateUpdateTechNightClock(GetFrameTime());
         }
@@ -9797,6 +9869,21 @@ void UpdateDrawGameplayScene(void) {
     DesenharPopupEvidencia();
     DesenharEvPopup2D();
     DesenharPhishingPopup();
+
+    // Relogio do Modo Hard (2:00 por dia, sempre visivel no topo esquerdo)
+    if (GameStateIsHardMode()) {
+        int segs = (int)ceilf(g_hardDiaTimer);
+        if (segs < 0) segs = 0;
+        int min = segs / 60;
+        int sec = segs % 60;
+        bool critico = (segs <= 20);
+        float pulsoH = critico ? (0.55f + 0.45f * sinf((float)GetTime() * 8.0f)) : 1.0f;
+        Rectangle rHard = { 10.0f, 10.0f, 92.0f, 18.0f };
+        DrawRectangleRec(ParaTela(rHard), Fade((Color){ 28, 24, 26, 255 }, 0.90f));
+        DrawRectangleLinesEx(ParaTela(rHard), 1.5f, critico ? Fade((Color){ 224, 62, 62, 255 }, pulsoH) : (Color){ 189, 181, 168, 255 });
+        DrawTextInArea(TextFormat("HARD %02d:%02d", min, sec), rHard, 8.5f,
+                       critico ? Fade((Color){ 255, 110, 110, 255 }, pulsoH) : (Color){ 255, 242, 230, 255 });
+    }
 
     // 10) Tutorial contextual (aparece conforme o jogador avanca na investigacao)
     DesenharTutorialContextual();

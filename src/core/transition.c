@@ -3,11 +3,11 @@
 #include "raylib.h"
 #include <stdio.h>
 
-#define FADE_OUT_TIME      0.55f  // segundos escurecendo a cena
-#define TEXT_FADE_IN_TIME  0.25f  // segundos para o texto aparecer
-#define TEXT_HOLD_TIME     0.80f  // segundos com o texto visivel (total da tela de texto = 1.3s)
-#define TEXT_FADE_OUT_TIME 0.25f  // segundos para o texto sumir suavemente
-#define FADE_IN_TIME       0.55f  // segundos clareando a nova cena
+#define FADE_OUT_TIME      0.70f  // segundos escurecendo a cena
+#define TEXT_FADE_IN_TIME  0.30f  // segundos para o texto aparecer
+#define TEXT_HOLD_TIME     0.90f  // segundos com o texto visivel
+#define TEXT_FADE_OUT_TIME 0.30f  // segundos para o texto sumir suavemente
+#define FADE_IN_TIME       0.70f  // segundos clareando a nova cena
 
 typedef enum { PHASE_NONE, PHASE_FADE_OUT, PHASE_TEXT, PHASE_FADE_IN } Phase;
 

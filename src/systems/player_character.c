@@ -387,7 +387,8 @@ void PlayerCharacterUpdate(PlayerCharacter *p,
 
         float targetYaw = atan2f(moveX, moveZ);
         float diffYaw = WrapAngleRad(targetYaw - p->facingYaw);
-        p->facingYaw = WrapAngleRad(p->facingYaw + diffYaw * (1.0f - expf(-12.5f * dt)));
+        float turnRate = 7.5f + 3.5f * Clamp(hypotf(p->velocity.x, p->velocity.y) / p->speed, 0.0f, 1.0f);
+        p->facingYaw = WrapAngleRad(p->facingYaw + diffYaw * (1.0f - expf(-turnRate * dt)));
     } else if (!travadoAnim && p->hasMoveTarget) {
         float dxM = p->moveTarget.x - p->position.x;
         float dzM = p->moveTarget.z - p->position.z;
@@ -403,18 +404,19 @@ void PlayerCharacterUpdate(PlayerCharacter *p,
             targetVel.y = dirZ * maxSpd;
             float targetYaw = atan2f(dirX, dirZ);
             float diffYaw = WrapAngleRad(targetYaw - p->facingYaw);
-            p->facingYaw = WrapAngleRad(p->facingYaw + diffYaw * (1.0f - expf(-12.5f * dt)));
+            float turnRate = 7.5f + 3.5f * Clamp(hypotf(p->velocity.x, p->velocity.y) / p->speed, 0.0f, 1.0f);
+            p->facingYaw = WrapAngleRad(p->facingYaw + diffYaw * (1.0f - expf(-turnRate * dt)));
         }
     }
 
-    // Aceleracao e desaceleracao exponencial suave (sem trancos mecanicos)
-    float rate = hasInput ? 15.0f : 11.0f;
+    // Aceleracao e desaceleracao exponencial organica (inercia suave sem trancos mecanicos)
+    float rate = hasInput ? 8.5f : 7.5f;
     float alpha = 1.0f - expf(-rate * dt);
     p->velocity.x += (targetVel.x - p->velocity.x) * alpha;
     p->velocity.y += (targetVel.y - p->velocity.y) * alpha;
 
     float velMag = hypotf(p->velocity.x, p->velocity.y);
-    if (!hasInput && velMag < 0.03f) {
+    if (!hasInput && velMag < 0.025f) {
         p->velocity = (Vector2){ 0.0f, 0.0f };
         velMag = 0.0f;
     }
@@ -443,20 +445,27 @@ void PlayerCharacterUpdate(PlayerCharacter *p,
 
     float actualSpeed = (dt > 1e-5f) ? (actualDist / dt) : 0.0f;
     float speedRatio = Clamp(actualSpeed / p->speed, 0.0f, 1.0f);
-    p->isMoving = (speedRatio > 0.05f);
+    p->isMoving = (speedRatio > 0.04f);
 
     if (!inComputerWalk && p->computerExitTimer <= 0.0f) {
-        float blendRate = p->isMoving ? 10.0f : 8.5f;
+        float blendRate = p->isMoving ? 7.5f : 6.0f;
         p->moveBlend += (speedRatio - p->moveBlend) * (1.0f - expf(-blendRate * dt));
         if (p->moveBlend < 0.005f && !p->isMoving) p->moveBlend = 0.0f;
 
         float targetRun = (running && p->isMoving) ? 1.0f : 0.0f;
-        p->runBlend += (targetRun - p->runBlend) * (1.0f - expf(-9.0f * dt));
+        p->runBlend += (targetRun - p->runBlend) * (1.0f - expf(-7.5f * dt));
         if (p->runBlend < 0.005f && targetRun == 0.0f) p->runBlend = 0.0f;
 
-        if (p->moveBlend > 0.01f) {
-            p->walkCycle += dt * (3.5f + 5.8f * speedRatio + 4.4f * p->runBlend);
+        if (p->isMoving) {
+            p->walkCycle += dt * (3.2f + 5.6f * speedRatio + 4.2f * p->runBlend);
             if (p->walkCycle > 2.0f * PI) p->walkCycle -= 2.0f * PI;
+        } else if (p->moveBlend > 0.01f) {
+            // Ao parar, guia a passada suavemente para o ponto neutro (0 ou PI) em vez de travar no meio do passo
+            float targetCycle = (p->walkCycle < PI * 0.5f || p->walkCycle > PI * 1.5f)
+                ? (p->walkCycle > PI ? 2.0f * PI : 0.0f)
+                : PI;
+            p->walkCycle += (targetCycle - p->walkCycle) * (1.0f - expf(-8.0f * dt));
+            if (p->walkCycle >= 2.0f * PI) p->walkCycle -= 2.0f * PI;
         }
     } else {
         p->runBlend = 0.0f;

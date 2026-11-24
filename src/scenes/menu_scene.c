@@ -66,6 +66,9 @@ static float g_rankingAnim       = 0.0f;
 static bool  g_modoAberto        = false;
 static float g_modoAnim          = 0.0f;
 static int   g_hoverModoAnt      = -1;
+static bool  g_dificuldadeAberto = false;
+static float g_dificuldadeAnim   = 0.0f;
+static int   g_hoverDifAnt       = -1;
 static bool  g_ctrlAberto        = false;
 static float g_ctrlAnim          = 0.0f;
 static int   g_hoverCtrlAnt      = -1;
@@ -87,6 +90,7 @@ static bool  g_iniciarHoverAnt   = false;
 static bool  g_esperarSoltarMouse = false; // ignora os botoes do menu ate soltar o clique que abriu/fechou as opcoes
 
 static bool g_shouldStartGame = false;
+static void AbrirTelaDificuldade(void);
 static void AbrirTelaControle(void);
 static void AbrirTelaNome(void);
 
@@ -99,13 +103,13 @@ static void OnClickPlay(void) {
     if (sem2D && !sem3D) {
         g_modoPulado = true;
         GameStateSetMode(MODO_3D);
-        AbrirTelaControle();
+        AbrirTelaDificuldade();
         return;
     }
     if (sem3D && !sem2D) {
         g_modoPulado = true;
         GameStateSetMode(MODO_2D);
-        AbrirTelaNome();
+        AbrirTelaDificuldade();
         return;
     }
     g_modoPulado = false;
@@ -115,8 +119,17 @@ static void OnClickPlay(void) {
     g_esperarSoltarMouse = true;
 }
 
+static void AbrirTelaDificuldade(void) {
+    g_modoAberto = false;
+    g_dificuldadeAberto = true;
+    g_hoverDifAnt = -1;
+    g_voltarHoverAnt = false;
+    g_esperarSoltarMouse = true;
+}
+
 static void AbrirTelaControle(void) {
     g_modoAberto = false;
+    g_dificuldadeAberto = false;
     g_ctrlAberto = true;
     g_hoverCtrlAnt = -1;
     g_voltarHoverAnt = false;
@@ -128,6 +141,7 @@ static void AbrirTelaNome(void) {
         VOZ_SUAVE, VOZ_GRAVE, VOZ_SUAVE, VOZ_SUAVE, VOZ_GRAVE, VOZ_GRAVE
     };
     g_modoAberto = false;
+    g_dificuldadeAberto = false;
     g_ctrlAberto = false;
     g_nomeAberto = true;
     g_nomeInput[0] = '\0';
@@ -163,10 +177,18 @@ static void FecharModo(void) {
     g_esperarSoltarMouse = true;
 }
 
-static void FecharControle(void) {
-    g_ctrlAberto = false;
+static void FecharDificuldade(void) {
+    g_dificuldadeAberto = false;
     g_modoAberto = !g_modoPulado;
     g_hoverModoAnt = -1;
+    g_voltarHoverAnt = false;
+    g_esperarSoltarMouse = true;
+}
+
+static void FecharControle(void) {
+    g_ctrlAberto = false;
+    g_dificuldadeAberto = true;
+    g_hoverDifAnt = -1;
     g_voltarHoverAnt = false;
     g_esperarSoltarMouse = true;
 }
@@ -178,8 +200,8 @@ static void FecharNome(void) {
         g_ctrlAberto = true;
         g_hoverCtrlAnt = -1;
     } else {
-        g_modoAberto = !g_modoPulado;
-        g_hoverModoAnt = -1;
+        g_dificuldadeAberto = true;
+        g_hoverDifAnt = -1;
     }
     g_voltarHoverAnt = false;
     g_esperarSoltarMouse = true;
@@ -525,7 +547,7 @@ static void TocarSomHover(void) {
 static void UpdateMenuButtons(void) {
     Vector2 mouse = RayCanvasGetMousePosition();
     bool algumHover = false;
-    bool menuAtivo = !g_opcoesAbertas && !g_rankingAberto && !g_modoAberto && !g_ctrlAberto && !g_nomeAberto;   // com painel aberto os botoes se escondem
+    bool menuAtivo = !g_opcoesAbertas && !g_rankingAberto && !g_modoAberto && !g_dificuldadeAberto && !g_ctrlAberto && !g_nomeAberto;   // com painel aberto os botoes se escondem
     float dt = GetFrameTime();
     if (dt > 0.05f) dt = 0.05f; // evita pulo brusco se a janela travar num frame
 
@@ -829,8 +851,7 @@ static void UpdateDrawModo(void) {
         if (hov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             GameStateSetMode((m == 0) ? MODO_2D : MODO_3D);
             TocarSomHover();
-            if (m == 1) AbrirTelaControle();
-            else        AbrirTelaNome();
+            AbrirTelaDificuldade();
             return;
         }
     }
@@ -852,6 +873,92 @@ static void UpdateDrawModo(void) {
 
     if (g_modoAberto) {
         bool algumHov = hoverVoltar || (hovModo >= 0);
+        SetMouseCursor(algumHov ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+    }
+}
+
+static void UpdateDrawDificuldade(void) {
+    float dt = GetFrameTime();
+    if (dt > 0.05f) dt = 0.05f;
+    float alvo = g_dificuldadeAberto ? 1.0f : 0.0f;
+    g_dificuldadeAnim += (alvo - g_dificuldadeAnim) * fminf(dt * 9.0f, 1.0f);
+    if (!g_dificuldadeAberto && g_dificuldadeAnim < 0.01f) { g_dificuldadeAnim = 0.0f; return; }
+
+    float a = g_dificuldadeAnim;
+    bool interativo = g_dificuldadeAberto && a > 0.5f && !RayCanvasInputBlocked();
+    Vector2 mv = MouseVirtual();
+
+    if (g_dificuldadeAberto && IsKeyPressed(KEY_ESCAPE)) {
+        FecharDificuldade();
+        return;
+    }
+
+    Color bege   = Fade((Color){ 189, 181, 168, 255 }, a);
+    Color claro  = Fade((Color){ 255, 242, 230, 255 }, a);
+    Color medio  = Fade((Color){ 125, 112, 113, 255 }, a);
+    Color fundo  = Fade((Color){ 24, 21, 23, 255 }, a);
+    Color fundoH = Fade((Color){ 58, 52, 54, 255 }, a);
+    Color alerta = Fade((Color){ 210, 76, 76, 255 }, a);
+
+    TextoOpcoes("DIFICULDADE", OPC_LABEL_X, 122.0f, 26.0f, bege);
+    TextoOpcoes("Escolha o ritmo da investigação:", OPC_LABEL_X, 146.0f, 16.0f, medio);
+
+    static const char *TITULOS[2] = { "MODO NORMAL", "MODO HARD" };
+    static const char *LINHA1[2]  = { "Sem limite de tempo", "2:00 min por dia" };
+    static const char *LINHA2[2]  = { "Investigue sem pressa", "Relógio nunca pausa!" };
+
+    int hovDif = -1;
+    const float cardW = 186.0f;
+    const float cardH = 108.0f;
+    const float cardGap = 16.0f;
+    const float cardY = 166.0f;
+
+    for (int d = 0; d < 2; d++) {
+        Rectangle rCard = { OPC_LABEL_X + d * (cardW + cardGap), cardY, cardW, cardH };
+        bool hov = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, rCard);
+        if (hov) hovDif = d;
+
+        Rectangle rTela = ParaTela(rCard);
+        float esc = rTela.height / cardH;
+        DrawRectangleRec(ParaTela((Rectangle){ rCard.x + 2.5f, rCard.y + 3.0f, cardW, cardH }), Fade(BLACK, 0.5f * a));
+        DrawRectangleRec(rTela, hov ? fundoH : fundo);
+        DrawRectangleLinesEx(rTela, (hov ? 2.2f : 1.4f) * esc, (d == 1 && hov) ? alerta : (hov ? claro : medio));
+
+        Vector2 tamTit = MeasureTextEx(g_fonte, TITULOS[d], 25.0f, 1.0f);
+        TextoOpcoes(TITULOS[d], rCard.x + (cardW - tamTit.x) * 0.5f, rCard.y + 28.0f, 25.0f, (d == 1) ? alerta : (hov ? claro : bege));
+
+        Vector2 tamL1 = MeasureTextEx(g_fonte, LINHA1[d], 15.0f, 0.5f);
+        TextoOpcoes(LINHA1[d], rCard.x + (cardW - tamL1.x) * 0.5f, rCard.y + 60.0f, 15.0f, claro);
+
+        Vector2 tamL2 = MeasureTextEx(g_fonte, LINHA2[d], 14.5f, 0.5f);
+        TextoOpcoes(LINHA2[d], rCard.x + (cardW - tamL2.x) * 0.5f, rCard.y + 79.0f, 14.5f, (d == 1) ? alerta : medio);
+
+        if (hov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            GameStateSetHardMode(d == 1);
+            TocarSomHover();
+            if (GameStateIs3DMode()) AbrirTelaControle();
+            else                     AbrirTelaNome();
+            return;
+        }
+    }
+    if (hovDif >= 0 && hovDif != g_hoverDifAnt) TocarSomHover();
+    g_hoverDifAnt = hovDif;
+
+    float bw = (float)g_botao.width * BOTAO_ESCALA;
+    float bh = (float)g_botao.height * BOTAO_ESCALA;
+    const float yVoltar = 292.0f;
+    Rectangle hitVoltar = { BOTAO_X, yVoltar, bw - 22.0f, bh };
+    bool hoverVoltar = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, hitVoltar);
+    if (hoverVoltar && !g_voltarHoverAnt) TocarSomHover();
+    g_voltarHoverAnt = hoverVoltar;
+
+    DesenharBotaoPainel("Voltar", BOTAO_X, yVoltar, a, hoverVoltar);
+    if (hoverVoltar && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        FecharDificuldade();
+    }
+
+    if (g_dificuldadeAberto) {
+        bool algumHov = hoverVoltar || (hovDif >= 0);
         SetMouseCursor(algumHov ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
     }
 }
@@ -1150,6 +1257,7 @@ void UpdateDrawMenuScene(void) {
     UpdateDrawOpcoes();
     UpdateDrawRanking();
     UpdateDrawModo();
+    UpdateDrawDificuldade();
     UpdateDrawControle();
     UpdateDrawNome();
 

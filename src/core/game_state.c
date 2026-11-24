@@ -22,6 +22,7 @@ static char           g_playerName[9] = "AGENTE";
 static int            g_playerAvatar = 0;
 static TomVozJogador  g_playerVoiceTone = VOZ_SUAVE;
 static ModoJogo       g_gameMode = MODO_3D;
+static bool           g_hardMode = false;
 static ControleModo3D g_controle3D = CONTROLE_AMBOS;
 static int            g_evUnlockDay[6] = { 1, 1, 2, 2, 3, 1 };
 static int            g_ev06CollectedDay = 0;
@@ -51,6 +52,14 @@ ModoJogo GameStateGetMode(void) {
 
 bool GameStateIs3DMode(void) {
     return g_gameMode == MODO_3D;
+}
+
+void GameStateSetHardMode(bool hard) {
+    g_hardMode = hard;
+}
+
+bool GameStateIsHardMode(void) {
+    return g_hardMode;
 }
 
 void GameStateSetControle3D(ControleModo3D ctrl) {

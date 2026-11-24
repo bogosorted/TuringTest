@@ -36,6 +36,8 @@ typedef enum {
 void           GameStateSetMode(ModoJogo modo);
 ModoJogo       GameStateGetMode(void);
 bool           GameStateIs3DMode(void);
+void           GameStateSetHardMode(bool hard);
+bool           GameStateIsHardMode(void);
 void           GameStateSetControle3D(ControleModo3D ctrl);
 ControleModo3D GameStateGetControle3D(void);
 

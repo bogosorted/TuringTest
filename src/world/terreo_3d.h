@@ -200,6 +200,7 @@ void  Terreo3DTriggerPaperDrop(Vector3 paperPos, float duracao);
 void  Terreo3DSetGuiaInfo(uint64_t evSalasMask, uint64_t suspSalasMask, const bool suspsComDialogo[3]);
 void  Terreo3DDispararPeixeFonte(void);
 float Terreo3DGetPeixeFonteProgress(void);
+void  Terreo3DRotacionarFigurantes(void);
 
 // Ciclo de vida e loop da cena 3D do Terreo
 void Terreo3DInit(int largura, int altura);

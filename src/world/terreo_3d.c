@@ -1682,14 +1682,43 @@ void Terreo3DAtualizarAvatarPlayer(void) {
     g_player.isFemale = GameStateIsPlayerFemale();
 }
 
+static bool                 g_extraNpcAtivo[32] = { 0 };
+static int                  g_extraNpcVar[32]   = { 0 };
+static bool                 g_extraNpcInit      = false;
+
+static void InicializarFigurantes(void) {
+    int count = (int)(sizeof(EXTRA_NPCS) / sizeof(EXTRA_NPCS[0]));
+    if (count > 32) count = 32;
+    for (int i = 0; i < count; i++) {
+        g_extraNpcAtivo[i] = true;
+        g_extraNpcVar[i]   = EXTRA_NPCS[i].variante;
+    }
+    g_extraNpcInit = true;
+}
+
+void Terreo3DRotacionarFigurantes(void) {
+    if (!g_extraNpcInit) InicializarFigurantes();
+    int count = (int)(sizeof(EXTRA_NPCS) / sizeof(EXTRA_NPCS[0]));
+    if (count > 32) count = 32;
+    for (int i = 0; i < count; i++) {
+        if (EXTRA_NPCS[i].sala == g_salaAtual) continue; // nunca muda na frente do player
+        // Alterna presenca (~68% ocupados) e variante de aparencia entre rotacoes
+        g_extraNpcAtivo[i] = (GetRandomValue(0, 99) < 68);
+        g_extraNpcVar[i]   = GetRandomValue(0, 5);
+    }
+}
+
 static void TerreoDesenharFuncionariosExtras(TerreoSalaId sala, float tempo) {
+    if (!g_extraNpcInit) InicializarFigurantes();
     int count = (int)(sizeof(EXTRA_NPCS) / sizeof(EXTRA_NPCS[0]));
     for (int i = 0; i < count; i++) {
         if (EXTRA_NPCS[i].sala != sala) continue;
+        if (i < 32 && !g_extraNpcAtivo[i]) continue;
+        int var = (i < 32) ? g_extraNpcVar[i] : EXTRA_NPCS[i].variante;
         PlayerCharacterDrawNpc3DEx(EXTRA_NPCS[i].pos,
                                    EXTRA_NPCS[i].yawDeg,
                                    EXTRA_NPCS[i].ativ,
-                                   EXTRA_NPCS[i].variante,
+                                   var,
                                    tempo,
                                    g_camAtual.position);
     }
@@ -1813,6 +1842,7 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
     int extraCount = (int)(sizeof(EXTRA_NPCS) / sizeof(EXTRA_NPCS[0]));
     for (int i = 0; i < extraCount && numAllCols < 62; i++) {
         if (EXTRA_NPCS[i].sala != g_salaAtual) continue;
+        if (g_extraNpcInit && i < 32 && !g_extraNpcAtivo[i]) continue;
         if (EXTRA_NPCS[i].ativ == NPC_ATIV_EM_PE || EXTRA_NPCS[i].ativ == NPC_ATIV_LENDO) {
             Vector3 p = EXTRA_NPCS[i].pos;
             allCols[numAllCols++] = (PlayerColliderBox){ p.x - 0.30f, p.z - 0.30f, p.x + 0.30f, p.z + 0.30f };
