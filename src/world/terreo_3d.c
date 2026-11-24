@@ -1736,7 +1736,19 @@ static bool EhObjetoInterativoReal(const char *id) {
             strncmp(id, "recepcionista", 13) == 0 ||
             strncmp(id, "bancada_ciber", 13) == 0 ||
             strstr(id, "terminal") != NULL ||
-            strcmp(id, "mesa_relatorios") == 0);
+            strcmp(id, "mesa_relatorios") == 0 ||
+            strcmp(id, "fonte_jardim") == 0 ||
+            strcmp(id, "banco_jardim") == 0 ||
+            strcmp(id, "cafeteira_copa_1") == 0 ||
+            strcmp(id, "geladeira_copa_1") == 0 ||
+            strcmp(id, "tv_lanchonete") == 0 ||
+            strcmp(id, "tv_copa_1") == 0 ||
+            strcmp(id, "bancada_vendedores") == 0 ||
+            strncmp(id, "mesa_lanchonete_", 16) == 0 ||
+            strcmp(id, "sofa_convivio") == 0 ||
+            strcmp(id, "balcao_executivo_4") == 0 ||
+            strncmp(id, "subsolo_modelo_", 15) == 0 ||
+            strncmp(id, "subsolo2_modelo_", 16) == 0);
 }
 
 TerreoInteracaoResultado Terreo3DUpdate(float dt,
@@ -1885,6 +1897,7 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
     }
 
     // 3) Proximidade para tecla E + dica no pensamento do player
+    bool somenteMouse = GameStateGetControle3D() == CONTROLE_MOUSE;
     int proxObj = -1;
     TerreoDestino proxPorta = TERREO_DEST_NENHUM;
     const char *proxPortaLabel = NULL;
@@ -1904,6 +1917,7 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
     Vector2 playerFwd = { sinf(g_player.facingYaw), cosf(g_player.facingYaw) };
     for (int i = 0; i < def->numInteractables; i++) {
         const SalaInteractable *it = &def->interactables[i];
+        if (somenteMouse && !EhObjetoInterativoReal(it->id)) continue;
         if (!g_evRelatoriosAtiva && it->id && strcmp(it->id, "mesa_relatorios") == 0) continue;
         if (!EvidenciaDisponivelPorId(it->id)) continue;
         float dx = it->position.x - g_player.position.x;
@@ -1914,8 +1928,13 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
         bool ehFonte = it->id && strcmp(it->id, "fonte_jardim") == 0;
         float maxR = (ehRecep || ehFonte) ? fminf(it->interactRadius, 2.35f)
                                           : (ehEv ? fminf(it->interactRadius, 1.40f) : fminf(it->interactRadius, 1.35f));
-        float effDist = ehEv ? (d - 0.25f) : d; // prioriza evidencias sobre moveis proximos
-        if (d <= maxR && effDist < melhorDist) {
+        BoundingBox box = BoxInteractable(it);
+        float maisProximoX = fminf(fmaxf(g_player.position.x, box.min.x), box.max.x);
+        float maisProximoZ = fminf(fmaxf(g_player.position.z, box.min.z), box.max.z);
+        float distanciaBorda = hypotf(g_player.position.x - maisProximoX,
+                                      g_player.position.z - maisProximoZ);
+        float effDist = ehEv ? (d - 0.25f) : distanciaBorda; // prioriza evidencias sobre moveis proximos
+        if (distanciaBorda <= maxR && effDist < melhorDist) {
             if (ehEv && d > 0.15f) {
                 float dot = (dx / d) * playerFwd.x + (dz / d) * playerFwd.y;
                 if (dot < 0.50f) continue; // precisa estar virado de frente para a evidencia

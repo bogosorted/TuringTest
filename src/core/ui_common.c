@@ -3,6 +3,7 @@
 #include "settings.h"
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 
 Rectangle UIGetTelaRect(void) {
     return RayCanvasGetRect(
@@ -49,16 +50,55 @@ float UIGetEscala(void) {
     return UIGetTelaRect().width / (float)UI_VIRTUAL_W;
 }
 
+static void UIDrawFittedLine(const char *texto, float x, float y, int tamanhoFonte,
+                             int larguraMaxima, bool centralizado, Color cor) {
+    char ajustado[1024];
+    snprintf(ajustado, sizeof(ajustado), "%s", texto);
+    int largura = MeasureText(ajustado, tamanhoFonte);
+    if (largura > larguraMaxima) {
+        const char *reticencias = "...";
+        int larguraReticencias = MeasureText(reticencias, tamanhoFonte);
+        size_t tamanho = strlen(ajustado);
+        bool encontrouLimite = false;
+        while (tamanho > 0) {
+            tamanho--;
+            while (tamanho > 0 && ((unsigned char)ajustado[tamanho] & 0xC0) == 0x80) {
+                tamanho--;
+            }
+            ajustado[tamanho] = '\0';
+            if (MeasureText(ajustado, tamanhoFonte) + larguraReticencias <= larguraMaxima) {
+                snprintf(ajustado + tamanho, sizeof(ajustado) - tamanho, "%s", reticencias);
+                encontrouLimite = true;
+                break;
+            }
+        }
+        if (!encontrouLimite) {
+            if (larguraReticencias > larguraMaxima) return;
+            snprintf(ajustado, sizeof(ajustado), "%s", reticencias);
+        }
+        largura = MeasureText(ajustado, tamanhoFonte);
+    }
+
+    float drawX = centralizado ? x + ((float)larguraMaxima - (float)largura) * 0.5f : x;
+    DrawText(ajustado, (int)drawX, (int)y, tamanhoFonte, cor);
+}
+
 void UIDrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, Color cor) {
     if (!texto || !texto[0] || area.width <= 0.0f || area.height <= 0.0f) return;
+    char textoNormalizado[1024];
+    UIRemoverAcentos(textoNormalizado, sizeof(textoNormalizado), texto);
+    texto = textoNormalizado;
     Rectangle destino = UIParaTela(area);
-    float escala = destino.height / area.height;
+    float escala = fminf(destino.width / area.width, destino.height / area.height);
     int tam = (int)(tamanhoFonte * escala);
     if (tam < 1) tam = 1;
 
     float margem = 6.0f * escala;
     float maxLargura = destino.width - margem * 2.0f;
-    if (maxLargura < 10.0f) maxLargura = destino.width;
+    if (maxLargura < 10.0f) {
+        margem = 0.0f;
+        maxLargura = destino.width;
+    }
 
     int minTam = (int)(5.0f * escala);
     if (minTam < 1) minTam = 1;
@@ -85,10 +125,9 @@ void UIDrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, Color
         float alturaTotal = (float)numLinhas * (float)tam + (float)(numLinhas - 1) * linhaEspaco;
         float yBase = destino.y + (destino.height - alturaTotal) / 2.0f;
         for (int l = 0; l < numLinhas; l++) {
-            int lw = MeasureText(linhas[l], tam);
-            float lx = destino.x + (destino.width - (float)lw) / 2.0f;
-            if (lx < destino.x + margem) lx = destino.x + margem;
-            DrawText(linhas[l], (int)lx, (int)(yBase + (float)l * ((float)tam + linhaEspaco)), tam, cor);
+            UIDrawFittedLine(linhas[l], destino.x + margem,
+                             yBase + (float)l * ((float)tam + linhaEspaco),
+                             tam, (int)maxLargura, true, cor);
         }
         return;
     }
@@ -97,15 +136,15 @@ void UIDrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, Color
         tam--;
     }
 
-    int larguraTexto = MeasureText(texto, tam);
-    float x = destino.x + (destino.width - (float)larguraTexto) / 2.0f;
-    if (x < destino.x + margem) x = destino.x + margem;
     float y = destino.y + (destino.height - (float)tam) / 2.0f;
-    DrawText(texto, (int)x, (int)y, tam, cor);
+    UIDrawFittedLine(texto, destino.x + margem, y, tam, (int)maxLargura, true, cor);
 }
 
 void UIDrawTextLeftAligned(const char *texto, Vector2 pos, int tamanhoFonte, Color cor) {
     if (!texto || !texto[0]) return;
+    char textoNormalizado[1024];
+    UIRemoverAcentos(textoNormalizado, sizeof(textoNormalizado), texto);
+    texto = textoNormalizado;
     Rectangle destino = UIParaTela((Rectangle){ pos.x, pos.y, 10.0f, 10.0f });
     float escala = destino.height / 10.0f;
     int tam = (int)(tamanhoFonte * escala);
@@ -115,6 +154,8 @@ void UIDrawTextLeftAligned(const char *texto, Vector2 pos, int tamanhoFonte, Col
 
 void UIDrawTextWrappedLeftAligned(const char *texto, Vector2 pos, float maxLargura, int tamanhoFonte, Color cor) {
     if (!texto || !texto[0]) return;
+    char textoNormalizado[1024];
+    UIRemoverAcentos(textoNormalizado, sizeof(textoNormalizado), texto);
     Rectangle rEscala = UIParaTela((Rectangle){ 0.0f, 0.0f, maxLargura, 10.0f });
     float maxScaledW = rEscala.width;
     float escala = rEscala.height / 10.0f;
@@ -122,14 +163,20 @@ void UIDrawTextWrappedLeftAligned(const char *texto, Vector2 pos, float maxLargu
     if (tam < 1) tam = 1;
 
     char buffer[1024];
-    snprintf(buffer, sizeof(buffer), "%s", texto);
+    snprintf(buffer, sizeof(buffer), "%s", textoNormalizado);
 
-    char *savePtr = NULL;
-    char *word = strtok_r(buffer, " ", &savePtr);
+    char *word = buffer;
     char line[1024] = "";
     float yOffset = 0.0f;
 
     while (word != NULL) {
+        while (*word == ' ') word++;
+        if (*word == '\0') break;
+        char *nextWord = word;
+        while (*nextWord != '\0' && *nextWord != ' ') nextWord++;
+        if (*nextWord != '\0') *nextWord++ = '\0';
+        else nextWord = NULL;
+
         char testLine[1024];
         if (line[0] != '\0') {
             snprintf(testLine, sizeof(testLine), "%.500s %.500s", line, word);
@@ -144,7 +191,7 @@ void UIDrawTextWrappedLeftAligned(const char *texto, Vector2 pos, float maxLargu
         } else {
             snprintf(line, sizeof(line), "%s", testLine);
         }
-        word = strtok_r(NULL, " ", &savePtr);
+        word = nextWord;
     }
     if (line[0] != '\0') {
         UIDrawTextLeftAligned(line, (Vector2){ pos.x, pos.y + yOffset }, tamanhoFonte, cor);
@@ -158,9 +205,37 @@ bool UIRemoverAcentos(char *dest, int tam, const char *src) {
     int j = 0;
     for (int i = 0; src[i] != '\0' && j < tam - 1; i++) {
         unsigned char c = (unsigned char)src[i];
-        if (c == 0xC3 && (unsigned char)src[i + 1] >= 0x80 && (unsigned char)src[i + 1] <= 0xBF) {
-            dest[j++] = TABELA[(unsigned char)src[i + 1] - 0x80];
+        unsigned char c1 = (unsigned char)src[i + 1];
+        unsigned char c2 = (c1 != '\0') ? (unsigned char)src[i + 2] : '\0';
+        if (c == 0xC3 && c1 >= 0x80 && c1 <= 0xBF) {
+            dest[j++] = TABELA[c1 - 0x80];
             i++;
+        } else if (c == 0xC2 && c1 != '\0' && (c1 & 0xC0) == 0x80) {
+            dest[j++] = (c1 == 0xBA) ? 'o' : (c1 == 0xAA) ? 'a' : (c1 == 0xA0) ? ' ' : '?';
+            i++;
+        } else if (c == 0xE2 && c1 == 0x80 && c2 != '\0' && (c2 & 0xC0) == 0x80) {
+            if (c2 == 0x94 || c2 == 0x93) dest[j++] = '-';
+            else if (c2 == 0xA6) {
+                dest[j++] = '.';
+                if (j < tam - 1) dest[j++] = '.';
+                if (j < tam - 1) dest[j++] = '.';
+            } else if (c2 == 0x9C || c2 == 0x9D) dest[j++] = '"';
+            else if (c2 == 0x98 || c2 == 0x99) dest[j++] = '\'';
+            else if (c2 == 0xA2) dest[j++] = '-';
+            else dest[j++] = '?';
+            i += 2;
+        } else if (c == 0xE2 && c1 == 0x96 && c2 == 0xA0) {
+            dest[j++] = '*';
+            i += 2;
+        } else if (c >= 0x80) {
+            dest[j++] = '?';
+            if ((c & 0xE0) == 0xC0 && c1 != '\0' && (c1 & 0xC0) == 0x80) i++;
+            else if ((c & 0xF0) == 0xE0 && c1 != '\0' && c2 != '\0' &&
+                     (c1 & 0xC0) == 0x80 && ((unsigned char)src[i + 2] & 0xC0) == 0x80) i += 2;
+            else if ((c & 0xF8) == 0xF0 && c1 != '\0' && c2 != '\0' &&
+                     (c1 & 0xC0) == 0x80 && (c2 & 0xC0) == 0x80 &&
+                     (unsigned char)src[i + 3] != '\0' &&
+                     ((unsigned char)src[i + 3] & 0xC0) == 0x80) i += 3;
         } else {
             dest[j++] = (char)c;
         }

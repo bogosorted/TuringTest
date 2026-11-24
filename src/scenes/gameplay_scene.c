@@ -1276,6 +1276,10 @@ typedef enum {
 
 static bool             g_inspecaoEvAtiva        = false;
 static TipoInspecaoEv3D g_inspecaoEvTipo         = INSP_NENHUMA;
+static float            g_pendEvTimer            = 0.0f;
+static TipoInspecaoEv3D g_pendEvTipo             = INSP_NENHUMA;
+static int              g_pendEvSusp             = -1;
+static const char      *g_pendEvId               = NULL;
 static int              g_inspecaoEvSusp         = -1;
 static char             g_inspecaoEvId[16]       = { 0 };
 static bool             g_inspecaoEvAberta       = false; // true apos clicar para iniciar animacao
@@ -1286,6 +1290,14 @@ static bool             g_evPopup2DAtivo         = false;
 static int              g_evPopup2DSusp          = -1;
 static const char      *g_evPopup2DId            = NULL;
 static EstadoCameraHoloEv g_inspCam              = { 0 };
+
+static void LimparEventoPendente(void) {
+    g_pendEvTimer = 0.0f;
+    g_pendEvTipo = INSP_NENHUMA;
+    g_pendEvSusp = -1;
+    g_pendEvId = NULL;
+}
+
 static bool             g_inspArrastandoEsq      = false;
 static bool             g_inspArrastandoDir      = false;
 static Vector2          g_inspMouseAnt           = { 0 };
@@ -2598,8 +2610,12 @@ static int WrapTextLines(const char *texto, int tam, float maxLargura, char line
 // Desenha texto de opcao de dialogo centralizado, quebrando em ate 2 linhas (ou 3 se muito longo)
 // para manter a fonte legivel em vez de espremer tudo em 1 linha.
 static void DrawChoiceTextInArea(const char *texto, Rectangle area, int tamanhoFonte, Color cor) {
+    if (!texto || area.width <= 0.0f || area.height <= 0.0f) return;
+    char textoNormalizado[1024];
+    RemoverAcentos(textoNormalizado, sizeof(textoNormalizado), texto);
+    texto = textoNormalizado;
     Rectangle destino = ParaTela(area);
-    float escala = destino.height / area.height;
+    float escala = fminf(destino.width / area.width, destino.height / area.height);
     int tam = (int)(tamanhoFonte * escala);
     if (tam < 1) tam = 1;
 
@@ -2667,8 +2683,12 @@ static void DrawChoiceTextInArea(const char *texto, Rectangle area, int tamanhoF
 // Cada caractere oscila verticalmente com transição suave de iluminacao na paleta do jogo
 // Suporta quebra de linha com '\n', mantendo cada linha 100% centralizada na horizontal e vertical do retangulo
 static void DrawTextWaveInArea(const char *texto, Rectangle area, int tamanhoFonte, Color corBase) {
+    if (!texto || area.width <= 0.0f || area.height <= 0.0f) return;
+    char textoNormalizado[1024];
+    RemoverAcentos(textoNormalizado, sizeof(textoNormalizado), texto);
+    texto = textoNormalizado;
     Rectangle destino = ParaTela(area);
-    float escala = destino.height / area.height;
+    float escala = fminf(destino.width / area.width, destino.height / area.height);
     int tam = (int)(tamanhoFonte * escala);
     if (tam < 1) tam = 1;
 
@@ -2858,7 +2878,15 @@ static void ExecutarAvancarDiaOuVeredito(void) {
 }
 
 static void SolicitarAvancarDia(void) {
-    ExecutarAvancarDiaOuVeredito();
+    if (SettingsGetDevMode()) {
+        ExecutarAvancarDiaOuVeredito();
+        return;
+    }
+    if (HasTokens()) {
+        g_confirmarAvancarDia = true;
+    } else {
+        ExecutarAvancarDiaOuVeredito();
+    }
 }
 
 static const Rectangle ELEVADOR_PAINEL = { 178, 28, 284, 272 };
@@ -4373,6 +4401,7 @@ static void DevReiniciarDiaAtual(void) {
     bool ok1 = LoadDialogTreeFromData(1, dia, &g_trees[1]);
     bool ok2 = LoadDialogTreeFromData(2, dia, &g_trees[2]);
     g_treesLoaded = (ok0 && ok1 && ok2);
+    LimparEventoPendente();
     g_localAtual = LocalInicial();
     if (GameStateIs3DMode()) {
         Terreo3DDefinirSala(TerreoSalaPorLocal(g_localAtual), TERREO_DEST_NENHUM);
@@ -4391,6 +4420,7 @@ static void DevTeleportarPara(LocalRasec dest) {
     g_tree = NULL;
     g_closeupAtual = CLOSEUP_NENHUM;
     g_elevadorAberto = false;
+    LimparEventoPendente();
     g_localAtual = dest;
     if (GameStateIs3DMode() && LocalEhTerreo3D(dest)) {
         Terreo3DDefinirSala(TerreoSalaPorLocal(dest), TERREO_DEST_NENHUM);
@@ -5157,6 +5187,7 @@ void GameplaySceneResetDialogues(void) {
     g_treesLoaded = false;
     g_dialogLoaded = false;
     g_tree = NULL;
+    LimparEventoPendente();
     memset(g_chatHistories, 0, sizeof(g_chatHistories));
 
     // Jogo novo (inicio limpo do dia 1): limpa checklists, historico de sorteio das evidencias e progresso do tutorial
@@ -5222,6 +5253,7 @@ void GameplaySceneResetDialogues(void) {
     g_inspecaoEvAtiva = false;
     g_confirmarAbandonarRun = false;
     g_voltarParaMenu = false;
+    LimparEventoPendente();
     g_localAtual = LocalInicial();
     if (GameStateIs3DMode()) {
         Terreo3DDefinirSala(TERREO_SALA_RECEPCAO, TERREO_DEST_NENHUM);
@@ -5382,6 +5414,7 @@ bool InitGameplayScene(void) {
     g_inspecaoEvAtiva = false;
     g_confirmarAbandonarRun = false;
     g_voltarParaMenu = false;
+    LimparEventoPendente();
     g_localAtual = LocalInicial();
     g_closeupAtual = CLOSEUP_NENHUM;
     g_closeupItemHoverAnt = false;
@@ -5909,13 +5942,18 @@ static bool CarregarFichas(const char *caminho) {
 
 // Escreve texto usando coordenadas da imagem 640x360
 static void TextoNaImagem(const char *txt, float x, float y, float tam, Color cor) {
+    char textoNormalizado[1024];
+    RemoverAcentos(textoNormalizado, sizeof(textoNormalizado), txt);
     Rectangle r = ParaTela((Rectangle){ x, y, 0, tam });
-    DrawTextEx(GetFontDefault(), txt, (Vector2){ r.x, r.y }, r.height, r.height / 10.0f, cor);
+    DrawTextEx(GetFontDefault(), textoNormalizado, (Vector2){ r.x, r.y }, r.height, r.height / 10.0f, cor);
 }
 
 // Escreve numa linha so; se nao couber em 'largura', diminui a letra
-static void TextoQueCabe(const char *txt, float x, float y, float largura, float tam, Color cor) {
-    while (tam > 6 && MeasureTextEx(GetFontDefault(), txt, tam, tam / 10.0f).x > largura) tam -= 1;
+static void TextoQueCabe(const char *txt, float x, float y, float largura, float tam,
+                         float minTam, Color cor) {
+    while (tam > minTam && MeasureTextEx(GetFontDefault(), txt, tam, tam / 10.0f).x > largura) {
+        tam = fmaxf(minTam, tam - 1.0f);
+    }
     TextoNaImagem(txt, x, y, tam, cor);
 }
 
@@ -5923,6 +5961,9 @@ static void TextoQueCabe(const char *txt, float x, float y, float largura, float
 // Devolve quantas linhas usou.
 static int TextoQuebrado(const char *txt, float x, float y, float largura,
                          float tam, float entreLinhas, Color cor) {
+    char textoNormalizado[1024];
+    RemoverAcentos(textoNormalizado, sizeof(textoNormalizado), txt);
+    txt = textoNormalizado;
     char linha[192] = "";
     char palavra[64];
     char teste[256];
@@ -5960,6 +6001,9 @@ static int TextoQuebrado(const char *txt, float x, float y, float largura,
 // Conta em quantas linhas o texto vai quebrar, sem desenhar
 // (mesma regra do TextoQuebrado)
 static int ContarLinhas(const char *txt, float largura, float tam) {
+    char textoNormalizado[1024];
+    RemoverAcentos(textoNormalizado, sizeof(textoNormalizado), txt);
+    txt = textoNormalizado;
     char linha[192] = "";
     char palavra[64];
     char teste[256];
@@ -6076,32 +6120,34 @@ static void DesenharAlcaRedim(Rectangle area) {
 // Devolve a altura total, em pixels da imagem.
 // Para colocar mais informacoes na ficha, e so adicionar aqui.
 static float ConteudoFicha(const Ficha *f, int suspeito, float x, float y, bool desenhar) {
-    const float largura = FICHA_SCROLL.width;
+    float escala = g_fichaScale;
+    const float largura = FICHA_SCROLL.width * escala;
     float cy = y;
     int n;
 
-    if (desenhar) TextoNaImagem("PERSONALIDADE", x, cy, 8, COR_FICHA_ROTULO);
-    cy += 11;
-    n = desenhar ? TextoQuebrado(f->personalidade, x, cy, largura, 10, 12, COR_FICHA_TEXTO)
-                 : ContarLinhas(f->personalidade, largura, 10);
-    cy += n * 12 + 8;
+    if (desenhar) TextoNaImagem("PERSONALIDADE", x, cy, 8 * escala, COR_FICHA_ROTULO);
+    cy += 11 * escala;
+    n = desenhar ? TextoQuebrado(f->personalidade, x, cy, largura, 10 * escala, 12 * escala, COR_FICHA_TEXTO)
+                 : ContarLinhas(f->personalidade, largura, 10 * escala);
+    cy += n * 12 * escala + 8 * escala;
 
-    if (desenhar) TextoNaImagem("COMPORTAMENTOS", x, cy, 8, COR_FICHA_ROTULO);
-    cy += 11;
+    if (desenhar) TextoNaImagem("COMPORTAMENTOS", x, cy, 8 * escala, COR_FICHA_ROTULO);
+    cy += 11 * escala;
     for (int i = 0; i < MAX_COMPORTAMENTOS; i++) {
         if (f->comportamentos[i][0] == '\0') continue;   // item vazio
-        if (desenhar) TextoNaImagem("-", x + 2, cy, 10, COR_FICHA_TEXTO);
-        n = desenhar ? TextoQuebrado(f->comportamentos[i], x + 10, cy, largura - 10, 10, 12, COR_FICHA_TEXTO)
-                     : ContarLinhas(f->comportamentos[i], largura - 10, 10);
-        cy += n * 12 + 3;
+        if (desenhar) TextoNaImagem("-", x + 2 * escala, cy, 10 * escala, COR_FICHA_TEXTO);
+        n = desenhar ? TextoQuebrado(f->comportamentos[i], x + 10 * escala, cy, largura - 10 * escala,
+                                     10 * escala, 12 * escala, COR_FICHA_TEXTO)
+                     : ContarLinhas(f->comportamentos[i], largura - 10 * escala, 10 * escala);
+        cy += n * 12 * escala + 3 * escala;
     }
-    cy += 8;
+    cy += 8 * escala;
 
-    if (desenhar) TextoNaImagem("RASEC - CONFIDENCIAL", x, cy, 8, COR_FICHA_ROTULO);
-    cy += 14;
+    if (desenhar) TextoNaImagem("RASEC - CONFIDENCIAL", x, cy, 8 * escala, COR_FICHA_ROTULO);
+    cy += 14 * escala;
 
-    if (desenhar) TextoNaImagem("EVIDENCIAS ENCONTRADAS", x, cy, 8, (Color){ 255, 242, 230, 255 });
-    cy += 11;
+    if (desenhar) TextoNaImagem("EVIDENCIAS ENCONTRADAS", x, cy, 8 * escala, (Color){ 255, 242, 230, 255 });
+    cy += 11 * escala;
 
     int totalEv = GetEvidenciaCount(suspeito);
     int encontradas = 0;
@@ -6113,25 +6159,26 @@ static float ConteudoFicha(const Ficha *f, int suspeito, float x, float y, bool 
         RemoverAcentos(evLimpo, sizeof evLimpo, GetEvidenciaNome(suspeito, evId));
         char linhaEv[280];
         snprintf(linhaEv, sizeof linhaEv, "[%s] %s", evId, evLimpo);
-        if (desenhar) TextoNaImagem("-", x + 2, cy, 10, (Color){ 255, 242, 230, 255 });
-        n = desenhar ? TextoQuebrado(linhaEv, x + 10, cy, largura - 10, 10, 12, (Color){ 255, 242, 230, 255 })
-                     : ContarLinhas(linhaEv, largura - 10, 10);
-        cy += n * 12 + 3;
+        if (desenhar) TextoNaImagem("-", x + 2 * escala, cy, 10 * escala, (Color){ 255, 242, 230, 255 });
+        n = desenhar ? TextoQuebrado(linhaEv, x + 10 * escala, cy, largura - 10 * escala,
+                                     10 * escala, 12 * escala, (Color){ 255, 242, 230, 255 })
+                     : ContarLinhas(linhaEv, largura - 10 * escala, 10 * escala);
+        cy += n * 12 * escala + 3 * escala;
     }
     if (encontradas == 0) {
         const char *vazio = "Nenhuma evidencia encontrada ainda.";
-        n = desenhar ? TextoQuebrado(vazio, x, cy, largura, 9, 11, COR_FICHA_ROTULO)
-                     : ContarLinhas(vazio, largura, 9);
-        cy += n * 11 + 3;
+        n = desenhar ? TextoQuebrado(vazio, x, cy, largura, 9 * escala, 11 * escala, COR_FICHA_ROTULO)
+                     : ContarLinhas(vazio, largura, 9 * escala);
+        cy += n * 11 * escala + 3 * escala;
     }
-    cy += 4;
+    cy += 4 * escala;
 
     return cy - y;
 }
 
 // Quanto da para rolar (0 = tudo cabe)
 static float FichaMaxScroll(void) {
-    float m = g_fichaConteudoH - FICHA_SCROLL.height;
+    float m = g_fichaConteudoH - FICHA_SCROLL.height * g_fichaScale;
     return (m > 0.0f) ? m : 0.0f;
 }
 
@@ -6190,7 +6237,7 @@ static bool UpdateFicha(void) {
     // Roda do mouse em cima da ficha: rola o conteudo
     if (CheckCollisionPointRec(mouse, area)) {
         float roda = GetMouseWheelMove();
-        if (roda != 0.0f) g_fichaScroll -= roda * FICHA_PASSO_RODA;
+        if (roda != 0.0f) g_fichaScroll -= roda * FICHA_PASSO_RODA * g_fichaScale;
     }
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -6896,17 +6943,22 @@ static void DesenharMouseTutorial(float cx, float cy) {
 // Balaozinho E / ENTER perto do player ao aproximar de itens interagiveis
 static void DesenharBalaoEInteract3D(void) {
     Vector2 pJan = Terreo3DPlayerHeadScreenPos();
+    Rectangle janela = JanelaAreaAtual();
+    float escalaX = janela.width / JANELA_AREA.width;
+    float escalaY = janela.height / JANELA_AREA.height;
+    float playerX = janela.x + pJan.x * escalaX;
+    float playerY = janela.y + pJan.y * escalaY;
     float bob = sinf((float)GetTime() * 4.5f) * 1.2f;
     float bw = 54.0f;
     float bh = 16.0f;
-    float bx = JANELA_AREA.x + pJan.x - bw * 0.5f;
-    float by = JANELA_AREA.y + pJan.y - bh - 7.0f + bob;
+    float bx = playerX - bw * 0.5f;
+    float by = playerY - bh - 7.0f + bob;
 
-    if (bx < JANELA_AREA.x + 4.0f) bx = JANELA_AREA.x + 4.0f;
-    if (bx + bw > JANELA_AREA.x + JANELA_AREA.width - 4.0f) bx = JANELA_AREA.x + JANELA_AREA.width - 4.0f - bw;
-    if (by < JANELA_AREA.y + 4.0f) by = JANELA_AREA.y + 4.0f;
-    if (by + bh + 5.0f > JANELA_AREA.y + JANELA_AREA.height - 4.0f) {
-        by = JANELA_AREA.y + JANELA_AREA.height - 4.0f - bh - 5.0f;
+    if (bx < janela.x + 4.0f) bx = janela.x + 4.0f;
+    if (bx + bw > janela.x + janela.width - 4.0f) bx = janela.x + janela.width - 4.0f - bw;
+    if (by < janela.y + 4.0f) by = janela.y + 4.0f;
+    if (by + bh + 5.0f > janela.y + janela.height - 4.0f) {
+        by = janela.y + janela.height - 4.0f - bh - 5.0f;
     }
 
     Rectangle rBal = { bx, by, bw, bh };
@@ -6915,7 +6967,7 @@ static void DesenharBalaoEInteract3D(void) {
     DrawRectangleLinesEx(ParaTela(rBal), 1.2f, (Color){ 255, 242, 230, 235 });
 
     // Pontinha do balao apontando para baixo (em direcao ao player)
-    float px = fmaxf(bx + 8.0f, fminf(JANELA_AREA.x + pJan.x, bx + bw - 8.0f));
+    float px = fmaxf(bx + 8.0f, fminf(playerX, bx + bw - 8.0f));
     Vector2 t1 = PontoParaTela((Vector2){ px - 3.5f, by + bh });
     Vector2 t2 = PontoParaTela((Vector2){ px,        by + bh + 4.5f });
     Vector2 t3 = PontoParaTela((Vector2){ px + 3.5f, by + bh });
@@ -7962,6 +8014,7 @@ static void UpdateGameplay(void) {
                 return;
             }
             if (tRes.acionouDestino) {
+                if (g_pendEvTimer > 0.0f) return;
                 LimparMonologoInterno();
                 FecharJanelasFerramentas();
                 g_closeupAtual = CLOSEUP_NENHUM;
@@ -7970,17 +8023,6 @@ static void UpdateGameplay(void) {
                 g_transTempo = 0.0f;
                 SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
                 return;
-            }
-            static float s_pendEvTimer = 0.0f;
-            static TipoInspecaoEv3D s_pendEvTipo = INSP_NENHUMA;
-            static int s_pendEvSusp = -1;
-            static const char *s_pendEvId = NULL;
-            if (s_pendEvTimer > 0.0f) {
-                s_pendEvTimer -= GetFrameTime();
-                if (s_pendEvTimer <= 0.0f && s_pendEvTipo != INSP_NENHUMA) {
-                    AbrirInspecaoEv3D(s_pendEvTipo, s_pendEvSusp, s_pendEvId);
-                    s_pendEvTipo = INSP_NENHUMA;
-                }
             }
 
             if (tRes.acionouObjeto) {
@@ -8031,19 +8073,19 @@ static void UpdateGameplay(void) {
                     }
                 } else if (tRes.objetoId && strcmp(tRes.objetoId, "ev_maria_queixa") == 0) {
                     Terreo3DTriggerPaperPickup(tRes.objetoPos, 0.72f);
-                    s_pendEvTipo = INSP_BOLINHA_PAPEL; s_pendEvSusp = 0; s_pendEvId = "EV-01"; s_pendEvTimer = 0.68f;
+                    g_pendEvTipo = INSP_BOLINHA_PAPEL; g_pendEvSusp = 0; g_pendEvId = "EV-01"; g_pendEvTimer = 0.68f;
                 } else if (tRes.objetoId && strcmp(tRes.objetoId, "ev_maria_devolvidos") == 0) {
                     Terreo3DTriggerPlayerAnim(tRes.objetoPos, PLAYER_ANIM_FILE, 0.48f);
-                    s_pendEvTipo = INSP_PASTA_DEVOLVIDOS; s_pendEvSusp = 0; s_pendEvId = "EV-02"; s_pendEvTimer = 0.45f;
+                    g_pendEvTipo = INSP_PASTA_DEVOLVIDOS; g_pendEvSusp = 0; g_pendEvId = "EV-02"; g_pendEvTimer = 0.45f;
                 } else if (tRes.objetoId && strcmp(tRes.objetoId, "ev_arthur_sobrecarga") == 0) {
                     Terreo3DTriggerComputerSit((Vector3){ 4.58f, 0.0f, 1.60f }, (Vector3){ 5.45f, 0.77f, 1.60f }, 1.85f);
-                    s_pendEvTipo = INSP_COMPUTADOR_MEMO; s_pendEvSusp = 1; s_pendEvId = "EV-03"; s_pendEvTimer = 1.80f;
+                    g_pendEvTipo = INSP_COMPUTADOR_MEMO; g_pendEvSusp = 1; g_pendEvId = "EV-03"; g_pendEvTimer = 1.80f;
                 } else if (tRes.objetoId && strcmp(tRes.objetoId, "ev_arthur_demissao") == 0) {
                     Terreo3DTriggerPlayerAnim(tRes.objetoPos, PLAYER_ANIM_PAPER, 0.45f);
-                    s_pendEvTipo = INSP_ENVELOPE_OFICIO; s_pendEvSusp = 1; s_pendEvId = "EV-04"; s_pendEvTimer = 0.42f;
+                    g_pendEvTipo = INSP_ENVELOPE_OFICIO; g_pendEvSusp = 1; g_pendEvId = "EV-04"; g_pendEvTimer = 0.42f;
                 } else if (tRes.objetoId && strcmp(tRes.objetoId, "ev_analu_terminal") == 0) {
                     Terreo3DTriggerComputerSit((Vector3){ -1.65f, 0.0f, -0.02f }, (Vector3){ -1.65f, 0.77f, -0.81f }, 1.85f);
-                    s_pendEvTipo = INSP_TERMINAL_ANALU; s_pendEvSusp = 2; s_pendEvId = "EV-05"; s_pendEvTimer = 1.80f;
+                    g_pendEvTipo = INSP_TERMINAL_ANALU; g_pendEvSusp = 2; g_pendEvId = "EV-05"; g_pendEvTimer = 1.80f;
                 } else if (tRes.objetoId && strcmp(tRes.objetoId, "ev_jardim_sombras") == 0) {
                     if (GameStateTemEvidencia(2, "EV-06") && GameStateGetDay() > GameStateGetEv06CollectedDay()) {
                         DispararMonologoInterno("Estão conversando sobre outras coisas. Parecem desconfortáveis com você encarando.");
@@ -8198,7 +8240,7 @@ static void UpdateGameplay(void) {
 // ESC em camadas: fecha do que esta mais na frente ate o que esta mais atras.
 // Quando nao ha mais nada aberto, abre o menu de pausa (opcoes + abandonar a run).
 static void ProcessarTeclaEsc(void) {
-    if (!IsKeyPressed(KEY_ESCAPE)) return;
+    if (!IsKeyPressed(KEY_ESCAPE) || g_transTempo >= 0.0f) return;
 
     if (g_inspecaoEvAtiva) {
         if (g_inspecaoEvTextoVisivel) g_inspecaoEvTextoVisivel = false;
@@ -8235,6 +8277,29 @@ static void ProcessarTeclaEsc(void) {
         return;
     }
     AbrirPausa();
+}
+
+static bool ModalAbertoSobreDialogo(void) {
+    return g_mapaCompletoAberto || g_evToastCount > 0 || g_evPopup2DAtivo ||
+           g_galeriaHoloAberta || g_inspecaoEvAtiva || g_confirmarAbandonarRun ||
+           g_elevadorAberto || g_confirmarAvancarDia || g_dicaAberta ||
+           g_fichaAtual >= 0 || (g_pranchetaAberta && !g_pranchetaMinimizada) ||
+           g_deepfakeAberto || OptionsUiModalAberto();
+}
+
+static void AtualizarEventoPendente(void) {
+    if (g_pendEvTimer <= 0.0f || g_transTempo >= 0.0f || ModalAbertoSobreDialogo()) return;
+
+    float dt = GetFrameTime();
+    if (dt > 0.05f) dt = 0.05f;
+    g_pendEvTimer -= dt;
+    if (g_pendEvTimer <= 0.0f && g_pendEvTipo != INSP_NENHUMA) {
+        TipoInspecaoEv3D tipo = g_pendEvTipo;
+        int suspeito = g_pendEvSusp;
+        const char *id = g_pendEvId;
+        LimparEventoPendente();
+        AbrirInspecaoEv3D(tipo, suspeito, id);
+    }
 }
 
 // Placa com o destino da seta, do lado de dentro da janela
@@ -8316,7 +8381,9 @@ static void DesenharIndicadorExclamacao(Rectangle destVirt, bool hov, float puls
     DrawRectangleRec(ParaTela((Rectangle){ badge.x + 1.0f, badge.y + 1.0f, badge.width, badge.height }), Fade(BLACK, 0.65f));
     DrawRectangleRec(rTela, hov ? (Color){ 255, 242, 230, 255 } : (Color){ 32, 29, 31, 240 });
     DrawRectangleLinesEx(rTela, 1.4f, (Color){ 255, 242, 230, 255 });
-    DrawTextInArea("!", badge, 9, hov ? (Color){ 32, 29, 31, 255 } : (Color){ 255, 242, 230, 255 });
+    Color corSimbolo = hov ? (Color){ 32, 29, 31, 255 } : (Color){ 255, 242, 230, 255 };
+    DrawRectangleRec(ParaTela((Rectangle){ cx - 1.1f, cy + 1.8f, 2.2f, 6.2f }), corSimbolo);
+    DrawRectangleRec(ParaTela((Rectangle){ cx - 1.1f, cy + 9.0f, 2.2f, 1.8f }), corSimbolo);
 }
 
 static void DesenharLanceEscadaDestacado(Texture2D tex, Texture2D texBranca, Rectangle bboxJanela, bool hov, float anim, float pulso) {
@@ -8575,7 +8642,11 @@ void UpdateDrawGameplayScene(void) {
     RayCanvasBegin();
 
     ProcessarTeclaEsc();
-    AtualizarTypewriter(GetFrameTime());
+    if (ModalAbertoSobreDialogo()) {
+        g_consumiuCliqueDialogo = false;
+    } else {
+        AtualizarTypewriter(GetFrameTime());
+    }
 
     // Transicao andando de um local para o outro (bloqueia os cliques enquanto dura)
     bool emTransicao = g_transTempo >= 0.0f;
@@ -8585,6 +8656,7 @@ void UpdateDrawGameplayScene(void) {
         if (antes < TRANS_ESCURECE && g_transTempo >= TRANS_ESCURECE) {
             LocalRasec anterior = g_localAtual;
             g_localAtual = (LocalRasec)g_transDestino;
+            if (anterior != g_localAtual) LimparEventoPendente();
             if (LocalEhTerreo3D(g_localAtual) && anterior != g_localAtual) {
                 Terreo3DDefinirSala(TerreoSalaPorLocal(g_localAtual), TerreoDestinoPorLocal(anterior));
                 LimparMonologoInterno();
@@ -8611,9 +8683,10 @@ void UpdateDrawGameplayScene(void) {
         }
     }
 
+    AtualizarEventoPendente();
+
     if (!g_dialogLoaded && GameStateIs3DMode() && IsKeyPressed(KEY_M) &&
-        !g_inspecaoEvAtiva && !g_elevadorAberto && !g_dicaAberta &&
-        !g_confirmarAvancarDia && !g_confirmarAbandonarRun) {
+        !emTransicao && (!ModalAbertoSobreDialogo() || g_mapaCompletoAberto)) {
         g_mapaCompletoAberto = !g_mapaCompletoAberto;
         if (g_mapaCompletoAberto) {
             g_tutMapaVisto = true;
@@ -8950,7 +9023,7 @@ void UpdateDrawGameplayScene(void) {
             } else {
                 // Nome do funcionario dono deste checklist
                 const char *nome = (g_funcionario < g_numFichas) ? g_fichas[g_funcionario].nome : "";
-                TextoQueCabe(nome, cx, cy + 14 * TABLET_SCALE, conteudo.width, 9, COR_TABLET_TEXTO);
+                TextoQueCabe(nome, cx, cy + 14 * TABLET_SCALE, conteudo.width, 9, 6, COR_TABLET_TEXTO);
 
                 // Quadradinhos (escurecem no hover) e textos ao lado
                 for (int i = 0; i < NUM_CAIXAS; i++) {
@@ -9034,21 +9107,25 @@ void UpdateDrawGameplayScene(void) {
         }
 
         // Titulo na barra de cima
-        TextoNaImagem("FICHA DO FUNCIONARIO", x + 7, y + 6, 8, COR_FICHA_TITULO);
+        TextoNaImagem("FICHA DO FUNCIONARIO", x + 7 * fs, y + 6 * fs, 8 * fs, COR_FICHA_TITULO);
 
         // Ao lado da foto (fixo, nao rola)
-        TextoNaImagem("NOME",   x + FICHA_LADO_X, y + 42,  8, COR_FICHA_ROTULO);
-        TextoQueCabe(f->nome,   x + FICHA_LADO_X, y + 53,  FICHA_LADO_W, 10, COR_FICHA_TEXTO);
-        TextoNaImagem("SETOR",  x + FICHA_LADO_X, y + 80,  8, COR_FICHA_ROTULO);
-        TextoQueCabe(f->setor,  x + FICHA_LADO_X, y + 91,  FICHA_LADO_W, 10, COR_FICHA_TEXTO);
-        TextoNaImagem("FUNCAO", x + FICHA_LADO_X, y + 118, 8, COR_FICHA_ROTULO);
-        TextoQueCabe(f->funcao, x + FICHA_LADO_X, y + 129, FICHA_LADO_W, 10, COR_FICHA_TEXTO);
+        TextoNaImagem("NOME",   x + FICHA_LADO_X * fs, y + 42 * fs,  8 * fs, COR_FICHA_ROTULO);
+        TextoQueCabe(f->nome,   x + FICHA_LADO_X * fs, y + 53 * fs,
+                     FICHA_LADO_W * fs, 10 * fs, 6 * fs, COR_FICHA_TEXTO);
+        TextoNaImagem("SETOR",  x + FICHA_LADO_X * fs, y + 80 * fs,  8 * fs, COR_FICHA_ROTULO);
+        TextoQueCabe(f->setor,  x + FICHA_LADO_X * fs, y + 91 * fs,
+                     FICHA_LADO_W * fs, 10 * fs, 6 * fs, COR_FICHA_TEXTO);
+        TextoNaImagem("FUNCAO", x + FICHA_LADO_X * fs, y + 118 * fs, 8 * fs, COR_FICHA_ROTULO);
+        TextoQueCabe(f->funcao, x + FICHA_LADO_X * fs, y + 129 * fs,
+                     FICHA_LADO_W * fs, 10 * fs, 6 * fs, COR_FICHA_TEXTO);
 
         // Parte de baixo: rola, e o que passa da area fica escondido
         g_fichaConteudoH = ConteudoFicha(f, g_fichaAtual, 0, 0, false);
         Rectangle rScroll = ParaTela(NaFicha(FICHA_SCROLL));
         BeginScissorMode((int)rScroll.x, (int)rScroll.y, (int)rScroll.width, (int)rScroll.height);
-        ConteudoFicha(f, g_fichaAtual, x + FICHA_SCROLL.x, y + FICHA_SCROLL.y - g_fichaScroll, true);
+        ConteudoFicha(f, g_fichaAtual, x + FICHA_SCROLL.x * fs,
+                      y + FICHA_SCROLL.y * fs - g_fichaScroll, true);
         EndScissorMode();
 
         // Barra de rolagem e alca de redimensionamento
@@ -9203,16 +9280,20 @@ void UpdateDrawGameplayScene(void) {
             bool mesmoAndar = (g_mapaAndarSelecionado == andarAtual);
             bool andarSupBloq = (g_mapaAndarSelecionado >= 2) &&
                                 !(SettingsGetDevMode() && SettingsGetDevUnlockUpperFloors());
-            bool clicavelPular = !mesmoAndar && (!andarSupBloq || g_mapaAndarSelecionado == 3);
+            bool evPendente = g_pendEvTimer > 0.0f;
+            bool clicavelPular = !evPendente && !mesmoAndar && (!andarSupBloq || g_mapaAndarSelecionado == 3);
             Rectangle rPular = { rPainel.x + rPainel.width - 170.0f, rPainel.y + rPainel.height - 27.0f, 158.0f, 20.0f };
             bool hovPular = clicavelPular && CheckCollisionPointRec(mouseM, rPular);
-            Color bgP = (mesmoAndar || andarSupBloq) ? (Color){ 32, 29, 31, 220 } : (hovPular ? (Color){ 96, 86, 88, 255 } : (Color){ 64, 58, 60, 255 });
-            Color bdP = (mesmoAndar || andarSupBloq) ? (Color){ 92, 84, 86, 180 } : (Color){ 255, 242, 230, 255 };
+            Color bgP = (evPendente || mesmoAndar || andarSupBloq) ? (Color){ 32, 29, 31, 220 } : (hovPular ? (Color){ 96, 86, 88, 255 } : (Color){ 64, 58, 60, 255 });
+            Color bdP = (evPendente || mesmoAndar || andarSupBloq) ? (Color){ 92, 84, 86, 180 } : (Color){ 255, 242, 230, 255 };
             DrawRectangleRec(ParaTela(rPular), bgP);
             DrawRectangleLinesEx(ParaTela(rPular), 1.2f, bdP);
-            const char *txtPular = mesmoAndar ? "VOCÊ JÁ ESTÁ AQUI"
-                                              : (andarSupBloq ? "ANDAR BLOQUEADO" : "IR PARA ESTE ANDAR >>");
-            DrawTextInArea(txtPular, rPular, 8, (mesmoAndar || andarSupBloq) ? (Color){ 130, 122, 122, 255 } : (Color){ 255, 242, 230, 255 });
+            const char *txtPular = evPendente ? "AGUARDE A INSPEÇÃO"
+                                  : (mesmoAndar ? "VOCÊ JÁ ESTÁ AQUI"
+                                                : (andarSupBloq ? "ANDAR BLOQUEADO" : "IR PARA ESTE ANDAR >>"));
+            DrawTextInArea(txtPular, rPular, 8,
+                           (evPendente || mesmoAndar || andarSupBloq) ? (Color){ 130, 122, 122, 255 }
+                                                                       : (Color){ 255, 242, 230, 255 });
             if (hovPular && clicouM) {
                 bool irSecretoAndar3 = false;
                 if (andarSupBloq && g_mapaAndarSelecionado == 3) {
@@ -9295,7 +9376,7 @@ void UpdateDrawGameplayScene(void) {
 }
 
 void UnloadGameplayScene(void) {
-    
+    LimparEventoPendente();
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
     for (int i = 0; i < 3; i++) FreeDialogTree(&g_trees[i]);
     g_treesLoaded = false;

@@ -232,7 +232,7 @@ void UpdateDrawSelectionScene(void) {
         Rectangle tela = GetTelaRect();
         DrawText(msgCant,
                  (int)(tela.x + (tela.width - MeasureText(msgCant, tamMsg)) / 2.0f),
-                 (int)(tela.y + 300 * escala),
+                 (int)(tela.y + 280 * escala),
                  tamMsg, hoverColor);
     }
 

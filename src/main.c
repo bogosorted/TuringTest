@@ -65,6 +65,7 @@ static bool SwitchScene(Scene *current, Scene next) {
 
 // Para onde vamos quando o fade-out da transicao terminar
 static Scene nextScene = SCENE_MENU;
+static bool advanceDayAfterFadeOut = false;
 
 // Fade-out -> tela preta com texto (3s) -> nextScene
 // (texto NULL = so o fade-out, a cena nova faz o proprio fade-in)
@@ -155,6 +156,12 @@ int main(int argc, char **argv) {
         // 1) Transicao: quando o fade-out termina, a troca de cena acontece
         //    "por tras" da tela preta
         if (TransitionUpdate() == TRANSITION_FADE_OUT_DONE) {
+            if (advanceDayAfterFadeOut) {
+                GameStateNextDay();
+                AddDailyTokens();
+                GameplaySceneResetDialogues();
+                advanceDayAfterFadeOut = false;
+            }
             SwitchScene(&currentScene, nextScene);
         }
 
@@ -199,10 +206,8 @@ int main(int argc, char **argv) {
                 if (SelectionSceneShouldStartInterrogation() && !TransitionActive()) {
                     GoToWithTransition(SCENE_GAMEPLAY, NULL);
                 } else if (SelectionSceneShouldAdvanceDay() && !TransitionActive()) {
-                    GameStateNextDay();
-                    AddDailyTokens();                // +1 token no novo dia
-                    GameplaySceneResetDialogues();
-                    const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d", GameStateGetDay());
+                    advanceDayAfterFadeOut = true;
+                    const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d", GameStateGetDay() + 1);
                     GoToWithTransition(SCENE_GAMEPLAY, transTexto);
                 } else if (SelectionSceneShouldGoToVerdict() && !TransitionActive()) {
                     const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d - Veredito", GAME_NUM_DAYS + 1);
@@ -219,10 +224,8 @@ int main(int argc, char **argv) {
                     SettingsResetSecretPalettes();
                     GoToWithTransition(SCENE_MENU, NULL);
                 } else if (GameplaySceneShouldAdvanceDay() && !TransitionActive()) {
-                    GameStateNextDay();
-                    AddDailyTokens();
-                    GameplaySceneResetDialogues();
-                    const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d", GameStateGetDay());
+                    advanceDayAfterFadeOut = true;
+                    const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d", GameStateGetDay() + 1);
                     GoToWithTransition(SCENE_GAMEPLAY, transTexto);
                 } else if (GameplaySceneShouldGoToVerdict() && !TransitionActive()) {
                     const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d - Veredito", GAME_NUM_DAYS + 1);
@@ -254,7 +257,7 @@ int main(int argc, char **argv) {
     CloseWindow();
     if (SettingsConsumeAppRestart()) {
 #ifdef _WIN32
-        _execv(argv[0], (const char *const *)argv);
+        _spawnv(_P_OVERLAY, argv[0], (const char *const *)argv);
 #else
         execv("/proc/self/exe", argv);
 #endif

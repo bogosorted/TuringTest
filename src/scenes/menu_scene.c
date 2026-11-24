@@ -905,11 +905,18 @@ static void UpdateDrawControle(void) {
         Vector2 tamTit = MeasureTextEx(g_fonte, TITULOS[c], 22.0f, 1.0f);
         TextoOpcoes(TITULOS[c], rCard.x + (cardW - tamTit.x) * 0.5f, rCard.y + 24.0f, 22.0f, hov ? claro : bege);
 
-        Vector2 tamL1 = MeasureTextEx(g_fonte, LINHA1[c], 12.0f, 0.4f);
-        TextoOpcoes(LINHA1[c], rCard.x + (cardW - tamL1.x) * 0.5f, rCard.y + 58.0f, 12.0f, claro);
+        float tamLinha = 12.0f;
+        Vector2 tamL1;
+        Vector2 tamL2;
+        do {
+            tamL1 = MeasureTextEx(g_fonte, LINHA1[c], tamLinha, 1.0f);
+            tamL2 = MeasureTextEx(g_fonte, LINHA2[c], tamLinha, 1.0f);
+            if ((tamL1.x <= cardW - 16.0f && tamL2.x <= cardW - 16.0f) || tamLinha <= 6.0f) break;
+            tamLinha -= 0.5f;
+        } while (true);
 
-        Vector2 tamL2 = MeasureTextEx(g_fonte, LINHA2[c], 12.0f, 0.4f);
-        TextoOpcoes(LINHA2[c], rCard.x + (cardW - tamL2.x) * 0.5f, rCard.y + 76.0f, 12.0f, medio);
+        TextoOpcoes(LINHA1[c], rCard.x + (cardW - tamL1.x) * 0.5f, rCard.y + 58.0f, tamLinha, claro);
+        TextoOpcoes(LINHA2[c], rCard.x + (cardW - tamL2.x) * 0.5f, rCard.y + 76.0f, tamLinha, medio);
 
         if (hov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             GameStateSetControle3D((ControleModo3D)c);
@@ -1151,21 +1158,23 @@ void UpdateDrawMenuScene(void) {
 
 void UnloadMenuScene(void) {
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-    UnloadTexture(g_animTextura);
-    UnloadImage(g_animImagem);      // libera os quadros do GIF
-    UnloadTexture(g_painel);
-    UnloadTexture(g_painelNoise1);
-    UnloadTexture(g_painelNoise2);
-    UnloadTexture(g_botao);
-    UnloadTexture(g_botaoSilhueta);
-    UnloadTexture(g_logo);
-    UnloadShader(g_waveShader);
-    UnloadShader(g_painelShader);
-    UnloadFont(g_fonte);
-    if (g_sndHover.frameCount > 0) {
-        UnloadSound(g_sndHover);
-        g_sndHover = (Sound){ 0 };
-    }
+    UISafeUnloadTexture(&g_animTextura);
+    if (g_animImagem.data) UnloadImage(g_animImagem);
+    g_animImagem = (Image){ 0 };
+    UISafeUnloadTexture(&g_painel);
+    UISafeUnloadTexture(&g_painelNoise1);
+    UISafeUnloadTexture(&g_painelNoise2);
+    UISafeUnloadTexture(&g_botao);
+    UISafeUnloadTexture(&g_botaoSilhueta);
+    UISafeUnloadTexture(&g_logo);
+    UISafeUnloadShader(&g_waveShader);
+    UISafeUnloadShader(&g_painelShader);
+    if (g_fonte.texture.id > 0) UnloadFont(g_fonte);
+    g_fonte = (Font){ 0 };
+    UISafeUnloadSound(&g_sndHover);
+    g_animQuadros = 0;
+    g_animAtual = 0;
+    g_animTempo = 0.0f;
     for (int v = 0; v < 3; v++) {
         if (g_vozPreviewSnd[v].frameCount > 0) {
             UnloadSound(g_vozPreviewSnd[v]);
