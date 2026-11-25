@@ -1,4 +1,5 @@
 #include "ranking.h"
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -24,19 +25,32 @@ static void SanitizarNome(char *dst, const char *src) {
     }
 }
 
+static bool FotoPathValido(const char *path) {
+    static const char prefix[] = "ranking_fotos/agente_";
+    if (!path || strncmp(path, prefix, sizeof prefix - 1) != 0) return false;
+
+    const unsigned char *p = (const unsigned char *)path + sizeof prefix - 1;
+    if (!isdigit(*p)) return false;
+    while (isdigit(*p)) p++;
+    if (*p++ != '_') return false;
+    if (!isdigit(*p)) return false;
+    while (isdigit(*p)) p++;
+    return strcmp((const char *)p, ".png") == 0;
+}
+
 static void SanitizarFoto(char *dst, const char *src) {
-    if (!src || src[0] == '\0' || strcmp(src, "-") == 0) {
-        dst[0] = '\0';
+    dst[0] = '\0';
+    if (!src || src[0] == '\0' || strcmp(src, "-") == 0 ||
+        strlen(src) >= RANKING_PHOTO_MAX || !FotoPathValido(src)) {
         return;
     }
-    int j = 0;
-    for (int i = 0; src[i] != '\0' && j < RANKING_PHOTO_MAX - 1; i++) {
-        unsigned char c = (unsigned char)src[i];
-        if (c > 32 && c <= 126) {
-            dst[j++] = (char)c;
-        }
+    memcpy(dst, src, strlen(src) + 1);
+}
+
+static void RemoverFoto(const char *path) {
+    if (FotoPathValido(path)) {
+        remove(path);
     }
-    dst[j] = '\0';
 }
 
 void RankingLoad(void) {
@@ -95,13 +109,13 @@ int RankingAddWithPhoto(const char *nome, int pontos, bool acertou, const char *
     }
 
     if (pos >= RANKING_MAX_ENTRIES) {
-        if (novo.foto[0] != '\0') remove(novo.foto);
+        RemoverFoto(novo.foto);
         return -1;
     }
 
     // Se a lista ja estava cheia (10), remove do disco a foto do 10o colocado que caiu fora
     if (g_count == RANKING_MAX_ENTRIES && g_entries[RANKING_MAX_ENTRIES - 1].foto[0] != '\0') {
-        remove(g_entries[RANKING_MAX_ENTRIES - 1].foto);
+        RemoverFoto(g_entries[RANKING_MAX_ENTRIES - 1].foto);
     }
 
     int limit = (g_count < RANKING_MAX_ENTRIES) ? g_count : (RANKING_MAX_ENTRIES - 1);
@@ -131,7 +145,7 @@ const RankingEntry *RankingGetEntry(int index) {
 void RankingRemoveAt(int index) {
     if (index < 0 || index >= g_count) return;
     if (g_entries[index].foto[0] != '\0') {
-        remove(g_entries[index].foto);
+        RemoverFoto(g_entries[index].foto);
     }
     for (int i = index; i < g_count - 1; i++) {
         g_entries[i] = g_entries[i + 1];
@@ -144,7 +158,7 @@ void RankingRemoveAt(int index) {
 void RankingClear(void) {
     for (int i = 0; i < g_count; i++) {
         if (g_entries[i].foto[0] != '\0') {
-            remove(g_entries[i].foto);
+            RemoverFoto(g_entries[i].foto);
         }
     }
     g_count = 0;
