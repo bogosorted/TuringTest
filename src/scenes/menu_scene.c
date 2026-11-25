@@ -25,6 +25,17 @@ static int       g_animAtual   = 0;
 static float     g_animTempo   = 0.0f;
 #define ANIM_DURACAO_QUADRO 0.07f       // 70 ms por quadro (mesma velocidade do GIF)
 
+typedef struct {
+    Image     imagem;
+    Texture2D textura;
+    int       quadros;
+    int       atual;
+    float     tempo;
+} ModoPreviewGif;
+
+static ModoPreviewGif g_modoPreview[2] = { 0 };
+static bool           g_modoPreviewDisponivel = false;
+
 static Texture2D g_painel;              // painel escuro da direita (562x360) com o padrao Perlin original
 static Texture2D g_painelNoise1;        // textura de Perlin noise 1 original (GenImagePerlinNoise scale 4.5)
 static Texture2D g_painelNoise2;        // textura de Perlin noise 2 original (GenImagePerlinNoise scale 14.0)
@@ -362,6 +373,50 @@ bool InitMenuScene(void) {
     g_animAtual = 0;
     g_animTempo = 0.0f;
 
+    // Previews dos modos 2D e 3D (so substituem os cartoes se ambos estiverem disponiveis)
+    static const char *PREVIEW_PATHS[2][2] = {
+        { "assets/sprites/menu/PreviewModo2D.gif", "novas_mudancas/Previews/PreviewModo2D.gif" },
+        { "assets/sprites/menu/PreviewModo3D.gif", "novas_mudancas/Previews/PreviewModo3D.gif" }
+    };
+    bool previewOk[2] = { false, false };
+    for (int m = 0; m < 2; m++) {
+        g_modoPreview[m] = (ModoPreviewGif){ 0 };
+        const char *path = NULL;
+        for (int p = 0; p < 2; p++) {
+            if (FileExists(PREVIEW_PATHS[m][p]) && GetFileLength(PREVIEW_PATHS[m][p]) > 0) {
+                path = PREVIEW_PATHS[m][p];
+                break;
+            }
+        }
+        if (path) {
+            int quadros = 0;
+            Image img = LoadImageAnim(path, &quadros);
+            if (quadros > 0 && img.data != NULL) {
+                Texture2D tex = LoadTextureFromImage(img);
+                if (tex.id > 0) {
+                    SetTextureFilter(tex, TEXTURE_FILTER_BILINEAR);
+                    SetTextureWrap(tex, TEXTURE_WRAP_CLAMP);
+                    g_modoPreview[m].imagem  = img;
+                    g_modoPreview[m].textura = tex;
+                    g_modoPreview[m].quadros = quadros;
+                    previewOk[m] = true;
+                } else {
+                    UnloadImage(img);
+                }
+            } else if (img.data != NULL) {
+                UnloadImage(img);
+            }
+        }
+    }
+    g_modoPreviewDisponivel = previewOk[0] && previewOk[1];
+    if (!g_modoPreviewDisponivel) {
+        for (int m = 0; m < 2; m++) {
+            UISafeUnloadTexture(&g_modoPreview[m].textura);
+            if (g_modoPreview[m].imagem.data) UnloadImage(g_modoPreview[m].imagem);
+            g_modoPreview[m] = (ModoPreviewGif){ 0 };
+        }
+    }
+
     // Carrega o painel da direita e as 2 texturas de Perlin noise originais (mesmo padrao antigo, agora com movimento sutil!)
     g_painel = LoadTexture("assets/sprites/menu/spr_mainmenu_fill.png");
     SetTextureFilter(g_painel, TEXTURE_FILTER_POINT);
@@ -533,6 +588,23 @@ static void AtualizarAnimacao(void) {
         // Os quadros ficam um depois do outro na memoria: pula ate o quadro atual
         int bytesPorQuadro = g_animImagem.width * g_animImagem.height * 4;
         UpdateTexture(g_animTextura, ((unsigned char *)g_animImagem.data) + bytesPorQuadro * g_animAtual);
+    }
+}
+
+static void AtualizarModoPreview(ModoPreviewGif *gif, float dt) {
+    if (!gif || gif->quadros <= 1 || gif->textura.id == 0 || !gif->imagem.data) return;
+
+    bool mudou = false;
+    gif->tempo += dt;
+    while (gif->tempo >= ANIM_DURACAO_QUADRO) {
+        gif->tempo -= ANIM_DURACAO_QUADRO;
+        gif->atual = (gif->atual + 1) % gif->quadros;
+        mudou = true;
+    }
+
+    if (mudou) {
+        int bytesPorQuadro = gif->imagem.width * gif->imagem.height * 4;
+        UpdateTexture(gif->textura, ((unsigned char *)gif->imagem.data) + bytesPorQuadro * gif->atual);
     }
 }
 
@@ -801,6 +873,11 @@ static void UpdateDrawModo(void) {
     bool interativo = g_modoAberto && a > 0.5f && !RayCanvasInputBlocked();
     Vector2 mv = MouseVirtual();
 
+    if (g_modoPreviewDisponivel) {
+        AtualizarModoPreview(&g_modoPreview[0], dt);
+        AtualizarModoPreview(&g_modoPreview[1], dt);
+    }
+
     if (g_modoAberto && IsKeyPressed(KEY_ESCAPE)) {
         FecharModo();
         return;
@@ -834,19 +911,40 @@ static void UpdateDrawModo(void) {
         Rectangle rTela = ParaTela(rCard);
         float esc = rTela.height / cardH;
         DrawRectangleRec(ParaTela((Rectangle){ rCard.x + 2.5f, rCard.y + 3.0f, cardW, cardH }), Fade(BLACK, 0.5f * a));
-        DrawRectangleRec(rTela, devBloq ? Fade(fundo, 0.55f) : (hov ? fundoH : fundo));
-        DrawRectangleLinesEx(rTela, (hov ? 2.2f : 1.4f) * esc, devBloq ? medio : (hov ? claro : medio));
 
-        Vector2 tamTit = MeasureTextEx(g_fonte, TITULOS[m], 26.0f, 1.0f);
-        TextoOpcoes(TITULOS[m], rCard.x + (cardW - tamTit.x) * 0.5f, rCard.y + 30.0f, 26.0f, devBloq ? medio : (hov ? claro : bege));
+        if (g_modoPreviewDisponivel) {
+            Texture2D tex = g_modoPreview[m].textura;
+            Rectangle src = { 0.0f, 0.0f, (float)tex.width, (float)tex.height };
+            Color tint = devBloq
+                ? Fade((Color){ 100, 100, 100, 255 }, 0.45f * a)
+                : Fade(hov ? WHITE : (Color){ 215, 208, 200, 255 }, a);
+            DrawRectangleRec(rTela, fundo);
+            DrawTexturePro(tex, src, rTela, (Vector2){ 0.0f, 0.0f }, 0.0f, tint);
+            DrawRectangleLinesEx(rTela, (hov ? 2.2f : 1.4f) * esc, devBloq ? medio : (hov ? claro : medio));
 
-        const char *l1 = devBloq ? "DESATIVADO" : LINHA1[m];
-        const char *l2 = devBloq ? "nas opções Dev" : LINHA2[m];
-        Vector2 tamL1 = MeasureTextEx(g_fonte, l1, 15.0f, 0.5f);
-        TextoOpcoes(l1, rCard.x + (cardW - tamL1.x) * 0.5f, rCard.y + 62.0f, 15.0f, devBloq ? (Color){ 210, 76, 76, 255 } : claro);
+            if (devBloq) {
+                const char *l1 = "DESATIVADO";
+                const char *l2 = "nas opções Dev";
+                Vector2 tamL1 = MeasureTextEx(g_fonte, l1, 15.0f, 0.5f);
+                Vector2 tamL2 = MeasureTextEx(g_fonte, l2, 15.0f, 0.5f);
+                TextoOpcoes(l1, rCard.x + (cardW - tamL1.x) * 0.5f, rCard.y + 38.0f, 15.0f, Fade((Color){ 210, 76, 76, 255 }, a));
+                TextoOpcoes(l2, rCard.x + (cardW - tamL2.x) * 0.5f, rCard.y + 56.0f, 15.0f, medio);
+            }
+        } else {
+            DrawRectangleRec(rTela, devBloq ? Fade(fundo, 0.55f) : (hov ? fundoH : fundo));
+            DrawRectangleLinesEx(rTela, (hov ? 2.2f : 1.4f) * esc, devBloq ? medio : (hov ? claro : medio));
 
-        Vector2 tamL2 = MeasureTextEx(g_fonte, l2, 15.0f, 0.5f);
-        TextoOpcoes(l2, rCard.x + (cardW - tamL2.x) * 0.5f, rCard.y + 80.0f, 15.0f, medio);
+            Vector2 tamTit = MeasureTextEx(g_fonte, TITULOS[m], 26.0f, 1.0f);
+            TextoOpcoes(TITULOS[m], rCard.x + (cardW - tamTit.x) * 0.5f, rCard.y + 30.0f, 26.0f, devBloq ? medio : (hov ? claro : bege));
+
+            const char *l1 = devBloq ? "DESATIVADO" : LINHA1[m];
+            const char *l2 = devBloq ? "nas opções Dev" : LINHA2[m];
+            Vector2 tamL1 = MeasureTextEx(g_fonte, l1, 15.0f, 0.5f);
+            TextoOpcoes(l1, rCard.x + (cardW - tamL1.x) * 0.5f, rCard.y + 62.0f, 15.0f, devBloq ? (Color){ 210, 76, 76, 255 } : claro);
+
+            Vector2 tamL2 = MeasureTextEx(g_fonte, l2, 15.0f, 0.5f);
+            TextoOpcoes(l2, rCard.x + (cardW - tamL2.x) * 0.5f, rCard.y + 80.0f, 15.0f, medio);
+        }
 
         if (hov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             GameStateSetMode((m == 0) ? MODO_2D : MODO_3D);
@@ -1269,6 +1367,12 @@ void UnloadMenuScene(void) {
     UISafeUnloadTexture(&g_animTextura);
     if (g_animImagem.data) UnloadImage(g_animImagem);
     g_animImagem = (Image){ 0 };
+    for (int m = 0; m < 2; m++) {
+        UISafeUnloadTexture(&g_modoPreview[m].textura);
+        if (g_modoPreview[m].imagem.data) UnloadImage(g_modoPreview[m].imagem);
+        g_modoPreview[m] = (ModoPreviewGif){ 0 };
+    }
+    g_modoPreviewDisponivel = false;
     UISafeUnloadTexture(&g_painel);
     UISafeUnloadTexture(&g_painelNoise1);
     UISafeUnloadTexture(&g_painelNoise2);

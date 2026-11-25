@@ -4355,8 +4355,7 @@ static float MedirAlturaTextoQuebrado(const char *texto, float maxLargura, int t
 #define HOLO_DICA_H 14.0f
 
 static bool EhTela3DExpandida(void) {
-    return SettingsGetDevMode() && SettingsGetDevExpanded3D() &&
-           GameStateIs3DMode() && !g_dialogLoaded &&
+    return GameStateIs3DMode() && !g_dialogLoaded &&
            LocalEhTerreo3D(g_localAtual) && g_closeupAtual == CLOSEUP_NENHUM;
 }
 
@@ -4640,23 +4639,12 @@ static bool UpdateAbaDev(bool *hoverOut) {
         }
     }
 
-    float halfW = (totW - 6.0f) * 0.5f;
-    Rectangle rFp = { x0, yTp + 29.0f, halfW, 24.0f };
+    Rectangle rFp = { x0, yTp + 29.0f, totW, 24.0f };
     if (CheckCollisionPointRec(mouse, ParaTela(rFp))) {
         if (hoverOut) *hoverOut = true;
         if (clicou) {
             TocarSomHover();
             SettingsSetDevFirstPerson(!SettingsGetDevFirstPerson());
-            return true;
-        }
-    }
-    Rectangle rExp = { x0 + halfW + 6.0f, yTp + 29.0f, halfW, 24.0f };
-    if (CheckCollisionPointRec(mouse, ParaTela(rExp))) {
-        if (hoverOut) *hoverOut = true;
-        if (clicou) {
-            TocarSomHover();
-            SettingsSetDevExpanded3D(!SettingsGetDevExpanded3D());
-            SettingsSave();
             return true;
         }
     }
@@ -4737,20 +4725,12 @@ static void DesenharAbaDev(Rectangle rCorpo) {
     DrawRectangleLinesEx(ParaTela(rIr), 1.4f, hI ? cClaro : cBorda);
     DrawTextInArea("IR", rIr, 9, cClaro);
 
-    float halfW = (totW - 6.0f) * 0.5f;
-    Rectangle rFp = { x0, yTp + 29.0f, halfW, 24.0f };
+    Rectangle rFp = { x0, yTp + 29.0f, totW, 24.0f };
     bool fpAtivo = SettingsGetDevFirstPerson();
     bool hFp = CheckCollisionPointRec(mouse, ParaTela(rFp));
     DrawRectangleRec(ParaTela(rFp), fpAtivo ? (hFp ? cAtHov : cAtivo) : (hFp ? cBtnHov : cBtn));
     DrawRectangleLinesEx(ParaTela(rFp), hFp ? 1.8f : 1.1f, hFp ? cClaro : cBorda);
     DrawTextInArea(fpAtivo ? "1ª PESSOA: ON" : "1ª PESSOA: OFF", rFp, 7, cClaro);
-
-    Rectangle rExp = { x0 + halfW + 6.0f, yTp + 29.0f, halfW, 24.0f };
-    bool expAtivo = SettingsGetDevExpanded3D();
-    bool hExp = CheckCollisionPointRec(mouse, ParaTela(rExp));
-    DrawRectangleRec(ParaTela(rExp), expAtivo ? (hExp ? cAtHov : cAtivo) : (hExp ? cBtnHov : cBtn));
-    DrawRectangleLinesEx(ParaTela(rExp), hExp ? 1.8f : 1.1f, hExp ? cClaro : cBorda);
-    DrawTextInArea(expAtivo ? "3D EXP (BETA): ON" : "3D EXP (BETA): OFF", rExp, 7, cClaro);
 }
 
 static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {

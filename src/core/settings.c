@@ -35,7 +35,6 @@ static bool  g_crt        = false;
 static bool  g_cam3dFixa  = true;
 static bool  g_autoReset  = false;
 static bool  g_techNight  = false;
-static bool  g_devExpanded3D = false;
 static bool  g_devDisable2D = false;
 static bool  g_devDisable3D = false;
 static bool  g_setaGuiando  = true;
@@ -182,7 +181,6 @@ void SettingsLoad(void) {
         else if (sscanf(linha, "cam3d_fixa=%d", &n) == 1) g_cam3dFixa = (n != 0);
         else if (sscanf(linha, "auto_reset=%d", &n) == 1) g_autoReset = (n != 0);
         else if (sscanf(linha, "tech_night=%d", &n) == 1) g_techNight = (n != 0);
-        else if (sscanf(linha, "tela3d_expandida=%d", &n) == 1) g_devExpanded3D = (n != 0);
         else if (sscanf(linha, "dev_sem_2d=%d", &n) == 1) g_devDisable2D = (n != 0);
         else if (sscanf(linha, "dev_sem_3d=%d", &n) == 1) g_devDisable3D = (n != 0);
         else if (sscanf(linha, "seta_guiando=%d", &n) == 1) g_setaGuiando = (n != 0);
@@ -210,9 +208,9 @@ void SettingsSave(void) {
         return;
     }
     // A paleta nao e salva: vale so enquanto o jogo esta aberto
-    fprintf(f, "musica=%.2f\nefeitos=%.2f\ntelacheia=%d\ntutorial=%d\nbalao_interacao=%d\ndev=%d\ncrt=%d\ncam3d_fixa=%d\nauto_reset=%d\ntech_night=%d\ntela3d_expandida=%d\ndev_sem_2d=%d\ndev_sem_3d=%d\nseta_guiando=%d\npaletas_exp=%d\npaletas_desbloqueadas=%u\n",
+    fprintf(f, "musica=%.2f\nefeitos=%.2f\ntelacheia=%d\ntutorial=%d\nbalao_interacao=%d\ndev=%d\ncrt=%d\ncam3d_fixa=%d\nauto_reset=%d\ntech_night=%d\ndev_sem_2d=%d\ndev_sem_3d=%d\nseta_guiando=%d\npaletas_exp=%d\npaletas_desbloqueadas=%u\n",
             g_volMusica, g_volEfeitos, g_telaCheia ? 1 : 0, g_tutorial ? 1 : 0, g_balaoInteracao ? 1 : 0, g_devMode ? 1 : 0,
-            g_crt ? 1 : 0, g_cam3dFixa ? 1 : 0, g_autoReset ? 1 : 0, g_techNight ? 1 : 0, g_devExpanded3D ? 1 : 0,
+            g_crt ? 1 : 0, g_cam3dFixa ? 1 : 0, g_autoReset ? 1 : 0, g_techNight ? 1 : 0,
             g_devDisable2D ? 1 : 0, g_devDisable3D ? 1 : 0, g_setaGuiando ? 1 : 0, g_devExpPalettes ? 1 : 0, g_paletasSecretasMask);
     fclose(f);
 }
@@ -279,8 +277,6 @@ bool SettingsGetDevUnlockUpperFloors(void) { return g_devUnlockUpperFloors; }
 void SettingsSetDevUnlockUpperFloors(bool ligado) { g_devUnlockUpperFloors = ligado; }
 bool SettingsGetDevFirstPerson(void) { return g_devFirstPerson; }
 void SettingsSetDevFirstPerson(bool ligado) { g_devFirstPerson = ligado; }
-bool SettingsGetDevExpanded3D(void) { return g_devExpanded3D; }
-void SettingsSetDevExpanded3D(bool ligado) { g_devExpanded3D = ligado; }
 bool SettingsGetDevDisable2D(void) { return g_devDisable2D; }
 void SettingsSetDevDisable2D(bool ligado) { g_devDisable2D = ligado; }
 bool SettingsGetDevDisable3D(void) { return g_devDisable3D; }

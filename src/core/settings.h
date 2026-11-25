@@ -54,8 +54,6 @@ bool SettingsGetDevUnlockUpperFloors(void);
 void SettingsSetDevUnlockUpperFloors(bool ligado);
 bool SettingsGetDevFirstPerson(void);
 void SettingsSetDevFirstPerson(bool ligado);
-bool SettingsGetDevExpanded3D(void);
-void SettingsSetDevExpanded3D(bool ligado);
 bool SettingsGetDevDisable2D(void);
 void SettingsSetDevDisable2D(bool ligado);
 bool SettingsGetDevDisable3D(void);

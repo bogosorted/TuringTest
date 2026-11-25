@@ -23,7 +23,6 @@ enum {
     HOVER_DEV_AUTORESET = 8,
     HOVER_DEV_TECHNIGHT = 9,
     HOVER_DEV_RESTART = 10,
-    HOVER_DEV_EXPANDED3D = 11,
     HOVER_DEV_SUBSOLO = 12,
     HOVER_DEV_ANDARES = 13,
     HOVER_DEV_FP = 14,
@@ -301,11 +300,6 @@ static bool DesenharPaginaDev(const OptionsUiLayout *lay, const OptionsUiEstilo 
     if (DevCheckbox(SettingsGetDevFirstPerson(), xL, y3, colW, "1ª Pessoa (F1)",
                     HOVER_DEV_FP, est, a, interativo, &algumHover, tocarHover)) {
         SettingsSetDevFirstPerson(!SettingsGetDevFirstPerson());
-    }
-    if (DevCheckbox(SettingsGetDevExpanded3D(), xR, y3, colW, "Tela 3D expandida (BETA)",
-                    HOVER_DEV_EXPANDED3D, est, a, interativo, &algumHover, tocarHover)) {
-        SettingsSetDevExpanded3D(!SettingsGetDevExpanded3D());
-        SettingsSave();
     }
 
     if (DevCheckbox(SettingsGetDevDisable2D(), xL, y4, colW, "Desativar Modo 2D (Menu)",
