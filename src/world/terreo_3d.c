@@ -1351,7 +1351,7 @@ void Terreo3DSetEvidenciaAtiva(bool evRelatoriosAtiva) {
 
 void Terreo3DSetSuspeitosSala(const bool presentes[3]) {
     for (int i = 0; i < 3; i++) {
-        g_suspeitosNaSala[i] = presentes ? presentes[i] : false;
+        g_suspeitosNaSala[i] = (g_salaAtual != TERREO_SALA_CAMERAS && presentes) ? presentes[i] : false;
     }
 }
 
@@ -1897,15 +1897,6 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
     }
     if (g_portaAnimTimer > 0.0f) {
         g_portaAnimTimer -= dt;
-        // Passo suave e calmo atravessando a porta durante a animacao
-        float dxP = g_portaAlvoPos.x - g_player.position.x;
-        float dzP = g_portaAlvoPos.z - g_player.position.z;
-        float distP = hypotf(dxP, dzP);
-        if (distP > 0.08f) {
-            float step = fminf(distP, 0.85f * dt);
-            g_player.position.x += (dxP / distP) * step;
-            g_player.position.z += (dzP / distP) * step;
-        }
         if (g_portaAnimTimer <= 0.0f) {
             g_portaAnimTimer = 0.0f;
             res.acionouDestino = true;
@@ -1995,11 +1986,11 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
         float maisProximoZ = fminf(fmaxf(g_player.position.z, box.min.z), box.max.z);
         float distanciaBorda = hypotf(g_player.position.x - maisProximoX,
                                       g_player.position.z - maisProximoZ);
-        float effDist = ehEv ? (d - 0.25f) : distanciaBorda; // prioriza evidencias sobre moveis proximos
+        float effDist = ehEv ? (distanciaBorda - 0.75f) : distanciaBorda; // prioriza evidencias sobre moveis proximos
         if (distanciaBorda <= maxR && effDist < melhorDist) {
             if (ehEv && d > 0.15f) {
                 float dot = (dx / d) * playerFwd.x + (dz / d) * playerFwd.y;
-                if (dot < 0.50f) continue; // precisa estar virado de frente para a evidencia
+                if (dot < 0.0f) continue; // precisa estar virado para o lado da evidencia
             }
             // Verifica se ha OUTRO movel/decoracao bloqueando o caminho ate o objeto
             bool bloqueadoMovel = false;
@@ -2022,7 +2013,7 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
             }
             if (bloqueadoMovel) continue;
 
-            melhorDist = ehEv ? (d - 0.25f) : d;
+            melhorDist = effDist;
             proxObj    = i;
             proxPorta  = TERREO_DEST_NENHUM;
         }
@@ -2181,7 +2172,8 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
     }
 
     // 5) Interacao via tecla E ou ENTER (proximidade)
-    if (allowTeclado && (IsKeyPressed(KEY_E) || IsKeyPressed(KEY_ENTER))) {
+    bool animOcupada = (g_player.interactTimer > 0.0f) || (g_player.computerExitTimer > 0.0f) || (g_portaAnimTimer > 0.0f);
+    if (allowTeclado && !animOcupada && (IsKeyPressed(KEY_E) || IsKeyPressed(KEY_ENTER))) {
         s_mousePendTipo = 0;
         PlayerCharacterClearMoveTarget(&g_player);
         if (proxSusp >= 0) {
@@ -2200,13 +2192,26 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
                     break;
                 }
             }
+            float dPorta = hypotf(alvoP.x - g_player.position.x, alvoP.z - g_player.position.z);
+            if (dPorta > 0.58f) {
+                s_pathCount = CalcularCaminhoGrid(def, allCols, numAllCols, g_player.position, alvoP, s_pathPts, 32);
+                s_pathIdx = 0;
+                Vector3 finalPt = (s_pathCount > 0) ? s_pathPts[s_pathCount - 1] : alvoP;
+                PlayerCharacterSetMoveGoalFinal(&g_player, finalPt);
+                if (s_pathCount > 0) PlayerCharacterSetMoveTarget(&g_player, s_pathPts[0]);
+                else                 PlayerCharacterSetMoveTarget(&g_player, alvoP);
+                s_mousePendTipo = 2;
+                s_mousePendDest = proxPorta;
+                s_mousePendPos  = alvoP;
+                return res;
+            }
             PlayerCharacterTriggerInteractEx(&g_player, alvoP, PLAYER_ANIM_DOOR, 0.28f);
             if (g_sndPorta3D.frameCount > 0) {
                 SetSoundVolume(g_sndPorta3D, 0.22f * SettingsGetSfxVolume());
                 SetSoundPitch(g_sndPorta3D, 0.96f);
                 PlaySound(g_sndPorta3D);
             }
-            g_portaAnimTimer = 0.22f;
+            g_portaAnimTimer = 0.24f;
             g_portaDestPendente = proxPorta;
             g_portaAlvoPos = alvoP;
             return res;
@@ -2229,7 +2234,7 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
     }
 
     // 6) Modo Mouse (Sims / Ragnarok / Dota): clique no chao para mover ou em objeto/NPC para ir ate ele e interagir
-    if (allowMouse && podeClicarObjetos && sobreJanela && g_texPronta && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (allowMouse && !animOcupada && podeClicarObjetos && sobreJanela && g_texPronta && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         if (hoverSusp >= 0) {
             Vector3 sp = { 0 };
             PosicaoSuspeitoNaSala(g_salaAtual, hoverSusp, &sp, NULL, NULL);
@@ -2252,39 +2257,35 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
             s_mousePendIdx  = hoverSusp;
             s_mousePendPos  = sp;
         } else if (hoverPorta != TERREO_DEST_NENHUM) {
-            if (proxPorta == hoverPorta) {
+            Vector3 alvoP = g_player.position;
+            for (int i = 0; i < def->numPortas; i++) {
+                if (def->portas[i].destino == hoverPorta) { alvoP = def->portas[i].triggerCenter; break; }
+            }
+            float dPorta = hypotf(alvoP.x - g_player.position.x, alvoP.z - g_player.position.z);
+            if (proxPorta == hoverPorta && dPorta <= 0.58f) {
                 s_mousePendTipo = 0;
                 s_pathCount = 0;
                 PlayerCharacterClearMoveTarget(&g_player);
-                Vector3 alvoP = g_player.position;
-                for (int i = 0; i < def->numPortas; i++) {
-                    if (def->portas[i].destino == hoverPorta) { alvoP = def->portas[i].triggerCenter; break; }
-                }
                 PlayerCharacterTriggerInteractEx(&g_player, alvoP, PLAYER_ANIM_DOOR, 0.28f);
                 if (g_sndPorta3D.frameCount > 0) {
                     SetSoundVolume(g_sndPorta3D, 0.22f * SettingsGetSfxVolume());
                     SetSoundPitch(g_sndPorta3D, 0.96f);
                     PlaySound(g_sndPorta3D);
                 }
-                g_portaAnimTimer = 0.22f;
+                g_portaAnimTimer = 0.24f;
                 g_portaDestPendente = hoverPorta;
                 g_portaAlvoPos = alvoP;
                 return res;
             }
-            for (int i = 0; i < def->numPortas; i++) {
-                if (def->portas[i].destino == hoverPorta) {
-                    s_pathCount = CalcularCaminhoGrid(def, allCols, numAllCols, g_player.position, def->portas[i].triggerCenter, s_pathPts, 32);
-                    s_pathIdx = 0;
-                    Vector3 finalPt = (s_pathCount > 0) ? s_pathPts[s_pathCount - 1] : def->portas[i].triggerCenter;
-                    PlayerCharacterSetMoveGoalFinal(&g_player, finalPt);
-                    if (s_pathCount > 0) PlayerCharacterSetMoveTarget(&g_player, s_pathPts[0]);
-                    else                 PlayerCharacterSetMoveTarget(&g_player, def->portas[i].triggerCenter);
-                    s_mousePendTipo = 2;
-                    s_mousePendDest = hoverPorta;
-                    s_mousePendPos  = def->portas[i].triggerCenter;
-                    break;
-                }
-            }
+            s_pathCount = CalcularCaminhoGrid(def, allCols, numAllCols, g_player.position, alvoP, s_pathPts, 32);
+            s_pathIdx = 0;
+            Vector3 finalPt = (s_pathCount > 0) ? s_pathPts[s_pathCount - 1] : alvoP;
+            PlayerCharacterSetMoveGoalFinal(&g_player, finalPt);
+            if (s_pathCount > 0) PlayerCharacterSetMoveTarget(&g_player, s_pathPts[0]);
+            else                 PlayerCharacterSetMoveTarget(&g_player, alvoP);
+            s_mousePendTipo = 2;
+            s_mousePendDest = hoverPorta;
+            s_mousePendPos  = alvoP;
         } else if (hoverObj >= 0) {
             if (proxObj == hoverObj) {
                 s_mousePendTipo = 0;
@@ -2342,8 +2343,8 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
         }
     }
 
-    // Executa interacao pendente quando o personagem chega perto pelo modo Mouse
-    if (allowMouse && s_mousePendTipo != 0) {
+    // Executa interacao pendente quando o personagem chega perto (caminhada por Mouse ou aproximacao de porta por E)
+    if (s_mousePendTipo != 0 && (allowMouse || s_mousePendTipo == 2)) {
         if (s_mousePendTipo == 1 && s_mousePendIdx >= 0 && s_mousePendIdx < def->numInteractables) {
             float dPend = hypotf(s_mousePendPos.x - g_player.position.x, s_mousePendPos.z - g_player.position.z);
             if (dPend <= 1.38f) {
@@ -2363,19 +2364,24 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
                 return res;
             }
             if (!g_player.hasMoveTarget) s_mousePendTipo = 0;
-        } else if (s_mousePendTipo == 2 && proxPorta == s_mousePendDest) {
-            s_mousePendTipo = 0;
-            PlayerCharacterClearMoveTarget(&g_player);
-            PlayerCharacterTriggerInteractEx(&g_player, s_mousePendPos, PLAYER_ANIM_DOOR, 0.28f);
-            if (g_sndPorta3D.frameCount > 0) {
-                SetSoundVolume(g_sndPorta3D, 0.22f * SettingsGetSfxVolume());
-                SetSoundPitch(g_sndPorta3D, 0.96f);
-                PlaySound(g_sndPorta3D);
+        } else if (s_mousePendTipo == 2) {
+            float dPorta = hypotf(s_mousePendPos.x - g_player.position.x, s_mousePendPos.z - g_player.position.z);
+            if (dPorta <= 0.58f || (!g_player.hasMoveTarget && proxPorta == s_mousePendDest)) {
+                s_mousePendTipo = 0;
+                s_pathCount = 0;
+                PlayerCharacterClearMoveTarget(&g_player);
+                PlayerCharacterTriggerInteractEx(&g_player, s_mousePendPos, PLAYER_ANIM_DOOR, 0.28f);
+                if (g_sndPorta3D.frameCount > 0) {
+                    SetSoundVolume(g_sndPorta3D, 0.22f * SettingsGetSfxVolume());
+                    SetSoundPitch(g_sndPorta3D, 0.96f);
+                    PlaySound(g_sndPorta3D);
+                }
+                g_portaAnimTimer = 0.24f;
+                g_portaDestPendente = s_mousePendDest;
+                g_portaAlvoPos = s_mousePendPos;
+                return res;
             }
-            g_portaAnimTimer = 0.22f;
-            g_portaDestPendente = proxPorta;
-            g_portaAlvoPos = s_mousePendPos;
-            return res;
+            if (!g_player.hasMoveTarget) s_mousePendTipo = 0;
         } else if (s_mousePendTipo == 3 && proxSusp == s_mousePendIdx) {
             Vector3 sp = { 0 };
             PosicaoSuspeitoNaSala(g_salaAtual, proxSusp, &sp, NULL, NULL);

@@ -58,6 +58,7 @@ add_executable(turing_test
     src/systems/mapa_holograma.c
     src/systems/setas_3d.c
     src/systems/player_character.c
+    src/systems/cutscene_3d.c
     src/world/terreo_3d.c
     src/world/sala_recepcao.c
     src/world/sala_lanchonete.c

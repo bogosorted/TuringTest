@@ -14,6 +14,7 @@
 #include "evidencia_holograma.h"
 #include "setas_3d.h"
 #include "terreo_3d.h"
+#include "cutscene_3d.h"
 #include "game_state.h"
 #include "dialog_data.h"
 #include "ui_common.h"
@@ -4608,8 +4609,8 @@ static bool UpdateAbaDev(bool *hoverOut) {
 
     // Linha de teleporte abaixo do grid
     float yTp = CHAT_AREA_Y + CHAT_HEADER_H + 10.0f + 6 * 29.0f + 4.0f;
-    float x0  = CHAT_AREA_X + 8.0f;
-    float totW = CHAT_AREA_W - 16.0f;
+    float x0  = ChatAreaXAtual() + 8.0f;
+    float totW = ChatAreaWAtual() - 16.0f;
     Rectangle rPrev = { x0, yTp, 24.0f, 24.0f };
     Rectangle rNext = { x0 + totW - 72.0f, yTp, 24.0f, 24.0f };
     Rectangle rIr   = { x0 + totW - 44.0f, yTp, 44.0f, 24.0f };
@@ -4639,12 +4640,22 @@ static bool UpdateAbaDev(bool *hoverOut) {
         }
     }
 
-    Rectangle rFp = { x0, yTp + 29.0f, totW, 24.0f };
+    float halfW = (totW - 4.0f) * 0.5f;
+    Rectangle rFp = { x0, yTp + 29.0f, halfW, 24.0f };
     if (CheckCollisionPointRec(mouse, ParaTela(rFp))) {
         if (hoverOut) *hoverOut = true;
         if (clicou) {
             TocarSomHover();
             SettingsSetDevFirstPerson(!SettingsGetDevFirstPerson());
+            return true;
+        }
+    }
+    Rectangle rCs = { x0 + halfW + 4.0f, yTp + 29.0f, halfW, 24.0f };
+    if (CheckCollisionPointRec(mouse, ParaTela(rCs))) {
+        if (hoverOut) *hoverOut = true;
+        if (clicou) {
+            TocarSomHover();
+            Cutscene3DStart();
             return true;
         }
     }
@@ -4725,12 +4736,19 @@ static void DesenharAbaDev(Rectangle rCorpo) {
     DrawRectangleLinesEx(ParaTela(rIr), 1.4f, hI ? cClaro : cBorda);
     DrawTextInArea("IR", rIr, 9, cClaro);
 
-    Rectangle rFp = { x0, yTp + 29.0f, totW, 24.0f };
+    float halfW = (totW - 4.0f) * 0.5f;
+    Rectangle rFp = { x0, yTp + 29.0f, halfW, 24.0f };
     bool fpAtivo = SettingsGetDevFirstPerson();
     bool hFp = CheckCollisionPointRec(mouse, ParaTela(rFp));
     DrawRectangleRec(ParaTela(rFp), fpAtivo ? (hFp ? cAtHov : cAtivo) : (hFp ? cBtnHov : cBtn));
     DrawRectangleLinesEx(ParaTela(rFp), hFp ? 1.8f : 1.1f, hFp ? cClaro : cBorda);
-    DrawTextInArea(fpAtivo ? "1ª PESSOA: ON" : "1ª PESSOA: OFF", rFp, 7, cClaro);
+    DrawTextInArea(fpAtivo ? "1ª PESSOA: ON" : "1ª PESSOA: OFF", rFp, 6.8f, cClaro);
+
+    Rectangle rCs = { x0 + halfW + 4.0f, yTp + 29.0f, halfW, 24.0f };
+    bool hCs = CheckCollisionPointRec(mouse, ParaTela(rCs));
+    DrawRectangleRec(ParaTela(rCs), hCs ? cBtnHov : cBtn);
+    DrawRectangleLinesEx(ParaTela(rCs), hCs ? 1.8f : 1.1f, hCs ? cClaro : cBorda);
+    DrawTextInArea("CUTSCENE 3D", rCs, 6.8f, cClaro);
 }
 
 static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
@@ -8927,6 +8945,7 @@ static void AtualizarRotacaoSuspeitos(float dt) {
                 if (HOLO_SALAS[l].numPartes == 0 || HOLO_SALAS[l].escada) continue;
                 // Garante que o suspeito nunca va para andares trancados (2, 3, 4 ou Subsolo)
                 if (HOLO_SALAS[l].andar != 0 && HOLO_SALAS[l].andar != 1) continue;
+                if (loc == LOCAL_SALA_CAMERAS) continue;
             } else {
                 if (HOLO_SALAS_2D[l].numPartes == 0 || HOLO_SALAS_2D[l].escada) continue;
             }
@@ -8998,6 +9017,17 @@ static void DesenharPhishingPopup(void) {
 }
 
 void UpdateDrawGameplayScene(void) {
+    if (Cutscene3DIsActive()) {
+        Cutscene3DUpdateAndRender(GetFrameTime());
+        if (Cutscene3DIsActive()) {
+            RayCanvasBegin();
+            ClearBackground(BLACK);
+            Cutscene3DDrawOverlay();
+            RayCanvasEnd();
+            return;
+        }
+    }
+
     // O mapa 3D vai para uma textura propria, entao precisa ser desenhado antes do
     // RayCanvasBegin (que pode estar desenhando o frame inteiro em outra textura)
     if (!g_dialogLoaded) {
@@ -9895,6 +9925,7 @@ void UpdateDrawGameplayScene(void) {
 }
 
 void UnloadGameplayScene(void) {
+    Cutscene3DUnload();
     LimparEventoPendente();
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
     for (int i = 0; i < 3; i++) FreeDialogTree(&g_trees[i]);

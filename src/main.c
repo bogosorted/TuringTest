@@ -11,6 +11,7 @@
 #include "raycanvas.h"
 #include "settings.h"
 #include "ranking.h"
+#include "cutscene_3d.h"
 #include <math.h>
 #ifdef _WIN32
 #include <process.h>
@@ -173,6 +174,17 @@ int main(int argc, char **argv) {
             continue;
         }
 
+        if (Cutscene3DIsActive()) {
+            Cutscene3DUpdateAndRender(dt);
+            if (Cutscene3DIsActive()) {
+                RayCanvasBegin();
+                ClearBackground(BLACK);
+                Cutscene3DDrawOverlay();
+                RayCanvasEnd();
+                continue;
+            }
+        }
+
         // 2) Cena atual
         switch (currentScene) {
             case SCENE_MENU:
@@ -251,6 +263,7 @@ int main(int argc, char **argv) {
     // Descarrega a tela que estiver aberta no momento
     UnloadScene(currentScene);
 
+    Cutscene3DUnload();
     if (bgmCarregada) {
         UnloadMusicStream(bgm);
     }
