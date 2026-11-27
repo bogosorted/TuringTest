@@ -3,6 +3,7 @@
 #include "game_state.h"
 #include "raycanvas.h"
 #include "cutscene_3d.h"
+#include "ui_common.h"
 #include <ctype.h>
 #include <math.h>
 #include <stddef.h>
@@ -84,11 +85,7 @@ static Rectangle ParaTela(Rectangle r) {
     return (Rectangle){ t.x + r.x * ex, t.y + r.y * ey, r.width * ex, r.height * ey };
 }
 
-static Vector2 MouseVirtual(void) {
-    Rectangle t = TelaRect();
-    Vector2 m = RayCanvasGetMousePosition();
-    return (Vector2){ (m.x - t.x) * (float)TELA_W / t.width, (m.y - t.y) * (float)TELA_H / t.height };
-}
+#define MouseVirtual UIMouseVirtual
 
 static Color ComAlpha(Color c, float a) {
     return Fade(c, (c.a / 255.0f) * a);

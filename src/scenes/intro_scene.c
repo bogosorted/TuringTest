@@ -5,6 +5,7 @@
 #include "game_state.h"
 #include "ui_common.h"
 #include <stdio.h>
+#include <math.h>
 
 // Mesmo espaco virtual das outras cenas (640x360)
 #define VIRTUAL_W UI_VIRTUAL_W
@@ -120,6 +121,7 @@ void UpdateDrawIntroScene(void) {
 
     float escala = Escala();
     Rectangle tela = GetTelaRect();
+    float escalaTexto = fminf(tela.width / (float)VIRTUAL_W, tela.height / (float)VIRTUAL_H);
 
     // Cores oficiais da paleta do menu
     Color corFundo    = (Color){  32,  29,  31, 255 };
@@ -148,16 +150,16 @@ void UpdateDrawIntroScene(void) {
     DrawRectangleLinesEx(tarjaCab, 1.5f * escala, Fade(corPainel, alpha));
 
     const char *cabecalho = "RASEC - DOSSIÊ CONFIDENCIAL // DIRETORIA DE SEGURANÇA";
-    int tamCab = (int)(9 * escala);
+    int tamCab = (int)(9 * escalaTexto);
     DrawText(cabecalho,
              (int)(tela.x + (tela.width - MeasureText(cabecalho, tamCab)) / 2.0f),
              (int)(moldura.y + 7 * escala),
              tamCab, Fade(corDestaque, alpha));
 
     // Texto centralizado na tela (horizontal e vertical)
-    int fonte = (int)(TEXT_FONT * escala);
+    int fonte = (int)(TEXT_FONT * escalaTexto);
     int alturaLinha = (int)(fonte * LINE_SPACING);
-    int n = BuildLines(fonte, (int)(TEXT_W * escala));
+    int n = BuildLines(fonte, (int)(TEXT_W * escalaTexto));
     int y = (int)(tela.y + (tela.height - n * alturaLinha) / 2.0f);
 
     for (int i = 0; i < n; i++) {

@@ -745,12 +745,8 @@ static const OptionsUiLayout LAYOUT_OPCOES = {
     .larguraValor = 52.0f, .gapNome = 10.0f
 };
 
-// Posicao do mouse em pixels 640x360 (inverso do ParaTela)
-static Vector2 MouseVirtual(void) {
-    Rectangle t = TelaRect();
-    Vector2 m = RayCanvasGetMousePosition();
-    return (Vector2){ (m.x - t.x) * (float)TELA_W / t.width, (m.y - t.y) * (float)TELA_H / t.height };
-}
+// Posicao do mouse em pixels 640x360 (usa guarda contra divisao por zero de UIMouseVirtual)
+#define MouseVirtual UIMouseVirtual
 
 // Texto na fonte do menu. 'yCentro' e o centro vertical
 static void TextoOpcoes(const char *txt, float x, float yCentro, float tamanho, Color cor) {

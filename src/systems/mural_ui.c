@@ -3,6 +3,7 @@
 #include "ranking.h"
 #include "raycanvas.h"
 #include "settings.h"
+#include "ui_common.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,14 +65,7 @@ static Rectangle ParaTela(Rectangle r) {
     return (Rectangle){ t.x + r.x * ex, t.y + r.y * ey, r.width * ex, r.height * ey };
 }
 
-static Vector2 MouseVirtual(void) {
-    Rectangle t = TelaRect();
-    Vector2 m = RayCanvasGetMousePosition();
-    return (Vector2){
-        (m.x - t.x) * (float)VIRTUAL_W / t.width,
-        (m.y - t.y) * (float)VIRTUAL_H / t.height
-    };
-}
+#define MouseVirtual UIMouseVirtual
 
 static void TocarHover(Sound snd) {
     if (snd.frameCount > 0) {

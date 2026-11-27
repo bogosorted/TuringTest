@@ -1660,6 +1660,8 @@ static bool TesteEspecialDisponivel(int suspeito) {
 
 static void ExecutarEnviesar(void) {
     if (!g_dialogLoaded || g_suspeitoAtual < 0 || g_suspeitoAtual >= 3) return;
+    g_falaPlayerPendente = false;
+    g_nextNodePendente[0] = '\0';
     bool dev = SettingsGetDevMode();
     GastarTokensFerramenta(2);
     GameStateSetViesUsado(g_suspeitoAtual, true);
@@ -1694,6 +1696,7 @@ static void ExecutarEnviesar(void) {
 }
 
 static void OnClickEnviesar(void) {
+    if (g_falaPlayerPendente) return;
     TraceLog(LOG_INFO, "Ferramenta Enviesar Dados clicada!");
     if (!g_dialogLoaded || g_suspeitoAtual < 0 || g_suspeitoAtual >= 3) {
         DefinirAlertaFerramenta(1.2f, "Selecione um suspeito na sala antes de usar a ferramenta!");
@@ -1752,6 +1755,7 @@ static void ExecutarDeepfake(void) {
 }
 
 static void OnClickDeepfake(void) {
+    if (g_falaPlayerPendente) return;
     if (g_deepfakeAberto) {
         g_deepfakeAberto = false;
         return;
@@ -1782,6 +1786,8 @@ static void OnClickDeepfake(void) {
 
 static void ExecutarInjecao(void) {
     if (!g_dialogLoaded || g_suspeitoAtual < 0 || g_suspeitoAtual >= 3) return;
+    g_falaPlayerPendente = false;
+    g_nextNodePendente[0] = '\0';
     bool dev = SettingsGetDevMode();
     GastarTokensFerramenta(3);
     GameStateSetInjecaoUsada(g_suspeitoAtual, true);
@@ -1816,6 +1822,7 @@ static void ExecutarInjecao(void) {
 }
 
 static void OnClickInjecao(void) {
+    if (g_falaPlayerPendente) return;
     TraceLog(LOG_INFO, "Ferramenta Injecao de Prompt clicada!");
     if (!g_dialogLoaded || g_suspeitoAtual < 0 || g_suspeitoAtual >= 3) {
         DefinirAlertaFerramenta(1.2f, "Selecione um suspeito na sala antes de usar a ferramenta!");

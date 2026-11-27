@@ -482,8 +482,9 @@ int MapaHoloNumAndares(void) {
 int MapaHoloSalaEm(Vector2 ponto) {
     if (!g_pronto || !g_texPronta) return -1;
     // De cima para baixo: o andar de cima e desenhado por ultimo e fica na frente
-    int minAndar = (SettingsGetDevMode() && SettingsGetDevUnlockSubsolo()) ? -1 : 0;
-    for (int andar = g_numAndares - 1; andar >= minAndar; andar--) {
+    int minAndar = g_apenasAndarAtual ? g_andarFoco : ((SettingsGetDevMode() && SettingsGetDevUnlockSubsolo()) ? -1 : 0);
+    int maxAndar = g_apenasAndarAtual ? g_andarFoco : (g_numAndares - 1);
+    for (int andar = maxAndar; andar >= minAndar; andar--) {
         for (int i = 0; i < g_numSalas; i++) {
             const HoloSala *s = &g_salas[i];
             if (s->numPartes == 0 || s->andar != andar) continue;
