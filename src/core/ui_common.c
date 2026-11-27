@@ -202,6 +202,7 @@ bool UIRemoverAcentos(char *dest, int tam, const char *src) {
     if (!dest || !src || tam <= 0) return false;
     static const char TABELA[] = "AAAAAAACEEEEIIIIDNOOOOOxOUUUUYTsaaaaaaaceeeeiiiidnooooo/ouuuuyty";
     dest[0] = '\0';
+    bool valido = true;
     int j = 0;
     for (int i = 0; src[i] != '\0' && j < tam - 1; i++) {
         unsigned char c = (unsigned char)src[i];
@@ -229,19 +230,25 @@ bool UIRemoverAcentos(char *dest, int tam, const char *src) {
             i += 2;
         } else if (c >= 0x80) {
             dest[j++] = '?';
-            if ((c & 0xE0) == 0xC0 && c1 != '\0' && (c1 & 0xC0) == 0x80) i++;
-            else if ((c & 0xF0) == 0xE0 && c1 != '\0' && c2 != '\0' &&
-                     (c1 & 0xC0) == 0x80 && ((unsigned char)src[i + 2] & 0xC0) == 0x80) i += 2;
-            else if ((c & 0xF8) == 0xF0 && c1 != '\0' && c2 != '\0' &&
-                     (c1 & 0xC0) == 0x80 && (c2 & 0xC0) == 0x80 &&
-                     (unsigned char)src[i + 3] != '\0' &&
-                     ((unsigned char)src[i + 3] & 0xC0) == 0x80) i += 3;
+            if ((c & 0xE0) == 0xC0 && c1 != '\0' && (c1 & 0xC0) == 0x80) {
+                i++;
+            } else if ((c & 0xF0) == 0xE0 && c1 != '\0' && c2 != '\0' &&
+                       (c1 & 0xC0) == 0x80 && (c2 & 0xC0) == 0x80) {
+                i += 2;
+            } else if ((c & 0xF8) == 0xF0 && c1 != '\0' && c2 != '\0' &&
+                       (c1 & 0xC0) == 0x80 && (c2 & 0xC0) == 0x80 &&
+                       (unsigned char)src[i + 3] != '\0' &&
+                       ((unsigned char)src[i + 3] & 0xC0) == 0x80) {
+                i += 3;
+            } else {
+                valido = false;
+            }
         } else {
             dest[j++] = (char)c;
         }
     }
     dest[j] = '\0';
-    return true;
+    return valido;
 }
 
 Texture2D UICriarSilhuetaColorida(const char *caminho, Color corBase, unsigned char alphaMin, bool mipmaps) {
