@@ -134,7 +134,7 @@ Projeto acadêmico focado em inovação, tecnologia e aprendizado de IA por meio
 ![Menu Inicial - Sprint 1](./assets/sprint1.png)
 
 ## Qualidade, Testes e Bug Tracker
-* **Rastreamento de Issues:** [GitHub Issues — bogosorted/TuringTest](https://github.com/bogosorted/TuringTest/issues) (**31 issues fechadas** e **13 em aberto** de 44 registradas até o fechamento da Sprint 4).
+* **Rastreamento de Issues:** [GitHub Issues — bogosorted/TuringTest](https://github.com/bogosorted/TuringTest/issues) (**42 issues fechadas** e **2 em aberto** de 44 registradas até o fechamento da Sprint 4).
 * **Board e Evidências de Teste:** [Quadro no Trello](https://trello.com/invite/b/6aa1e6285b09214e866db572/ATTI8e57471ff36c1c7f22fa6522a254aed409A5205E/p5-turing-test)
 * **Print do Issue / Bug Tracker:** *<!-- TODO: adicionar print atualizado do bug tracker -->*
 
