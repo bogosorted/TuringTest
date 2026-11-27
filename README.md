@@ -30,7 +30,7 @@ Este projeto foi idealizado e desenvolvido no contexto acadêmico da CESAR Schoo
 ## Produto em Produção (Download e Release)
 * **Página oficial (itch.io):** [https://vitorc-hub.itch.io/turingtest-demo](https://vitorc-hub.itch.io/turingtest-demo)
 * **GitHub Release (Windows e Linux):** [Teste de Turing v1.0.0 — Entrega 4](https://github.com/bogosorted/TuringTest/releases/tag/v1.0.0)
-* **Screencast Final:** *<!-- TODO: adicionar link do screencast final -->*
+* **Screencast Final e Evidências (Google Drive):** [Pasta de Screencasts e Testes](https://drive.google.com/drive/u/0/folders/1VTaq3THXLXGzfY1T6M6D5C9VqB5jnzX1)
 
 ## Premissa
 Na sede da RASEC, uma corporação de robótica, o treinamento de humanoides ultrapassou os limites de segurança estabelecidos devido ao aprendizado por convivência direta com humanos.
@@ -125,18 +125,57 @@ Projeto acadêmico focado em inovação, tecnologia e aprendizado de IA por meio
   * [US-17: Executar Injeção de Prompt no Interrogatório](./docs/diagramas/US-17.md)
   * [US-18: Escanear Anomalias Físicas no Interrogatório](./docs/diagramas/US-18.md)
 
-### Screencasts das Histórias (Sprint 4)
-* **US-12 (Gatilho para Finais e Consequências):** *<!-- TODO: link do vídeo -->*
-* **US-14 (Tutorial de Gameplay 2D/3D):** *<!-- TODO: link do vídeo -->*
-* **US-17 (Injeção de Prompt no Interrogatório):** *<!-- TODO: link do vídeo -->*
-* **US-18 (Scanner de Anomalias Físicas):** *<!-- TODO: link do vídeo -->*
+### Histórias por Sprint (Baseado no Quadro do Trello)
+
+#### Sprint 1 — Esqueleto e Base
+* `ESQUELETO DO JOGO PARA REVISÃO`
+* **História 01:** Start e Navegação Inicial
+* **História 02:** Fichas de Funcionários
+* **História 05:** Loop Central de Gameplay
+
+#### Sprint 2 — Interrogatório, Recursos e Veredito
+* **História 03 / 03.1:** Árvores de Diálogo e Implementação dos "Dreamers"
+* **História 06:** Sistema de Veredito
+* **História 07:** Tokens (Gerenciamento de Recursos)
+* **História 08:** Botão de Ajuda (Minigame Lógico)
+* **História 09:** Variabilidade e Desafio (Falsos Positivos e Progressão)
+* **História 11:** Sistema de Humor / Paciência
+
+#### Sprint 3 — Sistemas Avançados, Qualidade e UX
+* **História 10:** Sistema de Ranking e Pontuação Final
+* **História 14:** Tutorial (Dia 1)
+* **História 19:** Testes de Sistema ([Pasta de Evidências no Drive](https://drive.google.com/drive/u/0/folders/1VTaq3THXLXGzfY1T6M6D5C9VqB5jnzX1))
+* **História 21:** Visualizador de Evidências
+* **História 22:** Prancheta no Veredito
+* **História 23:** Menu de Opções e Configurações
+* **História 25:** Cena de Introdução
+* **História 26:** Transições entre Cenas
+
+#### Sprint 4 (Entrega 4) — Modo 2D/3D, Narrativa e Refinamentos Finais
+* **História 12:** Gatilho para Finais e Consequências
+* **História 17:** Ferramenta de Injeção de Prompt
+* **História 18:** Scanner de Artefatos e Análise de Deepfake
+* **História 20:** Mapa (2D/3D)
+* **História 24:** Seleção de Personagem
+* **História 27:** Tutorial para Versão Final (2D/3D)
+* **História 28:** Mural de Funcionários com Foto do Jogador e Ranking Final
+* **História 29:** Paletas Atualizadas e Paletas Secretas
+* **História 37:** Áudio, Trilha Sonora e Efeitos Sonoros
+* **Patches de Refinamento:** `Patch História 02` (Ficha de Funcionários), `Patch História 06` (Veredito Atualizado), `Patch História 08` (Botão de Ajuda Atualizado), `Patch Histórias 16 e 17` (Ferramentas Atualizadas), `Patch História 23` (Tela de Menu Atualizada)
+
+### Screencasts das Histórias e Testes
+* **Pasta de Screencasts e Testes de Sistema (Google Drive):** [Acessar gravações no Drive](https://drive.google.com/drive/u/0/folders/1VTaq3THXLXGzfY1T6M6D5C9VqB5jnzX1)
 
 ![Menu Inicial Atual](./assets/MenuPrincipal.png)
 
 ## Qualidade, Testes e Bug Tracker
 * **Rastreamento de Issues:** [GitHub Issues — bogosorted/TuringTest](https://github.com/bogosorted/TuringTest/issues) (**44 issues fechadas** e **0 em aberto** até o fechamento da Sprint 4).
 * **Board e Evidências de Teste:** [Quadro no Trello](https://trello.com/invite/b/6aa1e6285b09214e866db572/ATTI8e57471ff36c1c7f22fa6522a254aed409A5205E/p5-turing-test)
-* **Print do Issue / Bug Tracker:** *<!-- TODO: adicionar print atualizado do bug tracker -->*
+* **Prints do Issue / Bug Tracker (Issues Resolvidas):**
+
+![Issues Resolvidas 1](./assets/IssuesResolvidas1.png)
+![Issues Resolvidas 2](./assets/IssuesResolvidas2.png)
+![Issues Resolvidas 3](./assets/IssueResolvida3.png)
 
 ## Relatórios de Extreme Programming (XP)
 
