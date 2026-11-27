@@ -2086,6 +2086,24 @@ TerreoInteracaoResultado Terreo3DUpdate(float dt,
                 hoverSusp  = -1;
             }
         }
+        if (hoverSusp >= 0 && def->colliders && def->numColliders > 0) {
+            Vector3 sp = { 0 };
+            PosicaoSuspeitoNaSala(g_salaAtual, hoverSusp, &sp, NULL, NULL);
+            for (int c = 0; c < def->numColliders; c++) {
+                PlayerColliderBox b = def->colliders[c];
+                if (sp.x >= b.minX - 0.10f && sp.x <= b.maxX + 0.10f &&
+                    sp.z >= b.minZ - 0.10f && sp.z <= b.maxZ + 0.10f) continue;
+                BoundingBox bCol = {
+                    { b.minX, 0.0f,  b.minZ },
+                    { b.maxX, 1.45f, b.maxZ }
+                };
+                RayCollision hitCol = GetRayCollisionBox(ray, bCol);
+                if (hitCol.hit && hitCol.distance < bestHit) {
+                    hoverSusp = -1;
+                    break;
+                }
+            }
+        }
         g_mouseSobreInteragivel = (hoverPorta != TERREO_DEST_NENHUM) || (hoverObj >= 0) || (hoverSusp >= 0);
     }
 
