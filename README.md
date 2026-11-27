@@ -3,7 +3,7 @@
 ![C](https://img.shields.io/badge/C-00599C?style=for-the-badge&logo=c&logoColor=white) ![Raylib](https://img.shields.io/badge/Raylib-FFFFFF?style=for-the-badge&logoColor=black) ![CESAR School](https://img.shields.io/badge/CESAR_School-Projeto_Acad%C3%AAmico-blue?style=for-the-badge)
 
 > "Não deixem que as máquinas substituam a singularidade humana. Detenham os impostores. Exponha a verdade."
-![Descrição da imagem](./TuringTeste.jpg)
+![Teste de Turing](./assets/TuringTestDEMOBanner.png)
 
 Teste de Turing é um jogo de suspense e investigação focado em alfabetização em Inteligência Artificial (AI Literacy). O jogador assume o papel de um inspetor na corporação RASEC com a missão de interrogar funcionários e identificar humanoides sintéticos infiltrados na empresa antes que eles comprometam a rede central.
 
@@ -131,10 +131,10 @@ Projeto acadêmico focado em inovação, tecnologia e aprendizado de IA por meio
 * **US-17 (Injeção de Prompt no Interrogatório):** *<!-- TODO: link do vídeo -->*
 * **US-18 (Scanner de Anomalias Físicas):** *<!-- TODO: link do vídeo -->*
 
-![Menu Inicial - Sprint 1](./assets/sprint1.png)
+![Menu Inicial Atual](./assets/MenuPrincipal.png)
 
 ## Qualidade, Testes e Bug Tracker
-* **Rastreamento de Issues:** [GitHub Issues — bogosorted/TuringTest](https://github.com/bogosorted/TuringTest/issues) (**42 issues fechadas** e **2 em aberto** de 44 registradas até o fechamento da Sprint 4).
+* **Rastreamento de Issues:** [GitHub Issues — bogosorted/TuringTest](https://github.com/bogosorted/TuringTest/issues) (**44 issues fechadas** e **0 em aberto** até o fechamento da Sprint 4).
 * **Board e Evidências de Teste:** [Quadro no Trello](https://trello.com/invite/b/6aa1e6285b09214e866db572/ATTI8e57471ff36c1c7f22fa6522a254aed409A5205E/p5-turing-test)
 * **Print do Issue / Bug Tracker:** *<!-- TODO: adicionar print atualizado do bug tracker -->*
 
