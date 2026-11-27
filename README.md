@@ -11,16 +11,26 @@ Teste de Turing é um jogo de suspense e investigação focado em alfabetizaçã
 Este projeto foi idealizado e desenvolvido no contexto acadêmico da CESAR School, aplicando conceitos práticos de Ciência da Computação, Engenharia de Software, Design de Experiência do Usuário (UX) e Ética em Inteligência Artificial.
 
 ## Sumário
+* [Produto em Produção (Download e Release)](#produto-em-produção-download-e-release)
 * [Premissa](#premissa)
 * [Mecânicas Principais](#mecânicas-principais)
 * [Conceitos do Mundo Real e AI Literacy](#conceitos-do-mundo-real-e-ai-literacy)
 * [Tipologia dos Agentes](#tipologia-dos-agentes)
 * [Rotas e Finais](#rotas-e-finais)
+* [Evolução do Projeto (Sprints 1 a 4)](#evolução-do-projeto-sprints-1-a-4)
 * [Tecnologias e Conceitos](#tecnologias-e-conceitos)
 * [Documentação e User Stories](#documentação-e-user-stories)
+* [Qualidade, Testes e Bug Tracker](#qualidade-testes-e-bug-tracker)
 * [Relatórios de Extreme Programming (XP)](#relatórios-de-extreme-programming-xp)
+* [Equipe](#equipe)
+* [Como Contribuir](#como-contribuir)
 * [Instituição](#instituição)
 * [Como Rodar o Jogo (Para Iniciantes)](#como-rodar-o-jogo-para-iniciantes)
+
+## Produto em Produção (Download e Release)
+* **Página oficial (itch.io):** [https://vitorc-hub.itch.io/turingtest-demo](https://vitorc-hub.itch.io/turingtest-demo)
+* **GitHub Release (Windows e Linux):** [Teste de Turing v1.0.0 — Entrega 4](https://github.com/bogosorted/TuringTest/releases/tag/v1.0.0)
+* **Screencast Final:** *<!-- TODO: adicionar link do screencast final -->*
 
 ## Premissa
 Na sede da RASEC, uma corporação de robótica, o treinamento de humanoides ultrapassou os limites de segurança estabelecidos devido ao aprendizado por convivência direta com humanos.
@@ -65,6 +75,15 @@ Perfis Humanos (Falsos Positivos):
 * Rota Clandestina: Algumas IAs não tentarão disfarçar sua natureza e revelar a verdade obscura sobre os bastidores da RASEC. O jogador pode optar por protegê-las.
 * Final Secreto: Acesse o gabinete do CEO em dias específicos e apoie a insurreição para descobrir a verdadeira natureza da sua própria existência dentro da instalação.
 
+## Evolução do Projeto (Sprints 1 a 4)
+* **Sprints 1 e 2:** Menu inicial responsivo (`RayCanvas`), loop central de gameplay, fichas de funcionários, árvore de diálogos inicial e sistema de veredito.
+* **Sprint 3:** Diálogos dinâmicos em C (`dialog_data`), scanner biométrico, shaders, menu de opções e paletas, ranking com captura de webcam, desafio lógico, tutorial do Dia 1 e relatos iniciais de XP.
+* **Sprint 4 (Entrega 4):**
+  * **Modos 2D e 3D completos:** exploração de todos os setores da RASEC em 3D (com elevador, NPCs, evidências e setas-guia), expansão dos andares 2D e preview dos modos no menu.
+  * **Tutorial & Onboarding:** tutorial refeito para movimentação 3D, diálogos e uso de ferramentas.
+  * **Narrativa & Gameplay:** cutscenes e animações, rotação de suspeitos, modo difícil, easter-eggs, paletas secretas com reset por run e integração completa de áudios/SFX.
+  * **Qualidade & Sustentabilidade:** correções de QA/UI e compatibilidade MSVC, criação do [CONTRIBUTING.md](./CONTRIBUTING.md) e relatos finais de Programação em Pares (XP).
+
 ## Tecnologias e Conceitos
 * Gênero: Simulação Social, Suspense, Investigação, Puzzle Narrativo.
 * Linguagem e Biblioteca: Desenvolvido em C utilizando a biblioteca gráfica Raylib.
@@ -106,14 +125,41 @@ Projeto acadêmico focado em inovação, tecnologia e aprendizado de IA por meio
   * [US-17: Executar Injeção de Prompt no Interrogatório](./docs/diagramas/US-17.md)
   * [US-18: Escanear Anomalias Físicas no Interrogatório](./docs/diagramas/US-18.md)
 
+### Screencasts das Histórias (Sprint 4)
+* **US-12 (Gatilho para Finais e Consequências):** *<!-- TODO: link do vídeo -->*
+* **US-14 (Tutorial de Gameplay 2D/3D):** *<!-- TODO: link do vídeo -->*
+* **US-17 (Injeção de Prompt no Interrogatório):** *<!-- TODO: link do vídeo -->*
+* **US-18 (Scanner de Anomalias Físicas):** *<!-- TODO: link do vídeo -->*
+
 ![Menu Inicial - Sprint 1](./assets/sprint1.png)
+
+## Qualidade, Testes e Bug Tracker
+* **Rastreamento de Issues:** [GitHub Issues — bogosorted/TuringTest](https://github.com/bogosorted/TuringTest/issues) (**31 issues fechadas** e **13 em aberto** de 44 registradas até o fechamento da Sprint 4).
+* **Board e Evidências de Teste:** [Quadro no Trello](https://trello.com/invite/b/6aa1e6285b09214e866db572/ATTI8e57471ff36c1c7f22fa6522a254aed409A5205E/p5-turing-test)
+* **Print do Issue / Bug Tracker:** *<!-- TODO: adicionar print atualizado do bug tracker -->*
 
 ## Relatórios de Extreme Programming (XP)
 
-* [Gabriel Aragão e Andressa](./docs/relatorios/aragao-andressa.md) — *Tutorial Interativo do Dia 1, Diálogos e UX*
-* [Lívia Acioli e Ricardo Freire](./docs/relatorios/livia-ricardo.md) — *Fichas de Funcionários, Prancheta, QA e Sons*
-* [João Gabriel e José Rodrigo Bispo](./docs/relatorios/joao-rodrigo.md) — *Ciclo de Dias, Facilitação Scrum e Testes de Aceitação*
-* [Vitor Cauã e Renato Veras](./docs/relatorios/vitor-renato.md) — *Product Owner, Design de Interface (HUD) e Áudio/SFX*
+* [Gabriel Aragão e Andressa](./docs/relatorios/aragao-andressa.md) — *Tutorial Interativo (2D/3D), UX, Arquitetura e Documentação*
+* [Lívia Acioli e Ricardo Freire](./docs/relatorios/livia-ricardo.md) — *Fichas de Funcionários, Prancheta, QA, Correções e Sons*
+* [João Gabriel e José Rodrigo Bispo](./docs/relatorios/joao-rodrigo.md) — *Scrum Master, Diálogos/Feedback, Issue Tracking e QA*
+* [Vitor Cauã e Renato Veras](./docs/relatorios/vitor-renato.md) — *Product Owner, Modos 2D/3D, HUD, Cutscenes e Áudio/SFX*
+
+## Equipe
+
+| Integrante | Papel Principal |
+| :--- | :--- |
+| **Vitor Cauã** | Product Owner (P.O.), Design de Interface (HUD) e Desenvolvimento (2D/3D) |
+| **João Gabriel** | Scrum Master, Diálogos, Issue Tracking e Facilitação |
+| **Gabriel Aragão** | Desenvolvimento (Sistemas Centrais, Shaders, Documentação) |
+| **Lívia Acioli** | Desenvolvimento (Interface, Fichas, Veredito, Desafio Lógico, Áudio) |
+| **Andressa Souza** | UX, Tutorial (2D/3D), UI de Ferramentas e Gameplay |
+| **Renato Veras** | Áudio/SFX, Cutscenes, Modo 3D/Difícil e Gameplay |
+| **Ricardo Freire** | QA, Relatório de Bugs e Correções de Estabilidade/Build |
+| **José Rodrigo Bispo** | QA, Testes de Aceitação e Correções de Estabilidade |
+
+## Como Contribuir
+Consulte o guia completo em [CONTRIBUTING.md](./CONTRIBUTING.md) para instruções de pré-requisitos, compilação (Linux/Windows), estrutura modularizada em `src/`, convenções de código C99 e fluxo de branches/Pull Requests.
 
 ## Como Rodar o Jogo (Para Iniciantes)
 
