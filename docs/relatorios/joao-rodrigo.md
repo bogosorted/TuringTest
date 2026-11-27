@@ -59,5 +59,21 @@ No contexto do XP, os papéis da dupla se complementam: João garante a evoluç�
 * **Desafio:** Manter a agilidade no fechamento de tickets durante a descoberta de falhas complexas. Solução: Decomposição das falhas em subtarefas menores e comunicação constante para isolar a origem do bug.
 * **Aprendizado:** A atuação próxima entre a facilitação/desenvolvimento e a garantia de qualidade acelera a identificação de problemas e garante um produto final com maior nível de confiabilidade e menor tempo de retrabalho.
 
-## 8. Conclusão
-A dupla aplicou as práticas de XP de forma adaptada e eficiente ao longo das sprints. A combinação da facilitação e desenvolvimento de João com o controle de qualidade executado por José Rodrigo permitiu a entrega de versões incrementais do jogo com acompanhamento transparente dos tickets e controle de defeitos. O processo estabelecido assegura uma base sólida para a continuidade do projeto nas sprints seguintes.
+## 8. Conclusão (Sprint 3)
+A dupla aplicou as práticas de XP de forma adaptada e eficiente ao longo das sprints. A combinação da facilitação e desenvolvimento de João com o controle de qualidade executado por José Rodrigo permitiu a entrega de versões incrementais do jogo com acompanhamento transparente dos tickets e controle de defeitos.
+
+---
+
+## 9. Atualização Final — Sprint 4 (Entrega 4)
+
+Na Sprint 4, a dupla concentrou esforços na **facilitação de comunicação, gestão de issues e validação final de qualidade**:
+
+* **João Gabriel (Scrum Master / Facilitação e Conteúdo):**
+  * Conduziu **reuniões de alinhamento a cada 4 dias** para resolver gargalos de comunicação entre os integrantes do time, garantindo que as decisões e mudanças de escopo passassem pela aprovação do P.O. (**Vitor Cauã**).
+  * Atuou em par com **Vitor Cauã** na revisão e criação dos **novos diálogos**, rodadas de **feedback contínuo** e acompanhamento de **issue tracking**.
+* **José Rodrigo Bispo (QA e Correções):**
+  * Manteve a validação das entregas e o acompanhamento dos defeitos reportados.
+  * Corrigiu a validação do caminho de fotos no ranking e realizou o merge do **PR #49** (`3dc97a1` / `ec1cbdc`) na `main` em 24/11.
+
+### Resultado final
+A atuação coordenada entre facilitação (reuniões periódicas a cada 4 dias + alinhamento com P.O.) e QA (validação e correções via PR) ajudou a destravar a comunicação do time na reta final e a fechar o ciclo da Entrega 4.

@@ -57,5 +57,29 @@ No contexto do XP, o Vitor exerce também o papel de cliente: define as históri
 * **Desafio:** equilibrar a vontade de entregar tudo (como o áudio) com a necessidade de priorizar. O backlog serviu como ferramenta de decisão.
 * **Aprendizado:** o XP funciona além do código quando o foco está em comunicação, feedback rápido e entregas pequenas.
 
-## 8. Conclusão
-A dupla aplicou XP de forma adaptada, valorizando comunicação, simplicidade e entregas incrementais. Os resultados desta sprint foram um HUD mais limpo, ícones e ferramentas renovados, backlog melhor priorizado e áudio preparado para a integração. Nos próximos passos, seguiremos o mesmo ritmo, com novas telas e acompanhamento do backlog.
+## 8. Conclusão (Sprint 3)
+A dupla aplicou XP de forma adaptada, valorizando comunicação, simplicidade e entregas incrementais. Os resultados desta sprint foram um HUD mais limpo, ícones e ferramentas renovados, backlog melhor priorizado e áudio preparado para a integração.
+
+---
+
+## 9. Atualização Final — Sprint 4 (Entrega 4)
+
+Na reta final do projeto (a partir da introdução do modo 3D em 20/11 até o fechamento da Entrega 4), a dinâmica de trabalho em par evoluiu para **programação em par e design conjunto direto no código**, integrando todas as frentes pendentes (3D, 2D, áudio, tutorial, cutscenes e balanceamento).
+
+### 9.1 Parcerias de trabalho na Sprint 4
+* **Vitor Cauã e Renato Veras (par principal):** atuaram juntos em toda a evolução a partir do modo 3D — incluindo mapa e protagonista 3D, setores e elevador, NPCs e evidências no 3D, rotação de suspeitos, seta-guia para jogadores iniciantes, modo difícil, easter-eggs, cutscenes, animações, correção de compilação pós-modularização e integração final de áudio/SFX.
+* **Vitor Cauã e Andressa Souza:** trabalharam em conjunto a partir do modo 3D na refatoração do tutorial (movimentação 3D, diálogos e ferramentas), melhorias de UI das ferramentas, correções no modo 2D, paletas secretas com reset por run, preview dos modos no menu e ajustes do Modo Dev.
+* **Vitor Cauã e João Gabriel:** trabalharam juntos nos diálogos novos, rodadas de feedback e acompanhamento de issues (*issue tracking*). Como Scrum Master, João Gabriel conduziu reuniões periódicas a cada 4 dias para destravar problemas de comunicação da equipe, nas quais Vitor Cauã validava e aprovava as mudanças como Product Owner (P.O.).
+
+> **Nota sobre o histórico Git:** Nem todos os commits feitos em par a partir do modo 3D possuem o trailer `Co-authored-by` registrado no Git, pois a prática de incluir coautoria explícita nos commits passou a ser adotada posteriormente pela dupla.
+
+### 9.2 Práticas de XP consolidadas na Sprint 4
+| Prática do XP | Como aplicamos na Sprint 4 |
+| :--- | :--- |
+| **Programação em par** | Sessões conjuntas entre Vitor, Renato e Andressa na implementação e ajuste fino dos modos 3D/2D, cutscenes, áudio e tutorial. |
+| **Cliente presente (P.O.) e Scrum** | Reuniões de alinhamento a cada 4 dias conduzidas por João Gabriel (SM) com aprovação direta de escopo e mudanças por Vitor Cauã (P.O.). |
+| **Integração contínua e releases pequenas** | Entregas incrementais diárias entre 19/11 e 25/11 (modularização, novos andares 2D/3D, áudio, modo difícil, preview e cutscenes). |
+| **Feedback contínuo** | Ciclos rápidos de teste e ajuste em cima de usabilidade (tutorial, seta-guia, rotação de suspeitos e balanceamento de tokens). |
+
+### 9.3 Resultado final
+A Sprint 4 consolidou a visão completa do produto: os áudios e SFX planejados na Sprint 3 foram integrados, os modos 2D e 3D passaram a coexistir com preview e tutorial dedicados, e o fluxo de comunicação entre P.O., Scrum Master e desenvolvedores garantiu a entrega final dentro do prazo.

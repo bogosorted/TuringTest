@@ -62,6 +62,8 @@ bool SettingsGetSetaGuiando(void);
 void SettingsSetSetaGuiando(bool ligado);
 bool SettingsGetDevExperimentalPalettes(void);
 void SettingsSetDevExperimentalPalettes(bool ligado);
+bool SettingsGetDevTrailerMode(void);
+void SettingsSetDevTrailerMode(bool ligado);
 
 // Reinicio completo da aplicacao (usado pelo botao Dev Mode)
 void SettingsRequestAppRestart(void);

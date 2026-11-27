@@ -33,7 +33,9 @@ enum {
     HOVER_DEV_NO3D = 18,
     HOVER_SETA_GUIANDO = 19,
     HOVER_DEV_EXP_PAL = 20,
-    HOVER_DEV_CUTSCENE = 21
+    HOVER_DEV_CUTSCENE = 21,
+    HOVER_DEV_CUTSCENE2 = 22,
+    HOVER_DEV_TRAILER = 23
 };
 
 static int   g_sliderArrastando = -1;   // -1 = nenhum, 0 = musica, 1 = efeitos
@@ -303,10 +305,16 @@ static bool DesenharPaginaDev(const OptionsUiLayout *lay, const OptionsUiEstilo 
                     HOVER_DEV_FP, est, a, interativo, &algumHover, tocarHover)) {
         SettingsSetDevFirstPerson(!SettingsGetDevFirstPerson());
     }
-    Rectangle rCutscene = { xR, y3 - 8.0f, colW, 17.0f };
-    if (DevActionButton(rCutscene, "CUTSCENE 3D", (Color){ 64, 58, 60, 255 }, (Color){ 96, 86, 88, 255 },
+    float halfBtnW = (colW - 4.0f) * 0.5f;
+    Rectangle rCutscene = { xR, y3 - 8.0f, halfBtnW, 17.0f };
+    if (DevActionButton(rCutscene, "CUTSCENE 1", (Color){ 64, 58, 60, 255 }, (Color){ 96, 86, 88, 255 },
                         (Color){ 255, 242, 230, 255 }, HOVER_DEV_CUTSCENE, a, interativo, &algumHover, tocarHover)) {
         Cutscene3DStart();
+    }
+    Rectangle rCutscene2 = { xR + halfBtnW + 4.0f, y3 - 8.0f, halfBtnW, 17.0f };
+    if (DevActionButton(rCutscene2, "CUTSCENE 2", (Color){ 64, 58, 60, 255 }, (Color){ 96, 86, 88, 255 },
+                        (Color){ 255, 242, 230, 255 }, HOVER_DEV_CUTSCENE2, a, interativo, &algumHover, tocarHover)) {
+        Cutscene3DStartMirror();
     }
 
     if (DevCheckbox(SettingsGetDevDisable2D(), xL, y4, colW, "Desativar Modo 2D (Menu)",
@@ -320,10 +328,14 @@ static bool DesenharPaginaDev(const OptionsUiLayout *lay, const OptionsUiEstilo 
         SettingsSave();
     }
 
-    if (DevCheckbox(SettingsGetDevExperimentalPalettes(), xL, y5, wTot, "Paletas Experimentais (Indexadas)",
+    if (DevCheckbox(SettingsGetDevExperimentalPalettes(), xL, y5, colW, "Paletas Experimentais",
                     HOVER_DEV_EXP_PAL, est, a, interativo, &algumHover, tocarHover)) {
         SettingsSetDevExperimentalPalettes(!SettingsGetDevExperimentalPalettes());
         SettingsSave();
+    }
+    if (DevCheckbox(SettingsGetDevTrailerMode(), xR, y5, colW, "Falas do modo dev para trailer",
+                    HOVER_DEV_TRAILER, est, a, interativo, &algumHover, tocarHover)) {
+        SettingsSetDevTrailerMode(!SettingsGetDevTrailerMode());
     }
 
     Rectangle rDesligar = { xL, y6 - 8.0f, 114.0f, 17.0f };

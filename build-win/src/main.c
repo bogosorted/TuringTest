@@ -11,8 +11,13 @@
 #include "raycanvas.h"
 #include "settings.h"
 #include "ranking.h"
+#include "cutscene_3d.h"
 #include <math.h>
+#ifdef _WIN32
+#include <process.h>
+#else
 #include <unistd.h>
+#endif
 
 // Lista das telas que o jogo tem
 typedef enum {
@@ -61,6 +66,7 @@ static bool SwitchScene(Scene *current, Scene next) {
 
 // Para onde vamos quando o fade-out da transicao terminar
 static Scene nextScene = SCENE_MENU;
+static bool advanceDayAfterFadeOut = false;
 
 // Fade-out -> tela preta com texto (3s) -> nextScene
 // (texto NULL = so o fade-out, a cena nova faz o proprio fade-in)
@@ -71,10 +77,12 @@ static void GoToWithTransition(Scene destino, const char *texto) {
 
 int main(int argc, char **argv) {
     (void)argc;
-    // Garante que o jogo encontre os arquivos em assets/ mesmo se rodar de build/
+    // Garante que o jogo encontre os arquivos em assets/ mesmo se rodar de build/, build/Debug/ ou out/build/...
     ChangeDirectory(GetApplicationDirectory());
-    if (!DirectoryExists("assets") && DirectoryExists("../assets")) {
-        ChangeDirectory("..");
+    if (!DirectoryExists("assets")) {
+        if (DirectoryExists("../assets"))            ChangeDirectory("..");
+        else if (DirectoryExists("../../assets"))    ChangeDirectory("../..");
+        else if (DirectoryExists("../../../assets")) ChangeDirectory("../../..");
     }
     SettingsLoad();   // volumes e paleta salvos no settings.cfg
     RankingLoad();    // ranking de pontuacoes salvo em ranking.cfg
@@ -97,7 +105,7 @@ int main(int argc, char **argv) {
     // Música principal do jogo (toca continuamente com volume ajustado por cena e transição)
     Music bgm = { 0 };
     bool bgmCarregada = false;
-    if (FileExists("assets/audio/bgm_main.mp3")) {
+    if (IsAudioDeviceReady() && FileExists("assets/audio/bgm_main.mp3")) {
         bgm = LoadMusicStream("assets/audio/bgm_main.mp3");
         bgm.looping = true;
         PlayMusicStream(bgm);
@@ -122,8 +130,10 @@ int main(int argc, char **argv) {
         if (bgmCarregada) {
             UpdateMusicStream(bgm);
 
-            // Volume base: mais alto no menu/intro/veredito (0.60), mais baixo no gameplay (0.28)
-            float baseVol = (currentScene == SCENE_GAMEPLAY) ? 0.28f : 0.60f;
+            // Volume base: mais alto no menu/intro/veredito (0.60), mais baixo no gameplay (0.28),
+            // e mudo durante o suspense do veredito para dar espaco a suspenseveredito.mp3
+            float baseVol = (currentScene == SCENE_GAMEPLAY) ? 0.28f :
+                            (currentScene == SCENE_VERDICT && VerdictSceneSuspenseAtivo()) ? 0.0f : 0.60f;
 
             // Durante transições (fade e tela de texto entre dias), atenua o volume
             float fade = RayCanvasGetFade();
@@ -140,7 +150,7 @@ int main(int argc, char **argv) {
         if (IsKeyPressed(KEY_F10) || ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_Q))) {
             break;
         }
-        if (IsKeyPressed(KEY_F11)) {
+        if (IsKeyPressed(KEY_F11) || ((IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT)) && IsKeyPressed(KEY_ENTER))) {
             SettingsSetFullscreen(!SettingsGetFullscreen());
             SettingsApplyWindowMode();
             SettingsSave();
@@ -149,6 +159,12 @@ int main(int argc, char **argv) {
         // 1) Transicao: quando o fade-out termina, a troca de cena acontece
         //    "por tras" da tela preta
         if (TransitionUpdate() == TRANSITION_FADE_OUT_DONE) {
+            if (advanceDayAfterFadeOut) {
+                GameStateNextDay();
+                AddDailyTokens();
+                GameplaySceneResetDialogues();
+                advanceDayAfterFadeOut = false;
+            }
             SwitchScene(&currentScene, nextScene);
         }
 
@@ -156,6 +172,17 @@ int main(int argc, char **argv) {
         if (TransitionShowingText()) {
             TransitionDrawTextScreen();
             continue;
+        }
+
+        if (Cutscene3DIsActive()) {
+            Cutscene3DUpdateAndRender(dt);
+            if (Cutscene3DIsActive()) {
+                RayCanvasBegin();
+                ClearBackground(BLACK);
+                Cutscene3DDrawOverlay();
+                RayCanvasEnd();
+                continue;
+            }
         }
 
         // 2) Cena atual
@@ -193,10 +220,8 @@ int main(int argc, char **argv) {
                 if (SelectionSceneShouldStartInterrogation() && !TransitionActive()) {
                     GoToWithTransition(SCENE_GAMEPLAY, NULL);
                 } else if (SelectionSceneShouldAdvanceDay() && !TransitionActive()) {
-                    GameStateNextDay();
-                    AddDailyTokens();                // +1 token no novo dia
-                    GameplaySceneResetDialogues();
-                    const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d", GameStateGetDay());
+                    advanceDayAfterFadeOut = true;
+                    const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d", GameStateGetDay() + 1);
                     GoToWithTransition(SCENE_GAMEPLAY, transTexto);
                 } else if (SelectionSceneShouldGoToVerdict() && !TransitionActive()) {
                     const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d - Veredito", GAME_NUM_DAYS + 1);
@@ -213,10 +238,8 @@ int main(int argc, char **argv) {
                     SettingsResetSecretPalettes();
                     GoToWithTransition(SCENE_MENU, NULL);
                 } else if (GameplaySceneShouldAdvanceDay() && !TransitionActive()) {
-                    GameStateNextDay();
-                    AddDailyTokens();
-                    GameplaySceneResetDialogues();
-                    const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d", GameStateGetDay());
+                    advanceDayAfterFadeOut = true;
+                    const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d", GameStateGetDay() + 1);
                     GoToWithTransition(SCENE_GAMEPLAY, transTexto);
                 } else if (GameplaySceneShouldGoToVerdict() && !TransitionActive()) {
                     const char *transTexto = SettingsGetDevMode() ? NULL : TextFormat("Dia %d - Veredito", GAME_NUM_DAYS + 1);
@@ -240,14 +263,19 @@ int main(int argc, char **argv) {
     // Descarrega a tela que estiver aberta no momento
     UnloadScene(currentScene);
 
+    Cutscene3DUnload();
     if (bgmCarregada) {
         UnloadMusicStream(bgm);
     }
-    CloseAudioDevice(); // Encerra dispositivo de som
+    if (IsAudioDeviceReady()) CloseAudioDevice(); // Encerra dispositivo de som
     RayCanvasShutdown();
     CloseWindow();
     if (SettingsConsumeAppRestart()) {
+#ifdef _WIN32
+        _spawnv(_P_OVERLAY, argv[0], (const char *const *)argv);
+#else
         execv("/proc/self/exe", argv);
+#endif
     }
     return 0;
 }

@@ -7,11 +7,11 @@
 
 // Planta baixa do terreo (TerreoRASEC3D.png):
 // A Lanchonete/Cantina ocupa toda a altura vertical esquerda do terreo e cresce para a esquerda (<) para dar espaco as mesas.
-static const float LAN_MIN_X = -5.60f;
-static const float LAN_MAX_X =  3.90f;
-static const float LAN_MIN_Z = -6.20f;
-static const float LAN_MAX_Z =  6.20f;
-static const float LAN_WALL_H = 2.85f;
+#define LAN_MIN_X -5.60f
+#define LAN_MAX_X 3.90f
+#define LAN_MIN_Z -6.20f
+#define LAN_MAX_Z 6.20f
+#define LAN_WALL_H 2.85f
 
 static const PlayerColliderBox LAN_COLLIDERS[] = {
     { -5.60f, -6.20f, -3.20f,  6.20f }, // Divisao + bancada vertical na parede esquerda
@@ -99,10 +99,10 @@ static void DesenharLanchonete(float tempo, bool evRelatoriosAtiva) {
 
     DrawPlane((Vector3){ cx, 0.0f, cz }, (Vector2){ w, d }, TerreoLum(0.58f));
     Color corGrid = TerreoLum(0.42f);
-    for (float x = -4.0f; x <= 4.01f; x += 1.0f) {
+    for (float x = -5.0f; x <= 3.01f; x += 1.0f) {
         DrawLine3D((Vector3){ x, 0.004f, LAN_MIN_Z }, (Vector3){ x, 0.004f, LAN_MAX_Z }, corGrid);
     }
-    for (float z = -3.0f; z <= 3.01f; z += 1.0f) {
+    for (float z = -6.0f; z <= 6.01f; z += 1.0f) {
         DrawLine3D((Vector3){ LAN_MIN_X, 0.004f, z }, (Vector3){ LAN_MAX_X, 0.004f, z }, corGrid);
     }
 
@@ -115,8 +115,15 @@ static void DesenharLanchonete(float tempo, bool evRelatoriosAtiva) {
                 (Vector3){ 0.16f, LAN_WALL_H, d }, 0.32f, 0.36f, 0.38f, 0.12f);
 
     // Portas de vidro transparentes na parede direita (bem separadas: Jardim ao fundo, Recepcao a frente)
+    // + pequena porta decorativa de cozinha/preparo na parede ESQUERDA atras da bancada (sem interacao/acesso)
     TerreoPortaModelo((Vector3){ LAN_MAX_X - 0.04f, 0.0f,  4.20f }, -90.0f, PORTA_TIPO_VIDRO);
     TerreoPortaModelo((Vector3){ LAN_MAX_X - 0.04f, 0.0f, -4.20f }, -90.0f, PORTA_TIPO_VIDRO);
+    rlPushMatrix();
+    rlTranslatef(LAN_MIN_X + 0.04f, 0.0f, -3.55f);
+    rlRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+    rlScalef(0.76f, 0.88f, 1.0f);
+    TerreoPortaModelo((Vector3){ 0.0f, 0.0f, 0.0f }, 0.0f, PORTA_TIPO_ESCRITORIO);
+    rlPopMatrix();
 
     // TVs corporativas na lanchonete (parede do fundo e parede direita entre as portas)
     TerreoTV((Vector3){ -0.35f, 2.05f, LAN_MIN_Z + 0.08f },   0.0f, tempo);
@@ -133,14 +140,32 @@ static void DesenharLanchonete(float tempo, bool evRelatoriosAtiva) {
     }
     TerreoCaixa((Vector3){ -3.66f, 2.28f, 0.0f }, (Vector3){ 0.06f, 0.08f, d }, 0.28f, 0.22f, 0.22f, 0.10f);
 
-    // Vitrines, caixa e cafeteira sobre a bancada vertical
-    TerreoCaixa((Vector3){ -4.00f, 1.28f,  2.35f }, (Vector3){ 0.48f, 0.40f, 1.45f }, 0.80f, 0.72f, 0.66f, 0.20f);
-    TerreoCaixa((Vector3){ -4.00f, 1.22f, -0.25f }, (Vector3){ 0.34f, 0.28f, 0.36f }, 0.22f, 0.18f, 0.16f, 0.35f);
-    TerreoCaixa((Vector3){ -4.10f, 1.30f, -2.85f }, (Vector3){ 0.44f, 0.48f, 0.56f }, 0.28f, 0.20f, 0.18f, 0.12f);
+    // Vitrine detalhada com bandejas e salgados/doces, caixa registradora e cafeteira
+    {
+        // Base e vidro da vitrine de salgados
+        TerreoCaixa((Vector3){ -4.00f, 1.13f,  2.35f }, (Vector3){ 0.52f, 0.08f, 1.50f }, 0.34f, 0.28f, 0.26f, 0.12f);
+        DrawCubeWires((Vector3){ -4.00f, 1.35f, 2.35f }, 0.48f, 0.38f, 1.44f, TerreoLum(0.86f));
+        TerreoCaixa((Vector3){ -4.00f, 1.32f,  2.35f }, (Vector3){ 0.44f, 0.02f, 1.38f }, 0.76f, 0.70f, 0.64f, -1.0f);
+        // Bandejas com itens a venda (salgados, sanduiches e doces)
+        for (int it = 0; it < 4; it++) {
+            float iz = 1.85f + it * 0.33f;
+            TerreoCaixa((Vector3){ -4.00f, 1.20f, iz }, (Vector3){ 0.30f, 0.05f, 0.22f }, 0.88f, 0.78f, 0.72f, 0.20f);
+            DrawSphere((Vector3){ -4.00f, 1.38f, iz }, 0.065f, TerreoLum(0.70f + (it % 2) * 0.16f));
+        }
+        // Caixa registradora detalhada (gaveta + monitor POS + teclado + leitor)
+        TerreoCaixa((Vector3){ -4.02f, 1.15f, -0.25f }, (Vector3){ 0.38f, 0.10f, 0.42f }, 0.26f, 0.20f, 0.18f, 0.14f);
+        TerreoCaixa((Vector3){ -4.06f, 1.32f, -0.25f }, (Vector3){ 0.05f, 0.24f, 0.32f }, 0.18f, 0.12f, 0.12f, 0.46f);
+        TerreoCaixa((Vector3){ -3.90f, 1.22f, -0.25f }, (Vector3){ 0.12f, 0.04f, 0.28f }, 0.34f, 0.28f, 0.28f, 0.42f);
+        // Pilha de copos e potes ao lado da cafeteira
+        DrawCylinder((Vector3){ -4.05f, 1.09f, -1.75f }, 0.045f, 0.038f, 0.18f, 10, TerreoLum(0.92f));
+        DrawCylinder((Vector3){ -4.05f, 1.09f, -1.55f }, 0.045f, 0.038f, 0.14f, 10, TerreoLum(0.86f));
+        DrawCylinder((Vector3){ -4.18f, 1.09f, -1.65f }, 0.060f, 0.060f, 0.20f, 10, TerreoLum(0.74f));
+    }
+    TerreoCafeteira((Vector3){ -4.10f, 1.09f, -2.85f }, 90.0f);
 
-    // 2 vendedores atras da bancada
-    TerreoSilhuetaSombra((Vector3){ -4.95f, 0.0f, -1.85f }, 90.0f, false);
-    TerreoSilhuetaSombra((Vector3){ -4.95f, 0.0f,  1.75f }, 90.0f, false);
+    // 2 trabalhadores atras da bancada: um cansado e outro mexendo no caixa
+    TerreoDesenharNPCAtividade(1, 8 /* NPC_ATIV_CANSADO */, (Vector3){ -4.90f, 0.0f, -1.85f }, 90.0f, tempo);
+    TerreoDesenharNPCAtividade(3, 9 /* NPC_ATIV_CAIXA */,   (Vector3){ -4.85f, 0.0f, -0.25f }, 90.0f, tempo);
 
     // 6 banquinhos alinhados ao longo da bancada vertical
     for (int b = 0; b < 6; b++) {

@@ -11,6 +11,7 @@ CMakeFiles/turing_test.dir/src/core/game_state.c.o
  /usr/include/features-time64.h
  /usr/include/features.h
  /usr/include/stdc-predef.h
+ /usr/include/stdint.h
  /usr/include/stdlib.h
  /usr/include/string.h
  /usr/include/strings.h
@@ -28,6 +29,8 @@ CMakeFiles/turing_test.dir/src/core/game_state.c.o
  /usr/include/x86_64-linux-gnu/bits/select.h
  /usr/include/x86_64-linux-gnu/bits/select2.h
  /usr/include/x86_64-linux-gnu/bits/stdint-intn.h
+ /usr/include/x86_64-linux-gnu/bits/stdint-least.h
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h
  /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h
  /usr/include/x86_64-linux-gnu/bits/stdlib.h
@@ -53,6 +56,7 @@ CMakeFiles/turing_test.dir/src/core/game_state.c.o
  /usr/include/x86_64-linux-gnu/bits/uintn-identity.h
  /usr/include/x86_64-linux-gnu/bits/waitflags.h
  /usr/include/x86_64-linux-gnu/bits/waitstatus.h
+ /usr/include/x86_64-linux-gnu/bits/wchar.h
  /usr/include/x86_64-linux-gnu/bits/wordsize.h
  /usr/include/x86_64-linux-gnu/gnu/stubs-64.h
  /usr/include/x86_64-linux-gnu/gnu/stubs.h
@@ -62,6 +66,7 @@ CMakeFiles/turing_test.dir/src/core/game_state.c.o
  /usr/lib/gcc/x86_64-linux-gnu/15/include/stdarg.h
  /usr/lib/gcc/x86_64-linux-gnu/15/include/stdbool.h
  /usr/lib/gcc/x86_64-linux-gnu/15/include/stddef.h
+ /usr/lib/gcc/x86_64-linux-gnu/15/include/stdint.h
 
 CMakeFiles/turing_test.dir/src/core/ranking.c.o
  /home/vitorc/TuringTest/src/core/ranking.c
@@ -394,11 +399,16 @@ CMakeFiles/turing_test.dir/src/main.c.o
  /usr/include/features.h
  /usr/include/math.h
  /usr/include/stdc-predef.h
+ /usr/include/unistd.h
+ /usr/include/x86_64-linux-gnu/bits/confname.h
+ /usr/include/x86_64-linux-gnu/bits/environments.h
  /usr/include/x86_64-linux-gnu/bits/floatn-common.h
  /usr/include/x86_64-linux-gnu/bits/floatn.h
  /usr/include/x86_64-linux-gnu/bits/flt-eval-method.h
  /usr/include/x86_64-linux-gnu/bits/fp-fast.h
  /usr/include/x86_64-linux-gnu/bits/fp-logb.h
+ /usr/include/x86_64-linux-gnu/bits/getopt_core.h
+ /usr/include/x86_64-linux-gnu/bits/getopt_posix.h
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h
  /usr/include/x86_64-linux-gnu/bits/libm-simd-decl-stubs.h
  /usr/include/x86_64-linux-gnu/bits/long-double.h
@@ -406,7 +416,14 @@ CMakeFiles/turing_test.dir/src/main.c.o
  /usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h
  /usr/include/x86_64-linux-gnu/bits/mathcalls-macros.h
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h
+ /usr/include/x86_64-linux-gnu/bits/posix_opt.h
+ /usr/include/x86_64-linux-gnu/bits/time64.h
  /usr/include/x86_64-linux-gnu/bits/timesize.h
+ /usr/include/x86_64-linux-gnu/bits/types.h
+ /usr/include/x86_64-linux-gnu/bits/typesizes.h
+ /usr/include/x86_64-linux-gnu/bits/unistd-decl.h
+ /usr/include/x86_64-linux-gnu/bits/unistd.h
+ /usr/include/x86_64-linux-gnu/bits/unistd_ext.h
  /usr/include/x86_64-linux-gnu/bits/wordsize.h
  /usr/include/x86_64-linux-gnu/gnu/stubs-64.h
  /usr/include/x86_64-linux-gnu/gnu/stubs.h
@@ -1047,6 +1064,8 @@ CMakeFiles/turing_test.dir/src/systems/player_character.c.o
  /home/vitorc/TuringTest/build/_deps/raylib-src/src/raylib.h
  /home/vitorc/TuringTest/build/_deps/raylib-src/src/raymath.h
  /home/vitorc/TuringTest/build/_deps/raylib-src/src/rlgl.h
+ /home/vitorc/TuringTest/src/core/game_state.h
+ /home/vitorc/TuringTest/src/core/settings.h
  /home/vitorc/TuringTest/src/systems/player_character.h
  /usr/include/alloca.h
  /usr/include/endian.h
@@ -1277,6 +1296,7 @@ CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.o
  /home/vitorc/TuringTest/src/world/sala_arquivo_1.c
  /home/vitorc/TuringTest/build/_deps/raylib-src/src/raylib.h
  /home/vitorc/TuringTest/build/_deps/raylib-src/src/rlgl.h
+ /home/vitorc/TuringTest/src/core/game_state.h
  /home/vitorc/TuringTest/src/systems/player_character.h
  /home/vitorc/TuringTest/src/world/terreo_3d.h
  /usr/include/stdc-predef.h
@@ -1293,10 +1313,42 @@ CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.o
  /usr/lib/gcc/x86_64-linux-gnu/15/include/stdarg.h
  /usr/lib/gcc/x86_64-linux-gnu/15/include/stdbool.h
 
+CMakeFiles/turing_test.dir/src/world/sala_cameras.c.o
+ /home/vitorc/TuringTest/src/world/sala_cameras.c
+ /home/vitorc/TuringTest/build/_deps/raylib-src/src/raylib.h
+ /home/vitorc/TuringTest/build/_deps/raylib-src/src/rlgl.h
+ /home/vitorc/TuringTest/src/systems/player_character.h
+ /home/vitorc/TuringTest/src/world/terreo_3d.h
+ /usr/include/features-time64.h
+ /usr/include/features.h
+ /usr/include/math.h
+ /usr/include/stdc-predef.h
+ /usr/include/x86_64-linux-gnu/bits/floatn-common.h
+ /usr/include/x86_64-linux-gnu/bits/floatn.h
+ /usr/include/x86_64-linux-gnu/bits/flt-eval-method.h
+ /usr/include/x86_64-linux-gnu/bits/fp-fast.h
+ /usr/include/x86_64-linux-gnu/bits/fp-logb.h
+ /usr/include/x86_64-linux-gnu/bits/libc-header-start.h
+ /usr/include/x86_64-linux-gnu/bits/libm-simd-decl-stubs.h
+ /usr/include/x86_64-linux-gnu/bits/long-double.h
+ /usr/include/x86_64-linux-gnu/bits/math-vector.h
+ /usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h
+ /usr/include/x86_64-linux-gnu/bits/mathcalls-macros.h
+ /usr/include/x86_64-linux-gnu/bits/mathcalls.h
+ /usr/include/x86_64-linux-gnu/bits/timesize.h
+ /usr/include/x86_64-linux-gnu/bits/wordsize.h
+ /usr/include/x86_64-linux-gnu/gnu/stubs-64.h
+ /usr/include/x86_64-linux-gnu/gnu/stubs.h
+ /usr/include/x86_64-linux-gnu/sys/cdefs.h
+ /usr/lib/gcc/x86_64-linux-gnu/15/include/stdarg.h
+ /usr/lib/gcc/x86_64-linux-gnu/15/include/stdbool.h
+ /usr/lib/gcc/x86_64-linux-gnu/15/include/stddef.h
+
 CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.o
  /home/vitorc/TuringTest/src/world/sala_ciber_1.c
  /home/vitorc/TuringTest/build/_deps/raylib-src/src/raylib.h
  /home/vitorc/TuringTest/build/_deps/raylib-src/src/rlgl.h
+ /home/vitorc/TuringTest/src/core/game_state.h
  /home/vitorc/TuringTest/src/systems/player_character.h
  /home/vitorc/TuringTest/src/world/terreo_3d.h
  /usr/include/stdc-predef.h
@@ -1317,6 +1369,7 @@ CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.o
  /home/vitorc/TuringTest/src/world/sala_contabilidade_1.c
  /home/vitorc/TuringTest/build/_deps/raylib-src/src/raylib.h
  /home/vitorc/TuringTest/build/_deps/raylib-src/src/rlgl.h
+ /home/vitorc/TuringTest/src/core/game_state.h
  /home/vitorc/TuringTest/src/systems/player_character.h
  /home/vitorc/TuringTest/src/world/terreo_3d.h
  /usr/include/stdc-predef.h
@@ -1357,6 +1410,7 @@ CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.o
  /home/vitorc/TuringTest/src/world/sala_escritorio.c
  /home/vitorc/TuringTest/build/_deps/raylib-src/src/raylib.h
  /home/vitorc/TuringTest/build/_deps/raylib-src/src/rlgl.h
+ /home/vitorc/TuringTest/src/core/game_state.h
  /home/vitorc/TuringTest/src/systems/player_character.h
  /home/vitorc/TuringTest/src/world/terreo_3d.h
  /usr/include/stdc-predef.h
@@ -1367,6 +1421,7 @@ CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.o
  /home/vitorc/TuringTest/src/world/sala_escritorio_2.c
  /home/vitorc/TuringTest/build/_deps/raylib-src/src/raylib.h
  /home/vitorc/TuringTest/build/_deps/raylib-src/src/rlgl.h
+ /home/vitorc/TuringTest/src/core/game_state.h
  /home/vitorc/TuringTest/src/systems/player_character.h
  /home/vitorc/TuringTest/src/world/terreo_3d.h
  /usr/include/stdc-predef.h
@@ -1569,6 +1624,17 @@ CMakeFiles/turing_test.dir/src/world/sala_server_2.c.o
  /usr/lib/gcc/x86_64-linux-gnu/15/include/stdarg.h
  /usr/lib/gcc/x86_64-linux-gnu/15/include/stdbool.h
 
+CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.o
+ /home/vitorc/TuringTest/src/world/sala_subsolo.c
+ /home/vitorc/TuringTest/build/_deps/raylib-src/src/raylib.h
+ /home/vitorc/TuringTest/build/_deps/raylib-src/src/rlgl.h
+ /home/vitorc/TuringTest/src/systems/player_character.h
+ /home/vitorc/TuringTest/src/world/terreo_3d.h
+ /usr/include/stdc-predef.h
+ /usr/lib/gcc/x86_64-linux-gnu/15/include/stdarg.h
+ /usr/lib/gcc/x86_64-linux-gnu/15/include/stdbool.h
+ /usr/lib/gcc/x86_64-linux-gnu/15/include/stddef.h
+
 CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.o
  /home/vitorc/TuringTest/src/world/sala_treino_escritorio.c
  /home/vitorc/TuringTest/build/_deps/raylib-src/src/raylib.h
@@ -1694,6 +1760,7 @@ turing_test
  /home/vitorc/TuringTest/build-linux-release/CMakeFiles/turing_test.dir/src/systems/webcam.c.o
  /home/vitorc/TuringTest/build-linux-release/CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.o
  /home/vitorc/TuringTest/build-linux-release/CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.o
+ /home/vitorc/TuringTest/build-linux-release/CMakeFiles/turing_test.dir/src/world/sala_cameras.c.o
  /home/vitorc/TuringTest/build-linux-release/CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.o
  /home/vitorc/TuringTest/build-linux-release/CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.o
  /home/vitorc/TuringTest/build-linux-release/CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.o
@@ -1713,6 +1780,7 @@ turing_test
  /home/vitorc/TuringTest/build-linux-release/CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.o
  /home/vitorc/TuringTest/build-linux-release/CMakeFiles/turing_test.dir/src/world/sala_server_1.c.o
  /home/vitorc/TuringTest/build-linux-release/CMakeFiles/turing_test.dir/src/world/sala_server_2.c.o
+ /home/vitorc/TuringTest/build-linux-release/CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.o
  /home/vitorc/TuringTest/build-linux-release/CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.o
  /home/vitorc/TuringTest/build-linux-release/CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.o
  /home/vitorc/TuringTest/build-linux-release/CMakeFiles/turing_test.dir/src/world/terreo_3d.c.o

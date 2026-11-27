@@ -10,11 +10,11 @@
 // - Bancadas em L/curva ao longo das paredes com varios monitores e gabinetes
 // - Janelas claras ao fundo + duto de ar cilindrico no alto
 // - Armarios (3D_cabinet_7) na lateral
-static const float CB1_MIN_X = -5.40f;
-static const float CB1_MAX_X =  5.40f;
-static const float CB1_MIN_Z = -3.60f;
-static const float CB1_MAX_Z =  3.40f;
-static const float CB1_WALL_H = 3.00f;
+#define CB1_MIN_X -5.40f
+#define CB1_MAX_X 5.40f
+#define CB1_MIN_Z -3.60f
+#define CB1_MAX_Z 3.40f
+#define CB1_WALL_H 3.00f
 
 static const PlayerColliderBox CB1_COLLIDERS[] = {
     { -5.25f, -3.45f,  2.85f, -2.35f }, // Bancada longa ao fundo
@@ -89,11 +89,13 @@ static void DesenharCiber1(float tempo, bool evRelatoriosAtiva) {
     for (int i = 0; i < 4; i++) {
         float mx = -3.80f + i * 1.85f;
         TerreoMonitor((Vector3){ mx, 0.77f, -3.10f }, 0.0f);
+        TerreoGabinetePC((Vector3){ mx + 0.46f, 0.77f, -3.05f }, 0.0f);
         TerreoCadeira((Vector3){ mx, 0.0f,  -2.05f }, 180.0f);
     }
     for (int j = 0; j < 2; j++) {
         float mz = -0.95f + j * 1.95f;
         TerreoMonitor((Vector3){ -4.90f, 0.77f, mz }, 90.0f);
+        TerreoGabinetePC((Vector3){ -4.85f, 0.77f, mz - 0.46f }, 90.0f);
         TerreoCadeira((Vector3){ -3.85f, 0.0f,  mz }, -90.0f);
     }
     TerreoSilhuetaSombra((Vector3){ -1.95f, 0.0f, -2.05f }, 180.0f, true);

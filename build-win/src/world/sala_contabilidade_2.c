@@ -8,11 +8,11 @@
 // Contabilidade 2 (baseado em EscritorioContabilidade2.jpg):
 // Mais larga horizontalmente (para os lados), com area menor de apoio/estantes em L
 // conectada a mesa comprida de madeira central. Acesso via Contabilidade 1.
-static const float C2_MIN_X = -5.80f;
-static const float C2_MAX_X =  5.80f;
-static const float C2_MIN_Z = -3.10f;
-static const float C2_MAX_Z =  3.10f;
-static const float C2_WALL_H = 2.95f;
+#define C2_MIN_X -5.80f
+#define C2_MAX_X 5.80f
+#define C2_MIN_Z -3.10f
+#define C2_MAX_Z 3.10f
+#define C2_WALL_H 2.95f
 
 static const PlayerColliderBox C2_COLLIDERS[] = {
     { -1.40f, -1.05f,  3.20f,  1.25f }, // Mesa comprida horizontal de madeira + cadeiras
@@ -111,6 +111,7 @@ static void DesenharContabilidade2(float tempo, bool evRelatoriosAtiva) {
     for (int k = -1; k <= 1; k++) {
         float kx = 0.90f + k * 1.35f;
         TerreoMonitor((Vector3){ kx, 0.77f, -0.15f }, 0.0f);
+        TerreoGabinetePC((Vector3){ kx + 0.44f, 0.77f, -0.18f }, 0.0f);
         TerreoCadeira((Vector3){ kx, 0.0f, 0.95f }, 180.0f);
         TerreoCaixa((Vector3){ kx + 0.30f, 0.785f, 0.35f }, (Vector3){ 0.28f, 0.04f, 0.24f }, 0.76f, 0.66f, 0.58f, 0.20f);
     }

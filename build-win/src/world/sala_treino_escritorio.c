@@ -8,11 +8,11 @@
 // Treinamento Escritorio (baseado em treinamentoiaescritorio.jpg):
 // - Mesas escuras de desenvolvimento com monitores (incluindo monitor vertical), gabinetes PC com ventoinhas e muitos cabos
 // - Luminarias pendentes pretas suspensas sobre as mesas e janelas amplas ao fundo
-static const float TE_MIN_X = -5.40f;
-static const float TE_MAX_X =  5.40f;
-static const float TE_MIN_Z = -3.60f;
-static const float TE_MAX_Z =  3.40f;
-static const float TE_WALL_H = 3.10f;
+#define TE_MIN_X -5.40f
+#define TE_MAX_X 5.40f
+#define TE_MIN_Z -3.60f
+#define TE_MAX_Z 3.40f
+#define TE_WALL_H 3.10f
 
 static const PlayerColliderBox TE_COLLIDERS[] = {
     { -3.55f, -1.95f,  2.55f, -0.55f }, // Ilha de desenvolvimento 1
@@ -59,8 +59,8 @@ static void DesenharIlhaDev(float zCentro) {
         TerreoMonitor((Vector3){ px - 0.18f, 0.77f, zCentro }, 0.0f);
         // Monitor vertical ao lado
         TerreoCaixa((Vector3){ px + 0.24f, 1.02f, zCentro + 0.04f }, (Vector3){ 0.24f, 0.44f, 0.04f }, 0.18f, 0.10f, 0.12f, 0.44f);
-        // Gabinete PC torre com detalhe frontal luminoso
-        TerreoCaixa((Vector3){ px + 0.55f, 0.96f, zCentro - 0.15f }, (Vector3){ 0.22f, 0.42f, 0.40f }, 0.16f, 0.12f, 0.12f, 0.58f);
+        // Gabinete PC torre detalhado
+        TerreoGabinetePC((Vector3){ px + 0.55f, 0.77f, zCentro - 0.10f }, 0.0f);
         TerreoCadeira((Vector3){ px, 0.0f, zCentro + 0.72f }, 180.0f);
     }
     // Luminarias pendentes pretas acima da mesa

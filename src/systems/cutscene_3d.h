@@ -5,6 +5,7 @@
 
 // Inicializa/abre a cutscene 3D em primeira pessoa (modo Dev).
 void Cutscene3DStart(void);
+void Cutscene3DStartMirror(void);
 void Cutscene3DStop(void);
 bool Cutscene3DIsActive(void);
 

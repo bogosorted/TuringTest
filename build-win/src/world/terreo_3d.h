@@ -4,6 +4,7 @@
 #include "raylib.h"
 #include "player_character.h"
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef enum {
     TERREO_SALA_RECEPCAO = 0,
@@ -34,6 +35,7 @@ typedef enum {
     TERREO_SALA_REUNIAO_1,
     TERREO_SALA_REUNIAO_2,
     TERREO_SALA_SUBSOLO,
+    TERREO_SALA_SUBSOLO_2,
     TERREO_NUM_SALAS
 } TerreoSalaId;
 
@@ -66,7 +68,8 @@ typedef enum {
     TERREO_DEST_AUDITORIO,
     TERREO_DEST_REUNIAO_1,
     TERREO_DEST_REUNIAO_2,
-    TERREO_DEST_SUBSOLO
+    TERREO_DEST_SUBSOLO,
+    TERREO_DEST_SUBSOLO_2
 } TerreoDestino;
 
 typedef enum {
@@ -154,6 +157,7 @@ const TerreoSalaDef *SalaAuditorioDef(void);
 const TerreoSalaDef *SalaReuniao1Def(void);
 const TerreoSalaDef *SalaReuniao2Def(void);
 const TerreoSalaDef *SalaSubsoloDef(void);
+const TerreoSalaDef *SalaSubsolo2Def(void);
 
 // Helpers compartilhados de geometria 3D (sem projecao de sombras)
 Color TerreoLum(float l);
@@ -161,8 +165,11 @@ void  TerreoCaixa(Vector3 centro, Vector3 tam, float topLum, float frontLum, flo
 void  TerreoTV(Vector3 pos, float rotYDeg, float tempo);
 void  TerreoDesenharPlayerPreview(bool isFemale, Vector3 pos, float yawDeg, float tempo);
 void  TerreoDesenharPlayerVariant(int variantId, PlayerPreviewAnim anim, Vector3 pos, float yawDeg, float tempo);
+void  TerreoDesenharPlayerTechVariant(int techId, PlayerPreviewAnim anim, Vector3 pos, float yawDeg, float tempo);
 PlayerPreviewAnim TerreoSubsoloGetAnim(int idx);
 PlayerPreviewAnim TerreoSubsoloCiclarAnim(int idx);
+PlayerPreviewAnim TerreoSubsolo2GetAnim(int idx);
+PlayerPreviewAnim TerreoSubsolo2CiclarAnim(int idx);
 void  TerreoPortaModelo(Vector3 pos, float rotYDeg, TerreoPortaTipo tipo);
 void  TerreoCadeira(Vector3 pos, float rotYDeg);
 void  TerreoCadeiraConfortavel(Vector3 pos, float rotYDeg);
@@ -183,9 +190,21 @@ void  TerreoElevador(Vector3 pos, float rotYDeg);
 void  TerreoRackServidor(Vector3 pos, float rotYDeg);
 void  TerreoRoboPrototipo(Vector3 pos, float rotYDeg);
 void  TerreoEvidenciaBrilhante(Vector3 pos, float tempo, int tipoModelo);
+void  TerreoGabinetePC(Vector3 pos, float rotYDeg);
+void  TerreoGeladeira(Vector3 pos, float rotYDeg);
+void  TerreoCafeteira(Vector3 pos, float rotYDeg);
+void  TerreoMicroondas(Vector3 pos, float rotYDeg);
+void  TerreoDesenharNPCAtividade(int variantId, int ativ, Vector3 pos, float yawDeg, float tempo);
+void  Terreo3DTriggerPaperPickup(Vector3 paperPos, float duracao);
+void  Terreo3DTriggerPaperDrop(Vector3 paperPos, float duracao);
+void  Terreo3DSetGuiaInfo(uint64_t evSalasMask, uint64_t suspSalasMask, const bool suspsComDialogo[3]);
+void  Terreo3DDispararPeixeFonte(void);
+float Terreo3DGetPeixeFonteProgress(void);
+void  Terreo3DRotacionarFigurantes(void);
 
 // Ciclo de vida e loop da cena 3D do Terreo
 void Terreo3DInit(int largura, int altura);
+void Terreo3DSetViewportSize(int largura, int altura);
 void Terreo3DUnload(void);
 void Terreo3DDefinirSala(TerreoSalaId sala, TerreoDestino vindoDe);
 void Terreo3DSetEvidenciaAtiva(bool evRelatoriosAtiva);

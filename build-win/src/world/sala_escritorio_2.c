@@ -6,11 +6,11 @@
 #define PI 3.14159265358979323846f
 #endif
 
-static const float ESC2_MIN_X = -5.80f;
-static const float ESC2_MAX_X =  5.80f;
-static const float ESC2_MIN_Z = -4.20f;
-static const float ESC2_MAX_Z =  4.20f;
-static const float ESC2_WALL_H = 3.00f;
+#define ESC2_MIN_X -5.80f
+#define ESC2_MAX_X 5.80f
+#define ESC2_MIN_Z -4.20f
+#define ESC2_MAX_Z 4.20f
+#define ESC2_WALL_H 3.00f
 
 // Setor Administrativo 2 (conectado ao Setor ADM 1 com porta para voltar na parede esquerda!):
 // - Caminho da porta (x=-5.8..-4.2, z=-2.0..0.0) totalmente LIVRE
@@ -53,13 +53,13 @@ static const SalaInteractable ESC2_INTERACTABLES[] = {
         "Várias impressoras corporativas zumbem em fila imprimindo pilhas intermináveis de planilhas."
     },
     {
-        "janelas_adm2",
-        "Janelas do Prédio",
-        { -0.20f, 1.80f, -3.95f },
-        { 3.20f, 1.60f, 0.60f },
+        "quadro_branco_adm2",
+        "Quadros Brancos",
+        { -0.20f, 1.75f, -3.95f },
+        { 3.20f, 1.40f, 0.45f },
         2.20f,
         false,
-        "Grandes janelas de vidro com persianas verticais. Do lado de fora vê-se a luz pálida da cidade."
+        "Quadros brancos com fluxogramas, metas do trimestre e lembretes de auditoria."
     },
     {
         "planta_adm2",
@@ -143,6 +143,7 @@ static void DesenharBaiaCorporativa2(Vector3 centro, int numPostos, float largur
         if (i < numPostos) {
             float cx = px + larguraPosto * 0.5f;
             TerreoMonitor((Vector3){ cx, 0.77f, centro.z - 0.16f }, 0.0f);
+            TerreoGabinetePC((Vector3){ cx + 0.44f, 0.77f, centro.z - 0.16f }, 0.0f);
             Vector3 cPos = { cx, 0.0f, centro.z + profTotal * 0.5f + 0.24f };
             float pull = Terreo3DGetChairPull(cPos);
             TerreoCadeira((Vector3){ cPos.x, 0.0f, cPos.z + pull }, 180.0f);
@@ -178,34 +179,34 @@ static void DesenharEscritorio2(float tempo, bool evRelatoriosAtiva) {
     // Porta para voltar ao Setor ADM 1 (parede esquerda, completamente desobstruida!)
     TerreoPortaModelo((Vector3){ ESC2_MIN_X + 0.04f, 0.0f, -0.85f }, 90.0f, PORTA_TIPO_ESCRITORIO);
 
-    // Janelas envidracadas na parede do fundo (estilo corporate windows com persianas e luz exterior)
+    // Quadros brancos corporativos na parede do fundo (substituindo a janela que dava para outra sala)
     for (int j = 0; j < 2; j++) {
-        float jx = -0.90f + j * 1.50f;
-        // Moldura externa da janela
-        TerreoCaixa((Vector3){ jx, 1.80f, ESC2_MIN_Z + 0.02f },
-                    (Vector3){ 1.25f, 1.45f, 0.06f }, 0.28f, 0.22f, 0.22f, 0.08f);
-        // Vidro iluminado com tom mais claro
-        TerreoCaixa((Vector3){ jx, 1.80f, ESC2_MIN_Z + 0.04f },
-                    (Vector3){ 1.15f, 1.35f, 0.02f }, 0.82f, 0.78f, 0.72f, -1.0f);
-        // Persianas horizontais
-        for (int p = 0; p < 5; p++) {
-            float py = 1.30f + p * 0.24f;
-            DrawLine3D((Vector3){ jx - 0.55f, py, ESC2_MIN_Z + 0.055f },
-                       (Vector3){ jx + 0.55f, py, ESC2_MIN_Z + 0.055f }, TerreoLum(0.40f));
-        }
-        // Divisoria vertical da janela
-        TerreoCaixa((Vector3){ jx, 1.80f, ESC2_MIN_Z + 0.06f },
-                    (Vector3){ 0.04f, 1.35f, 0.03f }, 0.32f, 0.26f, 0.26f, -1.0f);
+        float qx = -0.90f + j * 1.65f;
+        // Moldura metalica
+        TerreoCaixa((Vector3){ qx, 1.75f, ESC2_MIN_Z + 0.02f },
+                    (Vector3){ 1.42f, 1.02f, 0.04f }, 0.30f, 0.24f, 0.24f, 0.10f);
+        // Superficie branca
+        TerreoCaixa((Vector3){ qx, 1.75f, ESC2_MIN_Z + 0.04f },
+                    (Vector3){ 1.32f, 0.92f, 0.02f }, 0.90f, 0.88f, 0.84f, -1.0f);
+        // Bandeja de pincel na base
+        TerreoCaixa((Vector3){ qx, 1.24f, ESC2_MIN_Z + 0.07f },
+                    (Vector3){ 0.85f, 0.03f, 0.06f }, 0.34f, 0.28f, 0.28f, 0.12f);
+        // Anotacoes / fluxograma desenhado
+        DrawLine3D((Vector3){ qx - 0.50f, 1.98f, ESC2_MIN_Z + 0.055f },
+                   (Vector3){ qx + 0.45f, 1.98f, ESC2_MIN_Z + 0.055f }, TerreoLum(0.24f));
+        DrawLine3D((Vector3){ qx - 0.45f, 1.75f, ESC2_MIN_Z + 0.055f },
+                   (Vector3){ qx + 0.25f, 1.75f, ESC2_MIN_Z + 0.055f }, TerreoLum(0.32f));
+        DrawLine3D((Vector3){ qx - 0.48f, 1.54f, ESC2_MIN_Z + 0.055f },
+                   (Vector3){ qx + 0.38f, 1.54f, ESC2_MIN_Z + 0.055f }, TerreoLum(0.28f));
     }
 
-    // Quadro de diretrizes/metas corporativas na parede do fundo à direita
+    // Quadro de diretrizes/metas corporativas + armario/gabinete detalhado de 4 gavetas
     TerreoCaixa((Vector3){ 2.30f, 1.70f, ESC2_MIN_Z + 0.03f },
                 (Vector3){ 1.40f, 0.90f, 0.04f }, 0.78f, 0.72f, 0.65f, 0.18f);
-    TerreoCaixa((Vector3){ 2.30f, 0.45f, -3.70f },
-                (Vector3){ 1.20f, 0.90f, 0.55f }, 0.40f, 0.32f, 0.28f, 0.12f);
+    TerreoArmario((Vector3){ 2.30f, 0.0f, -3.70f }, 0.0f, 1.20f, 0.92f, 0.55f);
 
-    // Gaveteiros + 3 Impressoras alinhadas ao lado no fundo-esquerdo
-    TerreoCaixa((Vector3){ -5.05f, 0.75f, -3.55f }, (Vector3){ 0.72f, 1.50f, 0.65f }, 0.40f, 0.30f, 0.28f, 0.12f);
+    // Gaveteiro detalhado + 3 Impressoras alinhadas ao lado no fundo-esquerdo
+    TerreoArmario((Vector3){ -5.05f, 0.0f, -3.55f }, 0.0f, 0.74f, 1.50f, 0.65f);
     TerreoImpressora((Vector3){ -4.05f, 0.0f, -3.55f }, 0.0f);
     TerreoImpressora((Vector3){ -3.10f, 0.0f, -3.55f }, 0.0f);
     TerreoImpressora((Vector3){ -2.15f, 0.0f, -3.55f }, 0.0f);
@@ -234,6 +235,7 @@ static void DesenharEscritorio2(float tempo, bool evRelatoriosAtiva) {
     for (int k = 0; k < 3; k++) {
         float kz = -1.60f + k * 1.60f;
         TerreoMonitor((Vector3){ 5.45f, 0.77f, kz }, -90.0f);
+        TerreoGabinetePC((Vector3){ 5.45f, 0.77f, kz + 0.42f }, -90.0f);
         Vector3 cPos = { 4.58f, 0.0f, kz };
         float pull = Terreo3DGetChairPull(cPos);
         TerreoCadeira((Vector3){ cPos.x - pull, 0.0f, cPos.z }, 90.0f);
@@ -243,10 +245,7 @@ static void DesenharEscritorio2(float tempo, bool evRelatoriosAtiva) {
     TerreoBebedouro((Vector3){ -5.10f, 0.0f, 3.35f });
 
     // Planta decorativa ornamental no canto inferior direito
-    DrawCylinder((Vector3){ 5.10f, 0.0f, 3.50f }, 0.24f, 0.32f, 0.55f, 12, TerreoLum(0.38f));
-    DrawCylinder((Vector3){ 5.10f, 0.52f, 3.50f }, 0.34f, 0.34f, 0.06f, 12, TerreoLum(0.48f));
-    DrawSphere((Vector3){ 5.10f, 0.88f, 3.50f }, 0.36f, TerreoLum(0.26f));
-    DrawSphere((Vector3){ 5.10f, 1.15f, 3.50f }, 0.28f, TerreoLum(0.30f));
+    TerreoPlanta((Vector3){ 5.10f, 0.0f, 3.50f }, 1.45f);
 }
 
 static const TerreoSalaDef SALA_ESCRITORIO_2_DEF = {

@@ -6,11 +6,11 @@
 #define PI 3.14159265358979323846f
 #endif
 
-static const float ESC3D_MIN_X = -3.20f;
-static const float ESC3D_MAX_X =  3.20f;
-static const float ESC3D_MIN_Z = -3.20f;
-static const float ESC3D_MAX_Z =  3.20f;
-static const float ESC3D_WALL_H = 3.20f;
+#define ESC3D_MIN_X -3.20f
+#define ESC3D_MAX_X 3.20f
+#define ESC3D_MIN_Z -3.20f
+#define ESC3D_MAX_Z 3.20f
+#define ESC3D_WALL_H 3.20f
 
 // Baseado visualmente em escadaria.zip (Stairs_5_BaseColor-1K):
 // - Piso e patamar em pedra/concreto cinza medio (~0.56)

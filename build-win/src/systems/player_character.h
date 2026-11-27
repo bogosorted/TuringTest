@@ -17,7 +17,8 @@ typedef enum {
     PLAYER_ANIM_DOOR,      // nao bloqueia movimento: estende a mao na macaneta
     PLAYER_ANIM_PAPER,     // mexendo no papel / documento / pasta
     PLAYER_ANIM_FILE,      // mexendo no arquivo / gaveta
-    PLAYER_ANIM_COMPUTER   // senta na cadeira e acessa o terminal
+    PLAYER_ANIM_COMPUTER,  // senta na cadeira e acessa o terminal
+    PLAYER_ANIM_PAPER_WALK // caminha ate a bolinha de papel e pega
 } PlayerInteractAnim;
 
 // Personagem 3D realista com shader noir e animacao fluida controlado por WASD / Setas.
@@ -56,6 +57,8 @@ void PlayerCharacterTriggerInteract(PlayerCharacter *p, Vector3 targetPos);
 void PlayerCharacterTriggerInteractEx(PlayerCharacter *p, Vector3 targetPos, PlayerInteractAnim tipo, float duracao);
 void PlayerCharacterTriggerComputerSit(PlayerCharacter *p, Vector3 seatPos, Vector3 monitorPos, float duracao);
 void PlayerCharacterTriggerComputerExit(PlayerCharacter *p);
+void PlayerCharacterTriggerPaperPickup(PlayerCharacter *p, Vector3 paperPos, float duracao);
+void PlayerCharacterTriggerPaperDrop(PlayerCharacter *p, Vector3 paperPos, float duracao);
 float PlayerCharacterGetChairPull(const PlayerCharacter *p, Vector3 chairPos);
 void PlayerCharacterSetShadowBounds(Rectangle boundsXZ);
 
@@ -77,7 +80,11 @@ typedef enum {
     NPC_ATIV_COMENDO,
     NPC_ATIV_LENDO,
     NPC_ATIV_CARREGANDO_PAPEIS,
-    NPC_ATIV_DESCONFIADA
+    NPC_ATIV_DESCONFIADA,
+    NPC_ATIV_CONVERSANDO,
+    NPC_ATIV_CANSADO,
+    NPC_ATIV_CAIXA,
+    NPC_ATIV_COCANDO_CABECA
 } NpcAtividade;
 
 // Desenha o personagem 3D com iluminacao noir direcional + rim light.
@@ -94,6 +101,7 @@ typedef enum {
 void PlayerCharacterDraw3D(const PlayerCharacter *p, Vector3 camPos);
 void PlayerCharacterDrawModelPreview3D(bool isFemale, Vector3 pos, float yawDeg, float tempo, Vector3 camPos);
 void PlayerCharacterDrawVariant3D(int variantId, PlayerPreviewAnim anim, Vector3 pos, float yawDeg, float tempo, Vector3 camPos);
+void PlayerCharacterDrawTechVariant3D(int techId, PlayerPreviewAnim anim, Vector3 pos, float yawDeg, float tempo, Vector3 camPos);
 void PlayerCharacterDrawSuspect3D(int suspeito, Vector3 pos, float yawDeg, float tempo, Vector3 camPos);
 void PlayerCharacterDrawSuspect3DEx(int suspeito, Vector3 pos, float yawDeg, NpcAtividade ativ, float tempo, Vector3 camPos);
 void PlayerCharacterDrawNpc3D(Vector3 pos, float yawDeg, bool sentado, float tempo, Vector3 camPos);

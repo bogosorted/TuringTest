@@ -7,11 +7,11 @@
 
 // Copa do 1o Andar (Contabilidade):
 // Bancada com pia/cafeteira, geladeira corporativa, bebedouro, 2 mesas redondas e porta decorativa de banheiro.
-static const float COPA1_MIN_X = -4.80f;
-static const float COPA1_MAX_X =  4.80f;
-static const float COPA1_MIN_Z = -3.60f;
-static const float COPA1_MAX_Z =  3.60f;
-static const float COPA1_WALL_H = 2.95f;
+#define COPA1_MIN_X -4.80f
+#define COPA1_MAX_X 4.80f
+#define COPA1_MIN_Z -3.60f
+#define COPA1_MAX_Z 3.60f
+#define COPA1_WALL_H 2.95f
 
 static const PlayerColliderBox COPA1_COLLIDERS[] = {
     { -4.55f, -3.50f, -3.45f, -2.35f }, // Geladeira
@@ -121,14 +121,13 @@ static void DesenharCopa1(float tempo, bool evRelatoriosAtiva) {
     // TV corporativa na parede esquerda voltada para as mesas
     TerreoTV((Vector3){ COPA1_MIN_X + 0.08f, 1.95f, 0.65f }, 90.0f, tempo);
 
-    // Geladeira
-    TerreoCaixa((Vector3){ -4.00f, 0.96f, -2.95f }, (Vector3){ 0.88f, 1.92f, 0.78f }, 0.84f, 0.76f, 0.66f, 0.18f);
-    TerreoCaixa((Vector3){ -3.66f, 1.25f, -2.52f }, (Vector3){ 0.04f, 0.42f, 0.04f }, 0.24f, 0.20f, 0.20f, -1.0f);
+    // Geladeira melhorada
+    TerreoGeladeira((Vector3){ -4.00f, 0.0f, -2.95f }, 0.0f);
 
-    // Bancada da copa + cafeteira + micro-ondas
+    // Bancada da copa + cafeteira + micro-ondas detalhados
     TerreoCaixa((Vector3){ -1.25f, 0.44f, -3.00f }, (Vector3){ 3.60f, 0.88f, 0.78f }, 0.68f, 0.54f, 0.46f, 0.14f);
-    TerreoCaixa((Vector3){ -2.05f, 1.06f, -3.00f }, (Vector3){ 0.56f, 0.36f, 0.42f }, 0.26f, 0.20f, 0.18f, 0.10f);
-    TerreoCaixa((Vector3){ -0.35f, 1.06f, -3.00f }, (Vector3){ 0.36f, 0.38f, 0.34f }, 0.22f, 0.16f, 0.14f, 0.10f);
+    TerreoMicroondas((Vector3){ -2.05f, 0.88f, -3.00f }, 0.0f);
+    TerreoCafeteira((Vector3){ -0.35f, 0.88f, -3.00f }, 0.0f);
 
     // Bebedouro
     TerreoBebedouro((Vector3){ 3.75f, 0.0f, -3.00f });

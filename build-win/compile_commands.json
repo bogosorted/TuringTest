@@ -139,6 +139,12 @@
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.obj -c /home/vitorc/TuringTest/src/systems/cutscene_3d.c",
+  "file": "/home/vitorc/TuringTest/src/systems/cutscene_3d.c",
+  "output": "CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
   "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj -c /home/vitorc/TuringTest/src/world/terreo_3d.c",
   "file": "/home/vitorc/TuringTest/src/world/terreo_3d.c",
   "output": "CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj"
@@ -292,6 +298,12 @@
   "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.obj -c /home/vitorc/TuringTest/src/world/sala_subsolo.c",
   "file": "/home/vitorc/TuringTest/src/world/sala_subsolo.c",
   "output": "CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.obj"
+},
+{
+  "directory": "/home/vitorc/TuringTest/build-win",
+  "command": "/usr/bin/x86_64-w64-mingw32-gcc -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP @CMakeFiles/turing_test.dir/includes_C.rsp -O3 -DNDEBUG -std=gnu99 -o CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_subsolo_2.c",
+  "file": "/home/vitorc/TuringTest/src/world/sala_subsolo_2.c",
+  "output": "CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.obj"
 },
 {
   "directory": "/home/vitorc/TuringTest/build-win/_deps/raylib-build/raylib",

@@ -25,6 +25,17 @@ static int       g_animAtual   = 0;
 static float     g_animTempo   = 0.0f;
 #define ANIM_DURACAO_QUADRO 0.07f       // 70 ms por quadro (mesma velocidade do GIF)
 
+typedef struct {
+    Image     imagem;
+    Texture2D textura;
+    int       quadros;
+    int       atual;
+    float     tempo;
+} ModoPreviewGif;
+
+static ModoPreviewGif g_modoPreview[2] = { 0 };
+static bool           g_modoPreviewDisponivel = false;
+
 static Texture2D g_painel;              // painel escuro da direita (562x360) com o padrao Perlin original
 static Texture2D g_painelNoise1;        // textura de Perlin noise 1 original (GenImagePerlinNoise scale 4.5)
 static Texture2D g_painelNoise2;        // textura de Perlin noise 2 original (GenImagePerlinNoise scale 14.0)
@@ -66,6 +77,9 @@ static float g_rankingAnim       = 0.0f;
 static bool  g_modoAberto        = false;
 static float g_modoAnim          = 0.0f;
 static int   g_hoverModoAnt      = -1;
+static bool  g_dificuldadeAberto = false;
+static float g_dificuldadeAnim   = 0.0f;
+static int   g_hoverDifAnt       = -1;
 static bool  g_ctrlAberto        = false;
 static float g_ctrlAnim          = 0.0f;
 static int   g_hoverCtrlAnt      = -1;
@@ -78,22 +92,55 @@ static bool  g_vozManual         = false;
 static Texture2D g_playerMiniTex[GAME_NUM_PLAYERS] = { 0 };
 static int   g_hoverAvatarAnt    = -1;
 static int   g_hoverVozAnt       = -1;
+static Sound g_vozPreviewSnd[3]  = { {0}, {0}, {0} };
+static float g_vozPreviewTimer   = 0.0f;
+static float g_vozPreviewTick    = 0.0f;
+static bool  g_modoPulado        = false;
 static bool  g_voltarHoverAnt    = false;  // mouse estava no botao Voltar no frame anterior
 static bool  g_iniciarHoverAnt   = false;
 static bool  g_esperarSoltarMouse = false; // ignora os botoes do menu ate soltar o clique que abriu/fechou as opcoes
 
 static bool g_shouldStartGame = false;
+static void AbrirTelaDificuldade(void);
+static void AbrirTelaControle(void);
+static void AbrirTelaNome(void);
+
 // Funcoes de clique de cada botao
 static void OnClickPlay(void) {
     TraceLog(LOG_INFO, "Botao JOGAR clicado!");
+    bool dev = SettingsGetDevMode();
+    bool sem2D = dev && SettingsGetDevDisable2D();
+    bool sem3D = dev && SettingsGetDevDisable3D();
+    if (sem2D && !sem3D) {
+        g_modoPulado = true;
+        GameStateSetMode(MODO_3D);
+        AbrirTelaDificuldade();
+        return;
+    }
+    if (sem3D && !sem2D) {
+        g_modoPulado = true;
+        GameStateSetMode(MODO_2D);
+        AbrirTelaDificuldade();
+        return;
+    }
+    g_modoPulado = false;
     g_modoAberto = true;
     g_hoverModoAnt = -1;
     g_voltarHoverAnt = false;
     g_esperarSoltarMouse = true;
 }
 
+static void AbrirTelaDificuldade(void) {
+    g_modoAberto = false;
+    g_dificuldadeAberto = true;
+    g_hoverDifAnt = -1;
+    g_voltarHoverAnt = false;
+    g_esperarSoltarMouse = true;
+}
+
 static void AbrirTelaControle(void) {
     g_modoAberto = false;
+    g_dificuldadeAberto = false;
     g_ctrlAberto = true;
     g_hoverCtrlAnt = -1;
     g_voltarHoverAnt = false;
@@ -101,13 +148,21 @@ static void AbrirTelaControle(void) {
 }
 
 static void AbrirTelaNome(void) {
+    static const TomVozJogador VOZ_SUG[GAME_NUM_PLAYERS] = {
+        VOZ_SUAVE, VOZ_GRAVE, VOZ_SUAVE, VOZ_SUAVE, VOZ_GRAVE, VOZ_GRAVE
+    };
     g_modoAberto = false;
+    g_dificuldadeAberto = false;
     g_ctrlAberto = false;
     g_nomeAberto = true;
     g_nomeInput[0] = '\0';
-    g_playerAvatarSel = GameStateGetPlayerAvatar();
-    g_playerVozSel = GameStateGetPlayerVoiceTone();
+    g_playerAvatarSel = GetRandomValue(0, GAME_NUM_PLAYERS - 1);
+    GameStateSetPlayerAvatar(g_playerAvatarSel);
+    g_playerVozSel = VOZ_SUG[g_playerAvatarSel];
+    GameStateSetPlayerVoiceTone(g_playerVozSel);
     g_vozManual = false;
+    g_vozPreviewTimer = 0.0f;
+    g_vozPreviewTick = 0.0f;
     g_hoverAvatarAnt = -1;
     g_hoverVozAnt = -1;
     g_voltarHoverAnt = false;
@@ -133,22 +188,31 @@ static void FecharModo(void) {
     g_esperarSoltarMouse = true;
 }
 
+static void FecharDificuldade(void) {
+    g_dificuldadeAberto = false;
+    g_modoAberto = !g_modoPulado;
+    g_hoverModoAnt = -1;
+    g_voltarHoverAnt = false;
+    g_esperarSoltarMouse = true;
+}
+
 static void FecharControle(void) {
     g_ctrlAberto = false;
-    g_modoAberto = true;
-    g_hoverModoAnt = -1;
+    g_dificuldadeAberto = true;
+    g_hoverDifAnt = -1;
     g_voltarHoverAnt = false;
     g_esperarSoltarMouse = true;
 }
 
 static void FecharNome(void) {
     g_nomeAberto = false;
+    g_vozPreviewTimer = 0.0f;
     if (GameStateIs3DMode()) {
         g_ctrlAberto = true;
         g_hoverCtrlAnt = -1;
     } else {
-        g_modoAberto = true;
-        g_hoverModoAnt = -1;
+        g_dificuldadeAberto = true;
+        g_hoverDifAnt = -1;
     }
     g_voltarHoverAnt = false;
     g_esperarSoltarMouse = true;
@@ -309,6 +373,50 @@ bool InitMenuScene(void) {
     g_animAtual = 0;
     g_animTempo = 0.0f;
 
+    // Previews dos modos 2D e 3D (so substituem os cartoes se ambos estiverem disponiveis)
+    static const char *PREVIEW_PATHS[2][2] = {
+        { "assets/sprites/menu/PreviewModo2D.gif", "novas_mudancas/Previews/PreviewModo2D.gif" },
+        { "assets/sprites/menu/PreviewModo3D.gif", "novas_mudancas/Previews/PreviewModo3D.gif" }
+    };
+    bool previewOk[2] = { false, false };
+    for (int m = 0; m < 2; m++) {
+        g_modoPreview[m] = (ModoPreviewGif){ 0 };
+        const char *path = NULL;
+        for (int p = 0; p < 2; p++) {
+            if (FileExists(PREVIEW_PATHS[m][p]) && GetFileLength(PREVIEW_PATHS[m][p]) > 0) {
+                path = PREVIEW_PATHS[m][p];
+                break;
+            }
+        }
+        if (path) {
+            int quadros = 0;
+            Image img = LoadImageAnim(path, &quadros);
+            if (quadros > 0 && img.data != NULL) {
+                Texture2D tex = LoadTextureFromImage(img);
+                if (tex.id > 0) {
+                    SetTextureFilter(tex, TEXTURE_FILTER_BILINEAR);
+                    SetTextureWrap(tex, TEXTURE_WRAP_CLAMP);
+                    g_modoPreview[m].imagem  = img;
+                    g_modoPreview[m].textura = tex;
+                    g_modoPreview[m].quadros = quadros;
+                    previewOk[m] = true;
+                } else {
+                    UnloadImage(img);
+                }
+            } else if (img.data != NULL) {
+                UnloadImage(img);
+            }
+        }
+    }
+    g_modoPreviewDisponivel = previewOk[0] && previewOk[1];
+    if (!g_modoPreviewDisponivel) {
+        for (int m = 0; m < 2; m++) {
+            UISafeUnloadTexture(&g_modoPreview[m].textura);
+            if (g_modoPreview[m].imagem.data) UnloadImage(g_modoPreview[m].imagem);
+            g_modoPreview[m] = (ModoPreviewGif){ 0 };
+        }
+    }
+
     // Carrega o painel da direita e as 2 texturas de Perlin noise originais (mesmo padrao antigo, agora com movimento sutil!)
     g_painel = LoadTexture("assets/sprites/menu/spr_mainmenu_fill.png");
     SetTextureFilter(g_painel, TEXTURE_FILTER_POINT);
@@ -435,6 +543,9 @@ bool InitMenuScene(void) {
     if (FileExists("assets/audio/sfx_hover.wav")) {
         g_sndHover = LoadSound("assets/audio/sfx_hover.wav");
     }
+    if (FileExists("assets/audio/blip_andre.wav"))    g_vozPreviewSnd[VOZ_GRAVE] = LoadSound("assets/audio/blip_andre.wav");
+    if (FileExists("assets/audio/blip_lucas.wav"))    g_vozPreviewSnd[VOZ_MEDIA] = LoadSound("assets/audio/blip_lucas.wav");
+    if (FileExists("assets/audio/blip_patricia.wav")) g_vozPreviewSnd[VOZ_SUAVE] = LoadSound("assets/audio/blip_patricia.wav");
 
     for (int i = 0; i < NUM_BUTTONS; i++) {
         g_hover[i] = false;
@@ -480,6 +591,23 @@ static void AtualizarAnimacao(void) {
     }
 }
 
+static void AtualizarModoPreview(ModoPreviewGif *gif, float dt) {
+    if (!gif || gif->quadros <= 1 || gif->textura.id == 0 || !gif->imagem.data) return;
+
+    bool mudou = false;
+    gif->tempo += dt;
+    while (gif->tempo >= ANIM_DURACAO_QUADRO) {
+        gif->tempo -= ANIM_DURACAO_QUADRO;
+        gif->atual = (gif->atual + 1) % gif->quadros;
+        mudou = true;
+    }
+
+    if (mudou) {
+        int bytesPorQuadro = gif->imagem.width * gif->imagem.height * 4;
+        UpdateTexture(gif->textura, ((unsigned char *)gif->imagem.data) + bytesPorQuadro * gif->atual);
+    }
+}
+
 static void TocarSomHover(void) {
     if (g_sndHover.frameCount > 0) {
         SetSoundVolume(g_sndHover, 0.35f * SettingsGetSfxVolume());
@@ -491,7 +619,7 @@ static void TocarSomHover(void) {
 static void UpdateMenuButtons(void) {
     Vector2 mouse = RayCanvasGetMousePosition();
     bool algumHover = false;
-    bool menuAtivo = !g_opcoesAbertas && !g_rankingAberto && !g_modoAberto && !g_ctrlAberto && !g_nomeAberto;   // com painel aberto os botoes se escondem
+    bool menuAtivo = !g_opcoesAbertas && !g_rankingAberto && !g_modoAberto && !g_dificuldadeAberto && !g_ctrlAberto && !g_nomeAberto;   // com painel aberto os botoes se escondem
     float dt = GetFrameTime();
     if (dt > 0.05f) dt = 0.05f; // evita pulo brusco se a janela travar num frame
 
@@ -514,12 +642,16 @@ static void UpdateMenuButtons(void) {
             if (g_jiggleTempo[i] < 0.0f) g_jiggleTempo[i] = 0.0f;
         }
 
-        // Fisica de mola (damped spring): desliza rapido e da um leve overshoot elastico no fim
+        // Fisica de mola (damped spring): cresce apenas para a direita, sem nunca sair para fora da foto na esquerda
         float alvoX = !menuAtivo ? BOTAO_X_ESCONDIDO : (g_hover[i] ? BOTAO_X : BOTAO_X_FECHADO);
         float forca = (alvoX - g_botaoPosX[i]) * SPRING_STIFF;
         g_botaoVelX[i] += forca * dt;
         g_botaoVelX[i] *= expf(-SPRING_DAMP * dt);
         g_botaoPosX[i] += g_botaoVelX[i] * dt;
+        if (menuAtivo && g_botaoPosX[i] > BOTAO_X) {
+            g_botaoPosX[i] = BOTAO_X;
+            if (g_botaoVelX[i] > 0.0f) g_botaoVelX[i] = 0.0f;
+        }
 
         if (!RayCanvasInputBlocked() && !g_esperarSoltarMouse && g_hover[i] &&
             (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonReleased(MOUSE_BUTTON_LEFT))) {
@@ -741,6 +873,11 @@ static void UpdateDrawModo(void) {
     bool interativo = g_modoAberto && a > 0.5f && !RayCanvasInputBlocked();
     Vector2 mv = MouseVirtual();
 
+    if (g_modoPreviewDisponivel) {
+        AtualizarModoPreview(&g_modoPreview[0], dt);
+        AtualizarModoPreview(&g_modoPreview[1], dt);
+    }
+
     if (g_modoAberto && IsKeyPressed(KEY_ESCAPE)) {
         FecharModo();
         return;
@@ -766,30 +903,53 @@ static void UpdateDrawModo(void) {
     const float cardY = 166.0f;
 
     for (int m = 0; m < 2; m++) {
+        bool devBloq = SettingsGetDevMode() && ((m == 0 && SettingsGetDevDisable2D()) || (m == 1 && SettingsGetDevDisable3D()));
         Rectangle rCard = { OPC_LABEL_X + m * (cardW + cardGap), cardY, cardW, cardH };
-        bool hov = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, rCard);
+        bool hov = !devBloq && interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, rCard);
         if (hov) hovModo = m;
 
         Rectangle rTela = ParaTela(rCard);
         float esc = rTela.height / cardH;
         DrawRectangleRec(ParaTela((Rectangle){ rCard.x + 2.5f, rCard.y + 3.0f, cardW, cardH }), Fade(BLACK, 0.5f * a));
-        DrawRectangleRec(rTela, hov ? fundoH : fundo);
-        DrawRectangleLinesEx(rTela, (hov ? 2.2f : 1.4f) * esc, hov ? claro : medio);
 
-        Vector2 tamTit = MeasureTextEx(g_fonte, TITULOS[m], 26.0f, 1.0f);
-        TextoOpcoes(TITULOS[m], rCard.x + (cardW - tamTit.x) * 0.5f, rCard.y + 30.0f, 26.0f, hov ? claro : bege);
+        if (g_modoPreviewDisponivel) {
+            Texture2D tex = g_modoPreview[m].textura;
+            Rectangle src = { 0.0f, 0.0f, (float)tex.width, (float)tex.height };
+            Color tint = devBloq
+                ? Fade((Color){ 100, 100, 100, 255 }, 0.45f * a)
+                : Fade(hov ? WHITE : (Color){ 215, 208, 200, 255 }, a);
+            DrawRectangleRec(rTela, fundo);
+            DrawTexturePro(tex, src, rTela, (Vector2){ 0.0f, 0.0f }, 0.0f, tint);
+            DrawRectangleLinesEx(rTela, (hov ? 2.2f : 1.4f) * esc, devBloq ? medio : (hov ? claro : medio));
 
-        Vector2 tamL1 = MeasureTextEx(g_fonte, LINHA1[m], 15.0f, 0.5f);
-        TextoOpcoes(LINHA1[m], rCard.x + (cardW - tamL1.x) * 0.5f, rCard.y + 62.0f, 15.0f, claro);
+            if (devBloq) {
+                const char *l1 = "DESATIVADO";
+                const char *l2 = "nas opções Dev";
+                Vector2 tamL1 = MeasureTextEx(g_fonte, l1, 15.0f, 0.5f);
+                Vector2 tamL2 = MeasureTextEx(g_fonte, l2, 15.0f, 0.5f);
+                TextoOpcoes(l1, rCard.x + (cardW - tamL1.x) * 0.5f, rCard.y + 38.0f, 15.0f, Fade((Color){ 210, 76, 76, 255 }, a));
+                TextoOpcoes(l2, rCard.x + (cardW - tamL2.x) * 0.5f, rCard.y + 56.0f, 15.0f, medio);
+            }
+        } else {
+            DrawRectangleRec(rTela, devBloq ? Fade(fundo, 0.55f) : (hov ? fundoH : fundo));
+            DrawRectangleLinesEx(rTela, (hov ? 2.2f : 1.4f) * esc, devBloq ? medio : (hov ? claro : medio));
 
-        Vector2 tamL2 = MeasureTextEx(g_fonte, LINHA2[m], 15.0f, 0.5f);
-        TextoOpcoes(LINHA2[m], rCard.x + (cardW - tamL2.x) * 0.5f, rCard.y + 80.0f, 15.0f, medio);
+            Vector2 tamTit = MeasureTextEx(g_fonte, TITULOS[m], 26.0f, 1.0f);
+            TextoOpcoes(TITULOS[m], rCard.x + (cardW - tamTit.x) * 0.5f, rCard.y + 30.0f, 26.0f, devBloq ? medio : (hov ? claro : bege));
+
+            const char *l1 = devBloq ? "DESATIVADO" : LINHA1[m];
+            const char *l2 = devBloq ? "nas opções Dev" : LINHA2[m];
+            Vector2 tamL1 = MeasureTextEx(g_fonte, l1, 15.0f, 0.5f);
+            TextoOpcoes(l1, rCard.x + (cardW - tamL1.x) * 0.5f, rCard.y + 62.0f, 15.0f, devBloq ? (Color){ 210, 76, 76, 255 } : claro);
+
+            Vector2 tamL2 = MeasureTextEx(g_fonte, l2, 15.0f, 0.5f);
+            TextoOpcoes(l2, rCard.x + (cardW - tamL2.x) * 0.5f, rCard.y + 80.0f, 15.0f, medio);
+        }
 
         if (hov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             GameStateSetMode((m == 0) ? MODO_2D : MODO_3D);
             TocarSomHover();
-            if (m == 1) AbrirTelaControle();
-            else        AbrirTelaNome();
+            AbrirTelaDificuldade();
             return;
         }
     }
@@ -811,6 +971,92 @@ static void UpdateDrawModo(void) {
 
     if (g_modoAberto) {
         bool algumHov = hoverVoltar || (hovModo >= 0);
+        SetMouseCursor(algumHov ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+    }
+}
+
+static void UpdateDrawDificuldade(void) {
+    float dt = GetFrameTime();
+    if (dt > 0.05f) dt = 0.05f;
+    float alvo = g_dificuldadeAberto ? 1.0f : 0.0f;
+    g_dificuldadeAnim += (alvo - g_dificuldadeAnim) * fminf(dt * 9.0f, 1.0f);
+    if (!g_dificuldadeAberto && g_dificuldadeAnim < 0.01f) { g_dificuldadeAnim = 0.0f; return; }
+
+    float a = g_dificuldadeAnim;
+    bool interativo = g_dificuldadeAberto && a > 0.5f && !RayCanvasInputBlocked();
+    Vector2 mv = MouseVirtual();
+
+    if (g_dificuldadeAberto && IsKeyPressed(KEY_ESCAPE)) {
+        FecharDificuldade();
+        return;
+    }
+
+    Color bege   = Fade((Color){ 189, 181, 168, 255 }, a);
+    Color claro  = Fade((Color){ 255, 242, 230, 255 }, a);
+    Color medio  = Fade((Color){ 125, 112, 113, 255 }, a);
+    Color fundo  = Fade((Color){ 24, 21, 23, 255 }, a);
+    Color fundoH = Fade((Color){ 58, 52, 54, 255 }, a);
+    Color alerta = Fade((Color){ 210, 76, 76, 255 }, a);
+
+    TextoOpcoes("DIFICULDADE", OPC_LABEL_X, 122.0f, 26.0f, bege);
+    TextoOpcoes("Escolha o ritmo da investigação:", OPC_LABEL_X, 146.0f, 16.0f, medio);
+
+    static const char *TITULOS[2] = { "MODO NORMAL", "MODO HARD" };
+    static const char *LINHA1[2]  = { "Sem limite de tempo", "2:00 min por dia" };
+    static const char *LINHA2[2]  = { "Investigue sem pressa", "Relógio nunca pausa!" };
+
+    int hovDif = -1;
+    const float cardW = 186.0f;
+    const float cardH = 108.0f;
+    const float cardGap = 16.0f;
+    const float cardY = 166.0f;
+
+    for (int d = 0; d < 2; d++) {
+        Rectangle rCard = { OPC_LABEL_X + d * (cardW + cardGap), cardY, cardW, cardH };
+        bool hov = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, rCard);
+        if (hov) hovDif = d;
+
+        Rectangle rTela = ParaTela(rCard);
+        float esc = rTela.height / cardH;
+        DrawRectangleRec(ParaTela((Rectangle){ rCard.x + 2.5f, rCard.y + 3.0f, cardW, cardH }), Fade(BLACK, 0.5f * a));
+        DrawRectangleRec(rTela, hov ? fundoH : fundo);
+        DrawRectangleLinesEx(rTela, (hov ? 2.2f : 1.4f) * esc, (d == 1 && hov) ? alerta : (hov ? claro : medio));
+
+        Vector2 tamTit = MeasureTextEx(g_fonte, TITULOS[d], 25.0f, 1.0f);
+        TextoOpcoes(TITULOS[d], rCard.x + (cardW - tamTit.x) * 0.5f, rCard.y + 28.0f, 25.0f, (d == 1) ? alerta : (hov ? claro : bege));
+
+        Vector2 tamL1 = MeasureTextEx(g_fonte, LINHA1[d], 15.0f, 0.5f);
+        TextoOpcoes(LINHA1[d], rCard.x + (cardW - tamL1.x) * 0.5f, rCard.y + 60.0f, 15.0f, claro);
+
+        Vector2 tamL2 = MeasureTextEx(g_fonte, LINHA2[d], 14.5f, 0.5f);
+        TextoOpcoes(LINHA2[d], rCard.x + (cardW - tamL2.x) * 0.5f, rCard.y + 79.0f, 14.5f, (d == 1) ? alerta : medio);
+
+        if (hov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            GameStateSetHardMode(d == 1);
+            TocarSomHover();
+            if (GameStateIs3DMode()) AbrirTelaControle();
+            else                     AbrirTelaNome();
+            return;
+        }
+    }
+    if (hovDif >= 0 && hovDif != g_hoverDifAnt) TocarSomHover();
+    g_hoverDifAnt = hovDif;
+
+    float bw = (float)g_botao.width * BOTAO_ESCALA;
+    float bh = (float)g_botao.height * BOTAO_ESCALA;
+    const float yVoltar = 292.0f;
+    Rectangle hitVoltar = { BOTAO_X, yVoltar, bw - 22.0f, bh };
+    bool hoverVoltar = interativo && !g_esperarSoltarMouse && CheckCollisionPointRec(mv, hitVoltar);
+    if (hoverVoltar && !g_voltarHoverAnt) TocarSomHover();
+    g_voltarHoverAnt = hoverVoltar;
+
+    DesenharBotaoPainel("Voltar", BOTAO_X, yVoltar, a, hoverVoltar);
+    if (hoverVoltar && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        FecharDificuldade();
+    }
+
+    if (g_dificuldadeAberto) {
+        bool algumHov = hoverVoltar || (hovDif >= 0);
         SetMouseCursor(algumHov ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
     }
 }
@@ -864,11 +1110,18 @@ static void UpdateDrawControle(void) {
         Vector2 tamTit = MeasureTextEx(g_fonte, TITULOS[c], 22.0f, 1.0f);
         TextoOpcoes(TITULOS[c], rCard.x + (cardW - tamTit.x) * 0.5f, rCard.y + 24.0f, 22.0f, hov ? claro : bege);
 
-        Vector2 tamL1 = MeasureTextEx(g_fonte, LINHA1[c], 12.0f, 0.4f);
-        TextoOpcoes(LINHA1[c], rCard.x + (cardW - tamL1.x) * 0.5f, rCard.y + 58.0f, 12.0f, claro);
+        float tamLinha = 12.0f;
+        Vector2 tamL1;
+        Vector2 tamL2;
+        do {
+            tamL1 = MeasureTextEx(g_fonte, LINHA1[c], tamLinha, 1.0f);
+            tamL2 = MeasureTextEx(g_fonte, LINHA2[c], tamLinha, 1.0f);
+            if ((tamL1.x <= cardW - 16.0f && tamL2.x <= cardW - 16.0f) || tamLinha <= 6.0f) break;
+            tamLinha -= 0.5f;
+        } while (true);
 
-        Vector2 tamL2 = MeasureTextEx(g_fonte, LINHA2[c], 12.0f, 0.4f);
-        TextoOpcoes(LINHA2[c], rCard.x + (cardW - tamL2.x) * 0.5f, rCard.y + 76.0f, 12.0f, medio);
+        TextoOpcoes(LINHA1[c], rCard.x + (cardW - tamL1.x) * 0.5f, rCard.y + 58.0f, tamLinha, claro);
+        TextoOpcoes(LINHA2[c], rCard.x + (cardW - tamL2.x) * 0.5f, rCard.y + 76.0f, tamLinha, medio);
 
         if (hov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             GameStateSetControle3D((ControleModo3D)c);
@@ -988,7 +1241,24 @@ static void UpdateDrawNome(void) {
         if (hovVz && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             g_playerVozSel = (TomVozJogador)v;
             g_vozManual = true;
+            g_vozPreviewTimer = 3.0f;
+            g_vozPreviewTick = 0.0f;
             TocarSomHover();
+        }
+    }
+    // Amostra de 3 segundos do tom de voz selecionado
+    if (g_nomeAberto && g_vozPreviewTimer > 0.0f) {
+        g_vozPreviewTimer -= dt;
+        g_vozPreviewTick -= dt;
+        if (g_vozPreviewTick <= 0.0f) {
+            g_vozPreviewTick = 0.085f;
+            int vi = (int)g_playerVozSel;
+            if (vi >= 0 && vi < 3 && g_vozPreviewSnd[vi].frameCount > 0) {
+                float basePitch = (vi == VOZ_SUAVE) ? 1.04f : (vi == VOZ_MEDIA ? 0.96f : 0.84f);
+                SetSoundPitch(g_vozPreviewSnd[vi], basePitch + ((float)GetRandomValue(-3, 4) / 100.0f));
+                SetSoundVolume(g_vozPreviewSnd[vi], 0.45f * SettingsGetSfxVolume());
+                PlaySound(g_vozPreviewSnd[vi]);
+            }
         }
     }
     if (hovVozAtual >= 0 && hovVozAtual != g_hoverVozAnt) TocarSomHover();
@@ -1085,6 +1355,7 @@ void UpdateDrawMenuScene(void) {
     UpdateDrawOpcoes();
     UpdateDrawRanking();
     UpdateDrawModo();
+    UpdateDrawDificuldade();
     UpdateDrawControle();
     UpdateDrawNome();
 
@@ -1093,20 +1364,34 @@ void UpdateDrawMenuScene(void) {
 
 void UnloadMenuScene(void) {
     SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-    UnloadTexture(g_animTextura);
-    UnloadImage(g_animImagem);      // libera os quadros do GIF
-    UnloadTexture(g_painel);
-    UnloadTexture(g_painelNoise1);
-    UnloadTexture(g_painelNoise2);
-    UnloadTexture(g_botao);
-    UnloadTexture(g_botaoSilhueta);
-    UnloadTexture(g_logo);
-    UnloadShader(g_waveShader);
-    UnloadShader(g_painelShader);
-    UnloadFont(g_fonte);
-    if (g_sndHover.frameCount > 0) {
-        UnloadSound(g_sndHover);
-        g_sndHover = (Sound){ 0 };
+    UISafeUnloadTexture(&g_animTextura);
+    if (g_animImagem.data) UnloadImage(g_animImagem);
+    g_animImagem = (Image){ 0 };
+    for (int m = 0; m < 2; m++) {
+        UISafeUnloadTexture(&g_modoPreview[m].textura);
+        if (g_modoPreview[m].imagem.data) UnloadImage(g_modoPreview[m].imagem);
+        g_modoPreview[m] = (ModoPreviewGif){ 0 };
+    }
+    g_modoPreviewDisponivel = false;
+    UISafeUnloadTexture(&g_painel);
+    UISafeUnloadTexture(&g_painelNoise1);
+    UISafeUnloadTexture(&g_painelNoise2);
+    UISafeUnloadTexture(&g_botao);
+    UISafeUnloadTexture(&g_botaoSilhueta);
+    UISafeUnloadTexture(&g_logo);
+    UISafeUnloadShader(&g_waveShader);
+    UISafeUnloadShader(&g_painelShader);
+    if (g_fonte.texture.id > 0) UnloadFont(g_fonte);
+    g_fonte = (Font){ 0 };
+    UISafeUnloadSound(&g_sndHover);
+    g_animQuadros = 0;
+    g_animAtual = 0;
+    g_animTempo = 0.0f;
+    for (int v = 0; v < 3; v++) {
+        if (g_vozPreviewSnd[v].frameCount > 0) {
+            UnloadSound(g_vozPreviewSnd[v]);
+            g_vozPreviewSnd[v] = (Sound){ 0 };
+        }
     }
     for (int i = 0; i < GAME_NUM_PLAYERS; i++) {
         if (g_playerMiniTex[i].id > 0) {

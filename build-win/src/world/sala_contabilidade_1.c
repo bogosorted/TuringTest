@@ -10,16 +10,17 @@
 // - Baias amplas com divisorias de madeira clara e faixa superior de vidro fosco
 // - Vasos de plantas em cima da divisoria principal
 // - Fileira de novos armarios (3D_cabinet_7) ao fundo
-static const float C1_MIN_X = -5.60f;
-static const float C1_MAX_X =  5.60f;
-static const float C1_MIN_Z = -4.00f;
-static const float C1_MAX_Z =  3.80f;
-static const float C1_WALL_H = 3.00f;
+#define C1_MIN_X -5.60f
+#define C1_MAX_X 5.60f
+#define C1_MIN_Z -4.00f
+#define C1_MAX_Z 3.80f
+#define C1_WALL_H 3.00f
 
 static const PlayerColliderBox C1_COLLIDERS[] = {
     { -3.10f,  0.55f,  2.90f,  1.95f }, // Bloco de baias frontal + jardineira divisoria
     { -3.10f, -2.05f,  2.90f, -0.65f }, // Bloco de baias traseiro
-    { -4.90f, -3.95f,  3.20f, -3.15f }, // Armarios encostados na parede do fundo
+    { -4.90f, -3.95f, -1.10f, -3.15f }, // Armarios do lado esquerdo da porta do Arquivo
+    {  1.10f, -3.95f,  4.90f, -3.15f }, // Armarios do lado direito da porta do Arquivo
 };
 
 static const SalaInteractable C1_INTERACTABLES[] = {
@@ -42,11 +43,20 @@ static const SalaInteractable C1_INTERACTABLES[] = {
         "Estações de trabalho da Contabilidade com divisórias de vidro fosco e plantas decorativas."
     },
     {
-        "armarios_contabilidade_1",
+        "armarios_contabilidade_1_esquerda",
         "Armários de Balancetes",
-        { -1.20f, 1.00f, -3.50f },
-        { 3.80f, 1.75f, 0.85f },
-        2.10f,
+        { -3.05f, 0.92f, -3.55f },
+        { 3.35f, 1.85f, 0.60f },
+        0.60f,
+        true,
+        "Armários metálicos trancados com pastas fiscais e balancetes mensais da RASEC."
+    },
+    {
+        "armarios_contabilidade_1_direita",
+        "Armários de Balancetes",
+        { 2.95f, 0.92f, -3.55f },
+        { 3.35f, 1.85f, 0.60f },
+        0.60f,
         true,
         "Armários metálicos trancados com pastas fiscais e balancetes mensais da RASEC."
     }
@@ -93,6 +103,7 @@ static void DesenharBaiaContabilidade(Vector3 centro, bool comPlantas) {
     for (int i = -1; i <= 1; i++) {
         float px = centro.x + i * 1.70f;
         TerreoMonitor((Vector3){ px, 0.77f, centro.z + 0.25f }, 180.0f);
+        TerreoGabinetePC((Vector3){ px - 0.46f, 0.77f, centro.z + 0.22f }, 180.0f);
         TerreoCadeira((Vector3){ px, 0.0f, centro.z - 0.55f }, 0.0f);
     }
 

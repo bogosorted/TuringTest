@@ -35,6 +35,10 @@ static bool  g_crt        = false;
 static bool  g_cam3dFixa  = true;
 static bool  g_autoReset  = false;
 static bool  g_techNight  = false;
+static bool  g_devDisable2D = false;
+static bool  g_devDisable3D = false;
+static bool  g_setaGuiando  = true;
+static bool  g_devExpPalettes = false;
 static bool  g_restartApp = false;
 static unsigned int g_paletasSecretasMask = 0u;
 
@@ -177,6 +181,10 @@ void SettingsLoad(void) {
         else if (sscanf(linha, "cam3d_fixa=%d", &n) == 1) g_cam3dFixa = (n != 0);
         else if (sscanf(linha, "auto_reset=%d", &n) == 1) g_autoReset = (n != 0);
         else if (sscanf(linha, "tech_night=%d", &n) == 1) g_techNight = (n != 0);
+        else if (sscanf(linha, "dev_sem_2d=%d", &n) == 1) g_devDisable2D = (n != 0);
+        else if (sscanf(linha, "dev_sem_3d=%d", &n) == 1) g_devDisable3D = (n != 0);
+        else if (sscanf(linha, "seta_guiando=%d", &n) == 1) g_setaGuiando = (n != 0);
+        else if (sscanf(linha, "paletas_exp=%d", &n) == 1) g_devExpPalettes = (n != 0);
         // A paleta e as paletas secretas sempre comecam zeradas ao abrir o jogo.
     }
     fclose(f);
@@ -200,9 +208,10 @@ void SettingsSave(void) {
         return;
     }
     // A paleta nao e salva: vale so enquanto o jogo esta aberto
-    fprintf(f, "musica=%.2f\nefeitos=%.2f\ntelacheia=%d\ntutorial=%d\nbalao_interacao=%d\ndev=%d\ncrt=%d\ncam3d_fixa=%d\nauto_reset=%d\ntech_night=%d\npaletas_desbloqueadas=%u\n",
+    fprintf(f, "musica=%.2f\nefeitos=%.2f\ntelacheia=%d\ntutorial=%d\nbalao_interacao=%d\ndev=%d\ncrt=%d\ncam3d_fixa=%d\nauto_reset=%d\ntech_night=%d\ndev_sem_2d=%d\ndev_sem_3d=%d\nseta_guiando=%d\npaletas_exp=%d\npaletas_desbloqueadas=%u\n",
             g_volMusica, g_volEfeitos, g_telaCheia ? 1 : 0, g_tutorial ? 1 : 0, g_balaoInteracao ? 1 : 0, g_devMode ? 1 : 0,
-            g_crt ? 1 : 0, g_cam3dFixa ? 1 : 0, g_autoReset ? 1 : 0, g_techNight ? 1 : 0, g_paletasSecretasMask);
+            g_crt ? 1 : 0, g_cam3dFixa ? 1 : 0, g_autoReset ? 1 : 0, g_techNight ? 1 : 0,
+            g_devDisable2D ? 1 : 0, g_devDisable3D ? 1 : 0, g_setaGuiando ? 1 : 0, g_devExpPalettes ? 1 : 0, g_paletasSecretasMask);
     fclose(f);
 }
 
@@ -259,6 +268,7 @@ void SettingsSetAutoReset(bool ligado) {
 static bool g_devUnlockSubsolo = false;
 static bool g_devUnlockUpperFloors = false;
 static bool g_devFirstPerson = false;
+static bool g_devTrailerMode = false;
 
 bool SettingsGetTechNight(void) { return g_techNight; }
 void SettingsSetTechNight(bool ligado) { g_techNight = ligado; }
@@ -268,6 +278,16 @@ bool SettingsGetDevUnlockUpperFloors(void) { return g_devUnlockUpperFloors; }
 void SettingsSetDevUnlockUpperFloors(bool ligado) { g_devUnlockUpperFloors = ligado; }
 bool SettingsGetDevFirstPerson(void) { return g_devFirstPerson; }
 void SettingsSetDevFirstPerson(bool ligado) { g_devFirstPerson = ligado; }
+bool SettingsGetDevDisable2D(void) { return g_devDisable2D; }
+void SettingsSetDevDisable2D(bool ligado) { g_devDisable2D = ligado; }
+bool SettingsGetDevDisable3D(void) { return g_devDisable3D; }
+void SettingsSetDevDisable3D(bool ligado) { g_devDisable3D = ligado; }
+bool SettingsGetSetaGuiando(void) { return g_setaGuiando; }
+void SettingsSetSetaGuiando(bool ligado) { g_setaGuiando = ligado; }
+bool SettingsGetDevExperimentalPalettes(void) { return g_devExpPalettes; }
+void SettingsSetDevExperimentalPalettes(bool ligado) { g_devExpPalettes = ligado; }
+bool SettingsGetDevTrailerMode(void) { return g_devTrailerMode; }
+void SettingsSetDevTrailerMode(bool ligado) { g_devTrailerMode = ligado; }
 
 void SettingsRequestAppRestart(void) { g_restartApp = true; }
 bool SettingsIsAppRestartRequested(void) { return g_restartApp; }
@@ -277,26 +297,38 @@ bool SettingsConsumeAppRestart(void) {
     return r;
 }
 
-// Aplica modo tela cheia ou janela conforme g_telaCheia
+// Aplica modo tela cheia sem bordas (borderless windowed / full screen falso, para Alt+Tab fluido) ou janela
 void SettingsApplyWindowMode(void) {
-    if (g_telaCheia) {
-        if (!IsWindowFullscreen()) {
-            ToggleFullscreen();
-        }
-    } else {
-        if (IsWindowFullscreen()) {
-            ToggleFullscreen();
-        }
-        int mon = GetCurrentMonitor();
-        int mw = GetMonitorWidth(mon);
-        int mh = GetMonitorHeight(mon);
-        Vector2 origem = GetMonitorPosition(mon);
+    if (IsWindowFullscreen()) {
+        ToggleFullscreen();
+    }
+    int mon = GetCurrentMonitor();
+    if (mon < 0) mon = 0;
+    int mw = GetMonitorWidth(mon);
+    int mh = GetMonitorHeight(mon);
+    Vector2 origem = GetMonitorPosition(mon);
+    if (mw <= 0 || mh <= 0) {
+        mw = JANELA_W;
+        mh = JANELA_H;
+        origem = (Vector2){ 0.0f, 0.0f };
+    }
 
+    if (g_telaCheia) {
+        if (!IsWindowState(FLAG_WINDOW_UNDECORATED)) {
+            SetWindowState(FLAG_WINDOW_UNDECORATED);
+        }
+        SetWindowSize(mw, mh);
+        SetWindowPosition((int)origem.x, (int)origem.y);
+    } else {
         // Janela 1280x720 centralizada (menor se o monitor for pequeno)
         int w = JANELA_W, h = JANELA_H;
         if (w > mw * 9 / 10) { w = mw * 9 / 10; h = w * 9 / 16; }
         if (h > mh * 9 / 10) { h = mh * 9 / 10; w = h * 16 / 9; }
-        ClearWindowState(FLAG_WINDOW_UNDECORATED);
+        if (w < 640) w = 640;
+        if (h < 360) h = 360;
+        if (IsWindowState(FLAG_WINDOW_UNDECORATED)) {
+            ClearWindowState(FLAG_WINDOW_UNDECORATED);
+        }
         SetWindowSize(w, h);
         SetWindowPosition((int)origem.x + (mw - w) / 2, (int)origem.y + (mh - h) / 2);
     }

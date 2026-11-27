@@ -7,11 +7,11 @@
 
 // Garagem de Prototipos (3o Andar, conectada ao Setor de Treinamento de IA):
 // - Unidades de prototipos em montagem, bancadas tecnicas e armarios de pecas
-static const float GP_MIN_X = -4.80f;
-static const float GP_MAX_X =  4.80f;
-static const float GP_MIN_Z = -3.60f;
-static const float GP_MAX_Z =  3.40f;
-static const float GP_WALL_H = 3.10f;
+#define GP_MIN_X -4.80f
+#define GP_MAX_X 4.80f
+#define GP_MIN_Z -3.60f
+#define GP_MAX_Z 3.40f
+#define GP_WALL_H 3.10f
 
 static const PlayerColliderBox GP_COLLIDERS[] = {
     { -3.85f, -3.25f, -1.75f, -1.95f }, // Bancada de montagem esquerda
@@ -84,6 +84,7 @@ static void DesenharGaragemPrototipos(float tempo, bool evRelatoriosAtiva) {
     // Bancada de montagem + armarios de pecas (TerreoArmario)
     TerreoCaixa((Vector3){ -2.80f, 0.74f, -2.60f }, (Vector3){ 1.95f, 0.06f, 1.00f }, 0.60f, 0.44f, 0.40f, 0.14f);
     TerreoMonitor((Vector3){ -2.80f, 0.77f, -2.65f }, 0.0f);
+    TerreoGabinetePC((Vector3){ -2.32f, 0.77f, -2.62f }, 0.0f);
     TerreoArmario((Vector3){ 2.25f, 0.0f, -2.85f }, 0.0f, 1.05f, 1.85f, 0.60f);
     TerreoArmario((Vector3){ 3.45f, 0.0f, -2.85f }, 0.0f, 1.05f, 1.85f, 0.60f);
 }

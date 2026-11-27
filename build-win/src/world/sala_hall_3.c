@@ -10,11 +10,11 @@
 // - Esquerda: Treinamento Escritorio (treinamentoiaescritorio.jpg)
 // - Direita: Setor de Treinamento de IA (treinamentoia.jpg + treinamentoia_prototipo.jpg)
 // - Fundo-direito: Elevador
-static const float H3_MIN_X = -5.20f;
-static const float H3_MAX_X =  5.20f;
-static const float H3_MIN_Z = -3.40f;
-static const float H3_MAX_Z =  3.20f;
-static const float H3_WALL_H = 3.05f;
+#define H3_MIN_X -5.20f
+#define H3_MAX_X 5.20f
+#define H3_MIN_Z -3.40f
+#define H3_MAX_Z 3.20f
+#define H3_WALL_H 3.05f
 
 static const PlayerColliderBox H3_COLLIDERS[] = {
     { -1.85f,  0.65f,  1.15f,  1.75f },

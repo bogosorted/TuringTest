@@ -2278,8 +2278,17 @@ static void SetExpressaoSuspeito(int suspeito, ExpressaoFacial expr, bool inicia
 }
 
 // Escolhe automaticamente uma expressao coerente com o nó ou fala atual do NPC
+static float g_trailerTwitchTimer = 0.0f;
+static float g_trailerGlitchTimer = 0.0f;
+
 static void AtualizarExpressaoPorTexto(int suspeito, const char *nodeId, const char *texto) {
     if (suspeito < 0 || suspeito >= 3) return;
+    if (nodeId && strcmp(nodeId, "TRAILER_AGR") == 0) {
+        g_trailerTwitchTimer = 2.40f;
+        g_trailerGlitchTimer = 0.55f;
+        SetExpressaoSuspeito(suspeito, (suspeito == 2) ? EXPR_SORRISO_INSANO : EXPR_RAIVA, true);
+        return;
+    }
     ExpressaoFacial nova = EXPR_NEUTRO;
 
     if (suspeito == 0) {
@@ -2288,9 +2297,13 @@ static void AtualizarExpressaoPorTexto(int suspeito, const char *nodeId, const c
             nova = EXPR_RAIVA;
         } else if (nodeId && strcmp(nodeId, "B.2.1#EV-01") == 0) {
             nova = EXPR_DESPREZO;
-        } else if (texto && (strstr(texto, "não faço os relatórios") || strstr(texto, "Isso não importa") || strstr(texto, "não entendi") || strstr(texto, "já falei demais"))) {
+        } else if (texto && (strstr(texto, "não faço os relatórios") || strstr(texto, "Isso não importa") || strstr(texto, "não entendi") || strstr(texto, "já falei demais") || strstr(texto, "meu trabalho") || strstr(texto, "nem começa"))) {
             nova = EXPR_RAIVA;
-        } else if (texto && (strstr(texto, "Como assim?") || strstr(texto, "serio?") || strstr(texto, "sério?"))) {
+        } else if (texto && (strstr(texto, "absurdo") || strstr(texto, "vinte minutos") || strstr(texto, "esquecido"))) {
+            nova = EXPR_CHOQUE;
+        } else if (texto && (strstr(texto, "esperto perto") || strstr(texto, "frio"))) {
+            nova = EXPR_MEDO;
+        } else if (texto && (strstr(texto, "Como assim?") || strstr(texto, "serio?") || strstr(texto, "sério?") || strstr(texto, "Ei, fala baixo") || strstr(texto, "crachá") || strstr(texto, "três vezes") || strstr(texto, "parâmetros"))) {
             nova = EXPR_SURPRESA;
         } else if (texto && (strstr(texto, "alucina") || strstr(texto, "errados") || strstr(texto, "difícil") || strstr(texto, "dificil") || strstr(texto, "semanas ruins"))) {
             nova = EXPR_TRISTE;
@@ -2309,9 +2322,15 @@ static void AtualizarExpressaoPorTexto(int suspeito, const char *nodeId, const c
             nova = EXPR_TRISTE;
         } else if (texto && (strstr(texto, "sem minha mãe") || strstr(texto, "complicado") || strstr(texto, "Sinto muito") || strstr(texto, "já tentei") || strstr(texto, "implicando") || strstr(texto, "dificuldades"))) {
             nova = EXPR_TRISTE;
-        } else if (texto && (strstr(texto, "extremamente lógico") || strstr(texto, "dificultando"))) {
+        } else if (texto && (strstr(texto, "extremamente lógico") || strstr(texto, "dificultando") || strstr(texto, "surto") || strstr(texto, "não tô no clima"))) {
             nova = EXPR_RAIVA;
-        } else if (texto && (strstr(texto, "banda indie") || strstr(texto, "Como assim"))) {
+        } else if (texto && (strstr(texto, "Quê?!") || strstr(texto, "fora da casinha") || strstr(texto, "vulto"))) {
+            nova = EXPR_CHOQUE;
+        } else if (texto && (strstr(texto, "código Morse") || strstr(texto, "energéticos") || strstr(texto, "robô") || strstr(texto, "2019"))) {
+            nova = EXPR_SORRISO_INSANO;
+        } else if (texto && (strstr(texto, "frio na espinha") || strstr(texto, "some do mapa"))) {
+            nova = EXPR_MEDO;
+        } else if (texto && (strstr(texto, "banda indie") || strstr(texto, "Como assim") || strstr(texto, "Caramba") || strstr(texto, "bizarro") || strstr(texto, "bebedouro") || strstr(texto, "olhando pra mim"))) {
             nova = EXPR_SURPRESA;
         } else if (texto && (strstr(texto, "brother") || strstr(texto, "ótimo") || strstr(texto, "sinistros") || strstr(texto, "Supimpa") || strstr(texto, "Hihihi") || strstr(texto, "rock") || strstr(texto, "energético") || strstr(texto, "família") || strstr(texto, "guitarrista"))) {
             nova = EXPR_FELIZ;
@@ -2393,6 +2412,27 @@ static void DesenharRetratoComRig(Texture2D tex, int suspeito, Rectangle charDes
         { g_poseCurr.d[7].x, g_poseCurr.d[7].y + talkJawAdd * 0.40f }
     };
     Vector2 jawD      = { g_poseCurr.d[8].x, g_poseCurr.d[8].y + talkJawAdd };
+
+    if (g_trailerTwitchTimer > 0.0f) {
+        g_trailerTwitchTimer -= dt;
+        if (g_trailerTwitchTimer < 0.0f) g_trailerTwitchTimer = 0.0f;
+        const float amp = 1.45f;
+        for (int i = 0; i < 4; i++) {
+            browD[i].x *= amp; browD[i].y *= amp;
+        }
+        for (int i = 0; i < 2; i++) {
+            lidD[i].x *= amp; lidD[i].y *= amp;
+            mouthD[i].x *= amp; mouthD[i].y *= amp;
+        }
+        jawD.x *= amp; jawD.y *= amp;
+        // Pequeno twitch curto e seco no rosto (piscar/espasmo rapido)
+        float cicloTwitch = fmodf(tNow, 0.52f);
+        if (cicloTwitch < 0.065f) {
+            browD[1].y -= 0.008f;
+            lidD[0].y  += 0.009f;
+            mouthD[1].x += 0.006f;
+        }
+    }
 
     SetShaderValueV(g_faceRigShader, g_locBrowP,  anc->browP,  SHADER_UNIFORM_VEC2, 4);
     SetShaderValueV(g_faceRigShader, g_locBrowD,  browD,       SHADER_UNIFORM_VEC2, 4);
@@ -4640,8 +4680,8 @@ static bool UpdateAbaDev(bool *hoverOut) {
         }
     }
 
-    float halfW = (totW - 4.0f) * 0.5f;
-    Rectangle rFp = { x0, yTp + 29.0f, halfW, 24.0f };
+    float thirdW = (totW - 8.0f) / 3.0f;
+    Rectangle rFp = { x0, yTp + 29.0f, thirdW, 24.0f };
     if (CheckCollisionPointRec(mouse, ParaTela(rFp))) {
         if (hoverOut) *hoverOut = true;
         if (clicou) {
@@ -4650,12 +4690,21 @@ static bool UpdateAbaDev(bool *hoverOut) {
             return true;
         }
     }
-    Rectangle rCs = { x0 + halfW + 4.0f, yTp + 29.0f, halfW, 24.0f };
+    Rectangle rCs = { x0 + thirdW + 4.0f, yTp + 29.0f, thirdW, 24.0f };
     if (CheckCollisionPointRec(mouse, ParaTela(rCs))) {
         if (hoverOut) *hoverOut = true;
         if (clicou) {
             TocarSomHover();
             Cutscene3DStart();
+            return true;
+        }
+    }
+    Rectangle rCs2 = { x0 + (thirdW + 4.0f) * 2.0f, yTp + 29.0f, thirdW, 24.0f };
+    if (CheckCollisionPointRec(mouse, ParaTela(rCs2))) {
+        if (hoverOut) *hoverOut = true;
+        if (clicou) {
+            TocarSomHover();
+            Cutscene3DStartMirror();
             return true;
         }
     }
@@ -4736,19 +4785,25 @@ static void DesenharAbaDev(Rectangle rCorpo) {
     DrawRectangleLinesEx(ParaTela(rIr), 1.4f, hI ? cClaro : cBorda);
     DrawTextInArea("IR", rIr, 9, cClaro);
 
-    float halfW = (totW - 4.0f) * 0.5f;
-    Rectangle rFp = { x0, yTp + 29.0f, halfW, 24.0f };
+    float thirdW = (totW - 8.0f) / 3.0f;
+    Rectangle rFp = { x0, yTp + 29.0f, thirdW, 24.0f };
     bool fpAtivo = SettingsGetDevFirstPerson();
     bool hFp = CheckCollisionPointRec(mouse, ParaTela(rFp));
     DrawRectangleRec(ParaTela(rFp), fpAtivo ? (hFp ? cAtHov : cAtivo) : (hFp ? cBtnHov : cBtn));
     DrawRectangleLinesEx(ParaTela(rFp), hFp ? 1.8f : 1.1f, hFp ? cClaro : cBorda);
-    DrawTextInArea(fpAtivo ? "1ª PESSOA: ON" : "1ª PESSOA: OFF", rFp, 6.8f, cClaro);
+    DrawTextInArea(fpAtivo ? "1ª PESS: ON" : "1ª PESS: OFF", rFp, 6.2f, cClaro);
 
-    Rectangle rCs = { x0 + halfW + 4.0f, yTp + 29.0f, halfW, 24.0f };
+    Rectangle rCs = { x0 + thirdW + 4.0f, yTp + 29.0f, thirdW, 24.0f };
     bool hCs = CheckCollisionPointRec(mouse, ParaTela(rCs));
     DrawRectangleRec(ParaTela(rCs), hCs ? cBtnHov : cBtn);
     DrawRectangleLinesEx(ParaTela(rCs), hCs ? 1.8f : 1.1f, hCs ? cClaro : cBorda);
-    DrawTextInArea("CUTSCENE 3D", rCs, 6.8f, cClaro);
+    DrawTextInArea("CUTSCENE 1", rCs, 6.2f, cClaro);
+
+    Rectangle rCs2 = { x0 + (thirdW + 4.0f) * 2.0f, yTp + 29.0f, thirdW, 24.0f };
+    bool hCs2 = CheckCollisionPointRec(mouse, ParaTela(rCs2));
+    DrawRectangleRec(ParaTela(rCs2), hCs2 ? cBtnHov : cBtn);
+    DrawRectangleLinesEx(ParaTela(rCs2), hCs2 ? 1.8f : 1.1f, hCs2 ? cClaro : cBorda);
+    DrawTextInArea("CUTSCENE 2", rCs2, 6.2f, cClaro);
 }
 
 static void DesenharHistoricoChat(Rectangle area, int suspectIndex) {
@@ -9023,7 +9078,22 @@ void UpdateDrawGameplayScene(void) {
             RayCanvasBegin();
             ClearBackground(BLACK);
             Cutscene3DDrawOverlay();
-            RayCanvasEnd();
+            if (g_trailerGlitchTimer > 0.0f) {
+        float dtGl = GetFrameTime();
+        if (dtGl > 0.05f) dtGl = 0.05f;
+        g_trailerGlitchTimer -= dtGl;
+        if (g_trailerGlitchTimer < 0.0f) g_trailerGlitchTimer = 0.0f;
+        for (int g = 0; g < 10; g++) {
+            float gy = (float)GetRandomValue(0, 350);
+            float gh = (float)GetRandomValue(2, 10);
+            float gx = (float)GetRandomValue(-18, 18);
+            float gw = (float)GetRandomValue(120, 420);
+            Color gCol = (g % 2 == 0) ? Fade((Color){ 255, 242, 230, 255 }, 0.35f) : Fade(BLACK, 0.55f);
+            DrawRectangleRec(ParaTela((Rectangle){ gx + (float)GetRandomValue(0, 300), gy, gw, gh }), gCol);
+        }
+    }
+
+    RayCanvasEnd();
             return;
         }
     }
@@ -9919,6 +9989,21 @@ void UpdateDrawGameplayScene(void) {
         DrawRectangleRec(ParaTela(rToast), Fade((Color){ 28, 25, 27, 255 }, 0.94f * alphaT));
         DrawRectangleLinesEx(ParaTela(rToast), 1.6f, Fade((Color){ 255, 224, 48, 255 }, alphaT));
         DrawTextInArea(g_paletaToastTexto, rToast, 9, Fade((Color){ 255, 224, 48, 255 }, alphaT));
+    }
+
+    if (g_trailerGlitchTimer > 0.0f) {
+        float dtGl = GetFrameTime();
+        if (dtGl > 0.05f) dtGl = 0.05f;
+        g_trailerGlitchTimer -= dtGl;
+        if (g_trailerGlitchTimer < 0.0f) g_trailerGlitchTimer = 0.0f;
+        for (int g = 0; g < 10; g++) {
+            float gy = (float)GetRandomValue(0, 350);
+            float gh = (float)GetRandomValue(2, 10);
+            float gx = (float)GetRandomValue(-18, 18);
+            float gw = (float)GetRandomValue(120, 420);
+            Color gCol = (g % 2 == 0) ? Fade((Color){ 255, 242, 230, 255 }, 0.35f) : Fade(BLACK, 0.55f);
+            DrawRectangleRec(ParaTela((Rectangle){ gx + (float)GetRandomValue(0, 300), gy, gw, gh }), gCol);
+        }
     }
 
     RayCanvasEnd();

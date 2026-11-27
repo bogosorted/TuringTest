@@ -583,8 +583,17 @@ static void RenderizarArma(Vector2 mouse) {
 // ---------------------------------------------------------------
 // Cena
 // ---------------------------------------------------------------
+static Music g_musSuspense          = { 0 };
+static bool  g_musSuspenseCarregada = false;
+static float g_suspenseVol          = 0.0f;
+
 bool VerdictSceneShouldRestart(void) {
     return g_tentarDeNovo;
+}
+
+bool VerdictSceneSuspenseAtivo(void) {
+    return g_musSuspenseCarregada &&
+           (g_estado == ESTADO_INTRO || g_estado == ESTADO_MIRANDO || g_estado == ESTADO_TIRO);
 }
 
 bool InitVerdictScene(void) {
@@ -618,6 +627,16 @@ bool InitVerdictScene(void) {
     g_sndHover = LoadSound("assets/audio/sfx_hover.wav");
     g_sndTiro  = CarregarSomOpcional(SOM_TIRO);
     for (int i = 0; i < 3; i++) g_sndGrito[i] = CarregarSomOpcional(SONS_GRITO[i]);
+
+    g_musSuspenseCarregada = false;
+    g_suspenseVol = 0.0f;
+    if (IsAudioDeviceReady() && FileExists("assets/audio/suspenseveredito.mp3")) {
+        g_musSuspense = LoadMusicStream("assets/audio/suspenseveredito.mp3");
+        g_musSuspense.looping = true;
+        PlayMusicStream(g_musSuspense);
+        SetMusicVolume(g_musSuspense, 0.0f);
+        g_musSuspenseCarregada = true;
+    }
 
     g_dither = LoadShaderFromMemory(NULL, DITHER_FS);
     g_sala = LoadTexture("assets/sprites/veredito/spr_veredito_sala.png");
@@ -678,7 +697,7 @@ bool InitVerdictScene(void) {
     return true;
 }
 
-#define SCORE_LIMIAR_FINAL_BOM 4400
+#define SCORE_LIMIAR_FINAL_BOM 3200
 
 static void CalcularESalvarPontuacao(void) {
     for (int s = 0; s < 3; s++) {
@@ -695,13 +714,13 @@ static void CalcularESalvarPontuacao(void) {
     bool acertouVeredito = (g_alvo == AI_INDEX);
     int ptsVeredito = acertouVeredito ? 1500 : 0;
 
-    // 2) Checklist marcado com base nos comportamentos reais de cada funcionario:
-    //    0: Inverte ordem, 1: Nao lembra cotidianos, 2: Falas padronizadas, 3: Inventou fatos,
-    //    4: Mudou contexto, 5: Mudou personalidade, 6: Segue a risca personalidade, 7: Muito evasivo(a)
+    // 2) Checklist marcado com base nos comportamentos observaveis nos dialogos de cada funcionario:
+    //    0: Inverteu ordem, 1: Esqueceu detalhes/rotina, 2: Falas robotizadas/padronizadas, 3: Inventou fatos/normas,
+    //    4: Contradisse algo anterior, 5: Mudou postura/personalidade, 6: Age conforme ficha, 7: Cortou assunto / evasivo(a)
     static const bool COMPORTAMENTO_REAL[GAME_NUM_SUSPECTS][8] = {
-        /* Maria     */ { false, false, false, false, false, false, true,  true  },
-        /* Arthur    */ { false, false, false, false, false, false, true,  false },
-        /* Ana Lucia */ { true,  true,  true,  true,  true,  true,  false, false },
+        /* Maria     */ { true,  false, true,  false, false, false, true,  true  },
+        /* Arthur    */ { false, true,  false, false, false, true,  true,  false },
+        /* Ana Lucia */ { true,  true,  true,  true,  true,  true,  false, true  },
     };
     int acertosChecklist = 0;
     int errosChecklist   = 0;
@@ -716,11 +735,10 @@ static void CalcularESalvarPontuacao(void) {
             else                          errosChecklist++;
         }
     }
-    int ptsChecklist = acertosChecklist * 200 - errosChecklist * 120;
-    if (ptsChecklist > 1200) ptsChecklist = 1200;
-    if (ptsChecklist < 0)    ptsChecklist = 0;
+    int ptsChecklist = acertosChecklist * 200 - errosChecklist * 100;
+    if (ptsChecklist < 0) ptsChecklist = 0;
 
-    // 3) Evidencias coletadas (somente evidencias listadas nas tabelas, ignorando flags internas de dialogo)
+    // 3) Evidencias coletadas
     int evCount = 0;
     for (int s = 0; s < GAME_NUM_SUSPECTS; s++) {
         int cnt = GetEvidenciaCount(s);
@@ -729,23 +747,18 @@ static void CalcularESalvarPontuacao(void) {
             if (GameStateTemEvidencia(s, id)) evCount++;
         }
     }
-    int ptsEv   = evCount * 300;
-    if (ptsEv > 1800) ptsEv = 1800;
+    int ptsEv = evCount * 250;
 
-    // 4) Evitar uso de ferramentas invasivas (Enviesamento, Deepfake, Injecao: max 3 na run)
-    int toolsUsed = GameStateCountSpecialToolsUsed();
-    if (toolsUsed > 3) toolsUsed = 3;
-    int toolsLivres = 3 - toolsUsed;
-    int ptsFerramentas = toolsLivres * 400;
-
-    // 5) Dicas nao utilizadas (max 3 na run)
+    // 4) Dicas nao utilizadas (max 3 na run)
     int dicasLivres = GameStateGetUnusedHintsCount();
     int ptsDicas    = dicasLivres * 200;
 
-    // 6) Eficiencia de tokens (bonus limitado para que pular conversas nunca dê Final Bom sozinho!)
+    // 5) Tokens restantes (usar ferramentas consome tokens, reduzindo este bonus)
     int tokensLivres = GameStateGetRemainingTokensTotal();
     int ptsTokens    = tokensLivres * 25;
     if (ptsTokens > 300) ptsTokens = 300;
+
+    int toolsUsed = GameStateCountSpecialToolsUsed();
 
     snprintf(g_scoreLinhas[0].rotulo, sizeof g_scoreLinhas[0].rotulo, "Veredito correto");
     g_scoreLinhas[0].alvo = ptsVeredito;
@@ -753,19 +766,20 @@ static void CalcularESalvarPontuacao(void) {
     g_scoreLinhas[1].alvo = ptsChecklist;
     snprintf(g_scoreLinhas[2].rotulo, sizeof g_scoreLinhas[2].rotulo, "Evidencias coletadas (%d)", evCount);
     g_scoreLinhas[2].alvo = ptsEv;
-    snprintf(g_scoreLinhas[3].rotulo, sizeof g_scoreLinhas[3].rotulo, "Ferramentas evitadas (%d/3)", toolsLivres);
-    g_scoreLinhas[3].alvo = ptsFerramentas;
-    snprintf(g_scoreLinhas[4].rotulo, sizeof g_scoreLinhas[4].rotulo, "Dicas nao utilizadas (%d/3)", dicasLivres);
-    g_scoreLinhas[4].alvo = ptsDicas;
-    snprintf(g_scoreLinhas[5].rotulo, sizeof g_scoreLinhas[5].rotulo, "Eficiencia de tokens");
-    g_scoreLinhas[5].alvo = ptsTokens;
+    snprintf(g_scoreLinhas[3].rotulo, sizeof g_scoreLinhas[3].rotulo, "Dicas nao utilizadas (%d/3)", dicasLivres);
+    g_scoreLinhas[3].alvo = ptsDicas;
+    snprintf(g_scoreLinhas[4].rotulo, sizeof g_scoreLinhas[4].rotulo, "Eficiencia de tokens (%d)", tokensLivres);
+    g_scoreLinhas[4].alvo = ptsTokens;
+    g_scoreLinhas[5].rotulo[0] = '\0';
+    g_scoreLinhas[5].alvo = 0;
 
-    g_scoreTotal = ptsVeredito + ptsChecklist + ptsEv + ptsFerramentas + ptsDicas + ptsTokens;
+    g_scoreTotal = ptsVeredito + ptsChecklist + ptsEv + ptsDicas + ptsTokens;
+    if (g_scoreTotal < 0) g_scoreTotal = 0;
     // O salvamento no Ranking ocorre na tela seguinte (ESTADO_FOTO), junto com a escolha da foto do jogador!
 
     // Regras garantidas dos 3 finais:
     // - Final Ruim:   Veredito incorreto.
-    // - Final Bom:    Veredito correto + marcou checklist na IA (>=2, sem spam cego) + evitou abuso de ferramentas (<=1 usada)
+    // - Final Bom:    Veredito correto + marcou checklist (>=2, sem spam cego) + evitou abuso de ferramentas (<=1 usada)
     //                 + coletou evidencias (>=2) + atingiu pontuacao alta (>= SCORE_LIMIAR_FINAL_BOM).
     // - Final Neutro: Veredito correto, mas faltou pontuacao alta / checklist / evidencias / abusou de ferramentas.
     bool checklistValido = (acertosChecklist >= 2) && (errosChecklist <= 2);
@@ -1134,7 +1148,7 @@ static void DesenharCenaJornalista(void) {
 
 static void DesenharPontuacaoFinal(void) {
     const float durLinha = 0.45f;
-    float durTotal = 6.0f * durLinha;
+    float durTotal = 5.0f * durLinha;
     bool clicou = !RayCanvasInputBlocked() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     if (!g_pontuacaoCompleta && g_tempo < durTotal && clicou) {
         g_pontuacaoCompleta = true;
@@ -1175,11 +1189,11 @@ static void DesenharPontuacaoFinal(void) {
     DrawText(sub, (int)rSub.x, (int)rSub.y, tamPeq, TONS[3]);
 
     int somaAnimada = 0;
-    for (int i = 0; i < 6; i++) {
-        float y = painel.y + 68.0f + i * 28.0f;
+    for (int i = 0; i < 5; i++) {
+        float y = painel.y + 74.0f + i * 31.0f;
         float t0 = i * durLinha;
         float prog = terminou ? 1.0f : fmaxf(0.0f, fminf(1.0f, (g_tempo - t0) / durLinha));
-        int valAtual = (int)(g_scoreLinhas[i].alvo * prog + 0.5f);
+        int valAtual = (int)(g_scoreLinhas[i].alvo * prog + (g_scoreLinhas[i].alvo < 0 ? -0.5f : 0.5f));
         somaAnimada += valAtual;
 
         Color corLinha = (prog > 0.0f) ? COR_CLARA : TONS[2];
@@ -1187,11 +1201,16 @@ static void DesenharPontuacaoFinal(void) {
         DrawText(g_scoreLinhas[i].rotulo, (int)rNome.x, (int)rNome.y, tamTexto, corLinha);
 
         char valTxt[24];
-        snprintf(valTxt, sizeof valTxt, "+%d", valAtual);
+        if (valAtual < 0) snprintf(valTxt, sizeof valTxt, "%d", valAtual);
+        else              snprintf(valTxt, sizeof valTxt, "+%d", valAtual);
         int wVal = MeasureText(valTxt, tamTexto);
         Rectangle rDir = ParaTela((Rectangle){ painel.x + painel.width - 20.0f, y, 0, 0 });
-        DrawText(valTxt, (int)(rDir.x - wVal), (int)rDir.y, tamTexto,
-                 (g_scoreLinhas[i].alvo > 0 && prog > 0.0f) ? TONS[4] : TONS[2]);
+        Color corVal = TONS[2];
+        if (prog > 0.0f) {
+            if (g_scoreLinhas[i].alvo > 0)      corVal = TONS[4];
+            else if (g_scoreLinhas[i].alvo < 0) corVal = (Color){ 210, 76, 76, 255 };
+        }
+        DrawText(valTxt, (int)(rDir.x - wVal), (int)rDir.y, tamTexto, corVal);
     }
 
     Rectangle rDiv = ParaTela((Rectangle){ painel.x + 16.0f, painel.y + 240.0f, painel.width - 32.0f, 1.5f });
@@ -1364,6 +1383,18 @@ void UpdateDrawVerdictScene(void) {
     g_tempo += dt;
     Vector2 mouse = MouseVirtual();
 
+    if (g_musSuspenseCarregada) {
+        UpdateMusicStream(g_musSuspense);
+        bool deveTocar = (g_estado == ESTADO_INTRO || g_estado == ESTADO_MIRANDO);
+        float targetVol = deveTocar ? (0.72f * SettingsGetMusicVolume()) : 0.0f;
+        float speed = deveTocar ? 3.5f : 10.0f;
+        g_suspenseVol += (targetVol - g_suspenseVol) * fminf(dt * speed, 1.0f);
+        SetMusicVolume(g_musSuspense, g_suspenseVol);
+        if (!deveTocar && g_suspenseVol < 0.01f && IsMusicStreamPlaying(g_musSuspense)) {
+            StopMusicStream(g_musSuspense);
+        }
+    }
+
     // A arma e renderizada antes do frame (textura propria)
     bool cenaVisivel = (g_estado == ESTADO_MIRANDO) || (g_estado == ESTADO_TIRO && g_tempo < TEMPO_CLARAO);
     if (cenaVisivel) RenderizarArma(mouse);
@@ -1534,6 +1565,10 @@ void UnloadVerdictScene(void) {
     if (g_texJornalista.id > 0) UnloadTexture(g_texJornalista);
     if (g_shaderJornalista.id > 0) UnloadShader(g_shaderJornalista);
     if (g_sndBlipJornalista.frameCount > 0) UnloadSound(g_sndBlipJornalista);
+    if (g_musSuspenseCarregada) {
+        UnloadMusicStream(g_musSuspense);
+        g_musSuspenseCarregada = false;
+    }
     UnloadRenderTexture(g_armaRT);
     UnloadRenderTexture(g_armaFinal);
     UnloadShader(g_dither);

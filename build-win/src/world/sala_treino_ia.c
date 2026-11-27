@@ -9,11 +9,11 @@
 // - Parede tecnica ao fundo com eletrocalhas, cabos, trilhos de disjuntores e caixas de medidores eletricos
 // - Prototipo humanoide branco articulado em destaque ao lado da bancada de testes
 // - Esquerda: Hall 3 | Fundo-direita: Garagem de Prototipos
-static const float TIA_MIN_X = -5.40f;
-static const float TIA_MAX_X =  5.40f;
-static const float TIA_MIN_Z = -3.80f;
-static const float TIA_MAX_Z =  3.60f;
-static const float TIA_WALL_H = 3.10f;
+#define TIA_MIN_X -5.40f
+#define TIA_MAX_X 5.40f
+#define TIA_MIN_Z -3.80f
+#define TIA_MAX_Z 3.60f
+#define TIA_WALL_H 3.10f
 
 static const PlayerColliderBox TIA_COLLIDERS[] = {
     { -4.60f, -3.65f, -1.60f, -2.55f }, // Quadros eletricos e caixas de energia na base da parede
@@ -114,7 +114,9 @@ static void DesenharTreinoIA(float tempo, bool evRelatoriosAtiva) {
     // Bancada central de calibracao
     TerreoCaixa((Vector3){ -0.40f, 0.74f, 1.10f }, (Vector3){ 3.80f, 0.06f, 1.05f }, 0.64f, 0.48f, 0.42f, 0.14f);
     TerreoMonitor((Vector3){ -1.25f, 0.77f, 1.05f }, 0.0f);
+    TerreoGabinetePC((Vector3){ -1.72f, 0.77f, 1.05f }, 0.0f);
     TerreoMonitor((Vector3){  0.45f, 0.77f, 1.05f }, 0.0f);
+    TerreoGabinetePC((Vector3){  0.92f, 0.77f, 1.05f }, 0.0f);
     TerreoCadeira((Vector3){ -0.40f, 0.0f,  1.85f }, 180.0f);
 }
 

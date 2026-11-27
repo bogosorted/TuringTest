@@ -10,11 +10,11 @@
 // - Elevador no fundo-direito
 // - Esquerda: Auditorio
 // - Direita: Porta da Sala do CEO (TRANCADA - apenas aviso, sem interior modelado!)
-static const float H4_MIN_X = -5.40f;
-static const float H4_MAX_X =  5.40f;
-static const float H4_MIN_Z = -3.40f;
-static const float H4_MAX_Z =  3.20f;
-static const float H4_WALL_H = 3.15f;
+#define H4_MIN_X -5.40f
+#define H4_MAX_X 5.40f
+#define H4_MIN_Z -3.40f
+#define H4_MAX_Z 3.20f
+#define H4_WALL_H 3.15f
 
 static const PlayerColliderBox H4_COLLIDERS[] = {
     { -3.85f, -3.40f, -1.25f, -1.65f }, // Balcao executivo em U (bloqueia acesso por tras)

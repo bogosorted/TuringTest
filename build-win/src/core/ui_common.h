@@ -19,7 +19,7 @@ void UIDrawTextInArea(const char *texto, Rectangle area, int tamanhoFonte, Color
 void UIDrawTextLeftAligned(const char *texto, Vector2 pos, int tamanhoFonte, Color cor);
 void UIDrawTextWrappedLeftAligned(const char *texto, Vector2 pos, float maxLargura, int tamanhoFonte, Color cor);
 
-// Remove acentos UTF-8 comuns em portugues para renderizacao com fontes simples
+// Normaliza acentos e pontuacao UTF-8 para renderizacao com fontes ASCII
 bool UIRemoverAcentos(char *dest, int tam, const char *src);
 
 // Cria silhueta solida a partir do canal alpha de uma imagem

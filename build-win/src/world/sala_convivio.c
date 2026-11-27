@@ -9,11 +9,11 @@
 // - Acima do Escritorio Adm 1 (porta embaixo)
 // - A direita do Jardim (porta a esquerda)
 // - A esquerda dos Banheiros (porta decorativa a direita)
-static const float CONV_MIN_X = -4.80f;
-static const float CONV_MAX_X =  4.80f;
-static const float CONV_MIN_Z = -3.40f;
-static const float CONV_MAX_Z =  3.40f;
-static const float CONV_WALL_H = 2.95f;
+#define CONV_MIN_X -4.80f
+#define CONV_MAX_X 4.80f
+#define CONV_MIN_Z -3.40f
+#define CONV_MAX_Z 3.40f
+#define CONV_WALL_H 2.95f
 
 static const PlayerColliderBox CONV_COLLIDERS[] = {
     { -2.45f, -3.35f,  0.45f, -1.85f }, // Sofa redondo encostado na parede
@@ -116,6 +116,10 @@ static void DesenharConvivio(float tempo, bool evRelatoriosAtiva) {
     TerreoBebedouro((Vector3){ 4.20f, 0.0f, -2.80f });
     TerreoPlanta((Vector3){ -4.15f, 0.0f, -2.75f }, 1.35f);
     TerreoPlanta((Vector3){  4.15f, 0.0f,  2.65f }, 1.25f);
+
+    // Dois funcionarios conversando entre si (animados)
+    TerreoDesenharNPCAtividade(1, 7 /* NPC_ATIV_CONVERSANDO */, (Vector3){ -2.10f, 0.0f, 0.95f },  68.0f, tempo);
+    TerreoDesenharNPCAtividade(2, 7 /* NPC_ATIV_CONVERSANDO */, (Vector3){ -1.25f, 0.0f, 1.18f }, -112.0f, tempo + 1.4f);
 }
 
 static const TerreoSalaDef SALA_CONVIVIO_DEF = {

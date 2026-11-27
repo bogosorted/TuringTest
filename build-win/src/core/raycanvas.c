@@ -32,6 +32,7 @@ static const char *PALETA_FS =
     "uniform vec3 orig[5];\n"
     "uniform vec3 pal[5];\n"
     "uniform float crtEnabled;\n"
+    "uniform float expIndexed;\n"
     "uniform float time;\n"
     "uniform vec2 resolution;\n"
     "out vec4 finalColor;\n"
@@ -55,19 +56,41 @@ static const char *PALETA_FS =
     "        rgb.b = texture(texture0, clamp(uv - vec2(off, 0.0), 0.0, 1.0)).b;\n"
     "    }\n"
     "    float l = lum(rgb);\n"
-    "    vec3 o = orig[4];\n"
-    "    vec3 p = pal[4];\n"
-    "    for (int i = 0; i < 4; i++) {\n"
-    "        float l0 = lum(orig[i]);\n"
-    "        float l1 = lum(orig[i + 1]);\n"
-    "        if (l <= l1) {\n"
-    "            float t = clamp((l - l0) / max(l1 - l0, 0.0001), 0.0, 1.0);\n"
-    "            o = mix(orig[i], orig[i + 1], t);\n"
-    "            p = mix(pal[i], pal[i + 1], t);\n"
-    "            break;\n"
+    "    vec3 outCol;\n"
+    "    if (expIndexed > 0.5) {\n"
+    "        // Indexacao real de cores: quantiza cada pixel para o tom exato mais proximo da paleta,\n"
+    "        // substituindo preto puro e branco puro por tons mais vivos da propria paleta.\n"
+    "        float sat = max(rgb.r, max(rgb.g, rgb.b)) - min(rgb.r, min(rgb.g, rgb.b));\n"
+    "        if (sat > 0.30) {\n"
+    "            outCol = rgb;\n"
+    "        } else {\n"
+    "            int best = 0;\n"
+    "            float bestD = 999.0;\n"
+    "            for (int i = 0; i < 5; i++) {\n"
+    "                float d = abs(l - lum(orig[i]));\n"
+    "                if (d < bestD) { bestD = d; best = i; }\n"
+    "            }\n"
+    "            vec3 chosen = pal[best];\n"
+    "            if (best == 0 && lum(chosen) < 0.04) chosen = mix(pal[0], pal[1], 0.42);\n"
+    "            if (best == 4 && lum(chosen) > 0.94) chosen = mix(pal[4], pal[3], 0.16);\n"
+    "            float avg = (chosen.r + chosen.g + chosen.b) / 3.0;\n"
+    "            outCol = clamp(mix(vec3(avg), chosen, 1.24), 0.0, 1.0);\n"
     "        }\n"
+    "    } else {\n"
+    "        vec3 o = orig[4];\n"
+    "        vec3 p = pal[4];\n"
+    "        for (int i = 0; i < 4; i++) {\n"
+    "            float l0 = lum(orig[i]);\n"
+    "            float l1 = lum(orig[i + 1]);\n"
+    "            if (l <= l1) {\n"
+    "                float t = clamp((l - l0) / max(l1 - l0, 0.0001), 0.0, 1.0);\n"
+    "                o = mix(orig[i], orig[i + 1], t);\n"
+    "                p = mix(pal[i], pal[i + 1], t);\n"
+    "                break;\n"
+    "            }\n"
+    "        }\n"
+    "        outCol = clamp(p + (rgb - o) * 0.94, 0.0, 1.0);\n"
     "    }\n"
-    "    vec3 outCol = clamp(p + (rgb - o) * 0.94, 0.0, 1.0);\n"
     "    if (crtEnabled > 0.5) {\n"
     "        float scan = 0.92 + 0.08 * sin(uv.y * 360.0 * 6.2831853);\n"
     "        float roll = 0.98 + 0.02 * sin(uv.y * 10.0 - time * 2.8);\n"
@@ -86,6 +109,7 @@ static bool            g_paletaShaderPronto = false;
 static int             g_locOrig = -1;
 static int             g_locPal  = -1;
 static int             g_locCrt  = -1;
+static int             g_locExp  = -1;
 static int             g_locTime = -1;
 static int             g_locRes  = -1;
 static RenderTexture2D g_alvo;                // frame desenhado antes de aplicar a paleta
@@ -111,14 +135,19 @@ void RayCanvasBeginFrame(void) {
         g_locOrig = GetShaderLocation(g_paletaShader, "orig");
         g_locPal  = GetShaderLocation(g_paletaShader, "pal");
         g_locCrt  = GetShaderLocation(g_paletaShader, "crtEnabled");
+        g_locExp  = GetShaderLocation(g_paletaShader, "expIndexed");
         g_locTime = GetShaderLocation(g_paletaShader, "time");
         g_locRes  = GetShaderLocation(g_paletaShader, "resolution");
         g_paletaShaderPronto = true;
     }
 
-    // Recria a textura se a janela mudou de tamanho (F11, redimensionar)
+    // Recria a textura se a janela mudou de tamanho (F11, redimensionar, Alt+Tab)
     int w = GetScreenWidth();
     int h = GetScreenHeight();
+    if (w <= 0 || h <= 0) {
+        g_usandoAlvo = false;
+        return;
+    }
     if (!g_alvoPronto || g_alvo.texture.width != w || g_alvo.texture.height != h) {
         if (g_alvoPronto) UnloadRenderTexture(g_alvo);
         g_alvo = LoadRenderTexture(w, h);
@@ -140,9 +169,11 @@ void RayCanvasEndFrame(void) {
         SetShaderValueV(g_paletaShader, g_locOrig, orig, SHADER_UNIFORM_VEC3, PALETTE_NUM_STOPS);
         SetShaderValueV(g_paletaShader, g_locPal,  pal,  SHADER_UNIFORM_VEC3, PALETTE_NUM_STOPS);
         float crtF = SettingsGetCRT() ? 1.0f : 0.0f;
+        float expF = (SettingsGetDevMode() && SettingsGetDevExperimentalPalettes()) ? 1.0f : 0.0f;
         float tNow = (float)GetTime();
         float res[2] = { (float)g_alvo.texture.width, (float)g_alvo.texture.height };
         SetShaderValue(g_paletaShader, g_locCrt,  &crtF, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(g_paletaShader, g_locExp,  &expF, SHADER_UNIFORM_FLOAT);
         SetShaderValue(g_paletaShader, g_locTime, &tNow, SHADER_UNIFORM_FLOAT);
         SetShaderValue(g_paletaShader, g_locRes,  res,   SHADER_UNIFORM_VEC2);
 

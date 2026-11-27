@@ -9,11 +9,11 @@
 // - Fileiras paralelas de mesas brancas com base cinza e multiplos monitores enfileirados
 // - Persianas claras nas janelas ao fundo
 // - Esquerda: volta ao Hall 2 | Fundo: porta industrial para Sala de Servidores 1
-static const float CB2_MIN_X = -5.60f;
-static const float CB2_MAX_X =  5.60f;
-static const float CB2_MIN_Z = -3.80f;
-static const float CB2_MAX_Z =  3.60f;
-static const float CB2_WALL_H = 3.00f;
+#define CB2_MIN_X -5.60f
+#define CB2_MAX_X 5.60f
+#define CB2_MIN_Z -3.80f
+#define CB2_MAX_Z 3.60f
+#define CB2_WALL_H 3.00f
 
 static const PlayerColliderBox CB2_COLLIDERS[] = {
     { -3.65f,  0.65f,  3.65f,  1.95f }, // Fileira 1 de estacoes
@@ -67,6 +67,7 @@ static void DesenharFileiraCiber(float zCentro) {
     for (int i = -2; i <= 2; i++) {
         float px = (float)i * 1.45f;
         TerreoMonitor((Vector3){ px, 0.77f, zCentro + 0.12f }, 180.0f);
+        TerreoGabinetePC((Vector3){ px - 0.44f, 0.77f, zCentro + 0.10f }, 180.0f);
         TerreoCadeira((Vector3){ px, 0.0f,  zCentro - 0.55f }, 0.0f);
     }
 }

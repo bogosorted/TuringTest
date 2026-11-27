@@ -58,15 +58,19 @@ static const char *CUTSCENE_TEXTO = "Você está pronto para o teste de turing..
 #define NUM_FEED_SALAS 4
 
 static bool            g_csAtiva = false;
+static int             g_csModo = 0; // 0 = Sala escura/monitores, 1 = Banheiro/espelho
+static bool            g_csEsconderUI = false;
 static float           g_csTempo = 0.0f;
 static float           g_csTextoProg = 0.0f;
 static int             g_csUltimoChar = 0;
 static int             g_csBlipCount = 0;
+static int             g_csLastGlitchStep = -1;
 
 static RenderTexture2D g_csCena = { 0 };
 static RenderTexture2D g_csFinal = { 0 };
 static RenderTexture2D g_csFeeds[NUM_FEED_SALAS] = { 0 };
 static RenderTexture2D g_csStaticTex = { 0 };
+static RenderTexture2D g_csMirrorTex = { 0 };
 static Shader          g_csShader = { 0 };
 static Shader          g_csStaticShader = { 0 };
 static int             g_csStaticTimeLoc = -1;
@@ -127,6 +131,8 @@ static void GarantirRecursos(int w, int h) {
         }
         g_csStaticTex = LoadRenderTexture(160, 90);
         SetTextureFilter(g_csStaticTex.texture, TEXTURE_FILTER_POINT);
+        g_csMirrorTex = LoadRenderTexture(320, 240);
+        SetTextureFilter(g_csMirrorTex.texture, TEXTURE_FILTER_POINT);
         g_csRecursosOk = true;
     }
     if (!g_csVozPronta && IsAudioDeviceReady()) {
@@ -354,13 +360,125 @@ static void DesenharCenaCutscene(float tempo) {
     DesenharCadeiraExecutiva(posPessoa, 180.0f);
 }
 
+// Renderiza o reflexo no espelho do banheiro (0.5s em cada distorcao de identidade)
+static void RenderizarEspelhoBanheiro(float tempo) {
+    if (g_csMirrorTex.id == 0) return;
+
+    // 0.00..0.85s: Masculino | 0.85..1.05s (0.20s): Feminino | 1.05..1.25s (0.20s): Robo Subsolo | 1.25s+: Masculino
+    int modelo = 0;
+    if (tempo >= 0.85f && tempo < 1.05f)      modelo = 1;
+    else if (tempo >= 1.05f && tempo < 1.25f) modelo = 2;
+    else                                      modelo = 0;
+
+    bool emTransicao = (fabsf(tempo - 0.85f) < 0.05f) ||
+                       (fabsf(tempo - 1.05f) < 0.05f) ||
+                       (fabsf(tempo - 1.25f) < 0.05f);
+
+    Camera3D camMirror = {
+        .position   = { 0.0f, 1.50f, -2.02f },
+        .target     = { 0.0f, 1.38f, -0.55f },
+        .up         = { 0.0f, 1.0f,   0.0f },
+        .fovy       = 42.0f,
+        .projection = CAMERA_PERSPECTIVE
+    };
+
+    BeginTextureMode(g_csMirrorTex);
+    ClearBackground((Color){ 10, 10, 12, 255 });
+    BeginMode3D(camMirror);
+    // Fundo do banheiro visto no reflexo
+    DrawPlane((Vector3){ 0.0f, 0.0f, 0.5f }, (Vector2){ 4.5f, 4.5f }, TerreoLum(0.14f));
+    TerreoCaixa((Vector3){ 0.0f, 1.45f, 1.85f }, (Vector3){ 4.2f, 2.9f, 0.16f }, 0.14f, 0.18f, 0.14f, 0.08f);
+    TerreoCaixa((Vector3){ -1.85f, 1.45f, 0.0f }, (Vector3){ 0.16f, 2.9f, 4.0f }, 0.12f, 0.15f, 0.16f, 0.08f);
+    TerreoCaixa((Vector3){  1.85f, 1.45f, 0.0f }, (Vector3){ 0.16f, 2.9f, 4.0f }, 0.12f, 0.15f, 0.16f, 0.08f);
+
+    Vector3 posChar = { 0.0f, 0.0f, -0.78f };
+    if (modelo == 0) {
+        TerreoDesenharPlayerPreview(false, posChar, 180.0f, tempo);
+    } else if (modelo == 1) {
+        TerreoDesenharPlayerPreview(true, posChar, 180.0f, tempo);
+    } else {
+        TerreoRoboPrototipo(posChar, 180.0f);
+    }
+    EndMode3D();
+
+    // Distorcao/estatica rapida no momento da troca de identidade
+    if (emTransicao || modelo != 0) {
+        int intensidade = emTransicao ? 24 : 7;
+        for (int s = 0; s < intensidade; s++) {
+            int sy = GetRandomValue(0, 236);
+            int sh = GetRandomValue(2, emTransicao ? 14 : 5);
+            DrawRectangle(0, sy, 320, sh, Fade(WHITE, emTransicao ? 0.55f : 0.18f));
+        }
+    }
+    EndTextureMode();
+}
+
+static void DesenharCenaBanheiro(float tempo) {
+    // Piso e paredes escuras de azulejo
+    DrawPlane((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector2){ 4.20f, 4.20f }, TerreoLum(0.14f));
+    Color corAz = TerreoLum(0.22f);
+    for (float x = -1.8f; x <= 1.81f; x += 0.45f) {
+        DrawLine3D((Vector3){ x, 0.003f, -1.85f }, (Vector3){ x, 0.003f, 1.85f }, corAz);
+    }
+    for (float z = -1.8f; z <= 1.81f; z += 0.45f) {
+        DrawLine3D((Vector3){ -1.85f, 0.003f, z }, (Vector3){ 1.85f, 0.003f, z }, corAz);
+    }
+
+    TerreoCaixa((Vector3){  0.0f, 1.45f, -1.88f }, (Vector3){ 3.90f, 2.90f, 0.18f }, 0.14f, 0.18f, 0.14f, 0.08f);
+    TerreoCaixa((Vector3){ -1.88f, 1.45f, 0.0f },  (Vector3){ 0.18f, 2.90f, 3.90f }, 0.12f, 0.15f, 0.16f, 0.08f);
+    TerreoCaixa((Vector3){  1.88f, 1.45f, 0.0f },  (Vector3){ 0.18f, 2.90f, 3.90f }, 0.12f, 0.15f, 0.16f, 0.08f);
+
+    // Luminaria fluorescente piscando suavemente acima do espelho
+    float luzLum = (fmodf(tempo, 2.3f) < 0.07f) ? 0.30f : 0.94f;
+    TerreoCaixa((Vector3){ 0.0f, 2.32f, -1.72f }, (Vector3){ 1.40f, 0.07f, 0.10f }, luzLum, luzLum, luzLum, -1.0f);
+
+    // Bancada da pia + cuba + torneira
+    TerreoCaixa((Vector3){ 0.0f, 0.42f, -1.52f }, (Vector3){ 1.75f, 0.84f, 0.62f }, 0.24f, 0.18f, 0.16f, 0.12f);
+    TerreoCaixa((Vector3){ 0.0f, 0.86f, -1.50f }, (Vector3){ 1.82f, 0.06f, 0.68f }, 0.56f, 0.46f, 0.42f, 0.18f);
+    TerreoCaixa((Vector3){ 0.0f, 0.88f, -1.46f }, (Vector3){ 0.62f, 0.03f, 0.38f }, 0.16f, 0.12f, 0.12f, 0.22f);
+    // Torneira metalica
+    DrawCylinder((Vector3){ 0.0f, 0.89f, -1.70f }, 0.024f, 0.024f, 0.14f, 8, TerreoLum(0.68f));
+    TerreoCaixa((Vector3){ 0.0f, 1.02f, -1.64f }, (Vector3){ 0.04f, 0.03f, 0.14f }, 0.72f, 0.62f, 0.58f, -1.0f);
+
+    // Moldura do espelho + plano com reflexo invertido horizontalmente
+    float mw = 1.56f, mh = 1.18f, my = 1.54f, mz = -1.78f;
+    TerreoCaixa((Vector3){ 0.0f, my, mz - 0.02f }, (Vector3){ mw + 0.10f, mh + 0.10f, 0.04f }, 0.12f, 0.08f, 0.08f, 0.24f);
+    if (g_csMirrorTex.id > 0) {
+        float hw = mw * 0.5f, hh = mh * 0.5f;
+        rlSetTexture(g_csMirrorTex.texture.id);
+        rlBegin(RL_QUADS);
+        rlColor4ub(255, 255, 255, 255);
+        rlNormal3f(0.0f, 0.0f, 1.0f);
+        // Flip horizontal (u: 1 -> 0) para efeito real de espelho
+        rlTexCoord2f(1.0f, 0.0f); rlVertex3f(-hw, my - hh, mz + 0.005f);
+        rlTexCoord2f(0.0f, 0.0f); rlVertex3f( hw, my - hh, mz + 0.005f);
+        rlTexCoord2f(0.0f, 1.0f); rlVertex3f( hw, my + hh, mz + 0.005f);
+        rlTexCoord2f(1.0f, 1.0f); rlVertex3f(-hw, my + hh, mz + 0.005f);
+        rlEnd();
+        rlSetTexture(0);
+    }
+}
+
 void Cutscene3DStart(void) {
     g_csAtiva = true;
+    g_csModo = 0;
     g_csTempo = 0.0f;
     g_csTextoProg = 0.0f;
     g_csUltimoChar = 0;
     g_csBlipCount = 0;
     g_csFeedFrame = 0;
+    g_csLastGlitchStep = -1;
+}
+
+void Cutscene3DStartMirror(void) {
+    g_csAtiva = true;
+    g_csModo = 1;
+    g_csTempo = 0.0f;
+    g_csTextoProg = 0.0f;
+    g_csUltimoChar = 0;
+    g_csBlipCount = 0;
+    g_csFeedFrame = 0;
+    g_csLastGlitchStep = -1;
 }
 
 void Cutscene3DStop(void) {
@@ -380,6 +498,61 @@ void Cutscene3DUpdateAndRender(float dt) {
     int sw = GetScreenWidth();
     int sh = GetScreenHeight();
     GarantirRecursos(sw, sh);
+
+    if (g_csModo == 1) {
+        if (IsKeyPressed(KEY_H)) g_csEsconderUI = !g_csEsconderUI;
+        if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            g_csAtiva = false;
+            return;
+        }
+        if (IsKeyPressed(KEY_R)) {
+            g_csTempo = 0.0f;
+            g_csLastGlitchStep = -1;
+        }
+        int step = (g_csTempo >= 1.25f) ? 3 : (g_csTempo >= 1.05f) ? 2 : (g_csTempo >= 0.85f) ? 1 : 0;
+        if (step != g_csLastGlitchStep) {
+            g_csLastGlitchStep = step;
+            if (step > 0 && g_csVozPronta && g_csVozGrave.frameCount > 0) {
+                SetSoundVolume(g_csVozGrave, 0.45f * SettingsGetSfxVolume());
+                SetSoundPitch(g_csVozGrave, (step == 2) ? 0.65f : 0.85f);
+                PlaySound(g_csVozGrave);
+            }
+        }
+        RenderizarEspelhoBanheiro(g_csTempo);
+
+        float camY = 1.54f + 0.012f * sinf(g_csTempo * 1.6f);
+        float camX = 0.018f * sinf(g_csTempo * 0.9f);
+        Camera3D camB = {
+            .position   = { camX, camY, -0.52f },
+            .target     = { 0.0f, 1.50f, -1.78f },
+            .up         = { 0.0f, 1.0f, 0.0f },
+            .fovy       = 46.0f,
+            .projection = CAMERA_PERSPECTIVE
+        };
+
+        BeginTextureMode(g_csCena);
+        ClearBackground((Color){ 6, 5, 6, 255 });
+        BeginMode3D(camB);
+        DesenharCenaBanheiro(g_csTempo);
+        EndMode3D();
+        EndTextureMode();
+
+        BeginTextureMode(g_csFinal);
+        ClearBackground(BLACK);
+        if (g_csRecursosOk && g_csShader.id > 0) {
+            BeginShaderMode(g_csShader);
+            DrawTextureRec(g_csCena.texture,
+                           (Rectangle){ 0, 0, (float)g_csCena.texture.width, -(float)g_csCena.texture.height },
+                           (Vector2){ 0, 0 }, WHITE);
+            EndShaderMode();
+        } else {
+            DrawTextureRec(g_csCena.texture,
+                           (Rectangle){ 0, 0, (float)g_csCena.texture.width, -(float)g_csCena.texture.height },
+                           (Vector2){ 0, 0 }, WHITE);
+        }
+        EndTextureMode();
+        return;
+    }
 
     // Avanco do texto estilo typewriter + voz sub-grave
     int totalLen = (int)strlen(CUTSCENE_TEXTO);
@@ -487,6 +660,12 @@ void Cutscene3DDrawOverlay(void) {
     DrawRectangleRec(UIParaTela((Rectangle){ 0, 0, UI_VIRTUAL_W, 24 }), Fade(BLACK, 0.55f));
     DrawRectangleRec(UIParaTela((Rectangle){ 0, UI_VIRTUAL_H - 108, UI_VIRTUAL_W, 108 }), Fade(BLACK, 0.45f));
 
+    if (g_csModo == 1) {
+        return;
+    }
+    if (IsKeyPressed(KEY_H)) g_csEsconderUI = !g_csEsconderUI;
+    if (g_csEsconderUI) return;
+
     // Caixa de dialogo destacada em toda a cutscene (sem opcoes de fala)
     Rectangle rBox = { 38.0f, 246.0f, 564.0f, 92.0f };
     DrawRectangleRec(UIParaTela((Rectangle){ rBox.x + 3, rBox.y + 3, rBox.width, rBox.height }), Fade(BLACK, 0.72f));
@@ -512,13 +691,6 @@ void Cutscene3DDrawOverlay(void) {
     buf[visBytes] = '\0';
 
     UIDrawTextWrappedLeftAligned(buf, (Vector2){ rBox.x + 20.0f, rBox.y + 22.0f }, rBox.width - 40.0f, 15, (Color){ 255, 242, 230, 255 });
-
-    // Dica discreta para continuar/sair
-    const char *hint = (g_csTextoProg >= (float)len)
-                     ? "[ESPAÇO / ENTER / CLIQUE] Continuar"
-                     : "[ESC] Sair";
-    UIDrawTextInArea(hint, (Rectangle){ rBox.x + rBox.width - 210.0f, rBox.y + rBox.height - 20.0f, 196.0f, 16.0f },
-                     7.5f, (Color){ 189, 181, 168, 220 });
 }
 
 void Cutscene3DUnload(void) {
@@ -529,6 +701,7 @@ void Cutscene3DUnload(void) {
         if (g_csFeeds[i].id > 0) { UnloadRenderTexture(g_csFeeds[i]); g_csFeeds[i] = (RenderTexture2D){ 0 }; }
     }
     if (g_csStaticTex.id > 0) { UnloadRenderTexture(g_csStaticTex); g_csStaticTex = (RenderTexture2D){ 0 }; }
+    if (g_csMirrorTex.id > 0) { UnloadRenderTexture(g_csMirrorTex); g_csMirrorTex = (RenderTexture2D){ 0 }; }
     UISafeUnloadShader(&g_csShader);
     UISafeUnloadShader(&g_csStaticShader);
     g_csStaticTimeLoc = -1;

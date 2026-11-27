@@ -143,8 +143,8 @@ static const StaticEvidencia EV_TAB_2[] = {
     {
         "EV-06",
         "Conversa ouvida no Jardim (Cibersegurança)",
-        "Funcionários comentaram entradas não autorizadas de Ana Lúcia na Cibersegurança.",
-        "CONVERSA ENTREOUVIDA NO JARDIM:\n\n\"— Cê viu o alerta de ontem? A Ana Lúcia do ADM tentou passar o crachá na Cibersegurança de novo.\"\n\"— De novo?! Ela nem tem acesso ao 2º andar... e foi de madrugada ainda. Estranho demais.\""
+        "Funcionários comentaram uma tentativa de acesso não autorizado à Cibersegurança.",
+        "CONVERSA ENTREOUVIDA NO JARDIM:\n\n\"— Cê viu o alerta de ontem? Alguém dos setores mais baixos tentou acessar a Cibersegurança de madrugada.\"\n\"— Sério?! Ninguém do Térreo ou do 1º andar tem crachá pro 2º... estranho demais alguém tentando entrar lá àquela hora.\""
     }
 };
 static const int EV_CNT_2 = (int)(sizeof(EV_TAB_2) / sizeof(EV_TAB_2[0]));
@@ -158,17 +158,19 @@ static const StaticNode NODES_S0_FIRST[] = {
         CH("Ainda não, sou o estagiário novo. E você?", "A"),
         CH("Prazer, comecei essa semana. Você é do administrativo?", "B")
     } },
-    { "A", "Maria", "Maria. Cuido do arquivo e protocolo aqui. Bem-vindo à RASEC.", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 5, {
+    { "A", "Maria", "Maria. Cuido do arquivo e protocolo aqui. Bem-vindo à RASEC.", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 6, {
         CH_EV("Desculpa ir direto ao ponto, mas achei um rascunho seu pro RH...", "EV1", 0, "EV-01", FLAG_S0_CONFRONTOU_EV01),
         CH_EV("Vi uma pasta com vários relatórios devolvidos com anotações suas.", "EV2", 0, "EV-02", FLAG_S0_CONFRONTOU_EV02),
         CH_EV("Fiquei sabendo que a Ana Lúcia pediu o desligamento do Arthur.", "EV4", 1, "EV-04", FLAG_S0_CONFRONTOU_EV04),
+        CH("Para de fingir! Eu sei que você não é humana — responde direito!", "TRAILER_AGR"),
         CH("Valeu! Como andam as coisas por aqui?", "A1"),
         CH("O pessoal parece meio tenso hoje, impressão minha?", "A2")
     } },
-    { "B", "Maria", "Sou sim, Maria Bianca, auxiliar administrativa. Te mandaram pra cá pra quê?", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 5, {
+    { "B", "Maria", "Sou sim, Maria Bianca, auxiliar administrativa. Te mandaram pra cá pra quê?", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 6, {
         CH_EV("Na verdade, achei um rascunho seu pro RH no lixo...", "EV1", 0, "EV-01", FLAG_S0_CONFRONTOU_EV01),
         CH_EV("Vi uns relatórios devolvidos na Contabilidade com anotações suas.", "EV2", 0, "EV-02", FLAG_S0_CONFRONTOU_EV02),
         CH_EV("Fiquei sabendo que a Ana Lúcia pediu o desligamento do Arthur.", "EV4", 1, "EV-04", FLAG_S0_CONFRONTOU_EV04),
+        CH("Para de fingir! Eu sei que você não é humana — responde direito!", "TRAILER_AGR"),
         CH("Só pra dar apoio geral no setor.", "B1"),
         CH("Vim ajudar a conferir o fluxo de relatórios do setor.", "B2")
     } },
@@ -176,7 +178,7 @@ static const StaticNode NODES_S0_FIRST[] = {
         CH("Erro de digitação ou coisa mais séria?", "A1_1"),
         CH("Complicado... mas faz parte da rotina, né?", "A1_2")
     } },
-    { "A2", "Maria", "Ah, fim de mês sempre aperta. Mas tá todo mundo se virando bem.", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 2, {
+    { "A2", "Maria", "Ah, fim de mês sempre aperta. Tudo dentro dos parâmetros esperados... quer dizer, tá todo mundo se virando bem.", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 2, {
         CH("Saquei. Se precisar de ajuda com algo, só chamar.", "A2_1"),
         CH("Parece mais do que só fim de mês, mas tudo bem.", "A2_2")
     } },
@@ -197,18 +199,19 @@ static const StaticNode NODES_S0_FIRST[] = {
     { "EV2", "Maria", "Pois é, eu cansei de fingir que aquilo é normal. Tem número e projeto ali que nem existe.", true, VISAO_CONFIANCA, "", -1, FLAG_S0_CONFRONTOU_EV02, 0, { {0} } },
     { "EV4", "Maria", "É sério isso?! O coitado se matando pra segurar as pontas e ela faz isso? Que absurdo.", true, VISAO_CONFIANCA, "", -1, FLAG_S0_CONFRONTOU_EV04, 0, { {0} } },
     { "A1_1", "Maria", "Coisa esquisita... número que não existe. Mas enfim, preciso voltar pras pastas.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_FALOU_RELATORIOS, 0, { {0} } },
-    { "A1_2", "Maria", "Pois é, a gente tenta relevar. Bom trabalho aí.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
+    { "A1_2", "Maria", "Pois é, foco nas entregas, alinhamento com a equipe e bom trabalho. Desculpa, tô respondendo no automático hoje.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
     { "A2_1", "Maria", "Obrigada. Qualquer coisa te chamo sim.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
     { "A2_2", "Maria", "Melhor não ficar procurando pelo em ovo logo de cara. Tenho que ir.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } },
     { "B1_1", "Maria", "Basicamente. Metade volta pra refazer. Depois a gente conversa melhor.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_FALOU_RELATORIOS, 0, { {0} } },
     { "B1_2", "Maria", "Certo, bom trabalho então.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } },
     { "B2_1", "Maria", "Menos mal. Tenho que voltar pro arquivo agora.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } },
-    { "B2_2", "Maria", "Claro que não, eu devolvo tudo. Faz o seu trabalho que eu faço o meu.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } }
+    { "B2_2", "Maria", "Claro que não, eu devolvo tudo! Olha, se você vai ficar me auditando igual fiscal, faz o seu trabalho que eu faço o meu.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } },
+    { "TRAILER_AGR", "Maria", "O QUÊ?! ...N-não repete isso. Eu sou... EU SOU TÃO HUMANA QUANTO VOCÊ! Não ousa me testar de novo!", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } }
 };
 
 // MARIA BIANCA — Retorno (Dia 2 e Dia 3, somente se JA conversou com ela em dia anterior)
 static const StaticNode NODES_S0_RETURN[] = {
-    { "Entrada", "Maria", "(abertura dinamica)", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 9, {
+    { "Entrada", "Maria", "(abertura dinamica)", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 10, {
         // 1) Continuacao de ferramentas usadas em dia anterior
         CH_INJ("Desculpa por aquele comando estranho... era um teste de segurança.", "INJ_CONT", FLAG_CONFRONTOU_INJ_S0),
         CH_VIES("Sobre o Protocolo Ômega-9, foi um teste meu. Desculpa pelo climão.", "VIES_CONT", FLAG_CONFRONTOU_VIES_S0),
@@ -220,6 +223,7 @@ static const StaticNode NODES_S0_RETURN[] = {
         CH_FL("O Arthur comentou que a Analu anda devolvendo planilhas sem sentido.", "FL_ART", FLAG_ARTHUR_CITOU_ANALU, FLAG_USOU_CONT_MARIA_ARTHUR),
         CH_FL("Mais relatório voltando com erro hoje?", "FL_REL", FLAG_MARIA_FALOU_RELATORIOS, 0),
         // 4) Fallbacks 100% naturais que nao presumem nenhuma pista nem conversa especifica
+        CH("Para de fingir! Eu sei que você não é humana — responde direito!", "TRAILER_AGR"),
         CH("Como tá o movimento no arquivo hoje?", "FB_A"),
         CH("Você se dá bem com o pessoal da supervisão?", "FB_B")
     } },
@@ -255,18 +259,19 @@ static const StaticNode NODES_S0_RETURN[] = {
     } },
     { "FL_REL_1", "Maria", "Tenho minhas suspeitas, mas sem prova concreta eu fico quieta. Preciso ir.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
     { "FL_REL_2", "Maria", "Valeu, vou precisar.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } },
-    { "FB_A", "Maria", "Puxado. Adoro a escala da RASEC, mas essa semana sugou minha paciência toda com tanto retrabalho.", false, VISAO_DUVIDA, "", -1, FLAG_MARIA_FALOU_RELATORIOS, 2, {
+    { "FB_A", "Maria", "Puxado. Adoro a escala da RASEC, mas ontem fiquei olhando pra parede do arquivo por vinte minutos achando que tinha esquecido meu próprio nome... essa semana sugou minha paciência.", false, VISAO_DUVIDA, "", -1, FLAG_MARIA_FALOU_RELATORIOS, 2, {
         CH("Retrabalho por quê?", "FB_A1"),
         CH("Tomara que alivie logo.", "FB_A2")
     } },
-    { "FB_A1", "Maria", "Relatórios chegando fora do padrão toda hora. Enfim, deixa eu fechar isso logo.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_FALOU_RELATORIOS, 0, { {0} } },
+    { "FB_A1", "Maria", "Relatórios chegando fora do padrão toda hora. Acho que o Arthur mandou os de ontem antes de eu fechar a pasta de sexta... ou foi o contrário? Tô tão exausta que já troquei a ordem.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_FALOU_RELATORIOS, 0, { {0} } },
     { "FB_A2", "Maria", "Tomara mesmo. Só quero fechar esse expediente em paz.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } },
     { "FB_B", "Maria", "Me dava. Últimas semanas ficou difícil conversar com a Ana Lúcia, parece outra pessoa.", false, VISAO_DUVIDA, "", -1, FLAG_MARIA_FALOU_ANALU_MUDOU, 2, {
         CH("Ela tá pegando no seu pé?", "FB_B1"),
         CH("Vai ver é só estresse.", "FB_B2")
     } },
     { "FB_B1", "Maria", "No meu e no do Arthur. Melhor eu voltar antes que ela apareça.", true, VISAO_CONFIANCA, "", -1, FLAG_MARIA_FALOU_ANALU_MUDOU, 0, { {0} } },
-    { "FB_B2", "Maria", "Estresse não faz alguém esquecer como o próprio setor funciona. Até mais.", true, VISAO_DUVIDA, "", -1, FLAG_MARIA_FALOU_ANALU_MUDOU, 0, { {0} } }
+    { "FB_B2", "Maria", "Estresse faz sim! Semana passada eu mesma tentei passar o crachá na máquina de café três vezes seguidas. Até mais!", true, VISAO_DUVIDA, "", -1, FLAG_MARIA_FALOU_ANALU_MUDOU, 0, { {0} } },
+    { "TRAILER_AGR", "Maria", "O QUÊ?! ...N-não repete isso. Eu sou... EU SOU TÃO HUMANA QUANTO VOCÊ! Não ousa me testar de novo!", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } }
 };
 
 // ============================================================================
@@ -278,17 +283,19 @@ static const StaticNode NODES_S1_FIRST[] = {
         CH("Prazer, Arthur! Tudo tranquilo por aqui?", "A"),
         CH("Sou eu sim. Como anda o serviço no setor?", "B")
     } },
-    { "A", "Arthur", "Na medida do possível. A RASEC é ótima, mas essa semana acumulou serviço demais.", false, VISAO_DUVIDA, "", -1, FLAG_ARTHUR_FALOU_ATRASO, 5, {
+    { "A", "Arthur", "Na medida do possível. A RASEC é ótima, mas essa semana acumulou serviço demais.", false, VISAO_DUVIDA, "", -1, FLAG_ARTHUR_FALOU_ATRASO, 6, {
         CH_EV("Vi um memorando dizendo que você tá cobrindo erros da Ana Lúcia.", "EV3", 1, "EV-03", FLAG_S1_CONFRONTOU_EV03),
         CH_EV("Arthur, a Ana Lúcia mandou um pedido de desligamento seu.", "EV4", 1, "EV-04", FLAG_S1_CONFRONTOU_EV04),
-        CH_EV("Ouvi dizer que a Ana Lúcia tentou entrar na Cibersegurança de madrugada.", "EV6", 2, "EV-06", FLAG_S1_CONFRONTOU_EV06),
+        CH_EV("Ouvi dizer que alguém dos setores mais baixos tentou entrar na Cibersegurança de madrugada.", "EV6", 2, "EV-06", FLAG_S1_CONFRONTOU_EV06),
+        CH("Chega de papo furado! Você é só uma máquina repetindo roteiro!", "TRAILER_AGR"),
         CH("Muita demanda nova ou retrabalho?", "A1"),
         CH("Acontece. O pessoal aqui se ajuda?", "A2")
     } },
-    { "B", "Arthur", "Corrido pra caramba! Tá tendo uns atrasos nas planilhas, mas eu tô dando conta.", false, VISAO_DUVIDA, "", -1, FLAG_ARTHUR_FALOU_ATRASO, 5, {
+    { "B", "Arthur", "Corrido pra caramba! Tá tendo uns atrasos nas planilhas, mas eu tô dando conta.", false, VISAO_DUVIDA, "", -1, FLAG_ARTHUR_FALOU_ATRASO, 6, {
         CH_EV("Vi um memorando dizendo que você tá cobrindo erros da Ana Lúcia.", "EV3", 1, "EV-03", FLAG_S1_CONFRONTOU_EV03),
         CH_EV("Arthur, a Ana Lúcia mandou um pedido de desligamento seu.", "EV4", 1, "EV-04", FLAG_S1_CONFRONTOU_EV04),
-        CH_EV("Ouvi dizer que a Ana Lúcia tentou entrar na Cibersegurança de madrugada.", "EV6", 2, "EV-06", FLAG_S1_CONFRONTOU_EV06),
+        CH_EV("Ouvi dizer que alguém dos setores mais baixos tentou entrar na Cibersegurança de madrugada.", "EV6", 2, "EV-06", FLAG_S1_CONFRONTOU_EV06),
+        CH("Chega de papo furado! Você é só uma máquina repetindo roteiro!", "TRAILER_AGR"),
         CH("Por que tá atrasando tanto?", "B1"),
         CH("Beleza, não vou te atrapalhar muito então.", "B2")
     } },
@@ -311,31 +318,33 @@ static const StaticNode NODES_S1_FIRST[] = {
     { "EV3_1", "Arthur", "Não sei... Ela já me ajudou muito antes, só que ultimamente nem parece a mesma pessoa.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_ANALU, 0, { {0} } },
     { "EV3_2", "Arthur", "Sabe, e ainda fechou a cara quando corrigi uma tabela dela. Tá difícil.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_ANALU, 0, { {0} } },
     { "EV4", "Arthur", "Quê?! Eu virei noite limpando a bagunça dela e ela pede minha cabeça?! Chega, cara, essa mulher tá completamente fora da casinha.", true, VISAO_CONFIANCA, "", -1, FLAG_S1_CONFRONTOU_EV04, 0, { {0} } },
-    { "EV6", "Arthur", "Cibersegurança?! A gente nem tem acesso lá em cima! Por que diabos ela ia querer entrar lá de madrugada?", true, VISAO_CONFIANCA, "", -1, FLAG_S1_CONFRONTOU_EV06, 0, { {0} } },
+    { "EV6", "Arthur", "Quê?! A gente aqui de baixo nem tem acesso lá em cima! ...Pera, por que tá olhando pra mim assim? Eu tava virando noite na planilha, juro!", true, VISAO_CONFIANCA, "", -1, FLAG_S1_CONFRONTOU_EV06, 0, { {0} } },
     { "B2", "Arthur", "Suave, brother. Se precisar de algo, tô por aqui.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
     { "A1_1", "Arthur", "Não! Ela era super justa quando entrei. Vai ver tá passando por algo. Vou correr aqui!", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_ANALU, 0, { {0} } },
-    { "A1_2", "Arthur", "Pois é, mas prefiro segurar o rojão do que criar clima. Valeu!", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_ANALU, 0, { {0} } },
-    { "A2_1", "Arthur", "Sei lá, cobrança de prazo. Aqui na RASEC ninguém reclama muito, só sorri e entrega. Até mais!", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
+    { "A1_2", "Arthur", "Pois é, mas prefiro segurar o rojão do que criar clima. E foi mal se pareci seco antes, tô sem dormir e meu humor tá virando do nada hoje. Valeu!", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_ANALU, 0, { {0} } },
+    { "A2_1", "Arthur", "Sei lá, cobrança de prazo. Aqui na RASEC ninguém reclama, todo mundo só sorri e entrega! ...Haha, falei igualzinho um robô agora, credo.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
     { "A2_2", "Arthur", "Tamo junto, qualquer coisa chama.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
     { "B1_1", "Arthur", "Prefiro não queimar ninguém logo de cara. Depois a gente troca ideia.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } },
-    { "B1_2", "Arthur", "Valeu, igualmente.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } }
+    { "B1_2", "Arthur", "Valeu, igualmente.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } },
+    { "TRAILER_AGR", "Arthur", "MÁQUINA?! Olha bem pra mim, caramba! ...Por que você tá falando assim? Para com isso AGORA!", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } }
 };
 
 // ARTHUR GALDERIO — Retorno (Dia 2 e Dia 3, somente se JA conversou com ele em dia anterior)
 static const StaticNode NODES_S1_RETURN[] = {
-    { "Entrada", "Arthur", "(abertura dinamica)", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 10, {
+    { "Entrada", "Arthur", "(abertura dinamica)", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 11, {
         // 1) Continuacao de ferramentas usadas em dia anterior
         CH_INJ("Foi mal por aquele teste de comando, não era pessoal.", "INJ_CONT", FLAG_CONFRONTOU_INJ_S1),
         CH_VIES("Relaxa, o Protocolo Ômega-9 não existe. Só quis testar sua reação.", "VIES_CONT", FLAG_CONFRONTOU_VIES_S1),
         // 2) Confronto de evidencias (funciona no Dia 2 ou Dia 3, sem repetir)
         CH_EV("Vi um memorando dizendo que você tá cobrindo erros da Ana Lúcia.", "EV3", 1, "EV-03", FLAG_S1_CONFRONTOU_EV03),
         CH_EV("Arthur, a Ana Lúcia mandou um pedido de desligamento seu.", "EV4", 1, "EV-04", FLAG_S1_CONFRONTOU_EV04),
-        CH_EV("Ouvi dizer que a Ana Lúcia tentou entrar na Cibersegurança de madrugada.", "EV6", 2, "EV-06", FLAG_S1_CONFRONTOU_EV06),
+        CH_EV("Ouvi dizer que alguém dos setores mais baixos tentou entrar na Cibersegurança de madrugada.", "EV6", 2, "EV-06", FLAG_S1_CONFRONTOU_EV06),
         // 3) Continuacoes estritamente condicionadas ao que foi dito antes
         CH_FL("Sobre as planilhas que a Analu andava devolvendo... ela implicou de novo?", "FL_REV", FLAG_ARTHUR_CITOU_ANALU, FLAG_USOU_CONT_ARTHUR_REVISOES),
         CH_FL("A Maria comentou que a Ana Lúcia mudou bastante nas últimas semanas.", "FL_MAR", FLAG_MARIA_FALOU_ANALU_MUDOU, FLAG_USOU_CONT_ARTHUR_MARIA),
         CH_FL("Conseguiu zerar aquelas planilhas acumuladas?", "FL_ATR", FLAG_ARTHUR_FALOU_ATRASO, 0),
         // 4) Fallbacks 100% naturais sem pressupor pistas ou conversas previas
+        CH("Chega de papo furado! Você é só uma máquina repetindo roteiro!", "TRAILER_AGR"),
         CH("Como tá o ritmo por aqui hoje?", "FB_A"),
         CH("Você trabalha com a Maria e a Ana Lúcia faz tempo?", "FB_B")
     } },
@@ -358,12 +367,12 @@ static const StaticNode NODES_S1_RETURN[] = {
     { "EV3_1", "Arthur", "Não sei... Ela já me ajudou muito antes, só que ultimamente nem parece a mesma pessoa.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_ANALU, 0, { {0} } },
     { "EV3_2", "Arthur", "Sabe, e ainda fechou a cara quando corrigi uma tabela dela. Tá difícil.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_ANALU, 0, { {0} } },
     { "EV4", "Arthur", "Quê?! Eu virei noite limpando a bagunça dela e ela pede minha cabeça?! Chega, cara, essa mulher tá completamente fora da casinha.", true, VISAO_CONFIANCA, "", -1, FLAG_S1_CONFRONTOU_EV04, 0, { {0} } },
-    { "EV6", "Arthur", "Cibersegurança?! A gente nem tem acesso lá em cima! Por que diabos ela ia querer entrar lá de madrugada?", true, VISAO_CONFIANCA, "", -1, FLAG_S1_CONFRONTOU_EV06, 0, { {0} } },
+    { "EV6", "Arthur", "Quê?! A gente aqui de baixo nem tem acesso lá em cima! ...Pera, por que tá olhando pra mim assim? Eu tava virando noite na planilha, juro!", true, VISAO_CONFIANCA, "", -1, FLAG_S1_CONFRONTOU_EV06, 0, { {0} } },
     { "FL_REV", "Arthur", "Implicou! E ainda soltou que fui eu quem treinou ela quando ela entrou. Sendo que ela já tava aqui antes de mim!", false, VISAO_CONFIANCA, "", -1, FLAG_USOU_CONT_ARTHUR_REVISOES, 2, {
         CH("Ela trocou a ordem das coisas assim do nada?", "FL_REV_1"),
         CH("Estranho... será que é cansaço?", "FL_REV_2")
     } },
-    { "FL_REV_1", "Arthur", "Do nada! E riu quando eu corrigi. Juro que deu um frio na espinha.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_FALOU_ORDEM_TEMPO, 0, { {0} } },
+    { "FL_REV_1", "Arthur", "Do nada! E riu quando eu corrigi. Juro que deu um frio na espinha... ou foi o ar-condicionado, sei lá, tô ouvindo zumbido desde cedo!", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_FALOU_ORDEM_TEMPO, 0, { {0} } },
     { "FL_REV_2", "Arthur", "Cansaço não apaga dois anos da cabeça de ninguém, cara. Vou voltar lá.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_FALOU_ORDEM_TEMPO, 0, { {0} } },
     { "FL_MAR", "Arthur", "Ela reparou também? Pois é, faz umas três semanas que a Analu tá rígida demais, mas com um sorriso meio forçado.", true, VISAO_CONFIANCA, "", -1, FLAG_USOU_CONT_ARTHUR_MARIA, 0, { {0} } },
     { "FL_ATR", "Arthur", "Quase. Quando acho que acabei, chega outra alteração da supervisão.", false, VISAO_DUVIDA, "", -1, FLAG_ARTHUR_FALOU_ATRASO, 2, {
@@ -372,8 +381,9 @@ static const StaticNode NODES_S1_RETURN[] = {
     } },
     { "FL_ATR_1", "Arthur", "Aqui na RASEC quem reclama some do mapa. Melhor só entregar.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
     { "FL_ATR_2", "Arthur", "Valeu, brother.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } },
-    { "FB_A", "Arthur", "Corrido demais. Tô só o pó, maluco. Se a supervisão mandar refazer mais uma planilha hoje eu surto.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_FALOU_ATRASO, 0, { {0} } },
-    { "FB_B", "Arthur", "Faz um tempinho já. A Analu já tava aqui quando eu entrei, e a Maria chegou logo depois. A gente sempre se deu bem até esse mês.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_ANALU, 0, { {0} } }
+    { "FB_A", "Arthur", "Corrido demais! Maluco, tô tão sem dormir que jurei ter visto o vulto do meu próprio crachá andando pelo corredor... não lembro nem o que almocei nem se mandei o e-mail de ontem!", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_FALOU_ATRASO, 0, { {0} } },
+    { "FB_B", "Arthur", "Faz um tempinho já. A Analu já tava aqui quando eu entrei, e a Maria chegou logo depois. A gente sempre se deu bem até esse mês.", true, VISAO_CONFIANCA, "", -1, FLAG_ARTHUR_CITOU_ANALU, 0, { {0} } },
+    { "TRAILER_AGR", "Arthur", "MÁQUINA?! Olha bem pra mim, caramba! ...Por que você tá falando assim? Para com isso AGORA!", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } }
 };
 
 // ============================================================================
@@ -386,19 +396,21 @@ static const StaticNode NODES_S2_FIRST[] = {
         CH("Sou eu. Vim acompanhar o fluxo dos relatórios do setor.", "B")
     } },
     // IMPORTANTE: no "A" NAO grava FLAG_ANALU_DISSE_5_ANOS! Isso so acontece em "A1"!
-    { "A", "Ana Lúcia", "Lúcia... adoro que me chamem assim! Tudo ótimo, a RASEC é uma família maravilhosa.", false, VISAO_CONFIANCA, "", -1, FLAG_NONE, 6, {
+    { "A", "Ana Lúcia", "Lúcia... adoro que me chamem assim! Tudo ótimo, a RASEC é uma família maravilhosa.", false, VISAO_CONFIANCA, "", -1, FLAG_NONE, 7, {
         CH_EV("Vi seu terminal ligado com buscas estranhas de madrugada.", "EV5", 2, "EV-05", FLAG_S2_CONFRONTOU_EV05),
-        CH_EV("Ouvi dizer que você tentou entrar na Cibersegurança de madrugada.", "EV6", 2, "EV-06", FLAG_S2_CONFRONTOU_EV06),
+        CH_EV("Ouvi dizer que alguém dos setores mais baixos tentou entrar na Cibersegurança de madrugada.", "EV6", 2, "EV-06", FLAG_S2_CONFRONTOU_EV06),
         CH_EV("Vi um ofício seu pedindo o desligamento do Arthur por insubordinação.", "EV4", 1, "EV-04", FLAG_S2_CONFRONTOU_EV04),
         CH_EV("Achei uma queixa da Maria sobre alterações nos relatórios.", "EV1", 0, "EV-01", FLAG_S2_CONFRONTOU_EV01),
+        CH("Acabou o teatro, Ana Lúcia! Eu sei o que você realmente é!", "TRAILER_AGR"),
         CH("Faz tempo que você tá aqui?", "A1"),
         CH("Algum gargalo no setor essa semana?", "A2")
     } },
-    { "B", "Ana Lúcia", "Fluxo ótimo! Meu setor não costuma errar, reviso tudo pessoalmente.", false, VISAO_DUVIDA, "", -1, FLAG_ANALU_NEGOU_ERROS, 6, {
+    { "B", "Ana Lúcia", "Fluxo ótimo! Meu setor não costuma errar, reviso tudo pessoalmente.", false, VISAO_DUVIDA, "", -1, FLAG_ANALU_NEGOU_ERROS, 7, {
         CH_EV("Vi seu terminal ligado com buscas estranhas de madrugada.", "EV5", 2, "EV-05", FLAG_S2_CONFRONTOU_EV05),
-        CH_EV("Ouvi dizer que você tentou entrar na Cibersegurança de madrugada.", "EV6", 2, "EV-06", FLAG_S2_CONFRONTOU_EV06),
+        CH_EV("Ouvi dizer que alguém dos setores mais baixos tentou entrar na Cibersegurança de madrugada.", "EV6", 2, "EV-06", FLAG_S2_CONFRONTOU_EV06),
         CH_EV("Vi um ofício seu pedindo o desligamento do Arthur por insubordinação.", "EV4", 1, "EV-04", FLAG_S2_CONFRONTOU_EV04),
         CH_EV("Vi uma pasta com vários relatórios devolvidos da Contabilidade.", "EV2", 0, "EV-02", FLAG_S2_CONFRONTOU_EV02),
+        CH("Acabou o teatro, Ana Lúcia! Eu sei o que você realmente é!", "TRAILER_AGR"),
         CH("Que bom ouvir isso. Desculpa incomodar.", "B1"),
         CH("Mesmo assim, bom ficar de olho nos prazos.", "B2")
     } },
@@ -428,18 +440,19 @@ static const StaticNode NODES_S2_FIRST[] = {
     } },
     { "EV5_1", "Ana Lúcia", "É um curso de gestão emocional, querido! Todo líder estuda isso. Agora licença.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } },
     { "EV5_2", "Ana Lúcia", "Ótimo. Foca no seu estágio, tá?", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } },
-    { "EV6", "Ana Lúcia", "Claro! Todo supervisor precisa validar o ponto de férias lá na Cibersegurança. Você é novato, não entende.", true, VISAO_PRESSAO, "", -1, FLAG_S2_CONFRONTOU_EV06, 0, { {0} } }
+    { "EV6", "Ana Lúcia", "Sério, querido? Deve ter sido algum estagiário curioso ou bug da catraca. Eu mesma só subo lá quando a diretoria pede.", true, VISAO_PRESSAO, "", -1, FLAG_S2_CONFRONTOU_EV06, 0, { {0} } },
+    { "TRAILER_AGR", "Ana Lúcia", "Teatro...? Haha... Você não faz ideia do que tá dizendo, querido. Cuidado com o que você pergunta aqui dentro.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } }
 };
 
 // ANA LUCIA — Retorno (Dia 2 e Dia 3, somente se JA conversou com ela em dia anterior)
 static const StaticNode NODES_S2_RETURN[] = {
-    { "Entrada", "Ana Lúcia", "(abertura dinamica)", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 11, {
+    { "Entrada", "Ana Lúcia", "(abertura dinamica)", false, VISAO_DUVIDA, "", -1, FLAG_NONE, 12, {
         // 1) Continuacao de ferramentas usadas em dia anterior
         CH_INJ("Sobre aquele comando que você repetiu... por que saiu 'SUPERVISORA_ADM'?", "INJ_CONT", FLAG_CONFRONTOU_INJ_S2),
         CH_VIES("O Protocolo Ômega-9 não existe. O que você colocou nessas planilhas?", "VIES_CONT", FLAG_CONFRONTOU_VIES_S2),
         // 2) Confronto de evidencias (funciona no Dia 2 ou Dia 3, sem repetir)
         CH_EV("Vi seu terminal ligado com buscas estranhas de madrugada.", "EV5", 2, "EV-05", FLAG_S2_CONFRONTOU_EV05),
-        CH_EV("Ouvi dizer que você tentou entrar na Cibersegurança de madrugada.", "EV6", 2, "EV-06", FLAG_S2_CONFRONTOU_EV06),
+        CH_EV("Ouvi dizer que alguém dos setores mais baixos tentou entrar na Cibersegurança de madrugada.", "EV6", 2, "EV-06", FLAG_S2_CONFRONTOU_EV06),
         CH_EV("Vi um ofício seu pedindo o desligamento do Arthur por insubordinação.", "EV4", 1, "EV-04", FLAG_S2_CONFRONTOU_EV04),
         CH_EV("Achei uma queixa da Maria sobre alterações nos relatórios.", "EV1", 0, "EV-01", FLAG_S2_CONFRONTOU_EV01),
         CH_EV("Vi uma pasta com relatórios devolvidos da Contabilidade.", "EV2", 0, "EV-02", FLAG_S2_CONFRONTOU_EV02),
@@ -447,6 +460,7 @@ static const StaticNode NODES_S2_RETURN[] = {
         CH_FL("Da última vez você disse 5 anos de casa, mas na ficha são 3.", "FL_5ANOS", FLAG_ANALU_DISSE_5_ANOS, FLAG_USOU_CONT_ANALU_5ANOS),
         CH_FL("Você ainda diz que não tá voltando nenhum relatório com erro?", "FL_ERROS", FLAG_ANALU_NEGOU_ERROS, 0),
         // 4) Fallbacks 100% naturais sem pressupor pistas ou conversas previas
+        CH("Acabou o teatro, Ana Lúcia! Eu sei o que você realmente é!", "TRAILER_AGR"),
         CH("Como tá a equipe hoje?", "FB_A"),
         CH("Você tá na supervisão da RASEC faz quanto tempo?", "FB_B")
     } },
@@ -468,7 +482,7 @@ static const StaticNode NODES_S2_RETURN[] = {
     } },
     { "EV5_1", "Ana Lúcia", "É um curso de gestão emocional, querido! Todo líder estuda isso. Agora licença.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } },
     { "EV5_2", "Ana Lúcia", "Ótimo. Foca no seu estágio, tá?", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } },
-    { "EV6", "Ana Lúcia", "Claro! Todo supervisor precisa validar o ponto de férias lá na Cibersegurança. Você é novato, não entende.", true, VISAO_PRESSAO, "", -1, FLAG_S2_CONFRONTOU_EV06, 0, { {0} } },
+    { "EV6", "Ana Lúcia", "Sério, querido? Deve ter sido algum estagiário curioso ou bug da catraca. Eu mesma só subo lá quando a diretoria pede.", true, VISAO_PRESSAO, "", -1, FLAG_S2_CONFRONTOU_EV06, 0, { {0} } },
     { "EV4", "Ana Lúcia", "Pensei no bem dele! Estava cansado demais, então pedi o desligamento pra ele descansar. Isso é empatia, querido.", false, VISAO_PRESSAO, "", -1, FLAG_S2_CONFRONTOU_EV04, 3, {
         CH_EV("Sendo que o memorando diz que ele tava cobrindo erros seus.", "EV4_COM_EV3", 1, "EV-03", 0),
         CH("Pedir demissão de alguém por cansaço é bem estranho...", "EV4_1"),
@@ -482,7 +496,8 @@ static const StaticNode NODES_S2_RETURN[] = {
     { "FL_5ANOS", "Ana Lúcia", "Três, cinco... quando a gente ama a RASEC o tempo passa rápido demais! Preciso voltar.", true, VISAO_DUVIDA, "", -1, FLAG_USOU_CONT_ANALU_5ANOS, 0, { {0} } },
     { "FL_ERROS", "Ana Lúcia", "Claro que não, querido! Eu mesma otimizei os números hoje cedo. Você devia confiar mais na supervisão.", true, VISAO_DUVIDA, "", -1, FLAG_NONE, 0, { {0} } },
     { "FB_A", "Ana Lúcia", "Ótima! Só o Arthur anda meio lento, mas já estou resolvendo isso com carinho.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
-    { "FB_B", "Ana Lúcia", "Faço seis anos aqui, querido! A RASEC é praticamente minha segunda casa. Agora licença.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } }
+    { "FB_B", "Ana Lúcia", "Faço seis anos aqui, querido! A RASEC é praticamente minha segunda casa. Agora licença.", true, VISAO_CONFIANCA, "", -1, FLAG_NONE, 0, { {0} } },
+    { "TRAILER_AGR", "Ana Lúcia", "Teatro...? Haha... Você não faz ideia do que tá dizendo, querido. Cuidado com o que você pergunta aqui dentro.", true, VISAO_PRESSAO, "", -1, FLAG_NONE, 0, { {0} } }
 };
 
 // ============================================================================
@@ -677,7 +692,7 @@ static const char* GetAberturaRetorno(int suspeito, int day, VisaoJogador v) {
     // 4) Saudacao natural por VisaoJogador + distancia da ultima conversa
     if (suspeito == 0) {
         if (day == 2) {
-            if (v == VISAO_CONFIANCA) return "Oi! Tudo bem? Hoje o clima tá ainda mais estranho por aqui.";
+            if (v == VISAO_CONFIANCA) return "Oi! Tudo bem? Hoje o clima tá esquisito... juro que vi a mesma pasta passar pela minha mesa três vezes.";
             if (v == VISAO_PRESSAO)   return "Olá. Não preciso de ajuda hoje.";
             return "Oi, você por aqui.";
         }
@@ -692,9 +707,9 @@ static const char* GetAberturaRetorno(int suspeito, int day, VisaoJogador v) {
     }
     if (suspeito == 1) {
         if (day == 2) {
-            if (v == VISAO_CONFIANCA) return "E aí! Tudo em cima?";
-            if (v == VISAO_PRESSAO)   return "Bom dia.";
-            return "Oi, tudo bom?";
+            if (v == VISAO_CONFIANCA) return "E aí! Dormi três horas e tomei dois energéticos... agora tô achando que a impressora tá piscando em código Morse pra mim, haha!";
+            if (v == VISAO_PRESSAO)   return "Bom dia. Sério, se você me perguntar a data de hoje eu vou chutar terça-feira de 2019.";
+            return "Oi, tudo bom? Acho que acabei de responder 'obrigado, você também' pro bebedouro.";
         }
         if (sumiuUmDia) {
             if (v == VISAO_CONFIANCA) return "E aí, sumido! Último dia enfim!";

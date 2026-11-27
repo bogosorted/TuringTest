@@ -9,14 +9,14 @@
 // Subsolo 3D (area de testes/showcase de modelos do player):
 // 4 modelos aprimorados (2 Masculinos + 2 Femininos). Ao interagir com cada um,
 // ele cicla entre: Idle -> Andando -> Correndo -> Computador -> Papel/Mapa -> Porta.
-static const float SUB_MIN_X = -6.00f;
-static const float SUB_MAX_X =  6.00f;
-static const float SUB_MIN_Z = -4.20f;
-static const float SUB_MAX_Z =  4.20f;
-static const float SUB_WALL_H = 3.10f;
+#define SUB_MIN_X -6.00f
+#define SUB_MAX_X 6.00f
+#define SUB_MIN_Z -4.20f
+#define SUB_MAX_Z 4.20f
+#define SUB_WALL_H 3.10f
 
 static const float SUB_MODEL_X[4] = { -3.60f, -1.20f, 1.20f, 3.60f };
-static const float SUB_MODEL_Z    = -0.60f;
+#define SUB_MODEL_Z -0.60f
 
 static const PlayerColliderBox SUB_COLLIDERS[] = {
     { -4.05f, -1.05f, -3.15f, -0.15f }, // Modelo 0 (Masculino Noir)
@@ -73,6 +73,17 @@ static const SalaInteractable SUB_INTERACTABLES[] = {
     }
 };
 
+static const SalaPorta SUB_PORTAS[] = {
+    {
+        TERREO_DEST_SUBSOLO_2,
+        "Porta (Subsolo 2 - Modelos Tech)",
+        { { 5.55f, 0.0f, 0.95f }, { 6.10f, 2.30f, 2.35f } },
+        { 5.65f, 0.0f, 1.65f },
+        1.45f,
+        { 5.40f, 1.00f, 0.55f, 1.30f }
+    }
+};
+
 static void DesenharSubsolo(float tempo, bool evRelatoriosAtiva) {
     (void)evRelatoriosAtiva;
     float w = SUB_MAX_X - SUB_MIN_X;
@@ -98,8 +109,9 @@ static void DesenharSubsolo(float tempo, bool evRelatoriosAtiva) {
     TerreoCaixa((Vector3){ SUB_MAX_X + 0.08f, SUB_WALL_H * 0.5f, cz },
                 (Vector3){ 0.16f, SUB_WALL_H, d }, 0.26f, 0.30f, 0.32f, 0.10f);
 
-    // Elevador na parede do fundo para subir de volta
+    // Elevador na parede do fundo para subir de volta + porta direita para o Subsolo 2
     TerreoElevador((Vector3){ -4.20f, 0.0f, SUB_MIN_Z + 0.02f }, 0.0f);
+    TerreoPortaModelo((Vector3){ SUB_MAX_X - 0.04f, 0.0f, 1.65f }, -90.0f, PORTA_TIPO_INDUSTRIAL);
 
     // 4 bases + 4 variantes aprimoradas do player com animacoes interativas
     for (int i = 0; i < 4; i++) {
@@ -135,8 +147,8 @@ static const TerreoSalaDef SALA_SUBSOLO_DEF = {
     .numColliders     = (int)(sizeof(SUB_COLLIDERS) / sizeof(SUB_COLLIDERS[0])),
     .interactables    = SUB_INTERACTABLES,
     .numInteractables = (int)(sizeof(SUB_INTERACTABLES) / sizeof(SUB_INTERACTABLES[0])),
-    .portas           = NULL,
-    .numPortas        = 0,
+    .portas           = SUB_PORTAS,
+    .numPortas        = (int)(sizeof(SUB_PORTAS) / sizeof(SUB_PORTAS[0])),
     .drawFunc         = DesenharSubsolo
 };
 

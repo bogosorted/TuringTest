@@ -6,10 +6,10 @@
 #define PI 3.14159265358979323846f
 #endif
 
-static const float JAR_MIN_X = -6.20f;
-static const float JAR_MAX_X =  6.20f;
-static const float JAR_MIN_Z = -7.60f;
-static const float JAR_MAX_Z =  4.40f;
+#define JAR_MIN_X -6.20f
+#define JAR_MAX_X 6.20f
+#define JAR_MIN_Z -7.60f
+#define JAR_MAX_Z 4.40f
 
 // Jardim amplo e aesthetic:
 // - Fonte circular grande melhorada no centro (x=0, z=-0.65)
@@ -17,7 +17,7 @@ static const float JAR_MAX_Z =  4.40f;
 // - 4 arvores gigantes com galhos crescendo para fora do topo da camera (sem cimento)
 // - Mesas de descanso diretamente no gramado (sem quadrados de cimento ao redor)
 static const PlayerColliderBox JAR_COLLIDERS[] = {
-    { -1.45f, -2.10f,  1.45f,  0.80f }, // Fonte circular central
+    // Fonte central usa colisao circular real em terreo_3d.c!
     { -5.35f, -6.75f, -3.75f, -5.15f }, // Arvore gigante fundo-esquerdo
     {  3.75f, -6.75f,  5.35f, -5.15f }, // Arvore gigante fundo-direito
     { -5.20f,  1.75f, -3.70f,  3.25f }, // Arvore gigante frente-esquerdo
@@ -118,19 +118,39 @@ static void DesenharArvoreOrganica(Vector3 pos, float escala) {
     DrawCylinderEx((Vector3){ 0.0f, 0.00f, 0.0f }, (Vector3){ -0.30f, 0.03f,  0.16f }, 0.10f, 0.03f, 6, Fade(TerreoLum(0.15f), alpha));
     DrawCylinderEx((Vector3){ 0.0f, 0.00f, 0.0f }, (Vector3){  0.28f, 0.03f, -0.18f }, 0.10f, 0.03f, 6, Fade(TerreoLum(0.15f), alpha));
 
-    // Galhos organicos altos abrindo-se acima da linha de visao
-    DrawCylinderEx((Vector3){ 0.03f, 3.10f, 0.0f }, (Vector3){ -1.15f, 4.25f,  0.45f }, 0.095f, 0.040f, 8, Fade(TerreoLum(0.16f), alpha));
-    DrawCylinderEx((Vector3){ 0.04f, 3.35f, 0.0f }, (Vector3){  1.10f, 4.45f, -0.35f }, 0.095f, 0.040f, 8, Fade(TerreoLum(0.16f), alpha));
-    DrawCylinderEx((Vector3){ 0.03f, 3.60f, 0.0f }, (Vector3){  0.15f, 4.55f,  1.05f }, 0.085f, 0.035f, 8, Fade(TerreoLum(0.16f), alpha));
+    // Galhos bifurcados em ziguezague (estilo relampago) e folhagem em camadas mais finas e realistas
+    DrawCylinderEx((Vector3){ 0.03f, 2.95f, 0.0f }, (Vector3){ -0.58f, 3.65f,  0.22f }, 0.095f, 0.058f, 7, Fade(TerreoLum(0.16f), alpha));
+    DrawCylinderEx((Vector3){ -0.58f, 3.65f, 0.22f }, (Vector3){ -1.25f, 4.30f,  0.48f }, 0.055f, 0.025f, 6, Fade(TerreoLum(0.16f), alpha));
+    DrawCylinderEx((Vector3){ -0.58f, 3.65f, 0.22f }, (Vector3){ -0.45f, 4.35f,  0.75f }, 0.048f, 0.020f, 6, Fade(TerreoLum(0.16f), alpha));
 
-    // Folhagem organica densa bem alta (cresce para fora da tela, deixando apenas bordas baixas visiveis)
-    DrawSphereEx((Vector3){  0.00f, 5.10f,  0.00f }, 1.65f, 10, 14, Fade(TerreoLum(0.36f), alpha));
-    DrawSphereEx((Vector3){ -1.05f, 4.45f,  0.42f }, 1.05f, 9,  12, Fade(TerreoLum(0.30f), alpha));
-    DrawSphereEx((Vector3){  1.02f, 4.60f, -0.32f }, 1.10f, 9,  12, Fade(TerreoLum(0.42f), alpha));
-    DrawSphereEx((Vector3){  0.14f, 4.55f,  0.96f }, 0.98f, 9,  12, Fade(TerreoLum(0.34f), alpha));
-    // Pequenos cachos de folhas pendendo dos galhos mais baixos
-    DrawSphereEx((Vector3){ -1.18f, 3.92f,  0.52f }, 0.44f, 7, 9, Fade(TerreoLum(0.28f), alpha));
-    DrawSphereEx((Vector3){  1.08f, 4.02f,  0.22f }, 0.42f, 7, 9, Fade(TerreoLum(0.36f), alpha));
+    DrawCylinderEx((Vector3){ 0.04f, 3.20f, 0.0f }, (Vector3){  0.62f, 3.85f, -0.18f }, 0.095f, 0.056f, 7, Fade(TerreoLum(0.16f), alpha));
+    DrawCylinderEx((Vector3){  0.62f, 3.85f, -0.18f }, (Vector3){  1.18f, 4.48f, -0.38f }, 0.052f, 0.022f, 6, Fade(TerreoLum(0.16f), alpha));
+    DrawCylinderEx((Vector3){  0.62f, 3.85f, -0.18f }, (Vector3){  0.95f, 4.35f,  0.34f }, 0.046f, 0.020f, 6, Fade(TerreoLum(0.16f), alpha));
+
+    DrawCylinderEx((Vector3){ 0.03f, 3.55f, 0.0f }, (Vector3){  0.12f, 4.55f,  1.05f }, 0.082f, 0.028f, 7, Fade(TerreoLum(0.16f), alpha));
+
+    // Cachos de folhas finas e achatadas em multiplas camadas organicas
+    static const Vector4 FOLHAS_JAR[] = {
+        {  0.00f, 5.05f,  0.00f, 1.35f },
+        { -1.15f, 4.38f,  0.46f, 0.78f },
+        { -0.45f, 4.42f,  0.76f, 0.65f },
+        {  1.12f, 4.55f, -0.34f, 0.82f },
+        {  0.92f, 4.38f,  0.34f, 0.68f },
+        {  0.14f, 4.58f,  1.02f, 0.72f },
+        { -1.24f, 3.94f,  0.54f, 0.42f },
+        {  1.08f, 4.02f,  0.22f, 0.40f },
+        { -0.68f, 4.78f, -0.48f, 0.74f },
+        {  0.55f, 4.86f,  0.56f, 0.72f },
+    };
+    for (int f = 0; f < (int)(sizeof(FOLHAS_JAR) / sizeof(FOLHAS_JAR[0])); f++) {
+        float r = FOLHAS_JAR[f].w;
+        float lum = 0.28f + (float)(f % 4) * 0.045f;
+        rlPushMatrix();
+        rlTranslatef(FOLHAS_JAR[f].x, FOLHAS_JAR[f].y, FOLHAS_JAR[f].z);
+        rlScalef(1.15f, 0.46f, 1.08f);
+        DrawSphereEx((Vector3){ 0.0f, 0.0f, 0.0f }, r, 8, 10, Fade(TerreoLum(lum), alpha));
+        rlPopMatrix();
+    }
 
     if (playerAtras) rlEnableDepthMask();
 
@@ -262,19 +282,75 @@ static void DesenharJardim(float tempo, bool evRelatoriosAtiva) {
     DrawCylinder((Vector3){ fPos.x, 1.02f, fPos.z }, 0.62f, 0.24f, 0.16f, 20, TerreoLum(0.78f));
     DrawCylinder((Vector3){ fPos.x, 1.18f, fPos.z }, 0.10f, 0.14f, 0.32f, 14, TerreoLum(0.68f));
     DrawCylinder((Vector3){ fPos.x, 1.48f, fPos.z }, 0.26f, 0.10f, 0.08f, 16, TerreoLum(0.82f));
+    // Jatos fixos (sem girar): caem na primeira bacia com respingos e transbordam para a bacia maior com respingos
     for (int j = 0; j < 8; j++) {
-        float ang = (float)j * (PI / 4.0f) + tempo * 0.45f;
-        Vector3 pTop = { fPos.x + cosf(ang) * 0.24f, 1.72f, fPos.z + sinf(ang) * 0.24f };
-        Vector3 pOut = { fPos.x + cosf(ang) * 0.92f, 0.43f, fPos.z + sinf(ang) * 0.92f };
-        DrawLine3D((Vector3){ fPos.x, 1.56f, fPos.z }, pTop, TerreoLum(0.96f));
-        DrawLine3D(pTop, pOut, TerreoLum(0.88f));
+        float ang = (float)j * (PI / 4.0f);
+        float ca = cosf(ang), sa = sinf(ang);
+        // 1o estagio: topo (1.56) -> 1a bacia (y=1.18, r=0.44)
+        Vector3 pMid1 = { fPos.x + ca * 0.22f, 1.66f, fPos.z + sa * 0.22f };
+        Vector3 pHit1 = { fPos.x + ca * 0.44f, 1.16f, fPos.z + sa * 0.44f };
+        DrawLine3D((Vector3){ fPos.x, 1.56f, fPos.z }, pMid1, TerreoLum(0.96f));
+        DrawLine3D(pMid1, pHit1, TerreoLum(0.90f));
+        // Respingo animado na 1a bacia
+        float sp1 = fmodf(tempo * 3.2f + (float)j * 0.37f, 1.0f);
+        float sy1 = 1.18f + sinf(sp1 * PI) * 0.14f;
+        DrawSphere((Vector3){ pHit1.x + ca * sp1 * 0.08f, sy1, pHit1.z + sa * sp1 * 0.08f }, 0.022f, TerreoLum(0.96f));
+
+        // 2o estagio: borda da 1a bacia (r=0.58, y=1.14) -> bacia maior (r=0.96, y=0.42)
+        Vector3 pRim  = { fPos.x + ca * 0.58f, 1.14f, fPos.z + sa * 0.58f };
+        Vector3 pMid2 = { fPos.x + ca * 0.78f, 0.90f, fPos.z + sa * 0.78f };
+        Vector3 pHit2 = { fPos.x + ca * 0.96f, 0.42f, fPos.z + sa * 0.96f };
+        DrawLine3D(pRim, pMid2, TerreoLum(0.90f));
+        DrawLine3D(pMid2, pHit2, TerreoLum(0.84f));
+        // Respingo animado na bacia maior
+        float sp2 = fmodf(tempo * 2.8f + (float)j * 0.53f, 1.0f);
+        float sy2 = 0.43f + sinf(sp2 * PI) * 0.16f;
+        DrawSphere((Vector3){ pHit2.x + ca * sp2 * 0.10f, sy2, pHit2.z + sa * sp2 * 0.10f }, 0.026f, TerreoLum(0.96f));
     }
 
-    // 4) 4 Arvores gigantes crescendo para fora do topo da camera + gramas aesthetic
+    // Easter egg: peixe pulando da fonte ao interagir 3 vezes ("ataque de phishing")
+    {
+        float pPeixe = Terreo3DGetPeixeFonteProgress();
+        if (pPeixe >= 0.0f) {
+            float arcY = 0.45f + 2.05f * sinf(pPeixe * PI);
+            float arcX = fPos.x - 0.65f + 1.30f * pPeixe;
+            float arcZ = fPos.z + 0.75f;
+            float pitchDeg = cosf(pPeixe * PI) * 52.0f;
+            rlPushMatrix();
+            rlTranslatef(arcX, arcY, arcZ);
+            rlRotatef(-pitchDeg, 0.0f, 0.0f, 1.0f);
+            // Corpo do peixe + cauda + barbatana dorsal
+            DrawCylinderEx((Vector3){ -0.14f, 0.0f, 0.0f }, (Vector3){ 0.16f, 0.0f, 0.0f }, 0.055f, 0.085f, 10, TerreoLum(0.95f));
+            DrawSphere((Vector3){ 0.16f, 0.0f, 0.0f }, 0.082f, TerreoLum(0.92f));
+            DrawCylinderEx((Vector3){ -0.28f, 0.05f, 0.0f }, (Vector3){ -0.14f, 0.0f, 0.0f }, 0.005f, 0.06f, 6, TerreoLum(0.80f));
+            DrawCylinderEx((Vector3){ -0.28f, -0.05f, 0.0f }, (Vector3){ -0.14f, 0.0f, 0.0f }, 0.005f, 0.06f, 6, TerreoLum(0.80f));
+            DrawCube((Vector3){ 0.02f, 0.085f, 0.0f }, 0.10f, 0.07f, 0.015f, TerreoLum(0.76f));
+            rlPopMatrix();
+            // Ondas/respingos na agua ao sair/entrar
+            float rSplash = 0.18f + 0.55f * fmodf(pPeixe * 2.0f, 1.0f);
+            DrawCylinderWires((Vector3){ arcX, 0.43f, arcZ }, rSplash, rSplash, 0.01f, 16, TerreoLum(0.98f));
+        }
+    }
+
+    // 4) 4 Arvores gigantes crescendo para fora do topo da camera + arbustos com vento leve + gramas
     DesenharArvoreOrganica((Vector3){ -4.55f, 0.0f, -5.95f }, 1.15f);
     DesenharArvoreOrganica((Vector3){  4.55f, 0.0f, -5.95f }, 1.15f);
     DesenharArvoreOrganica((Vector3){ -4.45f, 0.0f,  2.55f }, 1.05f);
     DesenharArvoreOrganica((Vector3){  4.45f, 0.0f,  2.55f }, 1.05f);
+    // Arbustos pequenos ao redor do jardim encostados nas paredes, com fisica de vento leve
+    static const Vector3 ARBUSTOS[] = {
+        { -5.75f, 0.0f, -4.10f }, { -5.75f, 0.0f, -2.55f }, { -5.75f, 0.0f,  1.60f }, { -5.75f, 0.0f,  3.50f },
+        {  5.75f, 0.0f, -4.10f }, {  5.75f, 0.0f, -2.55f }, {  5.75f, 0.0f,  1.60f }, {  5.75f, 0.0f,  3.50f },
+        { -2.60f, 0.0f, -7.15f }, { -1.10f, 0.0f, -7.15f }, {  1.10f, 0.0f, -7.15f }, {  2.60f, 0.0f, -7.15f },
+    };
+    for (int b = 0; b < (int)(sizeof(ARBUSTOS) / sizeof(ARBUSTOS[0])); b++) {
+        float sway = sinf(tempo * 2.1f + (float)b * 0.85f) * 0.045f;
+        Vector3 bp = ARBUSTOS[b];
+        DrawSphereEx((Vector3){ bp.x + sway * 0.6f, 0.24f, bp.z }, 0.30f, 7, 9, TerreoLum(0.24f));
+        DrawSphereEx((Vector3){ bp.x - 0.16f + sway, 0.28f, bp.z + 0.08f }, 0.22f, 6, 8, TerreoLum(0.30f));
+        DrawSphereEx((Vector3){ bp.x + 0.16f + sway, 0.26f, bp.z - 0.06f }, 0.20f, 6, 8, TerreoLum(0.28f));
+        DrawSphereEx((Vector3){ bp.x + sway * 1.2f, 0.40f, bp.z }, 0.18f, 6, 8, TerreoLum(0.36f));
+    }
     DesenharTufosGrama();
 
     // 5) Banco ripado de jardim + 2 mesas redondas de descanso + 2 silhuetas conversando na mesa direita

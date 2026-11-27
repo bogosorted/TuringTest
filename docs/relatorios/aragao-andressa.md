@@ -59,5 +59,20 @@ Fazer esse alinhamento juntos evitou criar um tutorial travado e deixou a introd
 * **Desafio:** posicionar os balões do tutorial na resolução 640x360 sem tampar a ficha, a prancheta ou o chat. Resolvemos testando e ajustando as coordenadas em conjunto.
 * **Aprendizado:** testar na hora enquanto desenvolvemos em dupla economiza muito tempo e deixa a experiência do jogo muito mais fluida.
 
-## 8. Conclusão
+## 8. Conclusão (Sprint 3)
 O trabalho em dupla entre Andressa e Aragão permitiu criar um tutorial de Dia 1 leve, fluido e direto ao ponto. Seguindo as práticas do XP com testes rápidos e conversa constante, entregamos uma introdução que ensina as mecânicas principais na prática e melhora bastante a primeira impressão de quem vai jogar.
+
+---
+
+## 9. Atualização Final — Sprint 4 (Entrega 4)
+
+Na Sprint 4, os integrantes da dupla atuaram em frentes complementares para fechar o produto e a documentação:
+
+* **Andressa Souza (UX, Tutorial e Gameplay 2D/3D):**
+  * Atuou em par com **Vitor Cauã** (e em alinhamento com **Renato Veras**) a partir da implementação do modo 3D (`20/11`–`25/11`), refazendo o tutorial para movimentação 3D, diálogos e ferramentas, aprimorando a UI de ferramentas e o sistema de tokens.
+  * Corrigiu e expandiu o modo 2D (novos locais e formalização de evidências), implementou paletas secretas com reset entre runs, adicionou preview dos modos no menu e refinou o Modo Dev e os áudios.
+* **Gabriel Aragão (Arquitetura, Documentação e Revisão):**
+  * Consolidou sistemas centrais de diálogo em C (`dialog_data`), shaders de piscar/contorno, scanner biométrico e regras de pontuação/ranking na entrada do ciclo final.
+  * Conduziu o merge do **PR #19** (`3a260b5`, correções de bugs do relatório) e elaborou o guia `CONTRIBUTING.md` na branch `feat/contributing.md`.
+
+> **Nota sobre o histórico Git:** Parte das sessões em par de Andressa com Vitor Cauã a partir do modo 3D ocorreu antes da adoção do trailer `Co-authored-by` nos commits.

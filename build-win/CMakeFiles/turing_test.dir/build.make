@@ -417,11 +417,26 @@ CMakeFiles/turing_test.dir/src/systems/player_character.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/systems/player_character.c.s"
 	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/systems/player_character.c -o CMakeFiles/turing_test.dir/src/systems/player_character.c.s
 
+CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.obj: /home/vitorc/TuringTest/src/systems/cutscene_3d.c
+CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building C object CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.obj -MF CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.obj.d -o CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.obj -c /home/vitorc/TuringTest/src/systems/cutscene_3d.c
+
+CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/systems/cutscene_3d.c > CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.i
+
+CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/systems/cutscene_3d.c -o CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.s
+
 CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj: CMakeFiles/turing_test.dir/flags.make
 CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj: /home/vitorc/TuringTest/src/world/terreo_3d.c
 CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building C object CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building C object CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj -MF CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj.d -o CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj -c /home/vitorc/TuringTest/src/world/terreo_3d.c
 
 CMakeFiles/turing_test.dir/src/world/terreo_3d.c.i: cmake_force
@@ -436,7 +451,7 @@ CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj: CMakeFiles/turing_test
 CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj: /home/vitorc/TuringTest/src/world/sala_recepcao.c
 CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building C object CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building C object CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj -c /home/vitorc/TuringTest/src/world/sala_recepcao.c
 
 CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.i: cmake_force
@@ -451,7 +466,7 @@ CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj: CMakeFiles/turing_te
 CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj: /home/vitorc/TuringTest/src/world/sala_lanchonete.c
 CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building C object CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building C object CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj -c /home/vitorc/TuringTest/src/world/sala_lanchonete.c
 
 CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.i: cmake_force
@@ -466,7 +481,7 @@ CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj: CMakeFiles/turing_test.d
 CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj: /home/vitorc/TuringTest/src/world/sala_jardim.c
 CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building C object CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building C object CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_jardim.c.obj -c /home/vitorc/TuringTest/src/world/sala_jardim.c
 
 CMakeFiles/turing_test.dir/src/world/sala_jardim.c.i: cmake_force
@@ -481,7 +496,7 @@ CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj: CMakeFiles/turing_te
 CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj: /home/vitorc/TuringTest/src/world/sala_escritorio.c
 CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building C object CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building C object CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.obj -c /home/vitorc/TuringTest/src/world/sala_escritorio.c
 
 CMakeFiles/turing_test.dir/src/world/sala_escritorio.c.i: cmake_force
@@ -496,7 +511,7 @@ CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj: CMakeFiles/turing_
 CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj: /home/vitorc/TuringTest/src/world/sala_escritorio_2.c
 CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building C object CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building C object CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_escritorio_2.c
 
 CMakeFiles/turing_test.dir/src/world/sala_escritorio_2.c.i: cmake_force
@@ -511,7 +526,7 @@ CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj: CMakeFiles/turing_test
 CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj: /home/vitorc/TuringTest/src/world/sala_convivio.c
 CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building C object CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_31) "Building C object CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_convivio.c.obj -c /home/vitorc/TuringTest/src/world/sala_convivio.c
 
 CMakeFiles/turing_test.dir/src/world/sala_convivio.c.i: cmake_force
@@ -526,7 +541,7 @@ CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj: CMakeFiles/turing_test.d
 CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj: /home/vitorc/TuringTest/src/world/sala_hall_1.c
 CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_31) "Building C object CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_32) "Building C object CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_hall_1.c
 
 CMakeFiles/turing_test.dir/src/world/sala_hall_1.c.i: cmake_force
@@ -541,7 +556,7 @@ CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj: CMakeFiles/turi
 CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj: /home/vitorc/TuringTest/src/world/sala_contabilidade_1.c
 CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_32) "Building C object CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_33) "Building C object CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_contabilidade_1.c
 
 CMakeFiles/turing_test.dir/src/world/sala_contabilidade_1.c.i: cmake_force
@@ -556,7 +571,7 @@ CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj: CMakeFiles/turi
 CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj: /home/vitorc/TuringTest/src/world/sala_contabilidade_2.c
 CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_33) "Building C object CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_34) "Building C object CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_contabilidade_2.c
 
 CMakeFiles/turing_test.dir/src/world/sala_contabilidade_2.c.i: cmake_force
@@ -571,7 +586,7 @@ CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj: CMakeFiles/turing_tes
 CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj: /home/vitorc/TuringTest/src/world/sala_arquivo_1.c
 CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_34) "Building C object CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_35) "Building C object CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_arquivo_1.c
 
 CMakeFiles/turing_test.dir/src/world/sala_arquivo_1.c.i: cmake_force
@@ -586,7 +601,7 @@ CMakeFiles/turing_test.dir/src/world/sala_cameras.c.obj: CMakeFiles/turing_test.
 CMakeFiles/turing_test.dir/src/world/sala_cameras.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_cameras.c.obj: /home/vitorc/TuringTest/src/world/sala_cameras.c
 CMakeFiles/turing_test.dir/src/world/sala_cameras.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_35) "Building C object CMakeFiles/turing_test.dir/src/world/sala_cameras.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_36) "Building C object CMakeFiles/turing_test.dir/src/world/sala_cameras.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_cameras.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_cameras.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_cameras.c.obj -c /home/vitorc/TuringTest/src/world/sala_cameras.c
 
 CMakeFiles/turing_test.dir/src/world/sala_cameras.c.i: cmake_force
@@ -601,7 +616,7 @@ CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj: CMakeFiles/turing_test.d
 CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj: /home/vitorc/TuringTest/src/world/sala_copa_1.c
 CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_36) "Building C object CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_37) "Building C object CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_copa_1.c
 
 CMakeFiles/turing_test.dir/src/world/sala_copa_1.c.i: cmake_force
@@ -616,7 +631,7 @@ CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj: CMakeFiles/turing_test.d
 CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj: /home/vitorc/TuringTest/src/world/sala_hall_2.c
 CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_37) "Building C object CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Building C object CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_hall_2.c
 
 CMakeFiles/turing_test.dir/src/world/sala_hall_2.c.i: cmake_force
@@ -631,7 +646,7 @@ CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj: CMakeFiles/turing_test.
 CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj: /home/vitorc/TuringTest/src/world/sala_ciber_1.c
 CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Building C object CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_39) "Building C object CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_ciber_1.c
 
 CMakeFiles/turing_test.dir/src/world/sala_ciber_1.c.i: cmake_force
@@ -646,7 +661,7 @@ CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj: CMakeFiles/turing_test.
 CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj: /home/vitorc/TuringTest/src/world/sala_ciber_2.c
 CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_39) "Building C object CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Building C object CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_ciber_2.c
 
 CMakeFiles/turing_test.dir/src/world/sala_ciber_2.c.i: cmake_force
@@ -661,7 +676,7 @@ CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj: CMakeFiles/turing_test
 CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj: /home/vitorc/TuringTest/src/world/sala_server_1.c
 CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Building C object CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Building C object CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_server_1.c.obj -c /home/vitorc/TuringTest/src/world/sala_server_1.c
 
 CMakeFiles/turing_test.dir/src/world/sala_server_1.c.i: cmake_force
@@ -676,7 +691,7 @@ CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj: CMakeFiles/turing_test
 CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj: /home/vitorc/TuringTest/src/world/sala_server_2.c
 CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Building C object CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_42) "Building C object CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_server_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_server_2.c
 
 CMakeFiles/turing_test.dir/src/world/sala_server_2.c.i: cmake_force
@@ -691,7 +706,7 @@ CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj: CMakeFiles/turing_test.d
 CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj: /home/vitorc/TuringTest/src/world/sala_hall_3.c
 CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_42) "Building C object CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_43) "Building C object CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.obj -c /home/vitorc/TuringTest/src/world/sala_hall_3.c
 
 CMakeFiles/turing_test.dir/src/world/sala_hall_3.c.i: cmake_force
@@ -706,7 +721,7 @@ CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj: CMakeFiles/tu
 CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj: /home/vitorc/TuringTest/src/world/sala_treino_escritorio.c
 CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_43) "Building C object CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_44) "Building C object CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.obj -c /home/vitorc/TuringTest/src/world/sala_treino_escritorio.c
 
 CMakeFiles/turing_test.dir/src/world/sala_treino_escritorio.c.i: cmake_force
@@ -721,7 +736,7 @@ CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj: CMakeFiles/turing_tes
 CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj: /home/vitorc/TuringTest/src/world/sala_treino_ia.c
 CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_44) "Building C object CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Building C object CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.obj -c /home/vitorc/TuringTest/src/world/sala_treino_ia.c
 
 CMakeFiles/turing_test.dir/src/world/sala_treino_ia.c.i: cmake_force
@@ -736,7 +751,7 @@ CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj: CMakeFiles/t
 CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj: /home/vitorc/TuringTest/src/world/sala_garagem_prototipos.c
 CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Building C object CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_46) "Building C object CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.obj -c /home/vitorc/TuringTest/src/world/sala_garagem_prototipos.c
 
 CMakeFiles/turing_test.dir/src/world/sala_garagem_prototipos.c.i: cmake_force
@@ -751,7 +766,7 @@ CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj: CMakeFiles/turing_test.d
 CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj: /home/vitorc/TuringTest/src/world/sala_hall_4.c
 CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_46) "Building C object CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_47) "Building C object CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj -c /home/vitorc/TuringTest/src/world/sala_hall_4.c
 
 CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.i: cmake_force
@@ -766,7 +781,7 @@ CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj: CMakeFiles/turing_tes
 CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj: /home/vitorc/TuringTest/src/world/sala_auditorio.c
 CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_47) "Building C object CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_48) "Building C object CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj -c /home/vitorc/TuringTest/src/world/sala_auditorio.c
 
 CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.i: cmake_force
@@ -781,7 +796,7 @@ CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj: CMakeFiles/turing_tes
 CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj: /home/vitorc/TuringTest/src/world/sala_reuniao_4.c
 CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_48) "Building C object CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_49) "Building C object CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj -c /home/vitorc/TuringTest/src/world/sala_reuniao_4.c
 
 CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.i: cmake_force
@@ -796,7 +811,7 @@ CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.obj: CMakeFiles/turing_test.
 CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
 CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.obj: /home/vitorc/TuringTest/src/world/sala_subsolo.c
 CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_49) "Building C object CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_50) "Building C object CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.obj"
 	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.obj -c /home/vitorc/TuringTest/src/world/sala_subsolo.c
 
 CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.i: cmake_force
@@ -806,6 +821,21 @@ CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.i: cmake_force
 CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.s"
 	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_subsolo.c -o CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.s
+
+CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.obj: CMakeFiles/turing_test.dir/flags.make
+CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.obj: CMakeFiles/turing_test.dir/includes_C.rsp
+CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.obj: /home/vitorc/TuringTest/src/world/sala_subsolo_2.c
+CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.obj: CMakeFiles/turing_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_51) "Building C object CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.obj"
+	/home/vitorc/.local/bin/ccache /usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.obj -MF CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.obj.d -o CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.obj -c /home/vitorc/TuringTest/src/world/sala_subsolo_2.c
+
+CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.i"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/vitorc/TuringTest/src/world/sala_subsolo_2.c > CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.i
+
+CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.s"
+	/usr/bin/x86_64-w64-mingw32-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/vitorc/TuringTest/src/world/sala_subsolo_2.c -o CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.s
 
 # Object files for target turing_test
 turing_test_OBJECTS = \
@@ -832,6 +862,7 @@ turing_test_OBJECTS = \
 "CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.obj" \
 "CMakeFiles/turing_test.dir/src/systems/setas_3d.c.obj" \
 "CMakeFiles/turing_test.dir/src/systems/player_character.c.obj" \
+"CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.obj" \
 "CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj" \
 "CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj" \
 "CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj" \
@@ -857,7 +888,8 @@ turing_test_OBJECTS = \
 "CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj" \
 "CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj" \
 "CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj" \
-"CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.obj"
+"CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.obj" \
+"CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.obj"
 
 # External object files for target turing_test
 turing_test_EXTERNAL_OBJECTS =
@@ -885,6 +917,7 @@ turing_test.exe: CMakeFiles/turing_test.dir/src/systems/evidencia_holograma.c.ob
 turing_test.exe: CMakeFiles/turing_test.dir/src/systems/mapa_holograma.c.obj
 turing_test.exe: CMakeFiles/turing_test.dir/src/systems/setas_3d.c.obj
 turing_test.exe: CMakeFiles/turing_test.dir/src/systems/player_character.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.obj
 turing_test.exe: CMakeFiles/turing_test.dir/src/world/terreo_3d.c.obj
 turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_recepcao.c.obj
 turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_lanchonete.c.obj
@@ -911,12 +944,13 @@ turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_hall_4.c.obj
 turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_auditorio.c.obj
 turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_reuniao_4.c.obj
 turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.obj
+turing_test.exe: CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.obj
 turing_test.exe: CMakeFiles/turing_test.dir/build.make
 turing_test.exe: _deps/raylib-build/raylib/libraylib.a
 turing_test.exe: CMakeFiles/turing_test.dir/linkLibs.rsp
 turing_test.exe: CMakeFiles/turing_test.dir/objects1.rsp
 turing_test.exe: CMakeFiles/turing_test.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_50) "Linking C executable turing_test.exe"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/vitorc/TuringTest/build-win/CMakeFiles --progress-num=$(CMAKE_PROGRESS_52) "Linking C executable turing_test.exe"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/turing_test.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

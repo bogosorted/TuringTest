@@ -569,6 +569,30 @@ src/scenes/verdict_scene.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/scenes/verdict_scene.c.s
 .PHONY : src/scenes/verdict_scene.c.s
 
+src/systems/cutscene_3d.obj: src/systems/cutscene_3d.c.obj
+.PHONY : src/systems/cutscene_3d.obj
+
+# target to build an object file
+src/systems/cutscene_3d.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.obj
+.PHONY : src/systems/cutscene_3d.c.obj
+
+src/systems/cutscene_3d.i: src/systems/cutscene_3d.c.i
+.PHONY : src/systems/cutscene_3d.i
+
+# target to preprocess a source file
+src/systems/cutscene_3d.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.i
+.PHONY : src/systems/cutscene_3d.c.i
+
+src/systems/cutscene_3d.s: src/systems/cutscene_3d.c.s
+.PHONY : src/systems/cutscene_3d.s
+
+# target to generate assembly for a file
+src/systems/cutscene_3d.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/systems/cutscene_3d.c.s
+.PHONY : src/systems/cutscene_3d.c.s
+
 src/systems/dialog_data.obj: src/systems/dialog_data.c.obj
 .PHONY : src/systems/dialog_data.obj
 
@@ -1337,6 +1361,30 @@ src/world/sala_subsolo.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_subsolo.c.s
 .PHONY : src/world/sala_subsolo.c.s
 
+src/world/sala_subsolo_2.obj: src/world/sala_subsolo_2.c.obj
+.PHONY : src/world/sala_subsolo_2.obj
+
+# target to build an object file
+src/world/sala_subsolo_2.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.obj
+.PHONY : src/world/sala_subsolo_2.c.obj
+
+src/world/sala_subsolo_2.i: src/world/sala_subsolo_2.c.i
+.PHONY : src/world/sala_subsolo_2.i
+
+# target to preprocess a source file
+src/world/sala_subsolo_2.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.i
+.PHONY : src/world/sala_subsolo_2.c.i
+
+src/world/sala_subsolo_2.s: src/world/sala_subsolo_2.c.s
+.PHONY : src/world/sala_subsolo_2.s
+
+# target to generate assembly for a file
+src/world/sala_subsolo_2.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turing_test.dir/build.make CMakeFiles/turing_test.dir/src/world/sala_subsolo_2.c.s
+.PHONY : src/world/sala_subsolo_2.c.s
+
 src/world/sala_treino_escritorio.obj: src/world/sala_treino_escritorio.c.obj
 .PHONY : src/world/sala_treino_escritorio.obj
 
@@ -1469,6 +1517,9 @@ help:
 	@echo "... src/scenes/verdict_scene.obj"
 	@echo "... src/scenes/verdict_scene.i"
 	@echo "... src/scenes/verdict_scene.s"
+	@echo "... src/systems/cutscene_3d.obj"
+	@echo "... src/systems/cutscene_3d.i"
+	@echo "... src/systems/cutscene_3d.s"
 	@echo "... src/systems/dialog_data.obj"
 	@echo "... src/systems/dialog_data.i"
 	@echo "... src/systems/dialog_data.s"
@@ -1565,6 +1616,9 @@ help:
 	@echo "... src/world/sala_subsolo.obj"
 	@echo "... src/world/sala_subsolo.i"
 	@echo "... src/world/sala_subsolo.s"
+	@echo "... src/world/sala_subsolo_2.obj"
+	@echo "... src/world/sala_subsolo_2.i"
+	@echo "... src/world/sala_subsolo_2.s"
 	@echo "... src/world/sala_treino_escritorio.obj"
 	@echo "... src/world/sala_treino_escritorio.i"
 	@echo "... src/world/sala_treino_escritorio.s"

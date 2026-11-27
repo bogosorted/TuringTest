@@ -140,6 +140,7 @@ static bool NodeIdVisited(const DialogTree *tree, const char *id) {
 }
 
 static bool ChoiceAllowed(const DialogTree *tree, const DialogChoice *ch) {
+    if (strcmp(ch->next_node, "TRAILER_AGR") == 0 && !(SettingsGetDevMode() && SettingsGetDevTrailerMode())) return false;
     if (ch->req_poucas_ev && GameStateCountEvidences() >= 2) return false;
     if (ch->forbid_flag > 0 && GameStateHasDialogFlag(ch->forbid_flag)) return false;
     if (ch->req_flag > 0) {

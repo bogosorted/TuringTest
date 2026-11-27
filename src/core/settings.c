@@ -268,6 +268,7 @@ void SettingsSetAutoReset(bool ligado) {
 static bool g_devUnlockSubsolo = false;
 static bool g_devUnlockUpperFloors = false;
 static bool g_devFirstPerson = false;
+static bool g_devTrailerMode = false;
 
 bool SettingsGetTechNight(void) { return g_techNight; }
 void SettingsSetTechNight(bool ligado) { g_techNight = ligado; }
@@ -285,6 +286,8 @@ bool SettingsGetSetaGuiando(void) { return g_setaGuiando; }
 void SettingsSetSetaGuiando(bool ligado) { g_setaGuiando = ligado; }
 bool SettingsGetDevExperimentalPalettes(void) { return g_devExpPalettes; }
 void SettingsSetDevExperimentalPalettes(bool ligado) { g_devExpPalettes = ligado; }
+bool SettingsGetDevTrailerMode(void) { return g_devTrailerMode; }
+void SettingsSetDevTrailerMode(bool ligado) { g_devTrailerMode = ligado; }
 
 void SettingsRequestAppRestart(void) { g_restartApp = true; }
 bool SettingsIsAppRestartRequested(void) { return g_restartApp; }

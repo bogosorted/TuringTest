@@ -7,11 +7,11 @@
 #define PI 3.14159265358979323846f
 #endif
 
-static const float REC_MIN_X = -5.80f;
-static const float REC_MAX_X =  5.80f;
-static const float REC_MIN_Z = -4.20f;
-static const float REC_MAX_Z =  4.20f;
-static const float REC_WALL_H = 4.20f;
+#define REC_MIN_X -5.80f
+#define REC_MAX_X 5.80f
+#define REC_MIN_Z -4.20f
+#define REC_MAX_Z 4.20f
+#define REC_WALL_H 4.20f
 
 // Recepcao ampla (sem portas de banheiro):
 // - Balcao grande em formato de U redondo conectado a parede do fundo (player nao entra)
@@ -187,18 +187,27 @@ static void DesenharRecepcao(float tempo, bool evRelatoriosAtiva) {
         // Gramado e mureta baixa do jardim
         TerreoCaixa((Vector3){ wx, wy - 0.75f, REC_MIN_Z - 0.80f }, (Vector3){ ww + 0.90f, 0.36f, 0.95f },
                     0.26f, 0.20f, 0.20f, -1.0f);
-        // Arvore principal bem visivel no centro-esquerda da janela (tronco, galhos e copa em camadas)
-        DrawCylinder((Vector3){ wx - 0.35f, wy - 0.62f, REC_MIN_Z - 0.68f }, 0.08f, 0.12f, 1.18f, 10, TerreoLum(0.14f));
-        DrawCylinderEx((Vector3){ wx - 0.35f, wy + 0.08f, REC_MIN_Z - 0.68f },
-                       (Vector3){ wx - 0.68f, wy + 0.42f, REC_MIN_Z - 0.65f }, 0.05f, 0.03f, 8, TerreoLum(0.14f));
-        DrawCylinderEx((Vector3){ wx - 0.35f, wy + 0.14f, REC_MIN_Z - 0.68f },
-                       (Vector3){ wx + 0.02f, wy + 0.46f, REC_MIN_Z - 0.66f }, 0.05f, 0.03f, 8, TerreoLum(0.14f));
-        DrawSphereEx((Vector3){ wx - 0.35f, wy + 0.56f, REC_MIN_Z - 0.68f }, 0.46f, 10, 12, TerreoLum(0.24f));
-        DrawSphereEx((Vector3){ wx - 0.68f, wy + 0.38f, REC_MIN_Z - 0.64f }, 0.34f, 9, 10, TerreoLum(0.30f));
-        DrawSphereEx((Vector3){ wx + 0.04f, wy + 0.42f, REC_MIN_Z - 0.66f }, 0.36f, 9, 10, TerreoLum(0.32f));
-        // Arbustos ao lado da arvore
-        DrawSphereEx((Vector3){ wx + 0.78f, wy - 0.36f, REC_MIN_Z - 0.62f }, 0.34f, 8, 10, TerreoLum(0.22f));
-        DrawSphereEx((Vector3){ wx + 1.12f, wy - 0.42f, REC_MIN_Z - 0.60f }, 0.26f, 8, 10, TerreoLum(0.28f));
+        // Uma unica arvore grande refletindo o jardim atual (tronco robusto + galhos bifurcados + copa em camadas)
+        DrawCylinder((Vector3){ wx, wy - 0.65f, REC_MIN_Z - 0.72f }, 0.11f, 0.16f, 1.15f, 10, TerreoLum(0.14f));
+        DrawCylinderEx((Vector3){ wx, wy + 0.05f, REC_MIN_Z - 0.72f },
+                       (Vector3){ wx - 0.55f, wy + 0.44f, REC_MIN_Z - 0.68f }, 0.06f, 0.025f, 7, TerreoLum(0.14f));
+        DrawCylinderEx((Vector3){ wx, wy + 0.12f, REC_MIN_Z - 0.72f },
+                       (Vector3){ wx + 0.52f, wy + 0.48f, REC_MIN_Z - 0.68f }, 0.06f, 0.025f, 7, TerreoLum(0.14f));
+        rlPushMatrix();
+        rlTranslatef(wx, wy + 0.58f, REC_MIN_Z - 0.70f);
+        rlScalef(1.35f, 0.55f, 1.0f);
+        DrawSphereEx((Vector3){ 0.0f, 0.0f, 0.0f }, 0.56f, 10, 12, TerreoLum(0.24f));
+        rlPopMatrix();
+        rlPushMatrix();
+        rlTranslatef(wx - 0.52f, wy + 0.42f, REC_MIN_Z - 0.66f);
+        rlScalef(1.25f, 0.52f, 1.0f);
+        DrawSphereEx((Vector3){ 0.0f, 0.0f, 0.0f }, 0.38f, 9, 10, TerreoLum(0.30f));
+        rlPopMatrix();
+        rlPushMatrix();
+        rlTranslatef(wx + 0.50f, wy + 0.45f, REC_MIN_Z - 0.66f);
+        rlScalef(1.25f, 0.52f, 1.0f);
+        DrawSphereEx((Vector3){ 0.0f, 0.0f, 0.0f }, 0.38f, 9, 10, TerreoLum(0.32f));
+        rlPopMatrix();
 
         // Moldura escura da janela + divisorias (montantes)
         TerreoCaixa((Vector3){ wx, wy + wh * 0.5f, REC_MIN_Z + 0.04f }, (Vector3){ ww + 0.14f, 0.09f, 0.14f }, 0.24f, 0.18f, 0.18f, 0.08f);
@@ -289,15 +298,31 @@ static void DesenharRecepcao(float tempo, bool evRelatoriosAtiva) {
     DesenharPoltronaClara((Vector3){ -1.48f, 0.0f, 1.88f },  72.0f);
     DesenharPoltronaClara((Vector3){  2.78f, 0.0f, 1.88f }, -72.0f);
 
-    // Mesinha de centro redonda com arranjo floral bem visivel
+    // Mesinha de centro redonda com arranjo floral elegante (vaso acinturado + hastes finas + flores em buque)
     TerreoMesaRedonda((Vector3){ 0.65f, 0.0f, 1.92f }, 0.58f, 0.44f);
-    DrawCylinder((Vector3){ 0.65f, 0.44f, 1.92f }, 0.11f, 0.08f, 0.20f, 12, TerreoLum(0.92f));
-    DrawSphereEx((Vector3){ 0.65f, 0.72f, 1.92f }, 0.16f, 8, 10, TerreoLum(0.42f));
-    DrawSphereEx((Vector3){ 0.57f, 0.78f, 1.96f }, 0.07f, 6, 8, TerreoLum(0.94f));
-    DrawSphereEx((Vector3){ 0.73f, 0.76f, 1.88f }, 0.07f, 6, 8, TerreoLum(0.94f));
+    {
+        float fx = 0.65f, fy = 0.44f, fz = 1.92f;
+        // Vaso ceramico acinturado com boca delicada
+        DrawCylinder((Vector3){ fx, fy,         fz }, 0.095f, 0.075f, 0.08f, 14, TerreoLum(0.86f));
+        DrawCylinder((Vector3){ fx, fy + 0.08f, fz }, 0.055f, 0.095f, 0.11f, 14, TerreoLum(0.92f));
+        DrawCylinder((Vector3){ fx, fy + 0.19f, fz }, 0.068f, 0.055f, 0.03f, 14, TerreoLum(0.80f));
+        // Hastes finas e folhas estreitas abrindo em leque + botoes florais claros
+        for (int k = 0; k < 6; k++) {
+            float a = (float)k * (2.0f * PI / 6.0f) + 0.3f;
+            float ca = cosf(a), sa = sinf(a);
+            Vector3 p0 = { fx, fy + 0.20f, fz };
+            Vector3 pTip = { fx + ca * 0.12f, fy + 0.34f + (k % 2) * 0.04f, fz + sa * 0.12f };
+            DrawCylinderEx(p0, pTip, 0.006f, 0.004f, 4, TerreoLum(0.24f));
+            DrawCapsule((Vector3){ fx + ca * 0.05f, fy + 0.24f, fz + sa * 0.05f },
+                        (Vector3){ fx + ca * 0.15f, fy + 0.27f, fz + sa * 0.15f }, 0.010f, 4, 6, TerreoLum(0.32f));
+            DrawSphereEx(pTip, 0.036f, 6, 8, TerreoLum((k % 2 == 0) ? 0.94f : 0.78f));
+        }
+        DrawCylinderEx((Vector3){ fx, fy + 0.20f, fz }, (Vector3){ fx, fy + 0.41f, fz }, 0.007f, 0.005f, 4, TerreoLum(0.24f));
+        DrawSphereEx((Vector3){ fx, fy + 0.42f, fz }, 0.044f, 7, 9, TerreoLum(0.96f));
+    }
 
-    // Vaso grande no canto
-    DesenharVasoPlantas((Vector3){ -4.95f, 0.0f, 3.15f }, 1.0f);
+    // Vaso grande no canto (usando planta melhorada com galhos bifurcados)
+    TerreoPlanta((Vector3){ -4.95f, 0.0f, 3.15f }, 1.55f);
 }
 
 static const TerreoSalaDef SALA_RECEPCAO_DEF = {
